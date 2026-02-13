@@ -207,16 +207,6 @@ const Profile = () => {
                   <UserCircle size={48} className="text-primary/40" />
                 )}
               </div>
-              <label className="absolute bottom-4 right-0 w-8 h-8 bg-primary hover:bg-primary-strong text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-90 z-20">
-                <Camera size={16} />
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isUploading}
-                />
-              </label>
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-1">
               {profile.name || "User"}
@@ -352,16 +342,6 @@ const Profile = () => {
                           />
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary hover:bg-primary-strong text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-90 z-20">
-                        <Camera size={14} />
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          disabled={isUploading}
-                        />
-                      </label>
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
                       Profile Photo

@@ -35,25 +35,6 @@ import {
 import { jsPDF } from "jspdf";
 import { QRCodeCanvas } from "qrcode.react";
 import {
-<<<<<<< HEAD
-    getAdminVendorOverview,
-    updateAdminVendorDetails,
-    updateAdminVendorStatus,
-    getAdminBrandOverview,
-    updateAdminBrandDetails,
-    updateAdminBrandStatus,
-    getAdminTransactionsFiltered,
-    getAdminOrders,
-    updateAdminOrderStatus,
-    getAdminQrBatch,
-    uploadImage,
-    updateAdminVendorCredentials,
-    getAdminVendorCredentialRequests,
-    approveAdminCredentialRequest,
-    rejectAdminCredentialRequest,
-    getAdminCampaignAnalytics,
-    updateAdminCampaignStatus
-=======
   getAdminVendorOverview,
   updateAdminVendorDetails,
   updateAdminVendorStatus,
@@ -71,7 +52,6 @@ import {
   rejectAdminCredentialRequest,
   getAdminCampaignAnalytics,
   updateAdminCampaignStatus,
->>>>>>> 03d250a79e2c85bc5e016be293fc661d287e8090
 } from "../../lib/api";
 
 const COLORS = ["#059669", "#f43f5e", "#3b82f6", "#f59e0b", "#8b5cf6"];
