@@ -1,0 +1,408 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { BadgeCheck, ChevronRight, Globe, Mail, MessageCircle, Search } from 'lucide-react';
+import FallbackImage from '../components/FallbackImage';
+import HowItWorks from '../components/HowItWorks';
+import { getPublicBrandDetails, getPublicBrands, sendBrandInquiry } from '../lib/api';
+import { getApiBaseUrl } from '../lib/apiClient';
+import { useToast } from '../components/ui';
+
+const API_BASE_URL = getApiBaseUrl();
+
+const resolvePublicAssetUrl = (value) => {
+  if (!value) return '/placeholder.svg';
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith('/uploads/')) {
+    return API_BASE_URL ? `${API_BASE_URL}${value}` : value;
+  }
+  return value;
+};
+
+const BrandDetails = () => {
+  const { id } = useParams();
+  const [brandData, setBrandData] = useState(null);
+  const [brandError, setBrandError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [showInquiry, setShowInquiry] = useState(false);
+  const [inquiryForm, setInquiryForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  const [inquiryStatus, setInquiryStatus] = useState('');
+  const [isSendingInquiry, setIsSendingInquiry] = useState(false);
+  const { success, error } = useToast();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBrand = async () => {
+      setIsLoading(true);
+      setBrandError('');
+      try {
+        let targetId = id;
+        if (!targetId) {
+          const brands = await getPublicBrands();
+          targetId = brands?.[0]?.id;
+        }
+
+        if (!targetId) {
+          if (!isMounted) return;
+          setBrandData(null);
+          return;
+        }
+
+        const dataRaw = await getPublicBrandDetails(targetId);
+        const data = dataRaw?.brand || dataRaw;
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Invalid brand response from server.');
+        }
+        if (!isMounted) return;
+        setBrandData(data);
+      } catch (err) {
+        if (!isMounted) return;
+        setBrandError(err.message || 'Unable to load brand details.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadBrand();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    setQuery('');
+    setActiveCategory('All');
+    setShowInquiry(false);
+    setInquiryStatus('');
+    setInquiryForm({ name: '', email: '', phone: '', message: '' });
+  }, [brandData?.id]);
+
+  const handleInquiryChange = (field) => (event) => {
+    setInquiryForm((prev) => ({ ...prev, [field]: event.target.value }));
+    setInquiryStatus('');
+  };
+
+  const handleSendInquiry = async () => {
+    const trimmedMessage = inquiryForm.message.trim();
+    if (!trimmedMessage) {
+      setInquiryStatus('Please enter your message.');
+      return;
+    }
+    setIsSendingInquiry(true);
+    setInquiryStatus('');
+    try {
+      const response = await sendBrandInquiry(displayBrand.id, {
+        name: inquiryForm.name.trim() || undefined,
+        email: inquiryForm.email.trim() || undefined,
+        phone: inquiryForm.phone.trim() || undefined,
+        message: trimmedMessage
+      });
+      const message = response?.message || 'Message sent to the brand.';
+      setInquiryStatus(message);
+      success('Message Sent', message);
+      setInquiryForm({ name: '', email: '', phone: '', message: '' });
+      setShowInquiry(false);
+    } catch (err) {
+      const failureMessage = err.message || 'Failed to send message.';
+      setInquiryStatus(failureMessage);
+      error('Message Failed', failureMessage);
+    } finally {
+      setIsSendingInquiry(false);
+    }
+  };
+
+  const brandProducts = useMemo(() => {
+    const sourceProducts = brandData?.products || brandData?.Products || [];
+    return sourceProducts.map((product) => ({
+      ...product,
+      image: resolvePublicAssetUrl(product.image || product.imageUrl || product.bannerUrl || '/placeholder.svg'),
+      reward: product.reward || product.cashback || 'Check App',
+      variant: product.variant || '',
+      category: product.category || 'General',
+    }));
+  }, [brandData]);
+
+  const categories = useMemo(() => {
+    const unique = new Set(brandProducts.map((product) => product.category).filter(Boolean));
+    return ['All', ...unique];
+  }, [brandProducts]);
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return brandProducts.filter((product) => {
+      const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
+      if (!matchesCategory) return false;
+      if (!normalizedQuery) return true;
+      const haystack = `${product.name} ${product.variant || ''} ${product.category || ''} ${product.description || ''}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [activeCategory, brandProducts, query]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
+        <div className="px-4 mt-4 text-xs text-gray-500">Loading brand details...</div>
+      </div>
+    );
+  }
+
+  if (brandError) {
+    return (
+      <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
+        <div className="px-4 mt-4 text-xs text-rose-500">{brandError}</div>
+      </div>
+    );
+  }
+
+  if (!brandData) {
+    return (
+      <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
+        <div className="px-4 mt-4 text-xs text-gray-500">No brand information available.</div>
+      </div>
+    );
+  }
+
+  const displayBrand = {
+    ...brandData,
+    logo: resolvePublicAssetUrl(brandData.logo || brandData.logoUrl),
+    banner: resolvePublicAssetUrl(brandData.banner || brandData.logoUrl || brandData.logo),
+    tags: Array.isArray(brandData.tags) ? brandData.tags : []
+  };
+
+  return (
+    <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
+      <div className="px-4 mt-4 space-y-4">
+        <div className="rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm transition-colors duration-300">
+          <FallbackImage
+            src={displayBrand.banner}
+            alt={`${displayBrand.name} banner`}
+            className="w-full h-36 object-cover"
+          />
+          <div className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{displayBrand.name}</h1>
+                <div className="flex items-center gap-2 text-[11px] text-green-700 font-semibold mt-1">
+                  <BadgeCheck size={14} className="text-green-600" />
+                  Verified brand partner
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowInquiry((prev) => !prev)}
+                className="shrink-0 bg-primary text-white text-[11px] font-semibold px-3 py-2 rounded-full flex items-center gap-1 shadow-sm"
+              >
+                <MessageCircle size={14} />
+                {showInquiry ? 'Close' : 'Talk to Brand'}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-3 text-[11px] text-primary-strong">
+              {displayBrand.email && (
+                <a
+                  href={`mailto:${displayBrand.email}`}
+                  className="inline-flex items-center gap-1 hover:text-primary-strong"
+                >
+                  <Mail size={12} />
+                  {displayBrand.email}
+                </a>
+              )}
+              {displayBrand.website && (
+                <a
+                  href={displayBrand.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 hover:text-primary-strong"
+                >
+                  <Globe size={12} />
+                  Brand Website
+                </a>
+              )}
+            </div>
+
+            {displayBrand.about && (
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{displayBrand.about}</p>
+            )}
+
+            {displayBrand.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {displayBrand.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[10px] font-semibold text-primary-strong dark:text-primary bg-primary/10 dark:bg-primary-strong/30 px-2 py-1 rounded-full border border-primary/20 dark:border-primary-strong/30"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">Products</div>
+                <div className="text-lg font-bold text-emerald-800">{brandProducts.length}</div>
+              </div>
+              <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-sky-700 font-semibold">Category</div>
+                <div className="text-lg font-bold text-sky-800">{categories.length - 1}</div>
+              </div>
+            </div>
+
+            {showInquiry && (
+              <div className="mt-2 rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-3">
+                <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  Send a message to {displayBrand.name}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    value={inquiryForm.name}
+                    onChange={handleInquiryChange('name')}
+                    placeholder="Your name (optional)"
+                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  />
+                  <input
+                    type="text"
+                    value={inquiryForm.phone}
+                    onChange={handleInquiryChange('phone')}
+                    placeholder="Phone (optional)"
+                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                  />
+                  <input
+                    type="email"
+                    value={inquiryForm.email}
+                    onChange={handleInquiryChange('email')}
+                    placeholder="Email (optional)"
+                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 sm:col-span-2"
+                  />
+                  <textarea
+                    rows={3}
+                    value={inquiryForm.message}
+                    onChange={handleInquiryChange('message')}
+                    placeholder="Write your query..."
+                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 sm:col-span-2"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowInquiry(false)}
+                    className="px-4 py-2 rounded-full border border-gray-200 dark:border-zinc-700 text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendInquiry}
+                    disabled={isSendingInquiry}
+                    className="px-4 py-2 rounded-full bg-primary text-white text-[11px] font-semibold shadow-sm disabled:opacity-60"
+                  >
+                    {isSendingInquiry ? 'Sending...' : 'Send Message'}
+                  </button>
+                </div>
+                {inquiryStatus && (
+                  <div className="text-[11px] font-semibold text-primary-strong">
+                    {inquiryStatus}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search Product"
+            className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-full py-3 pl-10 pr-12 text-sm text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md"
+          >
+            <Search size={14} />
+          </button>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {categories.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setActiveCategory(category)}
+              className={`px-4 py-2 rounded-full text-[11px] font-semibold border transition-colors ${activeCategory === category
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">Products from {displayBrand.name}</h2>
+            <div className="text-xs text-gray-500">{filteredProducts.length} items</div>
+          </div>
+          {filteredProducts.length === 0 ? (
+            <div className="bg-white dark:bg-zinc-900 border border-dashed border-gray-200 dark:border-zinc-800 rounded-2xl p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              No products matched your search yet.
+            </div>
+          ) : (
+            filteredProducts.map((product) => (
+              <Link
+                key={product.id}
+                to={`/product-info/${product.id}`}
+                className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex items-center gap-3 shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+              >
+                <FallbackImage
+                  src={product.image}
+                  alt={product.name}
+                  className="w-12 h-12 object-contain rounded-lg bg-primary/10 dark:bg-zinc-800"
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{product.name}</div>
+                  <div className="text-[11px] text-gray-500 dark:text-gray-400">{product.variant || product.category}</div>
+                  {product.scheme && (
+                    <div className="text-[10px] text-blue-700 dark:text-blue-400 font-medium mt-1">
+                      Running: {product.scheme}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-green-600 dark:text-green-500 font-semibold mt-1 flex items-center gap-2">
+                    <span>{product.reward}</span>
+                    {product.category && (
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary-strong text-[10px]">{product.category}</span>
+                    )}
+                  </div>
+                  {product.description && (
+                    <div className="text-[10px] text-gray-400 mt-1 line-clamp-1">{product.description}</div>
+                  )}
+                </div>
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ChevronRight size={16} className="text-primary-strong" />
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+
+        <HowItWorks />
+      </div>
+    </div>
+  );
+};
+
+export default BrandDetails;
