@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+ï»¿import React, { useState, useEffect, useRef } from "react";
 import {
   Gift,
   FileText,
@@ -64,22 +64,22 @@ const heroBanners = [
 ];
 const defaultOffers = [
   {
-    amount: "?1,100",
+    amount: "â‚¹1,100",
     brand: "RL Masala",
     gradient: "linear-gradient(135deg, #f97316, #ef4444, #e11d48)",
-    emoji: "???",
+    emoji: "ðŸ”¥",
   },
   {
-    amount: "?1,400",
+    amount: "â‚¹1,400",
     brand: "Agrawal's",
     gradient: "linear-gradient(135deg, #475569, #334155, #0f172a)",
-    emoji: "??",
+    emoji: "âœ¨",
   },
   {
-    amount: "?120",
+    amount: "â‚¹120",
     brand: "skcop",
     gradient: "linear-gradient(135deg, #10b981, #16a34a, #166534)",
-    emoji: "??",
+    emoji: "âœ¨",
   },
 ];
 
@@ -327,7 +327,7 @@ const Home = () => {
   const banners = homeData?.banners?.length ? homeData.banners : heroBanners;
   const stats = homeData?.stats || {};
   const fmtCash = (v) =>
-    !v ? "?0" : typeof v === "number" ? `?${v.toFixed(0)}` : v;
+    !v ? "â‚¹0" : typeof v === "number" ? `â‚¹${v.toFixed(0)}` : v;
 
   const quickActions = [
     {
@@ -390,7 +390,7 @@ const Home = () => {
       className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-white"
     >
       <div className="px-4 pt-5 space-y-6">
-        {/* --- 1 · HERO CAROUSEL --- */}
+        {/* --- 1 ï¿½ HERO CAROUSEL --- */}
         {isLoading ? (
           <div
             className="h-[210px] rounded-[28px] animate-pulse"
@@ -400,7 +400,7 @@ const Home = () => {
           <HeroCarousel items={banners} />
         )}
 
-        {/* --- 2 · SCAN CTA --- */}
+        {/* --- 2 ï¿½ SCAN CTA --- */}
         {!isLoading && (
           <Link to="/scan" className="scan-cta block">
             <div
@@ -486,7 +486,7 @@ const Home = () => {
           </Link>
         )}
 
-        {/* --- 3 · QUICK ACTIONS --- */}
+        {/* --- 3 ï¿½ QUICK ACTIONS --- */}
         <div className="quick-actions grid grid-cols-4 gap-3 items-end">
           {quickActions.map((item, i) => (
             <Link
@@ -513,7 +513,7 @@ const Home = () => {
           ))}
         </div>
 
-        {/* --- 4 · YOUR ACTIVITY STATS --- */}
+        {/* --- 4 ï¿½ YOUR ACTIVITY STATS --- */}
         <div
           className="home-activity-section"
           style={{
@@ -603,7 +603,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- 5 · PARTNER BRANDS --- */}
+        {/* --- 5 ï¿½ PARTNER BRANDS --- */}
         <div className="brands-rail">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -689,7 +689,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- 6 · TOP OFFERS --- */}
+        {/* --- 6 ï¿½ TOP OFFERS --- */}
         <div className="offers-rail">
           <div className="flex items-center gap-2 mb-3">
             <div
@@ -771,7 +771,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- 7 · PRODUCT REPORTS --- */}
+        {/* --- 7 ï¿½ PRODUCT REPORTS --- */}
         <Link
           to="/history"
           className="block active:scale-[0.98] transition-transform"
@@ -808,7 +808,7 @@ const Home = () => {
           </div>
         </Link>
 
-        {/* --- 8 · VIDEO SPOTLIGHT --- */}
+        {/* --- 8 ï¿½ VIDEO SPOTLIGHT --- */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div
@@ -827,7 +827,7 @@ const Home = () => {
           <VideoSpotlight />
         </div>
 
-        {/* --- 9 · HOW IT WORKS --- */}
+        {/* --- 9 ï¿½ HOW IT WORKS --- */}
         <div className="mb-6">
           <HowItWorks />
         </div>
@@ -837,4 +837,5 @@ const Home = () => {
 };
 
 export default Home;
+
 
