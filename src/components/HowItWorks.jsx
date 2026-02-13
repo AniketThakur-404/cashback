@@ -12,47 +12,72 @@ const HowItWorks = () => {
     {
       id: "01",
       title: "Look for Logo",
-      subtitle: "First Step",
+      subtitle: "STEP ONE",
       description:
         "Spot the Assured Rewards logo on any premium partner product.",
-      icon: <BadgeCheck size={22} className="text-white" />,
-      color: "#059669",
-      glow: "rgba(129, 204, 42, 0.3)",
+      icon: <BadgeCheck size={24} className="text-white" />,
+      color: "from-emerald-500 to-emerald-700",
+      glow: "rgba(16, 185, 129, 0.3)",
     },
     {
       id: "02",
       title: "Scratch & Scan",
-      subtitle: "Second Step",
+      subtitle: "STEP TWO",
       description:
         "Gently scratch the hidden area and scan with our app securely.",
-      icon: <Scan size={22} className="text-white" />,
-      color: "#34d399",
-      glow: "rgba(52, 211, 153, 0.3)",
+      icon: <Scan size={24} className="text-white" />,
+      color: "from-teal-400 to-teal-600",
+      glow: "rgba(20, 184, 166, 0.3)",
     },
     {
       id: "03",
       title: "Get Rewards",
-      subtitle: "Final Step",
+      subtitle: "STEP THREE",
       description:
         "Verify authentication and enjoy your vCash rewards instantly.",
-      icon: <Gift size={22} className="text-white" />,
-      color: "#10b981",
-      glow: "rgba(16, 185, 129, 0.3)",
+      icon: <Gift size={24} className="text-white" />,
+      color: "from-green-500 to-emerald-800",
+      glow: "rgba(5, 150, 105, 0.3)",
     },
   ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.to(".how-step-icon", {
-        scale: 1.1,
+      // Animate line progress
+      gsap.from(".timeline-line", {
+        scaleY: 0,
+        transformOrigin: "top",
+        duration: 1.5,
+        ease: "power2.inOut",
+        scrollTrigger: {
+          trigger: ".timeline-container",
+          start: "top 80%",
+          end: "bottom 80%",
+          scrub: 1,
+        },
+      });
+
+      // Animate steps
+      gsap.from(".step-card", {
+        x: -40,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.3,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: ".timeline-container",
+          start: "top 85%",
+        },
+      });
+
+      // Breathing icons
+      gsap.to(".step-icon-inner", {
+        scale: 1.05,
         duration: 2,
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
-        stagger: {
-          each: 0.3,
-          from: "start",
-        },
+        stagger: 0.2,
       });
     }, containerRef);
 
@@ -62,73 +87,84 @@ const HowItWorks = () => {
   return (
     <div
       ref={containerRef}
-      className="relative bg-white dark:bg-zinc-900 rounded-[32px] p-6 lg:p-8 transition-all duration-500 overflow-hidden shadow-2xl shadow-black/3 dark:shadow-black/20"
-      style={{ border: "1px solid rgba(0,0,0,0.05)" }}
+      className="relative bg-white dark:bg-zinc-900 rounded-[40px] p-8 lg:p-10 overflow-hidden shadow-2xl border border-black/5 dark:border-white/5"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Background Ornaments */}
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
 
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-5 h-5 rounded-md flex items-center justify-center bg-primary/10">
-            <Sparkles size={10} className="text-primary-strong" />
+      {/* Header */}
+      <div className="mb-12 relative z-10 text-left">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-primary/10">
+            <Sparkles size={12} className="text-primary-strong animate-pulse" />
           </div>
-          <span className="text-[10px] font-black tracking-[0.2em] text-primary-strong uppercase">
-            Simple Guide
+          <span className="text-[11px] font-black tracking-[0.3em] text-primary-strong uppercase">
+            User Guide
           </span>
         </div>
-        <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
-          How it Works?
+        <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight leading-tight">
+          How Assured Rewards <br />{" "}
+          <span className="text-primary">Works?</span>
         </h2>
       </div>
 
-      <div className="relative space-y-4">
-        <div className="absolute left-7 top-10 bottom-10 w-0.5 border-l-2 border-dashed border-primary/20 z-0" />
+      {/* Timeline Container */}
+      <div className="timeline-container relative pl-4 sm:pl-8 space-y-12">
+        {/* The Animated Line */}
+        <div className="absolute left-[44px] sm:left-[64px] top-[28px] bottom-[32px] w-[2px] bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+          <div className="timeline-line w-full h-full bg-gradient-to-b from-primary/80 to-primary-strong shadow-[0_0_15px_rgba(5,150,105,0.4)]" />
+        </div>
 
         {steps.map((step, idx) => (
           <div
-            key={step.id}
-            className="how-step-card relative z-10 group"
-            style={{ opacity: 1, visibility: "visible" }}
+            key={idx}
+            className="step-card relative flex items-start gap-6 sm:gap-10 group text-left"
           >
-            <div
-              className="flex items-start gap-5 p-5 rounded-3xl bg-zinc-50/50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-700/50 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-xl hover:shadow-black/4 transition-all duration-300"
-              style={{ opacity: 1, visibility: "visible" }}
-            >
-              <div className="relative shrink-0">
-                <div
-                  className="how-step-icon w-14 h-14 rounded-2xl flex items-center justify-center relative z-10"
-                  style={{
-                    background: `linear-gradient(135deg, ${step.color}, ${idx === 2 ? "#047857" : "#5a9620"})`,
-                    boxShadow: `0 8px 20px ${step.glow}`,
-                  }}
-                >
-                  {step.icon}
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white dark:bg-zinc-900 text-[10px] font-black flex items-center justify-center shadow-md border border-zinc-100 dark:border-zinc-800 z-20">
+            {/* Step Icon Wrapper */}
+            <div className="relative shrink-0 z-10">
+              <div
+                className={`step-icon-inner w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] flex items-center justify-center relative bg-gradient-to-br ${step.color} shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3`}
+                style={{
+                  boxShadow: `0 10px 25px ${step.glow}`,
+                }}
+              >
+                {step.icon}
+
+                {/* Number Badge */}
+                <div className="absolute -top-2 -right-2 w-7 h-7 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center text-[10px] font-black text-zinc-900 dark:text-white shadow-lg border border-zinc-100 dark:border-zinc-700">
                   {step.id}
                 </div>
               </div>
+            </div>
 
-              <div className="flex-1 pt-1">
-                <div className="text-[10px] font-black uppercase tracking-wider text-primary-strong/80 mb-0.5">
+            {/* Content Card */}
+            <div className="flex-1 pb-6 border-b border-zinc-50 dark:border-zinc-800/50 last:border-0">
+              <div className="inline-block px-3 py-1 rounded-full bg-primary/5 dark:bg-primary/10 border border-primary/10 mb-3">
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
                   {step.subtitle}
-                </div>
-                <h3 className="text-base font-black text-zinc-900 dark:text-white mb-1.5 leading-tight">
-                  {step.title}
-                </h3>
-                <p className="text-[12px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
-                  {step.description}
-                </p>
+                </span>
               </div>
+              <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-2 tracking-tight group-hover:text-primary transition-colors duration-300">
+                {step.title}
+              </h3>
+              <p className="text-[13px] sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                {step.description}
+              </p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 flex justify-center">
-        <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-50 dark:bg-zinc-800 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 border border-zinc-100 dark:border-zinc-700">
-          Easy to earn <Sparkles size={12} className="text-primary" />
+      {/* Footer Badge */}
+      <div className="mt-8 flex flex-col items-center gap-4 relative z-10">
+        <div className="h-[2px] w-12 bg-zinc-100 dark:bg-zinc-800 rounded-full" />
+        <div className="flex items-center gap-2 px-6 py-3 rounded-full bg-zinc-50 dark:bg-zinc-800/50 text-[12px] font-black text-zinc-500 dark:text-zinc-400 border border-zinc-100 dark:border-zinc-800 hover:border-primary/30 transition-all shadow-sm group cursor-default">
+          Everything is secure{" "}
+          <Sparkles
+            size={14}
+            className="text-primary-strong group-hover:animate-spin"
+          />
         </div>
       </div>
     </div>

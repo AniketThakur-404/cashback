@@ -33,6 +33,14 @@ export const buildApiUrl = (path, baseOverride = BASE_URL) => {
   return `${baseOverride}${path}`;
 };
 
+export const resolvePublicAssetUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
+    return path;
+  }
+  return buildApiUrl(path.startsWith("/") ? path : `/${path}`);
+};
+
 const parseResponse = async (response) => {
   const contentType = response.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {

@@ -131,6 +131,16 @@ export const uploadImage = (token, file) => {
   });
 };
 
+export const uploadUserAvatar = (token, file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  return apiRequest("/api/user/avatar", {
+    method: "POST",
+    token,
+    body: formData,
+  });
+};
+
 export const getMe = (token) =>
   apiRequest("/api/auth/me", {
     token,

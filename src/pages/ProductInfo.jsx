@@ -1,16 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { BadgeCheck, ChevronRight, Scan, Gift } from 'lucide-react';
-import FallbackImage from '../components/FallbackImage';
-import { getPublicBrandDetails, getPublicProductDetails, getPublicProducts } from '../lib/api';
-import { getApiBaseUrl } from '../lib/apiClient';
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { BadgeCheck, ChevronRight, Scan, Gift } from "lucide-react";
+import FallbackImage from "../components/FallbackImage";
+import {
+  getPublicBrandDetails,
+  getPublicProductDetails,
+  getPublicProducts,
+} from "../lib/api";
+import { getApiBaseUrl } from "../lib/apiClient";
+import HowItWorks from "../components/HowItWorks";
 
 const API_BASE_URL = getApiBaseUrl();
 
 const resolvePublicAssetUrl = (value) => {
-  if (!value) return '/placeholder.svg';
+  if (!value) return "/placeholder.svg";
   if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith('/uploads/')) {
+  if (value.startsWith("/uploads/")) {
     return API_BASE_URL ? `${API_BASE_URL}${value}` : value;
   }
   return value;
@@ -20,7 +25,7 @@ const ProductInfo = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [productError, setProductError] = useState('');
+  const [productError, setProductError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -28,7 +33,7 @@ const ProductInfo = () => {
 
     const loadProduct = async () => {
       setIsLoading(true);
-      setProductError('');
+      setProductError("");
       try {
         let targetId = id;
         if (!targetId) {
@@ -44,14 +49,18 @@ const ProductInfo = () => {
 
         const data = await getPublicProductDetails(targetId);
         const normalizedProduct = data?.product || data;
-        if (!normalizedProduct || typeof normalizedProduct !== 'object' || Array.isArray(normalizedProduct)) {
-          throw new Error('Invalid product response from server.');
+        if (
+          !normalizedProduct ||
+          typeof normalizedProduct !== "object" ||
+          Array.isArray(normalizedProduct)
+        ) {
+          throw new Error("Invalid product response from server.");
         }
         if (!isMounted) return;
         setProduct(normalizedProduct);
       } catch (err) {
         if (!isMounted) return;
-        setProductError(err.message || 'Unable to load product details.');
+        setProductError(err.message || "Unable to load product details.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -74,12 +83,18 @@ const ProductInfo = () => {
         const brandDetailsRaw = await getPublicBrandDetails(product.Brand.id);
         const brandDetails = brandDetailsRaw?.brand || brandDetailsRaw;
         if (!isMounted) return;
-        const sourceProducts = brandDetails?.products || brandDetails?.Products || [];
+        const sourceProducts =
+          brandDetails?.products || brandDetails?.Products || [];
         const normalized = sourceProducts
           .map((item) => ({
             ...item,
-            image: resolvePublicAssetUrl(item.image || item.imageUrl || item.bannerUrl || '/placeholder.svg'),
-            reward: item.reward || item.cashback || 'Check App',
+            image: resolvePublicAssetUrl(
+              item.image ||
+                item.imageUrl ||
+                item.bannerUrl ||
+                "/placeholder.svg",
+            ),
+            reward: item.reward || item.cashback || "Check App",
           }))
           .filter((item) => item.id !== product.id);
         setRelatedProducts(normalized);
@@ -96,7 +111,9 @@ const ProductInfo = () => {
   if (isLoading) {
     return (
       <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
-        <div className="px-4 mt-4 text-xs text-gray-500">Loading product details...</div>
+        <div className="px-4 mt-4 text-xs text-gray-500">
+          Loading product details...
+        </div>
       </div>
     );
   }
@@ -112,7 +129,9 @@ const ProductInfo = () => {
   if (!product) {
     return (
       <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
-        <div className="px-4 mt-4 text-xs text-gray-500">No product information available.</div>
+        <div className="px-4 mt-4 text-xs text-gray-500">
+          No product information available.
+        </div>
       </div>
     );
   }
@@ -120,38 +139,27 @@ const ProductInfo = () => {
   const displayProduct = {
     ...product,
     image: resolvePublicAssetUrl(product.imageUrl || product.image),
-    banner: resolvePublicAssetUrl(product.bannerUrl || product.banner || product.imageUrl),
-    reward: product.reward || product.cashback || 'Check App',
-    scheme: product.scheme || 'Standard Offer'
+    banner: resolvePublicAssetUrl(
+      product.bannerUrl || product.banner || product.imageUrl,
+    ),
+    reward: product.reward || product.cashback || "Check App",
+    scheme: product.scheme || "Standard Offer",
   };
 
   const brand = product.Brand;
 
   const details = [
-    { label: 'SKU', value: displayProduct.sku || '-' },
-    { label: 'MRP', value: displayProduct.mrp ? `INR ${Number(displayProduct.mrp).toFixed(2)}` : '-' },
-    { label: 'Scheme', value: displayProduct.scheme },
-    { label: 'Cashback', value: displayProduct.reward },
-    { label: 'Pack Size', value: displayProduct.packSize || '-' },
-    { label: 'Warranty', value: displayProduct.warranty || '-' },
-  ];
-
-  const steps = [
+    { label: "SKU", value: displayProduct.sku || "-" },
     {
-      title: 'Look for Assured Rewards Logo',
-      description: 'Check the Assured Rewards logo on products (online or offline).',
-      icon: <BadgeCheck size={16} className="text-primary-strong" />,
+      label: "MRP",
+      value: displayProduct.mrp
+        ? `INR ${Number(displayProduct.mrp).toFixed(2)}`
+        : "-",
     },
-    {
-      title: 'Scratch and Scan',
-      description: 'Scratch the hidden code and scan it securely.',
-      icon: <Scan size={16} className="text-primary-strong" />,
-    },
-    {
-      title: 'Get Rewards',
-      description: 'See authentication status and cashback instantly.',
-      icon: <Gift size={16} className="text-primary-strong" />,
-    },
+    { label: "Scheme", value: displayProduct.scheme },
+    { label: "Cashback", value: displayProduct.reward },
+    { label: "Pack Size", value: displayProduct.packSize || "-" },
+    { label: "Warranty", value: displayProduct.warranty || "-" },
   ];
 
   return (
@@ -167,14 +175,21 @@ const ProductInfo = () => {
             type="button"
             className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-800/90 border border-gray-200 dark:border-zinc-700 flex items-center justify-center shadow-md"
           >
-            <ChevronRight size={18} className="text-gray-700 dark:text-gray-300" />
+            <ChevronRight
+              size={18}
+              className="text-gray-700 dark:text-gray-300"
+            />
           </button>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{displayProduct.name}</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{displayProduct.variant}</p>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              {displayProduct.name}
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {displayProduct.variant}
+            </p>
           </div>
           {brand && (
             <Link
@@ -185,10 +200,16 @@ const ProductInfo = () => {
               <ChevronRight size={12} />
             </Link>
           )}
-          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{displayProduct.description}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+            {displayProduct.description}
+          </p>
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">Running Campaign</div>
-            <div className="text-sm font-bold text-emerald-900">{displayProduct.scheme || 'No active campaign'}</div>
+            <div className="text-[10px] uppercase tracking-wide text-emerald-700 font-semibold">
+              Running Campaign
+            </div>
+            <div className="text-sm font-bold text-emerald-900">
+              {displayProduct.scheme || "No active campaign"}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -200,36 +221,26 @@ const ProductInfo = () => {
                 <div className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   {detail.label}
                 </div>
-                <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1">{detail.value}</div>
+                <div className="text-sm font-bold text-gray-800 dark:text-gray-200 mt-1">
+                  {detail.value}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">
-          <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">How Assured Rewards Works?</div>
-          <div className="grid grid-cols-3 gap-3">
-            {steps.map((step) => (
-              <div
-                key={step.title}
-                className="bg-primary/10 dark:bg-primary-strong/20 border border-primary/20 dark:border-primary-strong/30 rounded-xl p-3 text-center space-y-2"
-              >
-                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 shadow-sm border border-primary/20 dark:border-zinc-700 flex items-center justify-center mx-auto">
-                  {step.icon}
-                </div>
-                <div className="text-[10px] font-semibold text-gray-700 dark:text-gray-300">{step.title}</div>
-                <div className="text-[9px] text-gray-500 dark:text-gray-400 leading-snug">{step.description}</div>
-              </div>
-            ))}
-          </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-0 shadow-sm overflow-hidden transition-colors duration-300">
+          <HowItWorks />
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-              More products from {brand?.name || 'this brand'}
+              More products from {brand?.name || "this brand"}
             </div>
-            <div className="text-xs text-gray-500">{relatedProducts.length} items</div>
+            <div className="text-xs text-gray-500">
+              {relatedProducts.length} items
+            </div>
           </div>
           {relatedProducts.length === 0 ? (
             <div className="text-xs text-gray-500 bg-primary/5 rounded-xl p-3 border border-primary/10">
@@ -249,10 +260,16 @@ const ProductInfo = () => {
                     className="w-12 h-12 object-cover rounded-lg bg-primary/10"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{item.name}</div>
-                    <div className="text-[11px] text-gray-500 truncate">{item.variant || item.category || 'General'}</div>
+                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                      {item.name}
+                    </div>
+                    <div className="text-[11px] text-gray-500 truncate">
+                      {item.variant || item.category || "General"}
+                    </div>
                   </div>
-                  <div className="text-[11px] font-semibold text-green-600">{item.reward}</div>
+                  <div className="text-[11px] font-semibold text-green-600">
+                    {item.reward}
+                  </div>
                   <ChevronRight size={16} className="text-gray-400" />
                 </Link>
               ))}

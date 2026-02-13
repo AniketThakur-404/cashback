@@ -40,7 +40,9 @@ const resolveBrandLogoUrl = (value) => {
     const withLeadingSlash = normalized.startsWith("/")
       ? normalized
       : `/${normalized}`;
-    return API_BASE_URL ? `${API_BASE_URL}${withLeadingSlash}` : withLeadingSlash;
+    return API_BASE_URL
+      ? `${API_BASE_URL}${withLeadingSlash}`
+      : withLeadingSlash;
   }
   return normalized;
 };
@@ -387,7 +389,7 @@ const Home = () => {
   return (
     <div
       ref={pageRef}
-      className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-white"
+      className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-primary/10 dark:bg-zinc-950"
     >
       <div className="px-4 pt-5 space-y-6">
         {/* --- 1 � HERO CAROUSEL --- */}
@@ -486,18 +488,18 @@ const Home = () => {
           </Link>
         )}
 
-        {/* --- 3 � QUICK ACTIONS --- */}
-        <div className="quick-actions grid grid-cols-4 gap-3 items-end">
+        {/* --- 3 – QUICK ACTIONS --- */}
+        <div className="quick-actions grid grid-cols-2 gap-4">
           {quickActions.map((item, i) => (
             <Link
               key={i}
               to={item.to}
-              className="quick-action active:scale-[0.92] transition-transform"
+              className="quick-action active:scale-[0.95] transition-transform"
               style={{ opacity: 1, visibility: "visible", transform: "none" }}
             >
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm">
                 <div
-                  className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
                   style={{
                     background: item.gradient,
                     boxShadow: `0 6px 16px ${item.shadow}`,
@@ -505,7 +507,7 @@ const Home = () => {
                 >
                   <item.icon size={22} className="text-white" />
                 </div>
-                <span className="text-[10px] font-bold text-gray-600">
+                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
                   {item.label}
                 </span>
               </div>
@@ -558,11 +560,11 @@ const Home = () => {
                   Your Activity
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-3" style={{ opacity: 1 }}>
+              <div className="flex flex-col gap-3" style={{ opacity: 1 }}>
                 {statItems.map((s, i) => (
                   <div
                     key={i}
-                    className="home-stat-box rounded-2xl p-4 text-center"
+                    className="home-stat-box rounded-2xl p-4 flex items-center justify-between"
                     style={{
                       opacity: 1,
                       background: s.bg,
@@ -570,7 +572,7 @@ const Home = () => {
                     }}
                   >
                     <div
-                      className="text-[11px] font-black uppercase mb-1.5"
+                      className="text-[12px] font-black uppercase"
                       style={{
                         letterSpacing: "0.1em",
                         color: s.color,
@@ -581,12 +583,12 @@ const Home = () => {
                     </div>
                     {isLoading ? (
                       <div
-                        className="h-8 rounded-lg animate-pulse mx-auto w-16"
+                        className="h-8 rounded-lg animate-pulse w-16"
                         style={{ background: "rgba(0,0,0,0.15)", opacity: 1 }}
                       />
                     ) : (
                       <div
-                        className="text-[26px] font-black leading-none"
+                        className="text-[28px] font-black leading-none"
                         style={{
                           opacity: 1,
                           color: s.color,
@@ -837,5 +839,3 @@ const Home = () => {
 };
 
 export default Home;
-
-

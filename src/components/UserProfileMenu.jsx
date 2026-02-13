@@ -3,6 +3,7 @@ import { LogIn, LogOut, User, Wallet, HelpCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import StarBorder from "./StarBorder";
 import { getMe } from "../lib/api";
+import { resolvePublicAssetUrl } from "../lib/apiClient";
 import { AUTH_CHANGE_EVENT, AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
 
 const UserProfileMenu = () => {
@@ -26,7 +27,8 @@ const UserProfileMenu = () => {
       setToken(localStorage.getItem(AUTH_TOKEN_KEY));
     };
     window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
-    return () => window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
+    return () =>
+      window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
   }, []);
 
   useEffect(() => {
@@ -62,6 +64,7 @@ const UserProfileMenu = () => {
           name: data.name || "",
           email: data.email || "",
           phoneNumber: data.phoneNumber || "",
+          avatarUrl: data.avatarUrl || "",
         });
       } catch (err) {
         if (!isActive) return;
@@ -109,10 +112,18 @@ const UserProfileMenu = () => {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative h-8 w-8 rounded-full border border-gray-200 bg-yellow-400 dark:border-zinc-800 dark:bg-yellow-500 flex items-center justify-center shadow-sm"
+        className="relative h-8 w-8 rounded-full border border-gray-200 bg-yellow-400 dark:border-zinc-800 dark:bg-yellow-500 flex items-center justify-center shadow-sm overflow-hidden"
         aria-label="Open user menu"
       >
-        <User size={16} className="text-gray-900 dark:text-white" />
+        {profile?.avatarUrl ? (
+          <img
+            src={resolvePublicAssetUrl(profile.avatarUrl)}
+            alt={profile.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <User size={16} className="text-gray-900 dark:text-white" />
+        )}
       </button>
 
       {isOpen && (
@@ -122,10 +133,13 @@ const UserProfileMenu = () => {
               {profile?.name || (isAuthenticated ? "User" : "Guest")}
             </div>
             {profile?.email && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">{profile.email}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {profile.email}
+              </div>
             )}
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {profile?.phoneNumber || (isAuthenticated ? "No phone on file" : "Not signed in")}
+              {profile?.phoneNumber ||
+                (isAuthenticated ? "No phone on file" : "Not signed in")}
             </div>
           </div>
 
@@ -135,7 +149,9 @@ const UserProfileMenu = () => {
             </div>
           )}
           {error && (
-            <div className="text-xs text-red-600 font-semibold mt-2">{error}</div>
+            <div className="text-xs text-red-600 font-semibold mt-2">
+              {error}
+            </div>
           )}
 
           <div className="mt-4 space-y-2 border-t border-gray-100 pt-3 text-sm font-semibold dark:border-zinc-800">
@@ -222,4 +238,3 @@ const UserProfileMenu = () => {
 };
 
 export default UserProfileMenu;
-

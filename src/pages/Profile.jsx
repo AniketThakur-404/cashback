@@ -1,318 +1,471 @@
 import React, { useEffect, useState } from "react";
 import {
-    ArrowLeft, Camera, LogOut, Mail, Phone, Save, User, UserCircle,
-    Star, HelpCircle, FileText, MessageCircle, Info, ChevronRight, CheckCircle2, Shield, FileQuestion
+  ArrowLeft,
+  Camera,
+  LogOut,
+  Mail,
+  Phone,
+  Save,
+  User,
+  UserCircle,
+  Star,
+  HelpCircle,
+  FileText,
+  MessageCircle,
+  Info,
+  ChevronRight,
+  CheckCircle2,
+  Shield,
+  FileQuestion,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { getMe, updateUserProfile } from "../lib/api";
+import { getMe, updateUserProfile, uploadUserAvatar } from "../lib/api";
+import { resolvePublicAssetUrl } from "../lib/apiClient";
 import { AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
 import { useToast } from "../components/ui/ToastContext";
 
 const Profile = () => {
-    const navigate = useNavigate();
-    const { info } = useToast();
-    const [token, setToken] = useState(() => localStorage.getItem(AUTH_TOKEN_KEY));
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
+  const { info } = useToast();
+  const [token, setToken] = useState(() =>
+    localStorage.getItem(AUTH_TOKEN_KEY),
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-    const [profile, setProfile] = useState({
-        name: "",
-        email: "",
-        phoneNumber: "",
-    });
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    avatarUrl: "",
+  });
+  const [isUploading, setIsUploading] = useState(false);
 
-    useEffect(() => {
-        if (!token) {
-            navigate("/"); // Redirect if not authenticated
-            return;
-        }
-        loadProfile();
-    }, [token, navigate]);
+  useEffect(() => {
+    if (!token) {
+      navigate("/wallet"); // Redirect if not authenticated
+      return;
+    }
+    loadProfile();
+  }, [token, navigate]);
 
-    const loadProfile = async () => {
-        setIsLoading(true);
-        try {
-            const data = await getMe(token);
-            setProfile({
-                name: data.name || "",
-                email: data.email || "",
-                phoneNumber: data.phoneNumber || "",
-            });
-        } catch (err) {
-            setError(err.message || "Failed to load profile");
-            if (err.status === 401) {
-                handleLogout();
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const loadProfile = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getMe(token);
+      setProfile({
+        name: data.name || "",
+        email: data.email || "",
+        phoneNumber: data.phoneNumber || "",
+        avatarUrl: data.avatarUrl || "",
+      });
+    } catch (err) {
+      setError(err.message || "Failed to load profile");
+      if (err.status === 401) {
+        handleLogout();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        setError("");
-        setSuccess("");
-        setIsSaving(true);
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsSaving(true);
 
-        try {
-            if (!profile.name.trim() || !profile.email.trim()) {
-                throw new Error("Name and Email are required");
-            }
+    try {
+      if (!profile.name.trim() || !profile.email.trim()) {
+        throw new Error("Name and Email are required");
+      }
 
-            await updateUserProfile(token, {
-                name: profile.name,
-                email: profile.email,
-            });
-            setSuccess("Profile updated successfully");
-            setTimeout(() => setSuccess(""), 3000);
-        } catch (err) {
-            setError(err.message || "Failed to update profile");
-        } finally {
-            setIsSaving(false);
-        }
-    };
+      await updateUserProfile(token, {
+        name: profile.name,
+        email: profile.email,
+      });
+      setSuccess("Profile updated successfully");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    const handleLogout = () => {
-        clearAuthToken();
-        navigate("/");
-    };
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (!token) return null;
+    setIsUploading(true);
+    setError("");
 
-    const handleComingSoon = (feature) => {
-        info("Coming Soon", `${feature} feature is under development and will be available soon!`);
-    };
+    try {
+      const data = await uploadUserAvatar(token, file);
+      setProfile((prev) => ({
+        ...prev,
+        avatarUrl: data.avatarUrl,
+      }));
+      setSuccess("Profile picture updated");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-    const MenuButton = ({ icon: Icon, label, onClick, to, isDestructive = false }) => {
-        const content = (
-            <>
-                <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDestructive ? 'bg-red-50 dark:bg-red-900/10' : 'bg-gray-100 dark:bg-zinc-800'}`}>
-                        <Icon size={20} className={isDestructive ? 'text-red-500' : 'text-gray-600 dark:text-gray-400'} />
-                    </div>
-                    <span className="font-semibold text-sm">{label}</span>
-                </div>
-                <ChevronRight size={18} className="text-gray-300 dark:text-zinc-700" />
-            </>
-        );
+  const handleLogout = () => {
+    clearAuthToken();
+    navigate("/");
+  };
 
-        const className = `w-full flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border-b border-gray-50 dark:border-zinc-800 last:border-0 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isDestructive ? 'text-red-500' : 'text-gray-900 dark:text-white'}`;
+  if (!token) return null;
 
-        if (to) {
-            return <Link to={to} className={className}>{content}</Link>;
-        }
+  const handleComingSoon = (feature) => {
+    info(
+      "Coming Soon",
+      `${feature} feature is under development and will be available soon!`,
+    );
+  };
 
-        return <button onClick={onClick} className={className}>{content}</button>;
-    };
+  const MenuButton = ({
+    icon: Icon,
+    label,
+    onClick,
+    to,
+    isDestructive = false,
+  }) => {
+    const content = (
+      <>
+        <div className="flex items-center gap-4">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${isDestructive ? "bg-red-50 dark:bg-red-900/10" : "bg-gray-100 dark:bg-zinc-800"}`}
+          >
+            <Icon
+              size={20}
+              className={
+                isDestructive
+                  ? "text-red-500"
+                  : "text-gray-600 dark:text-gray-400"
+              }
+            />
+          </div>
+          <span className="font-semibold text-sm">{label}</span>
+        </div>
+        <ChevronRight size={18} className="text-gray-300 dark:text-zinc-700" />
+      </>
+    );
+
+    const className = `w-full flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border-b border-gray-50 dark:border-zinc-800 last:border-0 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isDestructive ? "text-red-500" : "text-gray-900 dark:text-white"}`;
+
+    if (to) {
+      return (
+        <Link to={to} className={className}>
+          {content}
+        </Link>
+      );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300 font-admin-body">
-            <div className="max-w-md mx-auto space-y-6">
-
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-4">
-                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Account
-                    </h1>
-                </div>
-
-                <div className="space-y-6">
-                    {/* Profile Summary Card */}
-                    <div className="bg-primary/5 dark:bg-primary/10 rounded-3xl p-6 flex flex-col items-center justify-center">
-                        <div className="w-20 h-20 rounded-full bg-white dark:bg-zinc-900 shadow-md flex items-center justify-center mb-3">
-                            <UserCircle size={40} className="text-primary" />
-                        </div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{profile.name || "User"}</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{profile.phoneNumber}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{profile.email}</p>
-                    </div>
-
-                    {/* Account Settings Section */}
-                    <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">Settings</h3>
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
-                            <MenuButton
-                                icon={User}
-                                label="Edit Profile"
-                                onClick={() => setShowEditModal(true)}
-                            />
-                            <MenuButton
-                                icon={Star}
-                                label="Level Rewards"
-                                onClick={() => handleComingSoon('Level Rewards')}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Help & Support Section */}
-                    <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">Help & Support</h3>
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
-                            <MenuButton
-                                icon={HelpCircle}
-                                label="Brand FAQs"
-                                onClick={() => handleComingSoon('Brand FAQs')}
-                            />
-                            <MenuButton
-                                icon={FileQuestion}
-                                label="How Verify Works?"
-                                onClick={() => handleComingSoon('How Verify Works')}
-                            />
-                            <MenuButton
-                                icon={MessageCircle}
-                                label="General FAQ"
-                                to="/help"
-                            />
-                            <MenuButton
-                                icon={Mail}
-                                label="Contact Us"
-                                to="/profile/contact"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Legal Section */}
-                    <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">Legal</h3>
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
-                            <MenuButton
-                                icon={Shield}
-                                label="Privacy Policy"
-                                to="/profile/privacy-policy"
-                            />
-                            <MenuButton
-                                icon={FileText}
-                                label="Terms & Conditions"
-                                to="/profile/terms"
-                            />
-                            <MenuButton
-                                icon={Info}
-                                label="About Us"
-                                onClick={() => handleComingSoon('About Us')}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Logout Section */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
-                        <MenuButton
-                            icon={LogOut}
-                            label="Logout"
-                            onClick={handleLogout}
-                            isDestructive
-                        />
-                    </div>
-                </div>
-
-                {/* Edit Profile Modal */}
-                {showEditModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Profile</h2>
-                                <button
-                                    onClick={() => {
-                                        setShowEditModal(false);
-                                        setError("");
-                                        setSuccess("");
-                                    }}
-                                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
-                                >
-                                    <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleSave} className="space-y-5">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Full Name</label>
-                                        <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                            <input
-                                                type="text"
-                                                value={profile.name}
-                                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
-                                                placeholder="Enter your name"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Email Address</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                            <input
-                                                type="email"
-                                                value={profile.email}
-                                                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                                className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
-                                                placeholder="Enter your email"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">Phone Number</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                            <input
-                                                type="text"
-                                                value={profile.phoneNumber}
-                                                readOnly
-                                                className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-zinc-800/80 rounded-xl border-0 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                                            />
-                                        </div>
-                                        <p className="text-[10px] text-gray-400 ml-1">Phone number cannot be changed</p>
-                                    </div>
-                                </div>
-
-                                {error && (
-                                    <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl">
-                                        {error}
-                                    </div>
-                                )}
-
-                                {success && (
-                                    <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-xl flex items-center gap-2">
-                                        <CheckCircle2 size={16} />
-                                        {success}
-                                    </div>
-                                )}
-
-                                <div className="flex gap-3 pt-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowEditModal(false)}
-                                        className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-[0.98]"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isSaving}
-                                        className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-strong text-white font-semibold shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
-                                    >
-                                        {isSaving ? (
-                                            <>Saving...</>
-                                        ) : (
-                                            <>
-                                                <Save size={18} />
-                                                <span>Save Changes</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
+      <button onClick={onClick} className={className}>
+        {content}
+      </button>
     );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300 font-admin-body">
+      <div className="max-w-md mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-4">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Account
+          </h1>
+        </div>
+
+        <div className="space-y-6">
+          {/* Profile Summary Card */}
+          <div className="bg-primary/5 dark:bg-primary/10 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-white dark:bg-zinc-900 shadow-xl flex items-center justify-center mb-3 overflow-hidden border-4 border-white dark:border-zinc-800">
+                {isUploading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : null}
+                {profile.avatarUrl ? (
+                  <img
+                    src={resolvePublicAssetUrl(profile.avatarUrl)}
+                    alt={profile.name}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                  />
+                ) : (
+                  <UserCircle size={48} className="text-primary/40" />
+                )}
+              </div>
+              <label className="absolute bottom-4 right-0 w-8 h-8 bg-primary hover:bg-primary-strong text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-90 z-20">
+                <Camera size={16} />
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+              {profile.name || "User"}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+              {profile.phoneNumber}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {profile.email}
+            </p>
+          </div>
+
+          {/* Account Settings Section */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">
+              Settings
+            </h3>
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
+              <MenuButton
+                icon={User}
+                label="Edit Profile"
+                onClick={() => setShowEditModal(true)}
+              />
+              <MenuButton
+                icon={Star}
+                label="Level Rewards"
+                onClick={() => handleComingSoon("Level Rewards")}
+              />
+            </div>
+          </div>
+
+          {/* Help & Support Section */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">
+              Help & Support
+            </h3>
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
+              <MenuButton
+                icon={HelpCircle}
+                label="Brand FAQs"
+                onClick={() => handleComingSoon("Brand FAQs")}
+              />
+              <MenuButton
+                icon={FileQuestion}
+                label="How Verify Works?"
+                onClick={() => handleComingSoon("How Verify Works")}
+              />
+              <MenuButton icon={MessageCircle} label="General FAQ" to="/help" />
+              <MenuButton
+                icon={Mail}
+                label="Contact Us"
+                to="/profile/contact"
+              />
+            </div>
+          </div>
+
+          {/* Legal Section */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-2 mb-2">
+              Legal
+            </h3>
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
+              <MenuButton
+                icon={Shield}
+                label="Privacy Policy"
+                to="/profile/privacy-policy"
+              />
+              <MenuButton
+                icon={FileText}
+                label="Terms & Conditions"
+                to="/profile/terms"
+              />
+              <MenuButton
+                icon={Info}
+                label="About Us"
+                onClick={() => handleComingSoon("About Us")}
+              />
+            </div>
+          </div>
+
+          {/* Logout Section */}
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
+            <MenuButton
+              icon={LogOut}
+              label="Logout"
+              onClick={handleLogout}
+              isDestructive
+            />
+          </div>
+        </div>
+
+        {/* Edit Profile Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Edit Profile
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-5">
+                <div className="space-y-4">
+                  {/* Avatar Edit Section */}
+                  <div className="flex flex-col items-center gap-3 pb-2">
+                    <div className="relative group">
+                      <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-zinc-800 shadow-inner flex items-center justify-center overflow-hidden border-2 border-gray-100 dark:border-zinc-700">
+                        {isUploading ? (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[2px] z-10">
+                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : null}
+                        {profile.avatarUrl ? (
+                          <img
+                            src={resolvePublicAssetUrl(profile.avatarUrl)}
+                            alt={profile.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <UserCircle
+                            size={40}
+                            className="text-gray-300 dark:text-zinc-600"
+                          />
+                        )}
+                      </div>
+                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary hover:bg-primary-strong text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-90 z-20">
+                        <Camera size={14} />
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      Profile Photo
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={profile.name}
+                        onChange={(e) =>
+                          setProfile({ ...profile, name: e.target.value })
+                        }
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="email"
+                        value={profile.email}
+                        onChange={(e) =>
+                          setProfile({ ...profile, email: e.target.value })
+                        }
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="text"
+                        value={profile.phoneNumber}
+                        readOnly
+                        className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-zinc-800/80 rounded-xl border-0 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 ml-1">
+                      Phone number cannot be changed
+                    </p>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl">
+                    {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-xl flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    {success}
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 py-3 rounded-xl bg-primary hover:bg-primary-strong text-white font-semibold shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {isSaving ? (
+                      <>Saving...</>
+                    ) : (
+                      <>
+                        <Save size={18} />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Profile;

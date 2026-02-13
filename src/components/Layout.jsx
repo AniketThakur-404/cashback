@@ -163,11 +163,9 @@ const Layout = ({ children }) => {
         {/* MAIN CONTENT AREA (Scrollable) */}
         <main
           ref={mainRef}
-          className="flex-1 transition-colors duration-300 touch-pan-y"
+          className="flex-1 transition-colors duration-300 touch-pan-y overflow-x-hidden"
         >
-          <div className="min-h-full pb-24 bg-primary/10 dark:bg-zinc-950">
-            {children}
-          </div>
+          <div className="pb-32">{children}</div>
         </main>
 
         {/* BOTTOM NAVIGATION */}
