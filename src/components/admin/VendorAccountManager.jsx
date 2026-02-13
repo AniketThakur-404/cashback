@@ -872,6 +872,7 @@ const VendorAccountManager = ({
     }));
   };
 
+<<<<<<< HEAD
   /* START RENDER */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -881,6 +882,1109 @@ const VendorAccountManager = ({
     </div>
   );
   /* END RENDER */
+=======
+        try {
+            const data = await getAdminQrBatch(token, {
+                campaignId: campaign.id,
+                cashbackAmount: campaign.cashbackAmount,
+                limit: 2000
+            });
+            const items = Array.isArray(data) ? data : data?.items || [];
+
+            if (!items.length) {
+                setQrBatchError("No QRs found for this campaign.");
+                setIsPreparingBatchPdf(false);
+                return;
+            }
+
+            setBatchQrs(items);
+            setQrBatchStatus(`Rendering ${items.length} QRs...`);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const qrSize = 40;
+            const margin = 14;
+            const itemsPerRow = 4;
+            const rowsPerPage = 6;
+            const rowSpacing = qrSize + 28;
+            const spacing = (pageWidth - margin * 2 - qrSize * itemsPerRow) / Math.max(itemsPerRow - 1, 1);
+            const campaignTitle = campaign.title || "Campaign";
+            const priceLabel = formatAmount(campaign.cashbackAmount);
+            const brandName = brandData?.brand?.name || "Brand";
+
+            const drawHeader = () => {
+                doc.setFontSize(16);
+                doc.text(`Campaign QRs - INR ${priceLabel}`, margin, 18);
+                doc.setFontSize(10);
+                doc.text(`Campaign: ${campaignTitle}`, margin, 26);
+                doc.text(`Brand: ${brandName}`, margin, 32);
+                doc.text(`Generated: ${formatDate(new Date())}`, margin, 38);
+            };
+
+            drawHeader();
+            let skipped = 0;
+            const itemsPerPage = itemsPerRow * rowsPerPage;
+
+            items.forEach((qr, index) => {
+                const localIndex = index % itemsPerPage;
+                if (index > 0 && localIndex === 0) {
+                    doc.addPage();
+                    drawHeader();
+                }
+                const col = localIndex % itemsPerRow;
+                const row = Math.floor(localIndex / itemsPerRow);
+                const xPos = margin + col * (qrSize + spacing);
+                const yPos = 46 + row * rowSpacing;
+
+                const canvas = document.getElementById(getBatchCanvasId(qr.uniqueHash));
+                if (!canvas) {
+                    skipped += 1;
+                    return;
+                }
+                try {
+                    const imgData = canvas.toDataURL("image/png");
+                    doc.addImage(imgData, "PNG", xPos, yPos, qrSize, qrSize);
+                    doc.setFontSize(8);
+                    doc.text(qr.uniqueHash.slice(0, 8), xPos, yPos + qrSize + 6);
+                    doc.text(`INR ${formatAmount(qr.cashbackAmount)}`, xPos, yPos + qrSize + 12);
+                } catch (e) {
+                    console.error("Canvas export error", e);
+                    skipped++;
+                }
+            });
+
+            if (skipped > 0) {
+                setQrBatchStatus(`Downloaded PDF. ${skipped} QRs skipped.`);
+            } else {
+                setQrBatchStatus("");
+            }
+            const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+            doc.save(`campaign-${campaign.id.slice(0, 8)}-${timestamp}.pdf`);
+        } catch (err) {
+            console.error("Campaign PDF Error:", err);
+            setQrBatchError(err.message || "Failed to generate PDF.");
+        } finally {
+            setIsPreparingBatchPdf(false);
+            setBatchQrs([]);
+        }
+    };
+
+    const handleUpdateCampaignStatus = async (campaignId, newStatus) => {
+        setIsSaving(true);
+        setActionMessage({ type: "", text: "" });
+        try {
+            await updateAdminCampaignStatus(token, campaignId, newStatus);
+            setActionMessage({ type: "success", text: `Campaign marked as ${newStatus}.` });
+            if (selectedCampaign && selectedCampaign.id === campaignId) {
+                setSelectedCampaign({ ...selectedCampaign, status: newStatus });
+                if (brandData) {
+                    const updatedCampaigns = brandData.campaigns.map(c =>
+                        c.id === campaignId ? { ...c, status: newStatus } : c
+                    );
+                    setBrandData({ ...brandData, campaigns: updatedCampaigns });
+                }
+            }
+            loadData();
+        } catch (err) {
+            console.error(err);
+            setActionMessage({ type: "error", text: err.message || "Failed to update campaign." });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const getPieData = () => {
+        if (!analyticsData?.statusCounts) return [];
+        return Object.entries(analyticsData.statusCounts).map(([name, value]) => ({ name, value }));
+    };
+
+    // Determine what name to show in header
+    const headerName = brandData?.brand?.name || vendorData?.vendor?.businessName || "Account Details";
+    const headerSub = vendorData?.vendor?.contactEmail || brandData?.vendor?.contactEmail || "Manage Vendor & Brand";
+    const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
+
+    if (!vendorId && !brandId) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="relative w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl border border-slate-200/70 dark:border-white/10 bg-white/95 dark:bg-gradient-to-br dark:from-[#2a2a2c] dark:via-[#1e1e20] dark:to-[#1f1f21] flex flex-col overflow-hidden transition-all duration-300">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center text-white shadow-[0_0_15px_rgba(5,150,105,0.3)]">
+                            <Building2 size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
+                                {headerName}
+                            </h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                {headerSub}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-xl hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content Area */}
+                <div className="flex flex-1 overflow-hidden">
+
+                    {/* Sidebar Tabs */}
+                    <div className="w-64 border-r border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-black/20 p-4 flex flex-col gap-2 overflow-y-auto">
+                        <NavButton
+                            active={activeTab === "overview"}
+                            onClick={() => setActiveTab("overview")}
+                            icon={Activity}
+                            label="Overview"
+                        />
+                        {vendorId && (
+                            <NavButton
+                                active={activeTab === "profile"}
+                                onClick={() => setActiveTab("profile")}
+                                icon={Store}
+                                label="Vendor Profile"
+                            />
+                        )}
+                        {brandId && (
+                            <NavButton
+                                active={activeTab === "brand"}
+                                onClick={() => setActiveTab("brand")}
+                                icon={Building2}
+                                label="Brand Settings"
+                            />
+                        )}
+                        {vendorId && (
+                            <NavButton
+                                active={activeTab === "financials"}
+                                onClick={() => setActiveTab("financials")}
+                                icon={Wallet}
+                                label="Financials"
+                            />
+                        )}
+                        {(brandId || vendorId) && (
+                            <NavButton
+                                active={activeTab === "campaigns"}
+                                onClick={() => setActiveTab("campaigns")}
+                                icon={Megaphone}
+                                label="Campaigns"
+                            />
+                        )}
+                        {vendorId && (
+                            <NavButton
+                                active={activeTab === "orders"}
+                                onClick={() => setActiveTab("orders")}
+                                icon={ShoppingBag}
+                                label="Orders"
+                                badge={pendingOrdersCount > 0 ? pendingOrdersCount : null}
+                            />
+                        )}
+                    </div>
+
+                    {/* Main Panel */}
+                    <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50 dark:bg-transparent scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center h-full text-slate-500 text-sm animate-pulse">
+                                Loading account details...
+                            </div>
+                        ) : error ? (
+                            <div className="flex flex-col items-center justify-center h-full text-rose-500 gap-2">
+                                <AlertCircle size={32} />
+                                <p>{error}</p>
+                                <button onClick={loadData} className="text-xs underline text-slate-500">Try again</button>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Status Message */}
+                                {actionMessage.text && (
+                                    <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${actionMessage.type === "error"
+                                        ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
+                                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                                        }`}>
+                                        {actionMessage.type === "error" ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                                        {actionMessage.text}
+                                    </div>
+                                )}
+
+                                {/* OVERVIEW TAB */}
+                                {activeTab === "overview" && (
+                                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* Status Cards */}
+                                            <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Vendor Status</div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.vendor?.status || "unknown")}`}>
+                                                        {vendorData?.vendor?.status || "N/A"}
+                                                    </span>
+                                                    <Store className="text-slate-300 dark:text-white/20" size={24} />
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Subsription</div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex flex-col">
+                                                        <span className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.subscription?.status || brandData?.subscription?.status)}`}>
+                                                            {vendorData?.subscription?.status || brandData?.subscription?.status || "N/A"}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400 mt-1">
+                                                            Exp: {formatDate(vendorData?.subscription?.endDate || brandData?.subscription?.endDate)}
+                                                        </span>
+                                                    </div>
+                                                    <Calendar className="text-slate-300 dark:text-white/20" size={24} />
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
+                                                <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Wallet</div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xl font-bold text-slate-900 dark:text-white">
+                                                        INR {formatAmount(vendorData?.wallet?.balance || 0)}
+                                                    </span>
+                                                    <Wallet className="text-slate-300 dark:text-white/20" size={24} />
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-1">Locked: INR {formatAmount(vendorData?.wallet?.lockedBalance || 0)}</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Metrics */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <MetricItem label="Total QRs" value={vendorData?.metrics?.totalQrs || 0} />
+                                            <MetricItem label="Redeemed" value={vendorData?.metrics?.redeemedQrs || 0} />
+                                            <MetricItem label="Transactions" value={vendorData?.metrics?.totalTransactions || 0} />
+                                            <MetricItem label="Campaigns" value={vendorData?.metrics?.campaigns || 0} />
+                                        </div>
+
+                                        {/* CHARTS SECTION */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            {/* Transaction Volume Chart */}
+                                            <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md min-h-[300px] flex flex-col">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <div>
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                            <BarChartIcon size={16} className="text-[#059669]" /> Transaction Volume
+                                                        </h3>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Recent financial activity</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 w-full min-h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={transactions.slice(0, 7).reverse()}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                                                            <XAxis
+                                                                dataKey="createdAt"
+                                                                tickFormatter={(value) => new Date(value).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}
+                                                                axisLine={false}
+                                                                tickLine={false}
+                                                                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                                            />
+                                                            <YAxis
+                                                                axisLine={false}
+                                                                tickLine={false}
+                                                                tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                                            />
+                                                            <Tooltip
+                                                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                                                itemStyle={{ color: '#fff' }}
+                                                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                                            />
+                                                            <Bar dataKey="amount" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
+
+                                            {/* QR Performance Pie Chart */}
+                                            <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md min-h-[300px] flex flex-col">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <div>
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                            <PieChartIcon size={16} className="text-[#059669]" /> QR Performance
+                                                        </h3>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Distribution of QR statuses</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1 w-full min-h-[200px] relative">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie
+                                                                data={[
+                                                                    { name: 'Redeemed', value: vendorData?.metrics?.redeemedQrs || 0 },
+                                                                    { name: 'Active', value: (vendorData?.metrics?.totalQrs || 0) - (vendorData?.metrics?.redeemedQrs || 0) },
+                                                                ]}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={60}
+                                                                outerRadius={80}
+                                                                paddingAngle={5}
+                                                                dataKey="value"
+                                                            >
+                                                                {[
+                                                                    { name: 'Redeemed', value: vendorData?.metrics?.redeemedQrs || 0 },
+                                                                    { name: 'Active', value: (vendorData?.metrics?.totalQrs || 0) - (vendorData?.metrics?.redeemedQrs || 0) },
+                                                                ].map((entry, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip
+                                                                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
+                                                                itemStyle={{ color: '#fff' }}
+                                                            />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                        <div className="text-center">
+                                                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                                                                {vendorData?.metrics?.totalQrs || 0}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Total QRs</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-center gap-4 mt-4">
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                        <div className="w-2 h-2 rounded-full bg-[#059669]" /> Redeemed
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                        <div className="w-2 h-2 rounded-full bg-[#f43f5e]" /> Active
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* VENDOR PROFILE TAB */}
+                                {activeTab === "profile" && vendorId && (
+                                    <div className="max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                <Briefcase size={18} className="text-[#059669]" /> Business Details
+                                            </h3>
+                                            <div className="space-y-4">
+                                                <InputGroup label="Business Name" value={vendorForm.businessName} onChange={(v) => setVendorForm({ ...vendorForm, businessName: v })} />
+                                                <InputGroup label="GSTIN" value={vendorForm.gstin} onChange={(v) => setVendorForm({ ...vendorForm, gstin: v })} />
+                                                <InputGroup
+                                                    label="Tech Fee per QR (INR)"
+                                                    value={vendorForm.techFeePerQr}
+                                                    onChange={(v) => setVendorForm({ ...vendorForm, techFeePerQr: v })}
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                                <InputGroup label="Contact Phone" value={vendorForm.contactPhone} onChange={(v) => setVendorForm({ ...vendorForm, contactPhone: v })} />
+                                                <InputGroup label="Contact Email" value={vendorForm.contactEmail} onChange={(v) => setVendorForm({ ...vendorForm, contactEmail: v })} type="email" />
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Address</label>
+                                                    <textarea
+                                                        value={vendorForm.address}
+                                                        onChange={(e) => setVendorForm({ ...vendorForm, address: e.target.value })}
+                                                        rows={3}
+                                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors resize-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 flex justify-end">
+                                                <button
+                                                    onClick={handleSaveVendor}
+                                                    disabled={isSaving}
+                                                    className="px-6 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                                                >
+                                                    {isSaving ? <RotateCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                                    Save Changes
+                                                </button>
+                                            </div>
+
+                                            <div className="my-6 border-t border-slate-100 dark:border-white/5" />
+
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                <Power size={18} className="text-[#059669]" /> Vendor Account Status
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Status</label>
+                                                    <select
+                                                        value={vendorStatusForm.status}
+                                                        onChange={(e) => setVendorStatusForm({ ...vendorStatusForm, status: e.target.value })}
+                                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors"
+                                                    >
+                                                        <option value="active">Active</option>
+                                                        <option value="paused">Paused</option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="rejected">Rejected / Blocked</option>
+                                                    </select>
+                                                </div>
+                                                <InputGroup label="Reason (Optional)" value={vendorStatusForm.reason} onChange={(v) => setVendorStatusForm({ ...vendorStatusForm, reason: v })} />
+                                            </div>
+                                            <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleUpdateVendorStatus()}
+                                                    disabled={isSaving || vendorStatusForm.status === vendorData?.vendor?.status}
+                                                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold transition-all disabled:opacity-50"
+                                                >
+                                                    Update Status
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleUpdateVendorStatus({
+                                                            status: "paused",
+                                                            reason: vendorStatusForm.reason || "Flagged for suspicious activity"
+                                                        })
+                                                    }
+                                                    disabled={isSaving}
+                                                    className="px-4 py-2 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/30 hover:bg-rose-500/20 text-xs font-semibold transition-all disabled:opacity-50"
+                                                >
+                                                    Flag Suspicious
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* BRAND SETTINGS TAB */}
+                                {activeTab === "brand" && brandId && (
+                                    <div className="max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                <Building2 size={18} className="text-[#059669]" /> Brand Identity
+                                            </h3>
+                                            <div className="space-y-4">
+                                                <InputGroup label="Brand Name" value={brandForm.name} onChange={(v) => setBrandForm({ ...brandForm, name: v })} />
+                                                <InputGroup label="Website" value={brandForm.website} onChange={(v) => setBrandForm({ ...brandForm, website: v })} />
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Brand Logo</label>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleBrandLogoUpload}
+                                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors"
+                                                    />
+                                                    {brandForm.logoUrl && (
+                                                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                                            <img
+                                                                src={brandForm.logoUrl}
+                                                                alt="Brand logo preview"
+                                                                className="h-8 w-8 rounded-lg object-cover border border-slate-200/70 dark:border-white/10"
+                                                            />
+                                                            <span>Logo uploaded</span>
+                                                        </div>
+                                                    )}
+                                                    {brandLogoUploadStatus && (
+                                                        <div className="text-[11px] text-emerald-600">{brandLogoUploadStatus}</div>
+                                                    )}
+                                                    {brandLogoUploadError && (
+                                                        <div className="text-[11px] text-rose-600">{brandLogoUploadError}</div>
+                                                    )}
+                                                    {isUploadingBrandLogo && (
+                                                        <div className="text-[11px] text-slate-400">Uploading...</div>
+                                                    )}
+                                                </div>
+                                                <InputGroup
+                                                    label="QR price per unit (INR)"
+                                                    type="number"
+                                                    value={brandForm.qrPricePerUnit}
+                                                    onChange={(v) => setBrandForm({ ...brandForm, qrPricePerUnit: v })}
+                                                    min="0.01"
+                                                    max={MAX_QR_PRICE}
+                                                    step="0.01"
+                                                />
+                                            </div>
+
+                                            <div className="my-6 border-t border-slate-100 dark:border-white/5" />
+
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                <Power size={18} className="text-[#059669]" /> Account Status
+                                            </h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Status</label>
+                                                    <select
+                                                        value={brandStatusForm.status}
+                                                        onChange={(e) => setBrandStatusForm({ ...brandStatusForm, status: e.target.value })}
+                                                        className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors"
+                                                    >
+                                                        <option value="active">Active</option>
+                                                        <option value="inactive">Inactive / Paused</option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="rejected">Rejected</option>
+                                                    </select>
+                                                </div>
+                                                <InputGroup label="Reason (Optional)" value={brandStatusForm.reason} onChange={(v) => setBrandStatusForm({ ...brandStatusForm, reason: v })} />
+                                            </div>
+
+                                            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 flex justify-end">
+                                                <button
+                                                    onClick={handleSaveBrand}
+                                                    disabled={isSaving}
+                                                    className="px-6 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                                                >
+                                                    {isSaving ? <RotateCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                                    Update Brand
+                                                </button>
+                                            </div>
+                                            <div className="my-6 border-t border-slate-100 dark:border-white/5" />
+
+                                            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                <ShieldCheck size={18} className="text-[#059669]" /> Login Credentials
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {pendingCredentialRequest ? (
+                                                    <div className="rounded-lg border border-amber-200/60 bg-amber-50/80 text-amber-700 px-4 py-3 text-xs">
+                                                        <div className="font-semibold">Pending credential request</div>
+                                                        <div className="mt-1">
+                                                            Requested: {pendingCredentialRequest.requestedUsername || "Password update"}
+                                                        </div>
+                                                        <div className="text-[10px] opacity-80">
+                                                            {formatDate(pendingCredentialRequest.createdAt)}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-lg border border-slate-200/60 bg-slate-50 text-slate-500 px-4 py-3 text-xs">
+                                                        No pending credential request from vendor.
+                                                    </div>
+                                                )}
+                                                {isLoadingCredentialRequests && (
+                                                    <div className="text-xs text-slate-500">Loading credential requests...</div>
+                                                )}
+
+                                                <InputGroup
+                                                    label="Username"
+                                                    value={credentialForm.username}
+                                                    onChange={(v) => setCredentialForm({ ...credentialForm, username: v })}
+                                                />
+                                                <InputGroup
+                                                    label="New Password"
+                                                    type="password"
+                                                    value={credentialForm.password}
+                                                    onChange={(v) => setCredentialForm({ ...credentialForm, password: v })}
+                                                />
+                                                <InputGroup
+                                                    label="Confirm Password"
+                                                    type="password"
+                                                    value={credentialForm.confirmPassword}
+                                                    onChange={(v) => setCredentialForm({ ...credentialForm, confirmPassword: v })}
+                                                />
+                                                <div className="text-[11px] text-slate-400">
+                                                    Leave password blank if you only want to change the username.
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-3">
+                                                    {pendingCredentialRequest && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCredentialUpdate({ useRequestDefaults: true })}
+                                                            disabled={isUpdatingCredentials}
+                                                            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
+                                                        >
+                                                            Approve Request
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCredentialUpdate({ useRequestDefaults: false })}
+                                                        disabled={isUpdatingCredentials}
+                                                        className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
+                                                    >
+                                                        {pendingCredentialRequest ? "Approve with Overrides" : "Save Credentials"}
+                                                    </button>
+                                                    {pendingCredentialRequest && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleRejectCredentialRequest}
+                                                            disabled={isUpdatingCredentials}
+                                                            className="px-4 py-2 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-50 transition-colors disabled:opacity-50"
+                                                        >
+                                                            Reject Request
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {credentialRequestError && (
+                                                    <div className="text-xs text-rose-500">{credentialRequestError}</div>
+                                                )}
+                                                {credentialActionError && (
+                                                    <div className="text-xs text-rose-500">{credentialActionError}</div>
+                                                )}
+                                                {credentialActionStatus && (
+                                                    <div className="text-xs text-emerald-500">{credentialActionStatus}</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* FINANCIALS TAB */}
+                                {activeTab === "financials" && (
+                                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm backdrop-blur-md">
+                                            <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Transactions</h3>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm text-left">
+                                                    <thead className="bg-slate-50 dark:bg-white/5 text-xs text-slate-500 uppercase">
+                                                        <tr>
+                                                            <th className="px-6 py-3 font-medium">Date</th>
+                                                            <th className="px-6 py-3 font-medium">Type</th>
+                                                            <th className="px-6 py-3 font-medium">Description</th>
+                                                            <th className="px-6 py-3 font-medium text-right">Amount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                                        {transactions.length > 0 ? (
+                                                            transactions.slice(0, 10).map(tx => (
+                                                                <tr key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
+                                                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">{formatDate(tx.createdAt)}</td>
+                                                                    <td className="px-6 py-3">
+                                                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30'}`}>
+                                                                            {tx.type}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-slate-900 dark:text-white font-medium">{tx.category || tx.description}</td>
+                                                                    <td className={`px-6 py-3 text-right font-bold ${tx.type === 'credit' ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
+                                                                        {tx.type === 'credit' ? '+' : '-'} INR {formatAmount(tx.amount)}
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={4} className="px-6 py-8 text-center text-slate-400 text-xs">No transactions found</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ORDERS TAB */}
+                                {activeTab === "orders" && (
+                                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        {qrBatchError && (
+                                            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm flex items-center gap-2">
+                                                <AlertCircle size={16} /> {qrBatchError}
+                                            </div>
+                                        )}
+                                        {qrBatchStatus && (
+                                            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-sm flex items-center gap-2">
+                                                <CheckCircle2 size={16} /> {qrBatchStatus}
+                                            </div>
+                                        )}
+                                        {orderActionError && (
+                                            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm flex items-center gap-2">
+                                                <AlertCircle size={16} /> {orderActionError}
+                                            </div>
+                                        )}
+                                        <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm backdrop-blur-md">
+                                            <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">QR Orders</h3>
+                                                {pendingOrdersCount > 0 && (
+                                                    <span className="bg-amber-500/10 text-amber-500 text-xs font-bold px-2 py-0.5 rounded-full border border-amber-500/20">
+                                                        {pendingOrdersCount} Pending
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm text-left">
+                                                    <thead className="bg-slate-50 dark:bg-white/5 text-xs text-slate-500 uppercase">
+                                                        <tr>
+                                                            <th className="px-6 py-3 font-medium">Date</th>
+                                                            <th className="px-6 py-3 font-medium">Campaign</th>
+                                                            <th className="px-6 py-3 font-medium">Qty</th>
+                                                            <th className="px-6 py-3 font-medium">Details</th>
+                                                            <th className="px-6 py-3 font-medium">Cost</th>
+                                                            <th className="px-6 py-3 font-medium">Status</th>
+                                                            <th className="px-6 py-3 font-medium text-right">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                                        {orders.length > 0 ? (
+                                                            orders.map(order => (
+                                                                <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
+                                                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">
+                                                                        {formatDate(order.createdAt)}
+                                                                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">#{order.id.substring(0, 8)}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-3">
+                                                                        <div className="font-medium text-slate-900 dark:text-white">
+                                                                            {order.campaignTitle || "Unknown Campaign"}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">
+                                                                        {order.quantity} QRs
+                                                                    </td>
+                                                                    <td className="px-6 py-3">
+                                                                        <div className="text-xs text-slate-500">
+                                                                            C.B: INR {order.cashbackAmount}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 font-bold text-slate-900 dark:text-white">
+                                                                        INR {formatAmount(order.totalAmount || 0)}
+                                                                    </td>
+                                                                    <td className="px-6 py-3">
+                                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusClasses(order.status)}`}>
+                                                                            {order.status}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-6 py-3 text-right">
+                                                                        {order.status === 'pending' && (
+                                                                            <div className="flex items-center justify-end gap-2">
+                                                                                <button
+                                                                                    onClick={() => handleUpdateOrderStatus(order.id, 'approved')}
+                                                                                    disabled={processingOrderId === order.id}
+                                                                                    className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                                                                                    title="Approve"
+                                                                                >
+                                                                                    <CheckCircle2 size={16} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleUpdateOrderStatus(order.id, 'rejected')}
+                                                                                    disabled={processingOrderId === order.id}
+                                                                                    className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-colors disabled:opacity-50"
+                                                                                    title="Reject"
+                                                                                >
+                                                                                    <AlertCircle size={16} />
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                        {order.status !== 'pending' && (
+                                                                            <div className="flex items-center justify-end gap-2">
+                                                                                <button
+                                                                                    onClick={() => handleDownloadOrderPdf(order)}
+                                                                                    disabled={isPreparingBatchPdf}
+                                                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                                                                                    title="Download QR PDF"
+                                                                                >
+                                                                                    <Download size={14} />
+                                                                                    {isPreparingBatchPdf ? "..." : "PDF"}
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={7} className="px-6 py-8 text-center text-slate-400 text-xs">
+                                                                    No orders found
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CAMPAIGNS TAB */}
+                                {activeTab === "campaigns" && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        {!selectedCampaign ? (
+                                            <>
+                                                {/* CAMPAIGN LIST VIEW */}
+                                                {(brandData?.campaigns || vendorData?.campaigns || []).map(campaign => (
+                                                    <div key={campaign.id} className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex flex-col gap-3 hover:border-[#059669]/50 dark:hover:border-[#059669]/50 transition-all backdrop-blur-md group">
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <div className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">{campaign.title}</div>
+                                                                <div className="text-xs text-slate-500 line-clamp-1">{campaign.description}</div>
+                                                            </div>
+                                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusClasses(campaign.status)}`}>
+                                                                {campaign.status}
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                                                            <div>
+                                                                <div className="text-[10px] text-slate-400 uppercase">Budget</div>
+                                                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">INR {formatAmount(campaign.totalBudget)}</div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-[10px] text-slate-400 uppercase">Cashback</div>
+                                                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">INR {campaign.cashbackAmount}</div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-[10px] text-slate-400 uppercase">Ends</div>
+                                                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">{formatDate(campaign.endDate)}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-end pt-2">
+                                                            <button
+                                                                onClick={() => setSelectedCampaign(campaign)}
+                                                                className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-[#059669] hover:text-white transition-all text-xs font-bold flex items-center gap-2"
+                                                            >
+                                                                <Eye size={14} /> View Activity
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {(brandData?.campaigns || vendorData?.campaigns || []).length === 0 && (
+                                                    <div className="text-center py-10 text-slate-400">
+                                                        <p>No campaigns found</p>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            /* CAMPAIGN DETAIL VIEW */
+                                            <div className="space-y-6">
+                                                {/* Detail Header */}
+                                                <div className="flex items-center justify-between">
+                                                    <button
+                                                        onClick={() => setSelectedCampaign(null)}
+                                                        className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                    >
+                                                        <div className="p-1 rounded-full bg-slate-200 dark:bg-white/10"><X size={14} /></div> Back to List
+                                                    </button>
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusClasses(selectedCampaign.status)}`}>
+                                                        {selectedCampaign.status}
+                                                    </span>
+                                                </div>
+
+                                                {/* Main Details Card */}
+                                                <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
+                                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{selectedCampaign.title}</h3>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{selectedCampaign.description}</p>
+
+                                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-slate-100 dark:border-white/5">
+                                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-lg">
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold">Total Budget</div>
+                                                            <div className="text-lg font-bold text-slate-900 dark:text-white">INR {formatAmount(selectedCampaign.totalBudget)}</div>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-lg">
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold">Cashback / QR</div>
+                                                            <div className="text-lg font-bold text-[#059669]">INR {selectedCampaign.cashbackAmount}</div>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-lg">
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold">Start Date</div>
+                                                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-1">{formatDate(selectedCampaign.startDate)}</div>
+                                                        </div>
+                                                        <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-lg">
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold">End Date</div>
+                                                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-1">{formatDate(selectedCampaign.endDate)}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions Section */}
+                                                    <div className="pt-6">
+                                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3">Campaign Actions</h4>
+                                                        <div className="flex flex-wrap gap-3">
+                                                            {selectedCampaign.status === 'pending' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleUpdateCampaignStatus(selectedCampaign.id, 'active')}
+                                                                        disabled={isSaving}
+                                                                        className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                                                                    >
+                                                                        <CheckCircle2 size={16} /> Approve Campaign
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleUpdateCampaignStatus(selectedCampaign.id, 'rejected')}
+                                                                        disabled={isSaving}
+                                                                        className="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2"
+                                                                    >
+                                                                        <AlertCircle size={16} /> Reject
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {selectedCampaign.status === 'active' && (
+                                                                <button
+                                                                    onClick={() => handleUpdateCampaignStatus(selectedCampaign.id, 'paused')}
+                                                                    disabled={isSaving}
+                                                                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
+                                                                >
+                                                                    <Power size={16} /> Pause Campaign
+                                                                </button>
+                                                            )}
+                                                            {selectedCampaign.status === 'paused' && (
+                                                                <button
+                                                                    onClick={() => handleUpdateCampaignStatus(selectedCampaign.id, 'active')}
+                                                                    disabled={isSaving}
+                                                                    className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+                                                                >
+                                                                    <CheckCircle2 size={16} /> Resume Campaign
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => handleDownloadCampaignPdf(selectedCampaign)}
+                                                                disabled={isPreparingBatchPdf}
+                                                                className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-lg transition-all flex items-center gap-2 hover:bg-slate-800 dark:hover:bg-slate-200 disabled:opacity-50"
+                                                            >
+                                                                {isPreparingBatchPdf ? (
+                                                                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></span>
+                                                                ) : (
+                                                                    <Download size={16} />
+                                                                )}
+                                                                {isPreparingBatchPdf ? "Generating..." : "Download QRs"}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* ANALYTICS SECTION */}
+                                                    {analyticsData && (
+                                                        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                                                <BarChartIcon size={16} className="text-[#059669]" /> Performance Analytics
+                                                            </h4>
+
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                {/* Status Chart */}
+                                                                <div className="bg-slate-50 dark:bg-black/20 rounded-xl p-4 flex flex-col items-center justify-center min-h-[200px]">
+                                                                    <div className="w-full h-[180px]">
+                                                                        <ResponsiveContainer width="100%" height="100%">
+                                                                            <PieChart>
+                                                                                <Pie
+                                                                                    data={getPieData()}
+                                                                                    cx="50%"
+                                                                                    cy="50%"
+                                                                                    innerRadius={50}
+                                                                                    outerRadius={70}
+                                                                                    paddingAngle={5}
+                                                                                    dataKey="value"
+                                                                                >
+                                                                                    {getPieData().map((entry, index) => (
+                                                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                                    ))}
+                                                                                </Pie>
+                                                                                <Tooltip
+                                                                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff', fontSize: '12px' }}
+                                                                                    itemStyle={{ color: '#fff' }}
+                                                                                />
+                                                                            </PieChart>
+                                                                        </ResponsiveContainer>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-2 justify-center mt-2">
+                                                                        {getPieData().map((entry, index) => (
+                                                                            <div key={index} className="flex items-center gap-1.5 text-[10px] text-slate-500 uppercase">
+                                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                                                                                {entry.name}: {entry.value}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Key Metrics */}
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex flex-col justify-center">
+                                                                        <div className="text-2xl font-bold text-emerald-500">{analyticsData.metrics?.redemptionRate}%</div>
+                                                                        <div className="text-xs text-emerald-600/70 font-medium">Redemption Rate</div>
+                                                                    </div>
+                                                                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex flex-col justify-center">
+                                                                        <div className="text-2xl font-bold text-blue-500">{analyticsData.metrics?.uniqueRedeemers || 0}</div>
+                                                                        <div className="text-xs text-blue-600/70 font-medium">Unique Users</div>
+                                                                    </div>
+                                                                    <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl flex flex-col justify-center">
+                                                                        <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{analyticsData.metrics?.redeemedQrs || 0}</div>
+                                                                        <div className="text-xs text-slate-500 font-medium">Redeemed QRs</div>
+                                                                    </div>
+                                                                    <div className="p-4 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl flex flex-col justify-center">
+                                                                        <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{analyticsData.metrics?.totalQrs || 0}</div>
+                                                                        <div className="text-xs text-slate-500 font-medium">Total QRs Generated</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Recent Activity */}
+                                                            {analyticsData.recentRedemptions?.length > 0 && (
+                                                                <div className="mt-6">
+                                                                    <div className="text-xs font-bold text-slate-500 uppercase mb-3">Recent Redemptions</div>
+                                                                    <div className="space-y-2">
+                                                                        {analyticsData.recentRedemptions.map((redemption, i) => (
+                                                                            <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-xs font-bold text-slate-500">
+                                                                                        U
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <div className="text-xs font-bold text-slate-900 dark:text-white">User #{redemption.redeemedByUserId?.substring(0, 6) || "Unknown"}</div>
+                                                                                        <div className="text-[10px] text-slate-400">{formatDate(redemption.redeemedAt)}</div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="text-xs font-bold text-[#059669]">
+                                                                                    + INR {redemption.cashbackAmount}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {(analyticsData.budget || analyticsData.topRedeemers?.length) && (
+                                                                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                                                        <div className="text-xs font-bold text-slate-500 uppercase mb-2">Budget Check</div>
+                                                                        <div className="text-sm text-slate-900 dark:text-white">
+                                                                            Total:{" "}
+                                                                            {analyticsData.budget?.total !== null && analyticsData.budget?.total !== undefined
+                                                                                ? `INR ${formatAmount(analyticsData.budget.total)}`
+                                                                                : "Not set"}
+                                                                        </div>
+                                                                        <div className="text-xs text-slate-500 mt-1">
+                                                                            Used: INR {formatAmount(analyticsData.budget?.used || 0)}
+                                                                        </div>
+                                                                        <div className="text-xs text-slate-500">
+                                                                            Remaining:{" "}
+                                                                            {analyticsData.budget?.remaining !== null && analyticsData.budget?.remaining !== undefined
+                                                                                ? `INR ${formatAmount(analyticsData.budget.remaining)}`
+                                                                                : "-"}
+                                                                        </div>
+                                                                        <div className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                                            Usage: {analyticsData.budget?.usagePercent ?? 0}%
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                                                        <div className="text-xs font-bold text-slate-500 uppercase mb-2">Top Redeemers</div>
+                                                                        {analyticsData.topRedeemers?.length ? (
+                                                                            <div className="space-y-2 text-xs text-slate-500">
+                                                                                {analyticsData.topRedeemers.slice(0, 3).map((redeemer, idx) => (
+                                                                                    <div key={idx} className="flex items-center justify-between">
+                                                                                        <span>User {redeemer.redeemedByUserId?.slice(0, 6) || "Unknown"}</span>
+                                                                                        <span>{redeemer._count?._all || 0} scans</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="text-xs text-slate-500">No redeemer data yet.</div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Hidden Canvas Container for PDF Generation */}
+                {batchQrs.length > 0 && (
+                    <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }} aria-hidden="true">
+                        {batchQrs.map((qr) => (
+                            <QRCodeCanvas
+                                key={qr.uniqueHash}
+                                id={getBatchCanvasId(qr.uniqueHash)}
+                                value={getQrValue(qr.uniqueHash)}
+                                size={120}
+                                level="M"
+                                includeMargin
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+>>>>>>> a8162f8cb26da7b93be7751a3a55c544b735ab2e
 };
 
 export default VendorAccountManager;
