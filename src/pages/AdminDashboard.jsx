@@ -50,7 +50,6 @@ import {
   EyeOff,
 } from "lucide-react";
 
-
 import AdminSidebar from "../components/AdminSidebar";
 import BalanceCard from "../components/BalanceCard";
 import CashbackRewardsCard from "../components/CashbackRewardsCard";
@@ -60,6 +59,7 @@ import ActionButtonGroup from "../components/ActionButtonGroup";
 import EarnRewardCard from "../components/EarnRewardCard";
 import { useTheme } from "../components/ThemeProvider";
 import VendorAccountManager from "../components/admin/VendorAccountManager";
+import UserAccountManager from "../components/admin/UserAccountManager";
 import { ModeToggle } from "../components/ModeToggle";
 import UserWalletModal from "../components/admin/UserWalletModal";
 import {
@@ -125,7 +125,8 @@ const defaultHomeBanners = [
   },
 ];
 
-const cloneHomeBanners = (items) => items.map((banner) => ({ ...(banner || {}) }));
+const cloneHomeBanners = (items) =>
+  items.map((banner) => ({ ...(banner || {}) }));
 
 const resolveAssetUrl = (value) => {
   if (!value) return "";
@@ -184,7 +185,7 @@ const subscriptionFilterOptions = [
   { label: "Expired", value: "expired" },
 ];
 
-const QR_ORDER_ATTENTION_STATUSES = ['pending', 'paid'];
+const QR_ORDER_ATTENTION_STATUSES = ["pending", "paid"];
 
 const formatAmount = (value) => {
   if (value === undefined || value === null) return "0.00";
@@ -259,7 +260,6 @@ const getDefaultCampaignControlState = () => ({
   status: "paused",
 });
 
-
 const getQrValue = (hash) => {
   const envBase = import.meta.env.VITE_QR_BASE_URL;
   if (envBase) {
@@ -276,7 +276,11 @@ const getBatchCanvasId = (hash) => `admin-qr-batch-${hash}`;
 
 const getStatusClasses = (status) => {
   const normalized = String(status || "").toLowerCase();
-  if (["active", "success", "processed", "completed", "paid", "shipped"].includes(normalized)) {
+  if (
+    ["active", "success", "processed", "completed", "paid", "shipped"].includes(
+      normalized,
+    )
+  ) {
     return "text-emerald-600 dark:text-emerald-400";
   }
   if (["pending"].includes(normalized)) {
@@ -298,7 +302,7 @@ const extractCampaignTitle = (description) => {
   if (match && match[1]) {
     return match[1].trim();
   }
-  return cleaned.length > 60 ? `${cleaned.slice(0, 60).trim()}…` : cleaned;
+  return cleaned.length > 60 ? `${cleaned.slice(0, 60).trim()}ï¿½` : cleaned;
 };
 
 const adminPanelClass =
@@ -307,12 +311,14 @@ const adminCardClass =
   "bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-5 shadow-sm";
 const adminInputClass =
   "w-full px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/40 focus:outline-none focus:border-[#059669] transition-colors";
-const adminOptionClass = "bg-white text-slate-900 dark:bg-[#0f0f11] dark:text-white";
+const adminOptionClass =
+  "bg-white text-slate-900 dark:bg-[#0f0f11] dark:text-white";
 const adminPrimaryButtonClass =
   "px-6 py-2.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white font-semibold shadow-lg shadow-[#059669]/20 transition-all";
 const adminGhostButtonClass =
   "px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm text-slate-700 font-medium transition-colors dark:bg-white/5 dark:hover:bg-white/10 dark:text-white";
-const statLabelClass = "text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2";
+const statLabelClass =
+  "text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2";
 const statValueClass = "text-2xl font-bold text-slate-900 dark:text-white";
 
 const getDayKey = (date) => {
@@ -387,9 +393,15 @@ const buildStatusCounts = (items, key) =>
     return acc;
   }, {});
 
-const Sparkline = ({ data, stroke = "#059669", fill = "rgba(129, 204, 42, 0.2)" }) => {
+const Sparkline = ({
+  data,
+  stroke = "#059669",
+  fill = "rgba(129, 204, 42, 0.2)",
+}) => {
   if (!data || data.length === 0) {
-    return <div className="h-16 w-full rounded-2xl bg-slate-200/70 dark:bg-white/10" />;
+    return (
+      <div className="h-16 w-full rounded-2xl bg-slate-200/70 dark:bg-white/10" />
+    );
   }
 
   const min = Math.min(...data);
@@ -406,7 +418,11 @@ const Sparkline = ({ data, stroke = "#059669", fill = "rgba(129, 204, 42, 0.2)" 
   const areaPoints = `${points} 100,100 0,100`;
 
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-16 w-full">
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="h-16 w-full"
+    >
       <polygon points={areaPoints} fill={fill} />
       <polyline
         points={points}
@@ -424,7 +440,9 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { section, subSection } = useParams();
   const { effectiveTheme } = useTheme();
-  const [token, setToken] = useState(() => localStorage.getItem(ADMIN_TOKEN_KEY));
+  const [token, setToken] = useState(() =>
+    localStorage.getItem(ADMIN_TOKEN_KEY),
+  );
   const isAuthenticated = Boolean(token);
   const [adminInfo, setAdminInfo] = useState(null);
 
@@ -473,12 +491,18 @@ const AdminDashboard = () => {
   const [campaignAnalyticsId, setCampaignAnalyticsId] = useState("");
   const [campaignAnalytics, setCampaignAnalytics] = useState(null);
   const [campaignAnalyticsError, setCampaignAnalyticsError] = useState("");
-  const [isLoadingCampaignAnalytics, setIsLoadingCampaignAnalytics] = useState(false);
-  const [campaignEditForm, setCampaignEditForm] = useState(() => getDefaultCampaignEditFormState());
+  const [isLoadingCampaignAnalytics, setIsLoadingCampaignAnalytics] =
+    useState(false);
+  const [campaignEditForm, setCampaignEditForm] = useState(() =>
+    getDefaultCampaignEditFormState(),
+  );
   const [campaignEditStatus, setCampaignEditStatus] = useState("");
   const [campaignEditError, setCampaignEditError] = useState("");
-  const [isUpdatingCampaignDetails, setIsUpdatingCampaignDetails] = useState(false);
-  const [subscriptionForm, setSubscriptionForm] = useState(() => getDefaultSubscriptionFormState());
+  const [isUpdatingCampaignDetails, setIsUpdatingCampaignDetails] =
+    useState(false);
+  const [subscriptionForm, setSubscriptionForm] = useState(() =>
+    getDefaultSubscriptionFormState(),
+  );
   const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [subscriptionError, setSubscriptionError] = useState("");
@@ -509,7 +533,9 @@ const AdminDashboard = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [withdrawalsError, setWithdrawalsError] = useState("");
   const [isLoadingWithdrawals, setIsLoadingWithdrawals] = useState(false);
-  const [withdrawalAction, setWithdrawalAction] = useState(() => getDefaultWithdrawalActionState());
+  const [withdrawalAction, setWithdrawalAction] = useState(() =>
+    getDefaultWithdrawalActionState(),
+  );
   const [withdrawalStatus, setWithdrawalStatus] = useState("");
   const [withdrawalError, setWithdrawalError] = useState("");
   const [showAllWithdrawals, setShowAllWithdrawals] = useState(false);
@@ -517,12 +543,16 @@ const AdminDashboard = () => {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [notificationsError, setNotificationsError] = useState("");
 
-  const [walletCredit, setWalletCredit] = useState(() => getDefaultWalletCreditState());
+  const [walletCredit, setWalletCredit] = useState(() =>
+    getDefaultWalletCreditState(),
+  );
   const [walletStatus, setWalletStatus] = useState("");
   const [walletError, setWalletError] = useState("");
   const [isCreditingWallet, setIsCreditingWallet] = useState(false);
 
-  const [campaignControl, setCampaignControl] = useState(() => getDefaultCampaignControlState());
+  const [campaignControl, setCampaignControl] = useState(() =>
+    getDefaultCampaignControlState(),
+  );
   const [campaignStatus, setCampaignStatus] = useState("");
   const [campaignError, setCampaignError] = useState("");
   const [isUpdatingCampaign, setIsUpdatingCampaign] = useState(false);
@@ -726,7 +756,8 @@ const AdminDashboard = () => {
   const activeSection = section || "overview";
   const activeSubSection = subSection || "";
   const activeNav =
-    (activeSection === "vendors" || activeSection === "users") && activeSubSection
+    (activeSection === "vendors" || activeSection === "users") &&
+      activeSubSection
       ? `${activeSection}-${activeSubSection}`
       : activeSection;
 
@@ -749,7 +780,8 @@ const AdminDashboard = () => {
   const vendorView = isVendorsRoute ? activeSubSection || "all" : "all";
   const userView = isUsersRoute ? activeSubSection || "all" : "all";
   const showVendorSummaries = isVendorsRoute && vendorView === "all";
-  const showSubscriptionControls = isSubscriptionsRoute || (isVendorsRoute && vendorView === "all");
+  const showSubscriptionControls =
+    isSubscriptionsRoute || (isVendorsRoute && vendorView === "all");
   const showVendorTable = isVendorsRoute; // Always show table if vendors route
   const shouldRenderVendorsSection = isVendorsRoute || isSubscriptionsRoute;
 
@@ -774,12 +806,14 @@ const AdminDashboard = () => {
       paused: subscriptionBuckets.paused.length,
       expired: subscriptionBuckets.expired.length,
     }),
-    [subscriptionBuckets]
+    [subscriptionBuckets],
   );
 
   const withdrawalPreview = useMemo(() => {
     if (!withdrawals?.length) return [];
-    const pending = withdrawals.filter((w) => String(w.status || "").toLowerCase() === "pending");
+    const pending = withdrawals.filter(
+      (w) => String(w.status || "").toLowerCase() === "pending",
+    );
     if (showAllWithdrawals) {
       return pending.length ? pending : withdrawals;
     }
@@ -849,7 +883,7 @@ const AdminDashboard = () => {
       ? `${pageTitleMap.vendors} - ${vendorSubTitleMap[activeSubSection] || activeSubSection}`
       : activeSection === "users" && activeSubSection
         ? `${pageTitleMap.users} - ${userSubTitleMap[activeSubSection] || activeSubSection}`
-      : pageTitleMap[activeSection] || "Admin";
+        : pageTitleMap[activeSection] || "Admin";
 
   const handleRequestError = (err, setter, fallback) => {
     if (err?.status === 401) {
@@ -881,7 +915,11 @@ const AdminDashboard = () => {
       const data = await getAdminDashboard(authToken);
       setDashboardStats(data);
     } catch (err) {
-      handleRequestError(err, setDashboardError, "Unable to load dashboard stats.");
+      handleRequestError(
+        err,
+        setDashboardError,
+        "Unable to load dashboard stats.",
+      );
     } finally {
       setIsLoadingDashboard(false);
     }
@@ -930,7 +968,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const loadCampaignAnalytics = async (authToken = token, campaignId = campaignAnalyticsId) => {
+  const loadCampaignAnalytics = async (
+    authToken = token,
+    campaignId = campaignAnalyticsId,
+  ) => {
     if (!authToken || !campaignId) return;
     setIsLoadingCampaignAnalytics(true);
     setCampaignAnalyticsError("");
@@ -950,7 +991,11 @@ const AdminDashboard = () => {
         subtotal: data?.campaign?.subtotal ?? "",
       });
     } catch (err) {
-      handleRequestError(err, setCampaignAnalyticsError, "Unable to load campaign analytics.");
+      handleRequestError(
+        err,
+        setCampaignAnalyticsError,
+        "Unable to load campaign analytics.",
+      );
     } finally {
       setIsLoadingCampaignAnalytics(false);
     }
@@ -971,14 +1016,19 @@ const AdminDashboard = () => {
     }
   };
 
-  const loadOrders = async (authToken = token, { page = 1, append = false } = {}) => {
+  const loadOrders = async (
+    authToken = token,
+    { page = 1, append = false } = {},
+  ) => {
     if (!authToken) return;
     setIsLoadingOrders(true);
     setOrdersError("");
     const limit = 20;
     try {
       const data = await getAdminOrders(authToken, { page, limit });
-      const items = Array.isArray(data) ? data : data?.items || data?.orders || data?.data || [];
+      const items = Array.isArray(data)
+        ? data
+        : data?.items || data?.orders || data?.data || [];
       const total = Number.isFinite(data?.total) ? data.total : items.length;
       const statusCounts = data?.statusCounts || {};
 
@@ -1005,20 +1055,29 @@ const AdminDashboard = () => {
       const data = await getAdminTransactions(authToken);
       setTransactions(data?.transactions || []);
     } catch (err) {
-      handleRequestError(err, setTransactionsError, "Unable to load transactions.");
+      handleRequestError(
+        err,
+        setTransactionsError,
+        "Unable to load transactions.",
+      );
     } finally {
       setIsLoadingTransactions(false);
     }
   };
 
-  const loadQrs = async (authToken = token, { page = 1, append = false } = {}) => {
+  const loadQrs = async (
+    authToken = token,
+    { page = 1, append = false } = {},
+  ) => {
     if (!authToken) return;
     setIsLoadingQrs(true);
     setQrsError("");
     const limit = 150;
     try {
       const data = await getAdminQrs(authToken, { page, limit });
-      const items = Array.isArray(data) ? data : data?.items || data?.data || [];
+      const items = Array.isArray(data)
+        ? data
+        : data?.items || data?.data || [];
       const total = Number.isFinite(data?.total) ? data.total : items.length;
       const statusCounts = data?.statusCounts || {};
 
@@ -1045,7 +1104,11 @@ const AdminDashboard = () => {
       const data = await getAdminWithdrawals(authToken);
       setWithdrawals(data || []);
     } catch (err) {
-      handleRequestError(err, setWithdrawalsError, "Unable to load withdrawals.");
+      handleRequestError(
+        err,
+        setWithdrawalsError,
+        "Unable to load withdrawals.",
+      );
     } finally {
       setIsLoadingWithdrawals(false);
     }
@@ -1063,24 +1126,37 @@ const AdminDashboard = () => {
       if (err?.status === 404) {
         setNotifications([]);
       } else {
-        handleRequestError(err, setNotificationsError, "Unable to load notifications.");
+        handleRequestError(
+          err,
+          setNotificationsError,
+          "Unable to load notifications.",
+        );
       }
     } finally {
       setIsLoadingNotifications(false);
     }
   };
 
-  const loadSubscriptions = async (authToken = token, statusFilter = subscriptionFilter) => {
+  const loadSubscriptions = async (
+    authToken = token,
+    statusFilter = subscriptionFilter,
+  ) => {
     if (!authToken) return;
     setIsLoadingSubscriptions(true);
     setSubscriptionsError("");
     const normalizedStatus =
-      statusFilter && statusFilter !== "all" ? statusFilter.toUpperCase() : undefined;
+      statusFilter && statusFilter !== "all"
+        ? statusFilter.toUpperCase()
+        : undefined;
     try {
       const data = await getAdminSubscriptions(authToken, normalizedStatus);
       setSubscriptions(data || []);
     } catch (err) {
-      handleRequestError(err, setSubscriptionsError, "Unable to load subscriptions.");
+      handleRequestError(
+        err,
+        setSubscriptionsError,
+        "Unable to load subscriptions.",
+      );
     } finally {
       setIsLoadingSubscriptions(false);
     }
@@ -1091,7 +1167,10 @@ const AdminDashboard = () => {
     setLogsLoading(true);
     setLogsError("");
     try {
-      const { logs: logData, total } = await getAdminActivityLogs(authToken, { page: logsPage, ...params });
+      const { logs: logData, total } = await getAdminActivityLogs(authToken, {
+        page: logsPage,
+        ...params,
+      });
       setLogs(logData || []);
       setLogsTotal(total || 0);
     } catch (err) {
@@ -1114,7 +1193,10 @@ const AdminDashboard = () => {
       const normalizedMetadata = {
         ...(data?.metadata || {}),
       };
-      if (!Array.isArray(normalizedMetadata.homeBanners) || normalizedMetadata.homeBanners.length === 0) {
+      if (
+        !Array.isArray(normalizedMetadata.homeBanners) ||
+        normalizedMetadata.homeBanners.length === 0
+      ) {
         normalizedMetadata.homeBanners = cloneHomeBanners(defaultHomeBanners);
       }
       const normalized = {
@@ -1123,11 +1205,17 @@ const AdminDashboard = () => {
         waitlistEnabled:
           data?.waitlistEnabled ?? data?.metadata?.waitlistEnabled ?? false,
         fraudThresholds:
-          data?.fraudThresholds ?? data?.metadata?.fraudThresholds ?? defaultFraudThresholds,
+          data?.fraudThresholds ??
+          data?.metadata?.fraudThresholds ??
+          defaultFraudThresholds,
       };
       setSettings(normalized);
     } catch (err) {
-      handleRequestError(err, setSettingsError, "Unable to load system settings.");
+      handleRequestError(
+        err,
+        setSettingsError,
+        "Unable to load system settings.",
+      );
     } finally {
       setSettingsLoading(false);
     }
@@ -1141,7 +1229,11 @@ const AdminDashboard = () => {
       const data = await getAdminFinanceSummary(authToken);
       setFinanceSummary(data || null);
     } catch (err) {
-      handleRequestError(err, setFinanceError, "Unable to load finance summary.");
+      handleRequestError(
+        err,
+        setFinanceError,
+        "Unable to load finance summary.",
+      );
     } finally {
       setFinanceLoading(false);
     }
@@ -1155,7 +1247,11 @@ const AdminDashboard = () => {
       const data = await getAdminSupportTickets(authToken);
       setSupportTickets(Array.isArray(data) ? data : data?.tickets || []);
     } catch (err) {
-      handleRequestError(err, setSupportError, "Unable to load support tickets.");
+      handleRequestError(
+        err,
+        setSupportError,
+        "Unable to load support tickets.",
+      );
     } finally {
       setSupportLoading(false);
     }
@@ -1198,14 +1294,14 @@ const AdminDashboard = () => {
         loadQrs(authToken),
         loadWithdrawals(authToken),
         loadNotifications(authToken),
-        loadFinanceSummary(authToken)
+        loadFinanceSummary(authToken),
       );
     } else if (isAnalyticsRoute) {
       tasks.push(
         loadDashboardStats(authToken),
         loadTransactions(authToken),
         loadQrs(authToken),
-        loadUsers(authToken)
+        loadUsers(authToken),
       );
     } else if (isOperationsRoute) {
       tasks.push(loadVendors(authToken), loadBrands(authToken));
@@ -1216,13 +1312,21 @@ const AdminDashboard = () => {
     } else if (isPayoutsRoute) {
       tasks.push(loadWithdrawals(authToken), loadTransactions(authToken));
     } else if (isFinanceRoute) {
-      tasks.push(loadFinanceSummary(authToken), loadTransactions(authToken), loadOrders(authToken));
+      tasks.push(
+        loadFinanceSummary(authToken),
+        loadTransactions(authToken),
+        loadOrders(authToken),
+      );
     } else if (isUsersRoute) {
       tasks.push(loadUsers(authToken));
     } else if (isSupportRoute) {
       tasks.push(loadSupportTickets(authToken));
     } else if (isVendorsRoute || isSubscriptionsRoute) {
-      tasks.push(loadVendors(authToken), loadBrands(authToken), loadSubscriptions(authToken, subscriptionFilter));
+      tasks.push(
+        loadVendors(authToken),
+        loadBrands(authToken),
+        loadSubscriptions(authToken, subscriptionFilter),
+      );
     } else if (isTransactionsRoute) {
       tasks.push(loadTransactions(authToken));
     } else if (isQrsRoute) {
@@ -1255,10 +1359,6 @@ const AdminDashboard = () => {
     loadSubscriptions(token, subscriptionFilter);
   }, [token, subscriptionFilter, isSubscriptionsRoute, isVendorsRoute]);
 
-
-
-
-
   useEffect(() => {
     if (!token || !campaignAnalyticsId) return;
     loadCampaignAnalytics(token, campaignAnalyticsId);
@@ -1272,7 +1372,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     localStorage.setItem(
       ADMIN_SIDEBAR_KEY,
-      sidebarCollapsed ? "collapsed" : "expanded"
+      sidebarCollapsed ? "collapsed" : "expanded",
     );
   }, [sidebarCollapsed]);
 
@@ -1336,7 +1436,11 @@ const AdminDashboard = () => {
       setUserActionStatus("User status updated.");
       await loadUsers(token);
     } catch (err) {
-      handleRequestError(err, setUserActionError, "Unable to update user status.");
+      handleRequestError(
+        err,
+        setUserActionError,
+        "Unable to update user status.",
+      );
     }
   };
 
@@ -1350,7 +1454,11 @@ const AdminDashboard = () => {
       setVendorActionStatus("Vendor status updated.");
       await loadVendors(token);
     } catch (err) {
-      handleRequestError(err, setVendorActionError, "Unable to update vendor status.");
+      handleRequestError(
+        err,
+        setVendorActionError,
+        "Unable to update vendor status.",
+      );
     }
   };
 
@@ -1401,9 +1509,17 @@ const AdminDashboard = () => {
       setBrandCreationError("Select a subscription duration.");
       return;
     }
-    const priceValue = brandForm.qrPricePerUnit === "" ? null : Number(brandForm.qrPricePerUnit);
-    if (priceValue !== null && (!Number.isFinite(priceValue) || priceValue <= 0 || priceValue > MAX_QR_PRICE)) {
-      setBrandCreationError(`QR price per unit must be between 0.01 and ${MAX_QR_PRICE}.`);
+    const priceValue =
+      brandForm.qrPricePerUnit === "" ? null : Number(brandForm.qrPricePerUnit);
+    if (
+      priceValue !== null &&
+      (!Number.isFinite(priceValue) ||
+        priceValue <= 0 ||
+        priceValue > MAX_QR_PRICE)
+    ) {
+      setBrandCreationError(
+        `QR price per unit must be between 0.01 and ${MAX_QR_PRICE}.`,
+      );
       return;
     }
 
@@ -1425,7 +1541,9 @@ const AdminDashboard = () => {
       };
 
       const data = await createAdminBrand(token, payload);
-      setBrandCreationMessage("Brand created and vendor credentials generated.");
+      setBrandCreationMessage(
+        "Brand created and vendor credentials generated.",
+      );
       setCreatedBrandCredentials(data?.credentials || null);
       setCreatedBrandDetails({
         brand: data?.brand,
@@ -1438,7 +1556,8 @@ const AdminDashboard = () => {
       await loadVendors(token);
       await loadSubscriptions(token, subscriptionFilter);
     } catch (err) {
-      const errorMessage = err?.data?.error || err?.message || "Unable to create brand.";
+      const errorMessage =
+        err?.data?.error || err?.message || "Unable to create brand.";
       setBrandCreationError(errorMessage);
     } finally {
       setIsCreatingBrand(false);
@@ -1489,7 +1608,11 @@ const AdminDashboard = () => {
     setSubscriptionMessage("");
     setSubscriptionError("");
     try {
-      await updateAdminVendorSubscription(token, subscriptionForm.vendorId, payload);
+      await updateAdminVendorSubscription(
+        token,
+        subscriptionForm.vendorId,
+        payload,
+      );
       setSubscriptionMessage("Subscription updated successfully.");
       setSubscriptionForm((prev) => ({ ...prev, extendMonths: "" }));
       await loadVendors(token);
@@ -1521,12 +1644,23 @@ const AdminDashboard = () => {
         type: walletCredit.type,
       });
       setWalletStatus(
-        walletCredit.type === "debit" ? "Wallet debited successfully." : "Wallet credited successfully."
+        walletCredit.type === "debit"
+          ? "Wallet debited successfully."
+          : "Wallet credited successfully.",
       );
-      setWalletCredit({ vendorId: "", amount: "", description: "", type: "credit" });
+      setWalletCredit({
+        vendorId: "",
+        amount: "",
+        description: "",
+        type: "credit",
+      });
       await loadTransactions(token);
     } catch (err) {
-      handleRequestError(err, setWalletError, "Unable to adjust vendor wallet.");
+      handleRequestError(
+        err,
+        setWalletError,
+        "Unable to adjust vendor wallet.",
+      );
     } finally {
       setIsCreditingWallet(false);
     }
@@ -1541,12 +1675,20 @@ const AdminDashboard = () => {
     setCampaignStatus("");
     setIsUpdatingCampaign(true);
     try {
-      await updateAdminCampaignStatus(token, campaignControl.id.trim(), campaignControl.status);
+      await updateAdminCampaignStatus(
+        token,
+        campaignControl.id.trim(),
+        campaignControl.status,
+      );
       setCampaignStatus("Campaign status updated.");
       setCampaignControl((prev) => ({ ...prev, id: "" }));
       await loadCampaigns(token);
     } catch (err) {
-      handleRequestError(err, setCampaignError, "Unable to update campaign status.");
+      handleRequestError(
+        err,
+        setCampaignError,
+        "Unable to update campaign status.",
+      );
     } finally {
       setIsUpdatingCampaign(false);
     }
@@ -1570,7 +1712,7 @@ const AdminDashboard = () => {
   const handleBannerFieldChange = (index, field, value) => {
     const banners = getHomeBanners();
     const next = banners.map((banner, idx) =>
-      idx === index ? { ...(banner || {}), [field]: value } : banner
+      idx === index ? { ...(banner || {}), [field]: value } : banner,
     );
     setHomeBanners(next);
   };
@@ -1656,7 +1798,11 @@ const AdminDashboard = () => {
       setSettingsMessage("System settings updated successfully.");
       await loadSettings(token);
     } catch (err) {
-      handleRequestError(err, setSettingsError, "Unable to update system settings.");
+      handleRequestError(
+        err,
+        setSettingsError,
+        "Unable to update system settings.",
+      );
     } finally {
       setSettingsLoading(false);
     }
@@ -1682,7 +1828,11 @@ const AdminDashboard = () => {
       await loadVendorOverview(token, vendorEditForm.vendorId);
       await loadVendors(token);
     } catch (err) {
-      handleRequestError(err, setVendorEditError, "Unable to update vendor profile.");
+      handleRequestError(
+        err,
+        setVendorEditError,
+        "Unable to update vendor profile.",
+      );
     } finally {
       setIsUpdatingVendorDetails(false);
     }
@@ -1707,7 +1857,11 @@ const AdminDashboard = () => {
       await loadBrands(token);
       await loadVendors(token);
     } catch (err) {
-      handleRequestError(err, setBrandEditError, "Unable to update brand details.");
+      handleRequestError(
+        err,
+        setBrandEditError,
+        "Unable to update brand details.",
+      );
     } finally {
       setIsUpdatingBrandDetails(false);
     }
@@ -1731,7 +1885,11 @@ const AdminDashboard = () => {
       await loadBrands(token);
       await loadVendors(token);
     } catch (err) {
-      handleRequestError(err, setBrandStatusError, "Unable to update brand status.");
+      handleRequestError(
+        err,
+        setBrandStatusError,
+        "Unable to update brand status.",
+      );
     } finally {
       setIsUpdatingBrandStatus(false);
     }
@@ -1748,11 +1906,13 @@ const AdminDashboard = () => {
     try {
       const payload = {};
       if (campaignEditForm.title) payload.title = campaignEditForm.title;
-      if (campaignEditForm.description) payload.description = campaignEditForm.description;
+      if (campaignEditForm.description)
+        payload.description = campaignEditForm.description;
       if (campaignEditForm.cashbackAmount !== "") {
         payload.cashbackAmount = Number(campaignEditForm.cashbackAmount);
       }
-      if (campaignEditForm.startDate) payload.startDate = campaignEditForm.startDate;
+      if (campaignEditForm.startDate)
+        payload.startDate = campaignEditForm.startDate;
       if (campaignEditForm.endDate) payload.endDate = campaignEditForm.endDate;
       if (campaignEditForm.totalBudget !== "") {
         payload.totalBudget = Number(campaignEditForm.totalBudget);
@@ -1765,7 +1925,11 @@ const AdminDashboard = () => {
       await loadCampaignAnalytics(token, campaignEditForm.id);
       await loadCampaigns(token);
     } catch (err) {
-      handleRequestError(err, setCampaignEditError, "Unable to update campaign details.");
+      handleRequestError(
+        err,
+        setCampaignEditError,
+        "Unable to update campaign details.",
+      );
     } finally {
       setIsUpdatingCampaignDetails(false);
     }
@@ -1777,14 +1941,22 @@ const AdminDashboard = () => {
     if (!account) return;
 
     /* If we are just toggling the modal for the same account without a specific tab request (or same tab), close it. */
-    const isSameVendor = account.vendorId && account.vendorId === selectedVendorId;
+    const isSameVendor =
+      account.vendorId && account.vendorId === selectedVendorId;
     const isSameBrand = account.brandId && account.brandId === selectedBrandId;
-    const isSameAccount = (isSameVendor || isSameBrand) && (!account.vendorId || account.vendorId === selectedVendorId) && (!account.brandId || account.brandId === selectedBrandId);
+    const isSameAccount =
+      (isSameVendor || isSameBrand) &&
+      (!account.vendorId || account.vendorId === selectedVendorId) &&
+      (!account.brandId || account.brandId === selectedBrandId);
 
     // If requesting a specific tab, we might want to switch tabs even if modal is open
     const requestedTab = account.initialTab || "overview";
 
-    if (isAccountModalOpen && isSameAccount && requestedTab === initialAccountTab) {
+    if (
+      isAccountModalOpen &&
+      isSameAccount &&
+      requestedTab === initialAccountTab
+    ) {
       setIsAccountModalOpen(false);
       return;
     }
@@ -1820,7 +1992,9 @@ const AdminDashboard = () => {
 
       // Fetch QRs for this specific order
       const data = await getAdminQrBatch(token, { orderId: order.id });
-      const qrsToPrint = Array.isArray(data) ? data : data?.items || data?.qrs || [];
+      const qrsToPrint = Array.isArray(data)
+        ? data
+        : data?.items || data?.qrs || [];
 
       if (!qrsToPrint.length) {
         setQrBatchError("No QRs found for this order.");
@@ -1842,19 +2016,39 @@ const AdminDashboard = () => {
       const boxHeight = 60;
       const xGap = (pageWidth - cols * boxWidth) / 3;
       const yGap = (pageHeight - rows * boxHeight) / 5;
-      const perQrPrice = order.quantity ? Number(order.printCost || 0) / order.quantity : 0;
-      const perQrLabel = Number.isFinite(perQrPrice) && perQrPrice > 0 ? formatAmount(perQrPrice) : "0.00";
+      const perQrPrice = order.quantity
+        ? Number(order.printCost || 0) / order.quantity
+        : 0;
+      const perQrLabel =
+        Number.isFinite(perQrPrice) && perQrPrice > 0
+          ? formatAmount(perQrPrice)
+          : "0.00";
       const printCostLabel = formatAmount(order.printCost || 0);
       const headerOffset = 36;
 
       // Draw Header for context
       doc.setFontSize(16);
-      doc.text(`QR Batch: ${order.campaignTitle || "Campaign"}`, pageWidth / 2, 15, { align: "center" });
+      doc.text(
+        `QR Batch: ${order.campaignTitle || "Campaign"}`,
+        pageWidth / 2,
+        15,
+        { align: "center" },
+      );
       doc.setFontSize(10);
-      doc.text(`Order ID: ${order.id} | Qty: ${order.quantity}`, pageWidth / 2, 22, { align: "center" });
-      doc.text(`QR price: INR ${perQrLabel}/QR | Print cost: INR ${printCostLabel}`, pageWidth / 2, 28, {
-        align: "center",
-      });
+      doc.text(
+        `Order ID: ${order.id} | Qty: ${order.quantity}`,
+        pageWidth / 2,
+        22,
+        { align: "center" },
+      );
+      doc.text(
+        `QR price: INR ${perQrLabel}/QR | Print cost: INR ${printCostLabel}`,
+        pageWidth / 2,
+        28,
+        {
+          align: "center",
+        },
+      );
 
       // Loop and draw QRs
       for (let i = 0; i < qrsToPrint.length; i++) {
@@ -1890,7 +2084,11 @@ const AdminDashboard = () => {
           doc.text(`INR ${qr.cashbackAmount}`, x + 60, y + 25);
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(8);
-          doc.text(qr.uniqueHash ? qr.uniqueHash.slice(0, 8) : "", x + 60, y + 35);
+          doc.text(
+            qr.uniqueHash ? qr.uniqueHash.slice(0, 8) : "",
+            x + 60,
+            y + 35,
+          );
           doc.text("Powered by Incentify", x + 60, y + 50);
         } else {
           console.warn(`Canvas not found for QR ${qr.uniqueHash}`);
@@ -1908,8 +2106,6 @@ const AdminDashboard = () => {
     }
   };
 
-
-
   const renderOrderActions = (order) => (
     <div className="flex items-center gap-2">
       <button
@@ -1920,9 +2116,9 @@ const AdminDashboard = () => {
       >
         <Download size={16} />
       </button>
-      {order.status === 'paid' && (
+      {order.status === "paid" && (
         <button
-          onClick={() => handleOrderStatusSave(order.id, 'shipped')}
+          onClick={() => handleOrderStatusSave(order.id, "shipped")}
           className="px-2 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 font-semibold"
         >
           Mark Shipped
@@ -1931,14 +2127,15 @@ const AdminDashboard = () => {
     </div>
   );
 
-
-
   const attentionRequests = useMemo(() => {
     const items = [];
 
     if (Array.isArray(withdrawals)) {
       withdrawals
-        .filter((withdrawal) => String(withdrawal?.status || "").toLowerCase() === "pending")
+        .filter(
+          (withdrawal) =>
+            String(withdrawal?.status || "").toLowerCase() === "pending",
+        )
         .forEach((withdrawal) => {
           const vendorLabel =
             withdrawal?.Wallet?.Vendor?.businessName ||
@@ -1969,7 +2166,11 @@ const AdminDashboard = () => {
 
     if (Array.isArray(orders)) {
       orders
-        .filter((order) => QR_ORDER_ATTENTION_STATUSES.includes(String(order?.status || "").toLowerCase()))
+        .filter((order) =>
+          QR_ORDER_ATTENTION_STATUSES.includes(
+            String(order?.status || "").toLowerCase(),
+          ),
+        )
         .forEach((order) => {
           const vendorLabel =
             order?.vendor?.businessName ||
@@ -1984,8 +2185,11 @@ const AdminDashboard = () => {
             order?.totalAmount !== undefined && order?.totalAmount !== null
               ? `INR ${formatAmount(order.totalAmount)}`
               : null;
-          const normalizedStatus = String(order?.status || "pending").toLowerCase();
-          const statusTag = normalizedStatus === "paid" ? "approved" : normalizedStatus;
+          const normalizedStatus = String(
+            order?.status || "pending",
+          ).toLowerCase();
+          const statusTag =
+            normalizedStatus === "paid" ? "approved" : normalizedStatus;
           const statusLabel =
             normalizedStatus === "paid"
               ? "Approved"
@@ -2022,7 +2226,8 @@ const AdminDashboard = () => {
         metadata.quantity !== undefined && metadata.quantity !== null
           ? `Qty: ${metadata.quantity}`
           : null;
-      const statusLabel = metadata.status || (notification.isRead ? "read" : "unread");
+      const statusLabel =
+        metadata.status || (notification.isRead ? "read" : "unread");
       const metaParts = [];
       if (campaignLabel) metaParts.push(`Campaign: ${campaignLabel}`);
       if (quantityLabel) metaParts.push(quantityLabel);
@@ -2031,12 +2236,17 @@ const AdminDashboard = () => {
       }
       if (
         metadata.status &&
-        (!campaignLabel || campaignLabel.toLowerCase() !== metadata.status.toLowerCase())
+        (!campaignLabel ||
+          campaignLabel.toLowerCase() !== metadata.status.toLowerCase())
       ) {
         metaParts.push(`Status: ${metadata.status}`);
       }
       const metaText =
-        metaParts.length > 0 ? metaParts.join(" | ") : notification.type ? `Type: ${notification.type}` : "Notification";
+        metaParts.length > 0
+          ? metaParts.join(" | ")
+          : notification.type
+            ? `Type: ${notification.type}`
+            : "Notification";
       const amountLabel =
         metadata.totalAmount !== undefined && metadata.totalAmount !== null
           ? `INR ${formatAmount(metadata.totalAmount)}`
@@ -2055,7 +2265,9 @@ const AdminDashboard = () => {
         amountLabel,
         status: statusLabel,
         date: formatDate(notification.createdAt),
-        createdAt: notification.createdAt ? new Date(notification.createdAt).getTime() : 0,
+        createdAt: notification.createdAt
+          ? new Date(notification.createdAt).getTime()
+          : 0,
         payload: metadata,
       };
     });
@@ -2068,20 +2280,29 @@ const AdminDashboard = () => {
       .slice(0, 6);
   }, [attentionRequests, notificationActivities]);
 
-  const pendingWithdrawalsInFlight = withdrawals?.filter(
-    (withdrawal) => String(withdrawal?.status || "").toLowerCase() === "pending"
-  )?.length || 0;
-  const pendingWithdrawalCount = pendingWithdrawalsInFlight || dashboardStats?.pendingWithdrawals || 0;
-  const ordersAwaitingAction = orders?.filter((order) =>
-    QR_ORDER_ATTENTION_STATUSES.includes(String(order?.status || "").toLowerCase())
-  )?.length || 0;
-  const orderAttentionCount = ordersAwaitingAction || dashboardStats?.ordersAttention || 0;
+  const pendingWithdrawalsInFlight =
+    withdrawals?.filter(
+      (withdrawal) =>
+        String(withdrawal?.status || "").toLowerCase() === "pending",
+    )?.length || 0;
+  const pendingWithdrawalCount =
+    pendingWithdrawalsInFlight || dashboardStats?.pendingWithdrawals || 0;
+  const ordersAwaitingAction =
+    orders?.filter((order) =>
+      QR_ORDER_ATTENTION_STATUSES.includes(
+        String(order?.status || "").toLowerCase(),
+      ),
+    )?.length || 0;
+  const orderAttentionCount =
+    ordersAwaitingAction || dashboardStats?.ordersAttention || 0;
 
   // Count pending QR orders (paid but not shipped)
-  const pendingQrOrders = orders?.filter((order) =>
-    ['paid', 'pending'].includes(String(order?.status || "").toLowerCase())
-  )?.length || 0;
-  const pendingQrOrderCount = pendingQrOrders || dashboardStats?.ordersAttention || 0;
+  const pendingQrOrders =
+    orders?.filter((order) =>
+      ["paid", "pending"].includes(String(order?.status || "").toLowerCase()),
+    )?.length || 0;
+  const pendingQrOrderCount =
+    pendingQrOrders || dashboardStats?.ordersAttention || 0;
 
   const totalQrsCount = dashboardStats?.totalQrs || 0;
 
@@ -2093,19 +2314,25 @@ const AdminDashboard = () => {
       if (status === "blocked") acc.blocked += 1;
       return acc;
     },
-    { active: 0, inactive: 0, blocked: 0 }
+    { active: 0, inactive: 0, blocked: 0 },
   );
   const effectiveUserStatusCounts = {
-    active: dashboardStats?.userStatusCounts?.active ?? derivedUserStatusCounts.active,
-    inactive: dashboardStats?.userStatusCounts?.inactive ?? derivedUserStatusCounts.inactive,
-    blocked: dashboardStats?.userStatusCounts?.blocked ?? derivedUserStatusCounts.blocked,
+    active:
+      dashboardStats?.userStatusCounts?.active ??
+      derivedUserStatusCounts.active,
+    inactive:
+      dashboardStats?.userStatusCounts?.inactive ??
+      derivedUserStatusCounts.inactive,
+    blocked:
+      dashboardStats?.userStatusCounts?.blocked ??
+      derivedUserStatusCounts.blocked,
   };
-  const effectiveVendorStatusCounts = dashboardStats?.vendorStatusCounts || { active: vendors?.filter(v => v.status === 'active')?.length || 0 };
+  const effectiveVendorStatusCounts = dashboardStats?.vendorStatusCounts || {
+    active: vendors?.filter((v) => v.status === "active")?.length || 0,
+  };
   const totalBalance = dashboardStats?.totalWalletBalance || 0;
   const platformRevenue =
-    financeSummary?.platformRevenue ??
-    dashboardStats?.platformRevenue ??
-    0;
+    financeSummary?.platformRevenue ?? dashboardStats?.platformRevenue ?? 0;
 
   const notificationCount = pendingWithdrawalCount + orderAttentionCount;
 
@@ -2118,7 +2345,9 @@ const AdminDashboard = () => {
       return logs.filter((log) => String(log.action || "").includes("wallet"));
     }
     if (logsFilter === "admin") {
-      return logs.filter((log) => String(log.actorRole || "").toLowerCase() === "admin");
+      return logs.filter(
+        (log) => String(log.actorRole || "").toLowerCase() === "admin",
+      );
     }
     if (logsFilter === "fraud") {
       return logs.filter((log) => String(log.action || "").includes("flag"));
@@ -2129,7 +2358,9 @@ const AdminDashboard = () => {
   const handleCampaignRowStatusSave = async (campaignId, currentStatus) => {
     if (!campaignId) return;
     const normalizedCurrent = String(currentStatus || "").toLowerCase();
-    const nextStatus = String(campaignStatusUpdates[campaignId] || normalizedCurrent).toLowerCase();
+    const nextStatus = String(
+      campaignStatusUpdates[campaignId] || normalizedCurrent,
+    ).toLowerCase();
     const allowedStatuses = ["active", "paused", "rejected", "completed"];
 
     setCampaignActionStatus("");
@@ -2153,14 +2384,20 @@ const AdminDashboard = () => {
       });
       await loadCampaigns(token);
     } catch (err) {
-      handleRequestError(err, setCampaignActionError, "Unable to update campaign status.");
+      handleRequestError(
+        err,
+        setCampaignActionError,
+        "Unable to update campaign status.",
+      );
     }
   };
 
   const handleDeleteCampaign = async (campaign) => {
     if (!campaign?.id) return;
     const name = campaign.title || "this campaign";
-    if (!window.confirm(`Delete ${name}? This removes all QRs for this campaign.`)) {
+    if (
+      !window.confirm(`Delete ${name}? This removes all QRs for this campaign.`)
+    ) {
       return;
     }
 
@@ -2179,7 +2416,11 @@ const AdminDashboard = () => {
         return updated;
       });
     } catch (err) {
-      handleRequestError(err, setCampaignActionError, "Unable to delete campaign.");
+      handleRequestError(
+        err,
+        setCampaignActionError,
+        "Unable to delete campaign.",
+      );
     } finally {
       setDeletingCampaignId(null);
     }
@@ -2188,7 +2429,9 @@ const AdminDashboard = () => {
   const handleOrderStatusSave = async (orderId, currentStatus) => {
     if (!orderId) return;
     const normalizedCurrent = String(currentStatus || "").toLowerCase();
-    const nextStatus = String(orderStatusUpdates[orderId] || normalizedCurrent).toLowerCase();
+    const nextStatus = String(
+      orderStatusUpdates[orderId] || normalizedCurrent,
+    ).toLowerCase();
     const allowedStatuses = ["pending", "paid", "shipped"];
 
     setOrderActionStatus("");
@@ -2212,7 +2455,11 @@ const AdminDashboard = () => {
       });
       await loadOrders(token);
     } catch (err) {
-      handleRequestError(err, setOrderActionError, "Unable to update order status.");
+      handleRequestError(
+        err,
+        setOrderActionError,
+        "Unable to update order status.",
+      );
     }
   };
 
@@ -2230,11 +2477,20 @@ const AdminDashboard = () => {
         adminNote: withdrawalAction.adminNote.trim() || undefined,
       });
       setWithdrawalStatus("Withdrawal updated.");
-      setWithdrawalAction({ id: "", status: "processed", referenceId: "", adminNote: "" });
+      setWithdrawalAction({
+        id: "",
+        status: "processed",
+        referenceId: "",
+        adminNote: "",
+      });
       await loadWithdrawals(token);
       await loadTransactions(token);
     } catch (err) {
-      handleRequestError(err, setWithdrawalError, "Unable to process withdrawal.");
+      handleRequestError(
+        err,
+        setWithdrawalError,
+        "Unable to process withdrawal.",
+      );
     }
   };
 
@@ -2252,7 +2508,10 @@ const AdminDashboard = () => {
     setSupportActionError("");
     setSupportActionStatus("");
     try {
-      await replyAdminSupportTicket(token, ticketId, { response: responseText, status });
+      await replyAdminSupportTicket(token, ticketId, {
+        response: responseText,
+        status,
+      });
       setSupportActionStatus("Support ticket updated.");
       setSupportReplies((prev) => {
         const updated = { ...prev };
@@ -2261,7 +2520,11 @@ const AdminDashboard = () => {
       });
       await loadSupportTickets(token);
     } catch (err) {
-      handleRequestError(err, setSupportActionError, "Unable to update ticket.");
+      handleRequestError(
+        err,
+        setSupportActionError,
+        "Unable to update ticket.",
+      );
     }
   };
 
@@ -2280,7 +2543,7 @@ const AdminDashboard = () => {
       const data = await getAdminQrBatch(token, {
         campaignId: batch.campaignId,
         cashbackAmount: batch.cashbackAmount,
-        limit: 2000
+        limit: 2000,
       });
       const items = Array.isArray(data) ? data : data?.items || [];
       const total = Number.isFinite(data?.total) ? data.total : items.length;
@@ -2300,7 +2563,9 @@ const AdminDashboard = () => {
       const itemsPerRow = 4;
       const rowsPerPage = 6;
       const rowSpacing = qrSize + 28;
-      const spacing = (pageWidth - margin * 2 - qrSize * itemsPerRow) / Math.max(itemsPerRow - 1, 1);
+      const spacing =
+        (pageWidth - margin * 2 - qrSize * itemsPerRow) /
+        Math.max(itemsPerRow - 1, 1);
       const priceLabel = formatAmount(batch.cashbackAmount);
       const campaignTitle = batch.campaignTitle || "Campaign";
       const brandName = batch.brandName || "Brand";
@@ -2341,7 +2606,8 @@ const AdminDashboard = () => {
         const imgData = canvas.toDataURL("image/png");
         doc.addImage(imgData, "PNG", xPos, yPos, qrSize, qrSize);
 
-        const perPrice = Number(qr.cashbackAmount) || Number(batch.cashbackAmount) || 0;
+        const perPrice =
+          Number(qr.cashbackAmount) || Number(batch.cashbackAmount) || 0;
         doc.setFontSize(8);
         doc.text(qr.uniqueHash.slice(0, 8), xPos, yPos + qrSize + 6);
         doc.text(`INR ${formatAmount(perPrice)}`, xPos, yPos + qrSize + 12);
@@ -2357,7 +2623,10 @@ const AdminDashboard = () => {
         setQrBatchStatus("QR batch PDF downloaded.");
       }
 
-      const timestamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      const timestamp = new Date()
+        .toISOString()
+        .slice(0, 16)
+        .replace(/[:T]/g, "-");
       doc.save(`qrs-${priceLabel}-${timestamp}.pdf`);
     } catch (err) {
       console.error("PDF Gen Error:", err);
@@ -2423,7 +2692,7 @@ const AdminDashboard = () => {
     blocked: ["blocked"],
   };
   const allowedUserStatuses = userStatusFilter[normalizedUserView];
-  const filteredVendors = (vendors || []).filter(v => {
+  const filteredVendors = (vendors || []).filter((v) => {
     if (allowedVendorStatuses) {
       const vendorStatus = String(v?.status || "").toLowerCase();
       if (!allowedVendorStatuses.includes(vendorStatus)) {
@@ -2432,13 +2701,16 @@ const AdminDashboard = () => {
     }
     if (!searchLower) return true;
     const name = v.businessName?.toLowerCase() || "";
-    const email = v.contactEmail?.toLowerCase() || v.User?.email?.toLowerCase() || "";
+    const email =
+      v.contactEmail?.toLowerCase() || v.User?.email?.toLowerCase() || "";
     return name.includes(searchLower) || email.includes(searchLower);
   });
-  const limitedVendors = showAllVendors ? filteredVendors : filteredVendors.slice(0, 8);
+  const limitedVendors = showAllVendors
+    ? filteredVendors
+    : filteredVendors.slice(0, 8);
 
   // Users
-  const filteredUsers = (users || []).filter(u => {
+  const filteredUsers = (users || []).filter((u) => {
     if (allowedUserStatuses) {
       const userStatus = String(u?.status || "").toLowerCase();
       if (!allowedUserStatuses.includes(userStatus)) {
@@ -2465,9 +2737,15 @@ const AdminDashboard = () => {
           counts.active += amount;
         } else if (normalized.includes("pend")) {
           counts.pending += amount;
-        } else if (normalized.includes("redeem") || normalized.includes("used")) {
+        } else if (
+          normalized.includes("redeem") ||
+          normalized.includes("used")
+        ) {
           counts.redeemed += amount;
-        } else if (normalized.includes("block") || normalized.includes("revoked")) {
+        } else if (
+          normalized.includes("block") ||
+          normalized.includes("revoked")
+        ) {
           counts.blocked += amount;
         } else {
           counts.active += amount;
@@ -2479,15 +2757,18 @@ const AdminDashboard = () => {
     qrs.forEach((qr) => {
       const status = (qr?.status || "active").toLowerCase();
       if (status.includes("pend")) counts.pending += 1;
-      else if (status.includes("redeem") || status.includes("used")) counts.redeemed += 1;
-      else if (status.includes("block") || status.includes("revoked")) counts.blocked += 1;
+      else if (status.includes("redeem") || status.includes("used"))
+        counts.redeemed += 1;
+      else if (status.includes("block") || status.includes("revoked"))
+        counts.blocked += 1;
       else counts.active += 1;
     });
 
     return counts;
   }, [qrStatusSummary, qrs]);
 
-  const qrsCoverageLabel = qrsTotal > qrs.length ? `Showing ${qrs.length} of ${qrsTotal}` : "";
+  const qrsCoverageLabel =
+    qrsTotal > qrs.length ? `Showing ${qrs.length} of ${qrsTotal}` : "";
 
   const qrBatchSummary = useMemo(() => {
     if (!qrs?.length) return [];
@@ -2522,7 +2803,10 @@ const AdminDashboard = () => {
       }
 
       const createdAt = qr?.createdAt ? new Date(qr.createdAt).getTime() : 0;
-      if (!existing.lastCreatedAt || createdAt > new Date(existing.lastCreatedAt).getTime()) {
+      if (
+        !existing.lastCreatedAt ||
+        createdAt > new Date(existing.lastCreatedAt).getTime()
+      ) {
         existing.lastCreatedAt = qr?.createdAt || existing.lastCreatedAt;
       }
 
@@ -2540,7 +2824,8 @@ const AdminDashboard = () => {
   const filteredQrBatchSummary = useMemo(() => {
     if (!qrBatchSearchTerm) return qrBatchSummary;
     return qrBatchSummary.filter((batch) => {
-      const haystack = `${batch.campaignTitle} ${batch.brandName} ${batch.vendorLabel}`.toLowerCase();
+      const haystack =
+        `${batch.campaignTitle} ${batch.brandName} ${batch.vendorLabel}`.toLowerCase();
       return haystack.includes(qrBatchSearchTerm);
     });
   }, [qrBatchSummary, qrBatchSearchTerm]);
@@ -2550,17 +2835,31 @@ const AdminDashboard = () => {
     const getTime = (value) => (value ? new Date(value).getTime() : 0);
     switch (qrBatchSort) {
       case "qty":
-        return items.sort((a, b) => b.total - a.total || getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt));
+        return items.sort(
+          (a, b) =>
+            b.total - a.total ||
+            getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt),
+        );
       case "active":
-        return items.sort((a, b) => b.active - a.active || getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt));
+        return items.sort(
+          (a, b) =>
+            b.active - a.active ||
+            getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt),
+        );
       case "cashback":
         return items.sort(
-          (a, b) => (b.cashbackAmount || 0) - (a.cashbackAmount || 0) || getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt)
+          (a, b) =>
+            (b.cashbackAmount || 0) - (a.cashbackAmount || 0) ||
+            getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt),
         );
       case "oldest":
-        return items.sort((a, b) => getTime(a.lastCreatedAt) - getTime(b.lastCreatedAt));
+        return items.sort(
+          (a, b) => getTime(a.lastCreatedAt) - getTime(b.lastCreatedAt),
+        );
       default:
-        return items.sort((a, b) => getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt));
+        return items.sort(
+          (a, b) => getTime(b.lastCreatedAt) - getTime(a.lastCreatedAt),
+        );
     }
   }, [filteredQrBatchSummary, qrBatchSort]);
 
@@ -2568,7 +2867,10 @@ const AdminDashboard = () => {
   const visibleQrBatchSummary = showAllQrBatches
     ? sortedQrBatchSummary
     : sortedQrBatchSummary.slice(0, qrBatchPreviewLimit);
-  const qrBatchActiveTotal = sortedQrBatchSummary.reduce((sum, batch) => sum + batch.active, 0);
+  const qrBatchActiveTotal = sortedQrBatchSummary.reduce(
+    (sum, batch) => sum + batch.active,
+    0,
+  );
 
   const orderStatusCounts = useMemo(() => {
     const counts = {
@@ -2608,7 +2910,8 @@ const AdminDashboard = () => {
     return counts;
   }, [orderStatusSummary, orders]);
 
-  const orderNotificationCount = (orderStatusCounts.pending || 0) + (orderStatusCounts.paid || 0);
+  const orderNotificationCount =
+    (orderStatusCounts.pending || 0) + (orderStatusCounts.paid || 0);
 
   const sortedOrders = useMemo(() => {
     const priority = {
@@ -2632,7 +2935,10 @@ const AdminDashboard = () => {
     });
   }, [orders]);
 
-  const campaignStatusCounts = useMemo(() => buildStatusCounts(campaigns || [], "status"), [campaigns]);
+  const campaignStatusCounts = useMemo(
+    () => buildStatusCounts(campaigns || [], "status"),
+    [campaigns],
+  );
 
   // --- Dashboard Data Filtering ---
   const filteredDashboardData = useMemo(() => {
@@ -2644,27 +2950,32 @@ const AdminDashboard = () => {
     if (filterBrandId !== "all") {
       const bId = filterBrandId;
       _transactions = _transactions.filter(
-        t => t.Wallet?.Vendor?.Brand?.id === bId || t.Wallet?.Vendor?.brandId === bId
+        (t) =>
+          t.Wallet?.Vendor?.Brand?.id === bId ||
+          t.Wallet?.Vendor?.brandId === bId,
       );
-      _orders = _orders.filter(o => {
-        const orderBrandId = o.brandId || o.vendor?.brandId || o.vendor?.Brand?.id;
+      _orders = _orders.filter((o) => {
+        const orderBrandId =
+          o.brandId || o.vendor?.brandId || o.vendor?.Brand?.id;
         return orderBrandId === bId;
       });
-      _qrs = _qrs.filter(q => q.Campaign?.Brand?.id === bId || q.Campaign?.brandId === bId);
+      _qrs = _qrs.filter(
+        (q) => q.Campaign?.Brand?.id === bId || q.Campaign?.brandId === bId,
+      );
     }
 
     // Filter by Vendor
     if (filterVendorId !== "all") {
       const vId = filterVendorId;
-      _transactions = _transactions.filter(t => {
+      _transactions = _transactions.filter((t) => {
         const vid = t.Wallet?.Vendor?.id || t.Wallet?.vendorId;
         return vid === vId;
       });
-      _orders = _orders.filter(o => {
+      _orders = _orders.filter((o) => {
         const vid = o.vendorId || o.vendor?.id;
         return vid === vId;
       });
-      _qrs = _qrs.filter(q => {
+      _qrs = _qrs.filter((q) => {
         const vid =
           q.vendorId ||
           q.Campaign?.vendorId ||
@@ -2678,37 +2989,60 @@ const AdminDashboard = () => {
     if (filterCampaignId !== "all") {
       const cId = filterCampaignId;
       // Transactions: difficult to filter by campaign without explicit link. Skipping tx filter for campaign for now unless category matches?
-      // _transactions = _transactions.filter(...) 
+      // _transactions = _transactions.filter(...)
 
-      _qrs = _qrs.filter(q => q.campaignId === cId || q.Campaign?.id === cId);
-      _orders = _orders.filter(o => o.campaignId === cId || o.Campaign?.id === cId);
+      _qrs = _qrs.filter((q) => q.campaignId === cId || q.Campaign?.id === cId);
+      _orders = _orders.filter(
+        (o) => o.campaignId === cId || o.Campaign?.id === cId,
+      );
     }
 
     return { transactions: _transactions, qrs: _qrs, orders: _orders };
-  }, [transactions, qrs, sortedOrders, filterVendorId, filterCampaignId, filterBrandId]);
+  }, [
+    transactions,
+    qrs,
+    sortedOrders,
+    filterVendorId,
+    filterCampaignId,
+    filterBrandId,
+  ]);
 
-  const { transactions: effectiveTransactions, qrs: effectiveQrs, orders: effectiveOrders } = filteredDashboardData;
+  const {
+    transactions: effectiveTransactions,
+    qrs: effectiveQrs,
+    orders: effectiveOrders,
+  } = filteredDashboardData;
 
   // Transactions - filter out admin manual recharges to focus on vendor settlements
   // Now using effectiveTransactions
-  const vendorTransactions = (effectiveTransactions || []).filter(tx => {
+  const vendorTransactions = (effectiveTransactions || []).filter((tx) => {
     const category = String(tx.category || "").toUpperCase();
     return category !== "ADMIN_CREDIT" && category !== "ADMIN_ADJUSTMENT";
   });
-  const limitedVendorTransactions = showAllTransactions ? vendorTransactions : vendorTransactions.slice(0, 10);
+  const limitedVendorTransactions = showAllTransactions
+    ? vendorTransactions
+    : vendorTransactions.slice(0, 10);
 
   // Orders (Server side usually, but slicing for preview)
-  const limitedOrders = showAllOrders ? effectiveOrders : effectiveOrders.slice(0, 8);
+  const limitedOrders = showAllOrders
+    ? effectiveOrders
+    : effectiveOrders.slice(0, 8);
 
   // QRs
   const limitedQrs = showAllQrs ? effectiveQrs : effectiveQrs.slice(0, 12);
 
   // Analytics - Transaction Series (these were missing)
-  const transactionSeries = useMemo(() => buildTransactionSeries(effectiveTransactions, analyticsRange), [effectiveTransactions, analyticsRange]);
-  const transactionTotals = useMemo(() => ({
-    credit: transactionSeries.credit.reduce((sum, val) => sum + val, 0),
-    debit: transactionSeries.debit.reduce((sum, val) => sum + val, 0),
-  }), [transactionSeries]);
+  const transactionSeries = useMemo(
+    () => buildTransactionSeries(effectiveTransactions, analyticsRange),
+    [effectiveTransactions, analyticsRange],
+  );
+  const transactionTotals = useMemo(
+    () => ({
+      credit: transactionSeries.credit.reduce((sum, val) => sum + val, 0),
+      debit: transactionSeries.debit.reduce((sum, val) => sum + val, 0),
+    }),
+    [transactionSeries],
+  );
 
   // Analytics Metric Data (was missing)
   const analyticsMetricData = useMemo(() => {
@@ -2721,7 +3055,11 @@ const AdminDashboard = () => {
       };
     }
     if (analyticsMetric === "users") {
-      const userSeries = buildCountSeries(users, analyticsRange, (u) => u.createdAt);
+      const userSeries = buildCountSeries(
+        users,
+        analyticsRange,
+        (u) => u.createdAt,
+      );
       return {
         label: "New Users",
         series: userSeries.counts,
@@ -2730,7 +3068,11 @@ const AdminDashboard = () => {
       };
     }
     if (analyticsMetric === "qrs") {
-      const qrSeries = buildCountSeries(effectiveQrs, analyticsRange, (q) => q.createdAt);
+      const qrSeries = buildCountSeries(
+        effectiveQrs,
+        analyticsRange,
+        (q) => q.createdAt,
+      );
       return {
         label: "QR Codes Generated",
         series: qrSeries.counts,
@@ -2739,14 +3081,24 @@ const AdminDashboard = () => {
       };
     }
     return { label: "Metric", series: [], value: 0, isCurrency: false };
-  }, [analyticsMetric, analyticsRange, transactionSeries, transactionTotals, users, effectiveQrs]);
+  }, [
+    analyticsMetric,
+    analyticsRange,
+    transactionSeries,
+    transactionTotals,
+    users,
+    effectiveQrs,
+  ]);
 
   // Analytics Stats Cards
   const totalUsersCount = dashboardStats?.users || users.length || 0;
   const totalVendorsCount = dashboardStats?.vendors || vendors.length || 0;
   const displayedVendorsCount = useMemo(() => {
     if (filterVendorId !== "all") return 1;
-    if (filterBrandId !== "all") return vendors.filter(v => v.brandId === filterBrandId || v.Brand?.id === filterBrandId).length;
+    if (filterBrandId !== "all")
+      return vendors.filter(
+        (v) => v.brandId === filterBrandId || v.Brand?.id === filterBrandId,
+      ).length;
     return vendors.length || 0;
   }, [vendors, filterVendorId, filterBrandId]);
 
@@ -2754,22 +3106,35 @@ const AdminDashboard = () => {
 
   const currentDisplayedBalance = useMemo(() => {
     if (filterVendorId !== "all") {
-      const v = vendors.find(v => v.id === filterVendorId);
+      const v = vendors.find((v) => v.id === filterVendorId);
       return toFiniteNumber(v?.Wallet?.balance);
     }
     if (filterBrandId !== "all") {
       return vendors
-        .filter(v => v.brandId === filterBrandId || v.Brand?.id === filterBrandId)
+        .filter(
+          (v) => v.brandId === filterBrandId || v.Brand?.id === filterBrandId,
+        )
         .reduce((sum, v) => sum + toFiniteNumber(v.Wallet?.balance), 0);
     }
-    return vendors.reduce((sum, v) => sum + toFiniteNumber(v.Wallet?.balance), 0);
+    return vendors.reduce(
+      (sum, v) => sum + toFiniteNumber(v.Wallet?.balance),
+      0,
+    );
   }, [vendors, filterVendorId, filterBrandId]);
 
   const analyticsStats = [
     { label: "Total Users", value: totalUsersCount, isCurrency: false },
-    { label: "Active Vendors", value: displayedVendorsCount, isCurrency: false },
+    {
+      label: "Active Vendors",
+      value: displayedVendorsCount,
+      isCurrency: false,
+    },
     { label: "Total QRs", value: displayedQrsCount, isCurrency: false },
-    { label: "Platform Balance", value: currentDisplayedBalance, isCurrency: true },
+    {
+      label: "Platform Balance",
+      value: currentDisplayedBalance,
+      isCurrency: true,
+    },
   ];
 
   const fraudThresholds = settings?.fraudThresholds || {
@@ -2780,13 +3145,23 @@ const AdminDashboard = () => {
   const topRedeemer = campaignAnalytics?.topRedeemers?.[0];
   const topRedeemerCount = topRedeemer?._count?._all || 0;
   const redeemedCount = campaignAnalytics?.metrics?.redeemedQrs || 0;
-  const topRedeemerShare = redeemedCount ? (topRedeemerCount / redeemedCount) * 100 : 0;
+  const topRedeemerShare = redeemedCount
+    ? (topRedeemerCount / redeemedCount) * 100
+    : 0;
   const abuseSignals = [];
-  if (topRedeemerCount && topRedeemerCount >= fraudThresholds.maxRedemptionsPerUser) {
+  if (
+    topRedeemerCount &&
+    topRedeemerCount >= fraudThresholds.maxRedemptionsPerUser
+  ) {
     abuseSignals.push(`User redeemed ${topRedeemerCount} times.`);
   }
-  if (topRedeemerShare && topRedeemerShare >= fraudThresholds.maxRedeemerSharePercent) {
-    abuseSignals.push(`Top user share ${topRedeemerShare.toFixed(1)}% exceeds threshold.`);
+  if (
+    topRedeemerShare &&
+    topRedeemerShare >= fraudThresholds.maxRedeemerSharePercent
+  ) {
+    abuseSignals.push(
+      `Top user share ${topRedeemerShare.toFixed(1)}% exceeds threshold.`,
+    );
   }
 
   if (!token) {
@@ -2794,15 +3169,25 @@ const AdminDashboard = () => {
       <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 p-4 text-slate-900 dark:bg-[#020202] dark:text-white transition-colors duration-300 font-admin-body relative overflow-hidden">
         {/* Abstract Background Pattern */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s', animationDuration: '10s' }} />
+          <div
+            className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse"
+            style={{ animationDuration: "8s" }}
+          />
+          <div
+            className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] animate-pulse"
+            style={{ animationDelay: "2s", animationDuration: "10s" }}
+          />
         </div>
 
         <div className="w-full max-w-[440px] relative z-10 animate-in fade-in zoom-in-95 duration-500">
           <div className="flex flex-col items-center mb-8">
             <div className="h-14 mb-4">
               <img
-                src={effectiveTheme === "dark" ? "/dark theme incentify logo.png" : "/light theme incentify logo.png"}
+                src={
+                  effectiveTheme === "dark"
+                    ? "/dark theme incentify logo.png"
+                    : "/light theme incentify logo.png"
+                }
                 alt="Assured Rewards"
                 className="h-full w-auto object-contain"
               />
@@ -2821,7 +3206,13 @@ const AdminDashboard = () => {
               <ModeToggle />
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSignIn(); }} className="mt-8 space-y-5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSignIn();
+              }}
+              className="mt-8 space-y-5"
+            >
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-1">
                   Email
@@ -2882,25 +3273,31 @@ const AdminDashboard = () => {
             </form>
 
             {authStatus && (
-              <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-medium text-center">{authStatus}</div>
+              <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 font-medium text-center">
+                {authStatus}
+              </div>
             )}
             {authError && (
-              <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium text-center">{authError}</div>
+              <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium text-center">
+                {authError}
+              </div>
             )}
             <div className="mt-6 text-xs text-center text-slate-400 dark:text-slate-500">
-              Use the seeded admin credentials or create a new admin from the backend.
+              Use the seeded admin credentials or create a new admin from the
+              backend.
             </div>
           </div>
-        </div >
-      </div >
-
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100 text-slate-900 dark:bg-[#020202] dark:text-white transition-colors duration-300 font-admin-body">
       {/* New Sidebar */}
-      <div className={`hidden lg:block ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'} transition-all duration-300`}>
+      <div
+        className={`hidden lg:block ${sidebarCollapsed ? "lg:w-20" : "lg:w-64"} transition-all duration-300`}
+      >
         <AdminSidebar
           collapsed={sidebarCollapsed}
           activeNav={activeNav}
@@ -2954,11 +3351,19 @@ const AdminDashboard = () => {
                 aria-label="Toggle sidebar collapse"
                 title="Toggle sidebar"
               >
-                {sidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen size={20} />
+                ) : (
+                  <PanelLeftClose size={20} />
+                )}
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{headerTitle}</h1>
-                <p className="text-sm text-slate-600 dark:text-white/60">Hi {adminInfo?.name || email || "Admin"}, welcome back!</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {headerTitle}
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-white/60">
+                  Hi {adminInfo?.name || email || "Admin"}, welcome back!
+                </p>
               </div>
             </div>
 
@@ -2991,11 +3396,16 @@ const AdminDashboard = () => {
         <main className="p-6 space-y-6 max-w-[1800px] mx-auto">
           {/* Overview Section - Admin Stats */}
           {isOverviewRoute && (
-            <section id="overview" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <section
+              id="overview"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
               {/* Dashboard Filters */}
               <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm mb-2">
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Brand</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Brand
+                  </label>
                   <select
                     value={filterBrandId}
                     onChange={(e) => {
@@ -3006,17 +3416,30 @@ const AdminDashboard = () => {
                     className={adminInputClass}
                   >
                     <option value="all">All Brands</option>
-                    {brands.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
                     ))}
                     {/* Fallback if brands not loaded but present in vendors */}
-                    {brands.length === 0 && vendors.map(v => v.Brand).filter((b, i, self) => b && self.findIndex(s => s.id === b.id) === i).map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
+                    {brands.length === 0 &&
+                      vendors
+                        .map((v) => v.Brand)
+                        .filter(
+                          (b, i, self) =>
+                            b && self.findIndex((s) => s.id === b.id) === i,
+                        )
+                        .map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendor</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Vendor
+                  </label>
                   <select
                     value={filterVendorId}
                     onChange={(e) => {
@@ -3027,8 +3450,13 @@ const AdminDashboard = () => {
                   >
                     <option value="all">All Vendors</option>
                     {vendors
-                      .filter(v => filterBrandId === "all" || v.brandId === filterBrandId || v.Brand?.id === filterBrandId)
-                      .map(v => (
+                      .filter(
+                        (v) =>
+                          filterBrandId === "all" ||
+                          v.brandId === filterBrandId ||
+                          v.Brand?.id === filterBrandId,
+                      )
+                      .map((v) => (
                         <option key={v.id} value={v.id}>
                           {v.businessName || v.User?.name || v.contactEmail}
                         </option>
@@ -3036,7 +3464,9 @@ const AdminDashboard = () => {
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Campaign</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Campaign
+                  </label>
                   <select
                     value={filterCampaignId}
                     onChange={(e) => setFilterCampaignId(e.target.value)}
@@ -3044,13 +3474,21 @@ const AdminDashboard = () => {
                   >
                     <option value="all">All Campaigns</option>
                     {campaigns
-                      .filter(c => {
-                        const matchesVendor = filterVendorId === "all" || c.vendorId === filterVendorId || c.Vendor?.id === filterVendorId;
-                        const matchesBrand = filterBrandId === "all" || c.brandId === filterBrandId || c.Brand?.id === filterBrandId;
+                      .filter((c) => {
+                        const matchesVendor =
+                          filterVendorId === "all" ||
+                          c.vendorId === filterVendorId ||
+                          c.Vendor?.id === filterVendorId;
+                        const matchesBrand =
+                          filterBrandId === "all" ||
+                          c.brandId === filterBrandId ||
+                          c.Brand?.id === filterBrandId;
                         return matchesVendor && matchesBrand;
                       })
-                      .map(c => (
-                        <option key={c.id} value={c.id}>{c.title || "Untitled"}</option>
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title || "Untitled"}
+                        </option>
                       ))}
                   </select>
                 </div>
@@ -3063,7 +3501,10 @@ const AdminDashboard = () => {
                   <div className={statLabelClass}>Total Customers</div>
                   <div className="flex items-center justify-between">
                     <span className={statValueClass}>{totalUsersCount}</span>
-                    <Users className="text-slate-300 dark:text-white/20" size={24} />
+                    <Users
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
                 </div>
 
@@ -3072,7 +3513,10 @@ const AdminDashboard = () => {
                   <div className={statLabelClass}>Total Vendors</div>
                   <div className="flex items-center justify-between">
                     <span className={statValueClass}>{totalVendorsCount}</span>
-                    <Store className="text-slate-300 dark:text-white/20" size={24} />
+                    <Store
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
                 </div>
 
@@ -3080,8 +3524,13 @@ const AdminDashboard = () => {
                 <div className={adminCardClass}>
                   <div className={statLabelClass}>Active Campaigns</div>
                   <div className="flex items-center justify-between">
-                    <span className={statValueClass}>{dashboardStats?.activeCampaigns || 0}</span>
-                    <Megaphone className="text-slate-300 dark:text-white/20" size={24} />
+                    <span className={statValueClass}>
+                      {dashboardStats?.activeCampaigns || 0}
+                    </span>
+                    <Megaphone
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
                 </div>
 
@@ -3089,8 +3538,13 @@ const AdminDashboard = () => {
                 <div className={adminCardClass}>
                   <div className={statLabelClass}>Total Wallet Float</div>
                   <div className="flex items-center justify-between">
-                    <span className={statValueClass}>INR {formatAmount(totalBalance)}</span>
-                    <Wallet className="text-slate-300 dark:text-white/20" size={24} />
+                    <span className={statValueClass}>
+                      INR {formatAmount(totalBalance)}
+                    </span>
+                    <Wallet
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
                 </div>
 
@@ -3098,18 +3552,30 @@ const AdminDashboard = () => {
                 <div className={adminCardClass}>
                   <div className={statLabelClass}>Platform Revenue</div>
                   <div className="flex items-center justify-between">
-                    <span className={statValueClass}>INR {formatAmount(platformRevenue)}</span>
-                    <TrendingUp className="text-slate-300 dark:text-white/20" size={24} />
+                    <span className={statValueClass}>
+                      INR {formatAmount(platformRevenue)}
+                    </span>
+                    <TrendingUp
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1">From tech fees</div>
+                  <div className="text-[10px] text-slate-400 mt-1">
+                    From tech fees
+                  </div>
                 </div>
 
                 {/* Pending Payouts */}
                 <div className={adminCardClass}>
                   <div className={statLabelClass}>Pending Payouts</div>
                   <div className="flex items-center justify-between">
-                    <span className={statValueClass}>{pendingWithdrawalCount}</span>
-                    <HandCoins className="text-slate-300 dark:text-white/20" size={24} />
+                    <span className={statValueClass}>
+                      {pendingWithdrawalCount}
+                    </span>
+                    <HandCoins
+                      className="text-slate-300 dark:text-white/20"
+                      size={24}
+                    />
                   </div>
                 </div>
               </div>
@@ -3120,14 +3586,20 @@ const AdminDashboard = () => {
                 <div className={`${adminCardClass} lg:col-span-2`}>
                   <div className="flex items-center gap-2 mb-4">
                     <Activity className="text-[#059669]" size={18} />
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Requires Attention</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Requires Attention
+                    </h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-xs text-slate-500 font-medium">Pending Withdrawals</div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">{pendingWithdrawalCount}</div>
+                          <div className="text-xs text-slate-500 font-medium">
+                            Pending Withdrawals
+                          </div>
+                          <div className="text-xl font-bold text-amber-500 mt-1">
+                            {pendingWithdrawalCount}
+                          </div>
                         </div>
                         <HandCoins className="text-amber-400/50" size={28} />
                       </div>
@@ -3135,8 +3607,12 @@ const AdminDashboard = () => {
                     <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-xs text-slate-500 font-medium">Orders Awaiting Action</div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">{orderAttentionCount}</div>
+                          <div className="text-xs text-slate-500 font-medium">
+                            Orders Awaiting Action
+                          </div>
+                          <div className="text-xl font-bold text-amber-500 mt-1">
+                            {orderAttentionCount}
+                          </div>
                         </div>
                         <Package className="text-amber-400/50" size={28} />
                       </div>
@@ -3144,8 +3620,12 @@ const AdminDashboard = () => {
                     <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-xs text-slate-500 font-medium">Pending QR Orders</div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">{pendingQrOrderCount}</div>
+                          <div className="text-xs text-slate-500 font-medium">
+                            Pending QR Orders
+                          </div>
+                          <div className="text-xl font-bold text-amber-500 mt-1">
+                            {pendingQrOrderCount}
+                          </div>
                         </div>
                         <QrCode className="text-amber-400/50" size={28} />
                       </div>
@@ -3157,11 +3637,17 @@ const AdminDashboard = () => {
                 <RecentActivitiesCard
                   title="Vendor Requests & Notifications"
                   activities={vendorNotificationActivities}
-                  emptyMessage={isLoadingNotifications ? "Loading notifications..." : "No pending requests."}
+                  emptyMessage={
+                    isLoadingNotifications
+                      ? "Loading notifications..."
+                      : "No pending requests."
+                  }
                   onItemClick={handleRequestClick}
                 />
                 {notificationsError && (
-                  <div className="text-xs text-rose-400 mt-2">{notificationsError}</div>
+                  <div className="text-xs text-rose-400 mt-2">
+                    {notificationsError}
+                  </div>
                 )}
               </div>
             </section>
@@ -3169,11 +3655,18 @@ const AdminDashboard = () => {
 
           {/* Analytics Section */}
           {isAnalyticsRoute && (
-            <section id="analytics" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <section
+              id="analytics"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Analytics</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Platform performance metrics</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Analytics
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Platform performance metrics
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   {rangeOptions.map((option) => (
@@ -3181,8 +3674,8 @@ const AdminDashboard = () => {
                       key={option.value}
                       onClick={() => setAnalyticsRange(option.value)}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${analyticsRange === option.value
-                        ? 'bg-[#059669] text-white shadow-lg shadow-[#059669]/20'
-                        : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10'
+                        ? "bg-[#059669] text-white shadow-lg shadow-[#059669]/20"
+                        : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10"
                         }`}
                     >
                       {option.label}
@@ -3194,7 +3687,9 @@ const AdminDashboard = () => {
               {/* Dashboard Filters */}
               <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm">
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Brand</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Brand
+                  </label>
                   <select
                     value={filterBrandId}
                     onChange={(e) => {
@@ -3205,16 +3700,29 @@ const AdminDashboard = () => {
                     className={adminInputClass}
                   >
                     <option value="all">All Brands</option>
-                    {brands.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
                     ))}
-                    {brands.length === 0 && vendors.map(v => v.Brand).filter((b, i, self) => b && self.findIndex(s => s.id === b.id) === i).map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
+                    {brands.length === 0 &&
+                      vendors
+                        .map((v) => v.Brand)
+                        .filter(
+                          (b, i, self) =>
+                            b && self.findIndex((s) => s.id === b.id) === i,
+                        )
+                        .map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name}
+                          </option>
+                        ))}
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendor</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Vendor
+                  </label>
                   <select
                     value={filterVendorId}
                     onChange={(e) => {
@@ -3225,8 +3733,13 @@ const AdminDashboard = () => {
                   >
                     <option value="all">All Vendors</option>
                     {vendors
-                      .filter(v => filterBrandId === "all" || v.brandId === filterBrandId || v.Brand?.id === filterBrandId)
-                      .map(v => (
+                      .filter(
+                        (v) =>
+                          filterBrandId === "all" ||
+                          v.brandId === filterBrandId ||
+                          v.Brand?.id === filterBrandId,
+                      )
+                      .map((v) => (
                         <option key={v.id} value={v.id}>
                           {v.businessName || v.User?.name || v.contactEmail}
                         </option>
@@ -3234,7 +3747,9 @@ const AdminDashboard = () => {
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Campaign</label>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Campaign
+                  </label>
                   <select
                     value={filterCampaignId}
                     onChange={(e) => setFilterCampaignId(e.target.value)}
@@ -3242,13 +3757,21 @@ const AdminDashboard = () => {
                   >
                     <option value="all">All Campaigns</option>
                     {campaigns
-                      .filter(c => {
-                        const matchesVendor = filterVendorId === "all" || c.vendorId === filterVendorId || c.Vendor?.id === filterVendorId;
-                        const matchesBrand = filterBrandId === "all" || c.brandId === filterBrandId || c.Brand?.id === filterBrandId;
+                      .filter((c) => {
+                        const matchesVendor =
+                          filterVendorId === "all" ||
+                          c.vendorId === filterVendorId ||
+                          c.Vendor?.id === filterVendorId;
+                        const matchesBrand =
+                          filterBrandId === "all" ||
+                          c.brandId === filterBrandId ||
+                          c.Brand?.id === filterBrandId;
                         return matchesVendor && matchesBrand;
                       })
-                      .map(c => (
-                        <option key={c.id} value={c.id}>{c.title || "Untitled"}</option>
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title || "Untitled"}
+                        </option>
                       ))}
                   </select>
                 </div>
@@ -3259,39 +3782,62 @@ const AdminDashboard = () => {
                 {analyticsStats.map((stat) => (
                   <div key={stat.label} className={adminCardClass}>
                     <div className={statLabelClass}>{stat.label}</div>
-                    <div className={`${statValueClass} break-all leading-tight`}>
+                    <div
+                      className={`${statValueClass} break-all leading-tight`}
+                    >
                       {isLoadingDashboard
                         ? "..."
                         : stat.isCurrency
                           ? `INR ${formatAmount(stat.value)}`
-                          : stat.value ?? "-"}
+                          : (stat.value ?? "-")}
                     </div>
                   </div>
                 ))}
               </div>
-              {dashboardError && <div className="text-sm text-rose-400">{dashboardError}</div>}
+              {dashboardError && (
+                <div className="text-sm text-rose-400">{dashboardError}</div>
+              )}
 
               {/* Transaction Flow Card */}
               <div className={`${adminCardClass} !p-6`}>
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="text-[#059669]" size={18} />
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Flow</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Last {analyticsRange} days</p>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Transaction Flow
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Last {analyticsRange} days
+                    </p>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3 mb-6">
                   <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">Credits</div>
-                    <div className="text-xl font-bold text-emerald-500 mt-1">INR {formatAmount(transactionTotals.credit)}</div>
+                    <div className="text-xs text-slate-500 font-medium">
+                      Credits
+                    </div>
+                    <div className="text-xl font-bold text-emerald-500 mt-1">
+                      INR {formatAmount(transactionTotals.credit)}
+                    </div>
                   </div>
                   <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">Debits</div>
-                    <div className="text-xl font-bold text-rose-500 mt-1">INR {formatAmount(transactionTotals.debit)}</div>
+                    <div className="text-xs text-slate-500 font-medium">
+                      Debits
+                    </div>
+                    <div className="text-xl font-bold text-rose-500 mt-1">
+                      INR {formatAmount(transactionTotals.debit)}
+                    </div>
                   </div>
                   <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">Net Flow</div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">INR {formatAmount(transactionTotals.credit - transactionTotals.debit)}</div>
+                    <div className="text-xs text-slate-500 font-medium">
+                      Net Flow
+                    </div>
+                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                      INR{" "}
+                      {formatAmount(
+                        transactionTotals.credit - transactionTotals.debit,
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Sparkline data={transactionSeries.net} />
@@ -3301,11 +3847,18 @@ const AdminDashboard = () => {
 
           {/* Operations Section */}
           {isOperationsRoute && (
-            <section id="operations" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <section
+              id="operations"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Operations</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manual adjustments and platform controls</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Operations
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Manual adjustments and platform controls
+                  </p>
                 </div>
               </div>
 
@@ -3313,50 +3866,84 @@ const AdminDashboard = () => {
                 <div className={adminCardClass}>
                   <div className="flex items-center gap-2 mb-6">
                     <Wallet width={18} className="text-[#059669]" />
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Adjust Vendor Wallet</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Adjust Vendor Wallet
+                    </h3>
                   </div>
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Vendor ID</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Vendor ID
+                        </label>
                         <input
                           type="text"
                           value={walletCredit.vendorId}
-                          onChange={(e) => setWalletCredit({ ...walletCredit, vendorId: e.target.value })}
+                          onChange={(e) =>
+                            setWalletCredit({
+                              ...walletCredit,
+                              vendorId: e.target.value,
+                            })
+                          }
                           placeholder="e.g. 12345"
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Transaction Type</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Transaction Type
+                        </label>
                         <select
                           value={walletCredit.type}
-                          onChange={(e) => setWalletCredit({ ...walletCredit, type: e.target.value })}
+                          onChange={(e) =>
+                            setWalletCredit({
+                              ...walletCredit,
+                              type: e.target.value,
+                            })
+                          }
                           className={adminInputClass}
                         >
-                          <option value="credit" className={adminOptionClass}>Credit (Deposit)</option>
-                          <option value="debit" className={adminOptionClass}>Debit (Withdraw)</option>
+                          <option value="credit" className={adminOptionClass}>
+                            Credit (Deposit)
+                          </option>
+                          <option value="debit" className={adminOptionClass}>
+                            Debit (Withdraw)
+                          </option>
                         </select>
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Amount (INR)</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Amount (INR)
+                      </label>
                       <input
                         type="number"
                         value={walletCredit.amount}
-                        onChange={(e) => setWalletCredit({ ...walletCredit, amount: e.target.value })}
+                        onChange={(e) =>
+                          setWalletCredit({
+                            ...walletCredit,
+                            amount: e.target.value,
+                          })
+                        }
                         placeholder="0.00"
                         className={adminInputClass}
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Justification</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Justification
+                      </label>
                       <textarea
                         value={walletCredit.description}
-                        onChange={(e) => setWalletCredit({ ...walletCredit, description: e.target.value })}
+                        onChange={(e) =>
+                          setWalletCredit({
+                            ...walletCredit,
+                            description: e.target.value,
+                          })
+                        }
                         placeholder="Reason for this manual adjustment..."
                         className={`${adminInputClass} min-h-[80px]`}
                       />
@@ -3372,12 +3959,22 @@ const AdminDashboard = () => {
                           <span className="flex items-center justify-center gap-2">
                             Processing...
                           </span>
-                        ) : 'Apply Adjustment'}
+                        ) : (
+                          "Apply Adjustment"
+                        )}
                       </button>
                     </div>
 
-                    {walletStatus && <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-lg text-sm border border-emerald-500/20 text-center">{walletStatus}</div>}
-                    {walletError && <div className="p-3 bg-rose-500/10 text-rose-500 rounded-lg text-sm border border-rose-500/20 text-center">{walletError}</div>}
+                    {walletStatus && (
+                      <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-lg text-sm border border-emerald-500/20 text-center">
+                        {walletStatus}
+                      </div>
+                    )}
+                    {walletError && (
+                      <div className="p-3 bg-rose-500/10 text-rose-500 rounded-lg text-sm border border-rose-500/20 text-center">
+                        {walletError}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -3385,32 +3982,45 @@ const AdminDashboard = () => {
                 <div className={adminCardClass}>
                   <div className="flex items-center gap-2 mb-6">
                     <BarChart2 width={18} className="text-[#059669]" />
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">Campaign Analytics</h3>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Campaign Analytics
+                    </h3>
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-                    Enter a campaign ID below to fetch detailed analytics including QR generation stats, redemption rates, and budget utilization.
+                    Enter a campaign ID below to fetch detailed analytics
+                    including QR generation stats, redemption rates, and budget
+                    utilization.
                   </p>
 
                   {/* Campaign Analytics Form would go here, reusing same styles */}
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Campaign ID</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Campaign ID
+                      </label>
                       <div className="flex gap-2">
                         <select
                           value={campaignAnalyticsId}
-                          onChange={(e) => setCampaignAnalyticsId(e.target.value)}
+                          onChange={(e) =>
+                            setCampaignAnalyticsId(e.target.value)
+                          }
                           className={adminInputClass}
                         >
                           <option value="">Select a campaign...</option>
                           {campaigns.map((campaign) => (
                             <option key={campaign.id} value={campaign.id}>
-                              {campaign.title || "Untitled"} • {campaign.Brand?.name || "Unknown Brand"}
+                              {campaign.title || "Untitled"} ï¿½{" "}
+                              {campaign.Brand?.name || "Unknown Brand"}
                             </option>
                           ))}
                         </select>
                         <button
-                          onClick={() => loadCampaignAnalytics(token, campaignAnalyticsId)}
-                          disabled={!campaignAnalyticsId || isLoadingCampaignAnalytics}
+                          onClick={() =>
+                            loadCampaignAnalytics(token, campaignAnalyticsId)
+                          }
+                          disabled={
+                            !campaignAnalyticsId || isLoadingCampaignAnalytics
+                          }
                           className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-lg transition-colors"
                         >
                           <Search size={18} />
@@ -3464,13 +4074,21 @@ const AdminDashboard = () => {
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
                         <div className="text-slate-500">Wallet per QR</div>
                         <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                          INR {formatAmount(campaignAnalytics.metrics?.walletDeductionPerQr || 0)}
+                          INR{" "}
+                          {formatAmount(
+                            campaignAnalytics.metrics?.walletDeductionPerQr ||
+                            0,
+                          )}
                         </div>
                       </div>
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
                         <div className="text-slate-500">Wallet total</div>
                         <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                          INR {formatAmount(campaignAnalytics.metrics?.walletDeductionTotal || 0)}
+                          INR{" "}
+                          {formatAmount(
+                            campaignAnalytics.metrics?.walletDeductionTotal ||
+                            0,
+                          )}
                         </div>
                       </div>
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
@@ -3487,11 +4105,13 @@ const AdminDashboard = () => {
                           {campaignAnalytics.campaign?.status || "-"}
                         </div>
                         <div className="text-slate-500 mt-1">
-                          Validity: {formatDate(campaignAnalytics.validity?.startDate)} ?{" "}
+                          Validity:{" "}
+                          {formatDate(campaignAnalytics.validity?.startDate)} ?{" "}
                           {formatDate(campaignAnalytics.validity?.endDate)}
                         </div>
                         <div className="text-slate-500">
-                          Days remaining: {campaignAnalytics.validity?.daysRemaining ?? 0}
+                          Days remaining:{" "}
+                          {campaignAnalytics.validity?.daysRemaining ?? 0}
                         </div>
                       </div>
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
@@ -3500,10 +4120,12 @@ const AdminDashboard = () => {
                           Orders: {campaignAnalytics.metrics?.orders || 0}
                         </div>
                         <div className="text-slate-500">
-                          Ordered QRs: {campaignAnalytics.metrics?.orderedQuantity || 0}
+                          Ordered QRs:{" "}
+                          {campaignAnalytics.metrics?.orderedQuantity || 0}
                         </div>
                         <div className="text-slate-500">
-                          Unique redeemers: {campaignAnalytics.metrics?.uniqueRedeemers || 0}
+                          Unique redeemers:{" "}
+                          {campaignAnalytics.metrics?.uniqueRedeemers || 0}
                         </div>
                       </div>
                     </div>
@@ -3512,16 +4134,19 @@ const AdminDashboard = () => {
                         <div className="text-slate-500">Budget Check</div>
                         <div className="text-slate-900 dark:text-white">
                           Total:{" "}
-                          {campaignAnalytics.budget?.total !== null && campaignAnalytics.budget?.total !== undefined
+                          {campaignAnalytics.budget?.total !== null &&
+                            campaignAnalytics.budget?.total !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.total)}`
                             : "Not set"}
                         </div>
                         <div className="text-slate-500">
-                          Used: INR {formatAmount(campaignAnalytics.budget?.used || 0)}
+                          Used: INR{" "}
+                          {formatAmount(campaignAnalytics.budget?.used || 0)}
                         </div>
                         <div className="text-slate-500">
                           Remaining:{" "}
-                          {campaignAnalytics.budget?.remaining !== null && campaignAnalytics.budget?.remaining !== undefined
+                          {campaignAnalytics.budget?.remaining !== null &&
+                            campaignAnalytics.budget?.remaining !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.remaining)}`
                             : "-"}
                         </div>
@@ -3533,7 +4158,9 @@ const AdminDashboard = () => {
                         <div className="mt-2 h-2 w-full rounded-full bg-slate-200/60 dark:bg-white/10">
                           <div
                             className={`h-2 rounded-full ${campaignAnalytics.budget?.usagePercent >= 100 ? "bg-rose-500" : "bg-emerald-500"}`}
-                            style={{ width: `${Math.min(campaignAnalytics.budget?.usagePercent || 0, 100)}%` }}
+                            style={{
+                              width: `${Math.min(campaignAnalytics.budget?.usagePercent || 0, 100)}%`,
+                            }}
                           />
                         </div>
                       </div>
@@ -3543,63 +4170,94 @@ const AdminDashboard = () => {
                           <ul className="text-xs text-rose-500 mt-2 space-y-1">
                             {abuseSignals.map((signal, idx) => (
                               <li key={idx} className="flex items-start gap-2">
-                                <span className="mt-0.5">•</span>
+                                <span className="mt-0.5">ï¿½</span>
                                 <span>{signal}</span>
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <div className="text-slate-500 mt-2">No anomalies detected.</div>
+                          <div className="text-slate-500 mt-2">
+                            No anomalies detected.
+                          </div>
                         )}
                         {campaignAnalytics.topRedeemers?.length > 0 && (
                           <div className="text-[11px] text-slate-500 mt-3">
                             Top redeemer:{" "}
-                            {campaignAnalytics.topRedeemers[0]?.redeemedByUserId?.slice(0, 8) || "User"} (
-                            {campaignAnalytics.topRedeemers[0]?._count?._all || 0} scans)
+                            {campaignAnalytics.topRedeemers[0]?.redeemedByUserId?.slice(
+                              0,
+                              8,
+                            ) || "User"}{" "}
+                            (
+                            {campaignAnalytics.topRedeemers[0]?._count?._all ||
+                              0}{" "}
+                            scans)
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="grid gap-3 md:grid-cols-2 text-xs">
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
-                        <div className="font-semibold text-slate-900 dark:text-white mb-2">Recent QRs</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mb-2">
+                          Recent QRs
+                        </div>
                         {campaignAnalytics.recentQrs?.length ? (
                           <div className="space-y-1 text-slate-500 dark:text-slate-400">
                             {campaignAnalytics.recentQrs.map((qr) => (
-                              <div key={qr.uniqueHash} className="flex items-center justify-between">
+                              <div
+                                key={qr.uniqueHash}
+                                className="flex items-center justify-between"
+                              >
                                 <span>{qr.uniqueHash.slice(0, 8)}...</span>
-                                <span className={getStatusClasses(qr.status)}>{qr.status}</span>
+                                <span className={getStatusClasses(qr.status)}>
+                                  {qr.status}
+                                </span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-slate-500">No QR activity yet.</div>
+                          <div className="text-slate-500">
+                            No QR activity yet.
+                          </div>
                         )}
                       </div>
                       <div className="rounded-lg bg-slate-50/70 dark:bg-white/5 p-3">
-                        <div className="font-semibold text-slate-900 dark:text-white mb-2">Recent Redemptions</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mb-2">
+                          Recent Redemptions
+                        </div>
                         {campaignAnalytics.recentRedemptions?.length ? (
                           <div className="space-y-1 text-slate-500 dark:text-slate-400">
                             {campaignAnalytics.recentRedemptions.map((qr) => (
-                              <div key={qr.uniqueHash} className="flex items-center justify-between">
+                              <div
+                                key={qr.uniqueHash}
+                                className="flex items-center justify-between"
+                              >
                                 <span>{qr.uniqueHash.slice(0, 8)}...</span>
                                 <span>{formatDate(qr.redeemedAt)}</span>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="text-slate-500">No redemptions yet.</div>
+                          <div className="text-slate-500">
+                            No redemptions yet.
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
 
                   <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 p-4 space-y-3">
-                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Edit Campaign</h4>
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                      Edit Campaign
+                    </h4>
                     <input
                       type="text"
                       value={campaignEditForm.title}
-                      onChange={(e) => setCampaignEditForm({ ...campaignEditForm, title: e.target.value })}
+                      onChange={(e) =>
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          title: e.target.value,
+                        })
+                      }
                       placeholder="Title"
                       className={adminInputClass}
                     />
@@ -3607,7 +4265,10 @@ const AdminDashboard = () => {
                       rows="3"
                       value={campaignEditForm.description}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, description: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          description: e.target.value,
+                        })
                       }
                       placeholder="Description"
                       className={adminInputClass}
@@ -3616,7 +4277,10 @@ const AdminDashboard = () => {
                       type="number"
                       value={campaignEditForm.cashbackAmount}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, cashbackAmount: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          cashbackAmount: e.target.value,
+                        })
                       }
                       placeholder="Cashback amount"
                       className={adminInputClass}
@@ -3625,7 +4289,10 @@ const AdminDashboard = () => {
                       type="date"
                       value={campaignEditForm.startDate}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, startDate: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          startDate: e.target.value,
+                        })
                       }
                       className={adminInputClass}
                     />
@@ -3633,7 +4300,10 @@ const AdminDashboard = () => {
                       type="date"
                       value={campaignEditForm.endDate}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, endDate: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          endDate: e.target.value,
+                        })
                       }
                       className={adminInputClass}
                     />
@@ -3641,7 +4311,10 @@ const AdminDashboard = () => {
                       type="number"
                       value={campaignEditForm.totalBudget}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, totalBudget: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          totalBudget: e.target.value,
+                        })
                       }
                       placeholder="Total budget"
                       className={adminInputClass}
@@ -3650,7 +4323,10 @@ const AdminDashboard = () => {
                       type="number"
                       value={campaignEditForm.subtotal}
                       onChange={(e) =>
-                        setCampaignEditForm({ ...campaignEditForm, subtotal: e.target.value })
+                        setCampaignEditForm({
+                          ...campaignEditForm,
+                          subtotal: e.target.value,
+                        })
                       }
                       placeholder="Subtotal"
                       className={adminInputClass}
@@ -3663,8 +4339,16 @@ const AdminDashboard = () => {
                     >
                       {isUpdatingCampaignDetails ? "Saving..." : "Save Changes"}
                     </button>
-                    {campaignEditStatus && <div className="text-xs text-emerald-500">{campaignEditStatus}</div>}
-                    {campaignEditError && <div className="text-xs text-rose-400">{campaignEditError}</div>}
+                    {campaignEditStatus && (
+                      <div className="text-xs text-emerald-500">
+                        {campaignEditStatus}
+                      </div>
+                    )}
+                    {campaignEditError && (
+                      <div className="text-xs text-rose-400">
+                        {campaignEditError}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -3676,9 +4360,12 @@ const AdminDashboard = () => {
             <section id="campaigns" className="space-y-6 mt-12">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Campaigns</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Campaigns
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-300">
-                    Review vendor campaign requests and approve or pause activity.
+                    Review vendor campaign requests and approve or pause
+                    activity.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -3687,7 +4374,9 @@ const AdminDashboard = () => {
                       onClick={() => setShowAllCampaigns((prev) => !prev)}
                       className={adminGhostButtonClass}
                     >
-                      {showAllCampaigns ? "Show less" : `View all (${campaigns.length})`}
+                      {showAllCampaigns
+                        ? "Show less"
+                        : `View all (${campaigns.length})`}
                     </button>
                   )}
                   <button
@@ -3703,34 +4392,62 @@ const AdminDashboard = () => {
 
               <div className="grid gap-6 lg:grid-cols-[1fr,2fr]">
                 <div className={`${adminPanelClass} p-6`}>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quick Status Override</h3>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                    Quick Status Override
+                  </h3>
                   <div className="space-y-4">
                     <input
                       type="text"
                       value={campaignControl.id}
-                      onChange={(e) => setCampaignControl({ ...campaignControl, id: e.target.value })}
+                      onChange={(e) =>
+                        setCampaignControl({
+                          ...campaignControl,
+                          id: e.target.value,
+                        })
+                      }
                       placeholder="Campaign ID"
                       className={adminInputClass}
                     />
                     <select
                       value={campaignControl.status}
-                      onChange={(e) => setCampaignControl({ ...campaignControl, status: e.target.value })}
+                      onChange={(e) =>
+                        setCampaignControl({
+                          ...campaignControl,
+                          status: e.target.value,
+                        })
+                      }
                       className={adminInputClass}
                     >
-                      <option value="active" className={adminOptionClass}>Active</option>
-                      <option value="paused" className={adminOptionClass}>Paused</option>
-                      <option value="rejected" className={adminOptionClass}>Rejected</option>
-                      <option value="completed" className={adminOptionClass}>Completed</option>
+                      <option value="active" className={adminOptionClass}>
+                        Active
+                      </option>
+                      <option value="paused" className={adminOptionClass}>
+                        Paused
+                      </option>
+                      <option value="rejected" className={adminOptionClass}>
+                        Rejected
+                      </option>
+                      <option value="completed" className={adminOptionClass}>
+                        Completed
+                      </option>
                     </select>
                     <button
                       onClick={handleCampaignStatusUpdate}
                       disabled={isUpdatingCampaign}
                       className={`w-full ${adminPrimaryButtonClass} disabled:opacity-50`}
                     >
-                      {isUpdatingCampaign ? 'Updating...' : 'Update Campaign'}
+                      {isUpdatingCampaign ? "Updating..." : "Update Campaign"}
                     </button>
-                    {campaignStatus && <div className="text-sm text-emerald-400">{campaignStatus}</div>}
-                    {campaignError && <div className="text-sm text-rose-400">{campaignError}</div>}
+                    {campaignStatus && (
+                      <div className="text-sm text-emerald-400">
+                        {campaignStatus}
+                      </div>
+                    )}
+                    {campaignError && (
+                      <div className="text-sm text-rose-400">
+                        {campaignError}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -3752,27 +4469,51 @@ const AdminDashboard = () => {
                       Completed: {campaignStatusCounts.completed || 0}
                     </span>
                   </div>
-                  {isLoadingCampaigns && <div className="text-sm text-slate-500">Loading campaigns...</div>}
-                  {campaignsError && <div className="text-xs text-rose-400">{campaignsError}</div>}
+                  {isLoadingCampaigns && (
+                    <div className="text-sm text-slate-500">
+                      Loading campaigns...
+                    </div>
+                  )}
+                  {campaignsError && (
+                    <div className="text-xs text-rose-400">
+                      {campaignsError}
+                    </div>
+                  )}
                   {!isLoadingCampaigns && campaigns.length === 0 && (
-                    <div className="text-sm text-slate-500">No vendor campaigns yet.</div>
+                    <div className="text-sm text-slate-500">
+                      No vendor campaigns yet.
+                    </div>
                   )}
                   {limitedCampaigns.length > 0 && (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 dark:bg-white/5">
                           <tr>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Campaign</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Brand</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Vendor</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Budget</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Status</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Actions</th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Campaign
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Brand
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Vendor
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Budget
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Status
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Actions
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {limitedCampaigns.map((campaign) => {
-                            const currentStatus = String(campaign.status || "pending").toLowerCase();
+                            const currentStatus = String(
+                              campaign.status || "pending",
+                            ).toLowerCase();
                             const brandLabel = campaign.Brand?.name || "-";
                             const vendorLabel =
                               campaign.Brand?.Vendor?.businessName ||
@@ -3785,20 +4526,26 @@ const AdminDashboard = () => {
                                 className="border-t border-slate-200/70 dark:border-white/5"
                               >
                                 <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                  <div className="font-semibold">{campaign.title || "Campaign"}</div>
+                                  <div className="font-semibold">
+                                    {campaign.title || "Campaign"}
+                                  </div>
                                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                                     {campaign.id.slice(0, 8)}...
                                   </div>
                                 </td>
-                                <td className="py-3 px-3 text-slate-900 dark:text-white/70">{brandLabel}</td>
-                                <td className="py-3 px-3 text-slate-900 dark:text-white/70">{vendorLabel}</td>
+                                <td className="py-3 px-3 text-slate-900 dark:text-white/70">
+                                  {brandLabel}
+                                </td>
+                                <td className="py-3 px-3 text-slate-900 dark:text-white/70">
+                                  {vendorLabel}
+                                </td>
                                 <td className="py-3 px-3 text-slate-900 dark:text-white/70">
                                   INR {formatAmount(campaign.totalBudget)}
                                 </td>
                                 <td className="py-3 px-3">
                                   <span
                                     className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusClasses(
-                                      currentStatus
+                                      currentStatus,
                                     )}`}
                                   >
                                     {currentStatus}
@@ -3807,7 +4554,10 @@ const AdminDashboard = () => {
                                 <td className="py-3 px-3">
                                   <div className="flex items-center gap-2">
                                     <select
-                                      value={campaignStatusUpdates[campaign.id] || currentStatus}
+                                      value={
+                                        campaignStatusUpdates[campaign.id] ||
+                                        currentStatus
+                                      }
                                       onChange={(e) =>
                                         setCampaignStatusUpdates({
                                           ...campaignStatusUpdates,
@@ -3816,30 +4566,67 @@ const AdminDashboard = () => {
                                       }
                                       className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#059669]"
                                     >
-                                      <option value="pending" disabled className={adminOptionClass}>
+                                      <option
+                                        value="pending"
+                                        disabled
+                                        className={adminOptionClass}
+                                      >
                                         Pending
                                       </option>
-                                      <option value="active" className={adminOptionClass}>Active</option>
-                                      <option value="paused" className={adminOptionClass}>Paused</option>
-                                      <option value="rejected" className={adminOptionClass}>Rejected</option>
-                                      <option value="completed" className={adminOptionClass}>Completed</option>
+                                      <option
+                                        value="active"
+                                        className={adminOptionClass}
+                                      >
+                                        Active
+                                      </option>
+                                      <option
+                                        value="paused"
+                                        className={adminOptionClass}
+                                      >
+                                        Paused
+                                      </option>
+                                      <option
+                                        value="rejected"
+                                        className={adminOptionClass}
+                                      >
+                                        Rejected
+                                      </option>
+                                      <option
+                                        value="completed"
+                                        className={adminOptionClass}
+                                      >
+                                        Completed
+                                      </option>
                                     </select>
                                     <button
-                                      onClick={() => handleCampaignRowStatusSave(campaign.id, currentStatus)}
+                                      onClick={() =>
+                                        handleCampaignRowStatusSave(
+                                          campaign.id,
+                                          currentStatus,
+                                        )
+                                      }
                                       className="px-3 py-1 rounded-lg bg-[#059669] hover:bg-[#047857] text-slate-900 dark:text-white text-xs font-semibold transition-colors"
                                     >
                                       Save
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteCampaign(campaign)}
-                                      disabled={deletingCampaignId === campaign.id}
+                                      onClick={() =>
+                                        handleDeleteCampaign(campaign)
+                                      }
+                                      disabled={
+                                        deletingCampaignId === campaign.id
+                                      }
                                       className="px-3 py-1 rounded-lg border border-rose-200/70 text-rose-600 hover:text-rose-700 hover:border-rose-300 text-xs font-semibold disabled:opacity-60 dark:border-rose-400/40 dark:text-rose-300"
                                     >
-                                      {deletingCampaignId === campaign.id ? "Deleting..." : "Delete"}
+                                      {deletingCampaignId === campaign.id
+                                        ? "Deleting..."
+                                        : "Delete"}
                                     </button>
                                     <button
                                       type="button"
-                                      onClick={() => setCampaignAnalyticsId(campaign.id)}
+                                      onClick={() =>
+                                        setCampaignAnalyticsId(campaign.id)
+                                      }
                                       className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-xs font-semibold text-slate-900 dark:text-white"
                                     >
                                       Inspect
@@ -3853,8 +4640,16 @@ const AdminDashboard = () => {
                       </table>
                     </div>
                   )}
-                  {campaignActionStatus && <div className="text-xs text-emerald-400">{campaignActionStatus}</div>}
-                  {campaignActionError && <div className="text-xs text-rose-400">{campaignActionError}</div>}
+                  {campaignActionStatus && (
+                    <div className="text-xs text-emerald-400">
+                      {campaignActionStatus}
+                    </div>
+                  )}
+                  {campaignActionError && (
+                    <div className="text-xs text-rose-400">
+                      {campaignActionError}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -3862,14 +4657,20 @@ const AdminDashboard = () => {
 
           {/* Orders Section */}
           {isOrdersRoute && (
-            <section id="orders" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section
+              id="orders"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
               {qrBatchSummary.length > 0 && (
                 <div className={`${adminPanelClass} p-6 space-y-5`}>
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">QR Batch Overview</h3>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                        QR Batch Overview
+                      </h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Summarized from QR inventory (campaign, cashback, batch size).
+                        Summarized from QR inventory (campaign, cashback, batch
+                        size).
                         {qrsCoverageLabel ? ` ${qrsCoverageLabel}.` : ""}
                       </p>
                     </div>
@@ -3886,7 +4687,10 @@ const AdminDashboard = () => {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                       <div className="relative w-full sm:w-72">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search
+                          size={14}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        />
                         <input
                           value={qrBatchSearch}
                           onChange={(event) => {
@@ -3938,13 +4742,27 @@ const AdminDashboard = () => {
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 dark:bg-white/5">
                           <tr>
-                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Campaign</th>
-                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Cashback</th>
-                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Qty</th>
-                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Active</th>
-                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Redeemed</th>
-                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">Last Batch</th>
-                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">PDF</th>
+                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Campaign
+                            </th>
+                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Cashback
+                            </th>
+                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Qty
+                            </th>
+                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Active
+                            </th>
+                            <th className="text-right py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Redeemed
+                            </th>
+                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Last Batch
+                            </th>
+                            <th className="text-left py-2.5 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              PDF
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -3954,29 +4772,41 @@ const AdminDashboard = () => {
                               className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-50/60 dark:hover:bg-white/[0.04] transition-colors"
                             >
                               <td className="py-2.5 px-3 text-slate-900 dark:text-white">
-                                <div className="font-semibold">{batch.campaignTitle}</div>
+                                <div className="font-semibold">
+                                  {batch.campaignTitle}
+                                </div>
                                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                  {batch.brandName} • {batch.vendorLabel}
+                                  {batch.brandName} ï¿½ {batch.vendorLabel}
                                 </div>
                               </td>
                               <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">
                                 INR {formatAmount(batch.cashbackAmount)}
                               </td>
-                              <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">{batch.total}</td>
-                              <td className="py-2.5 px-3 text-right text-emerald-500">{batch.active}</td>
-                              <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">{batch.redeemed}</td>
+                              <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">
+                                {batch.total}
+                              </td>
+                              <td className="py-2.5 px-3 text-right text-emerald-500">
+                                {batch.active}
+                              </td>
+                              <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">
+                                {batch.redeemed}
+                              </td>
                               <td className="py-2.5 px-3 text-slate-900 dark:text-white/60 text-xs">
                                 {formatDate(batch.lastCreatedAt)}
                               </td>
                               <td className="py-2.5 px-3">
                                 <button
                                   type="button"
-                                  onClick={() => handleDownloadQrBatchPdf(batch)}
+                                  onClick={() =>
+                                    handleDownloadQrBatchPdf(batch)
+                                  }
                                   disabled={isPreparingBatchPdf}
                                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                                 >
                                   <Download size={14} />
-                                  {isPreparingBatchPdf ? "Preparing..." : "Download"}
+                                  {isPreparingBatchPdf
+                                    ? "Preparing..."
+                                    : "Download"}
                                 </button>
                               </td>
                             </tr>
@@ -3985,18 +4815,31 @@ const AdminDashboard = () => {
                       </table>
                     </div>
                   )}
-                  {qrBatchStatus && <div className="text-xs text-emerald-400">{qrBatchStatus}</div>}
-                  {qrBatchError && <div className="text-xs text-rose-400">{qrBatchError}</div>}
+                  {qrBatchStatus && (
+                    <div className="text-xs text-emerald-400">
+                      {qrBatchStatus}
+                    </div>
+                  )}
+                  {qrBatchError && (
+                    <div className="text-xs text-rose-400">{qrBatchError}</div>
+                  )}
                 </div>
               )}
               {/* Loading Overlay for PDF */}
               {isPreparingBatchPdf && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                   <div className="bg-white dark:bg-[#1a1a1c] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
-                    <RefreshCw className="animate-spin text-[#059669]" size={32} />
+                    <RefreshCw
+                      className="animate-spin text-[#059669]"
+                      size={32}
+                    />
                     <div className="text-center">
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Generating PDF</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">{qrBatchStatus}</p>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+                        Generating PDF
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {qrBatchStatus}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -4005,8 +4848,15 @@ const AdminDashboard = () => {
           )}
 
           {/* Hidden Canvas Container for PDF Generation */}
-          <div style={{ position: "absolute", left: "-9999px", top: "-9999px", visibility: "hidden" }}>
-            {batchQrs.map(qr => (
+          <div
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              top: "-9999px",
+              visibility: "hidden",
+            }}
+          >
+            {batchQrs.map((qr) => (
               <QRCodeCanvas
                 key={qr.uniqueHash}
                 id={`pdf-qr-${qr.uniqueHash}`}
@@ -4021,36 +4871,64 @@ const AdminDashboard = () => {
           {/* Payouts/Withdrawals Section */}
           {isPayoutsRoute && (
             <section id="payouts" className="space-y-6 mt-12">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Payouts</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Payouts
+              </h2>
               <div className={`${adminPanelClass} p-6`}>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Process Withdrawal</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                  Process Withdrawal
+                </h3>
                 <div className="grid gap-4 lg:grid-cols-2 mb-4">
                   <input
                     type="text"
                     value={withdrawalAction.id}
-                    onChange={(e) => setWithdrawalAction({ ...withdrawalAction, id: e.target.value })}
+                    onChange={(e) =>
+                      setWithdrawalAction({
+                        ...withdrawalAction,
+                        id: e.target.value,
+                      })
+                    }
                     placeholder="Withdrawal ID"
                     className={adminInputClass}
                   />
                   <select
                     value={withdrawalAction.status}
-                    onChange={(e) => setWithdrawalAction({ ...withdrawalAction, status: e.target.value })}
+                    onChange={(e) =>
+                      setWithdrawalAction({
+                        ...withdrawalAction,
+                        status: e.target.value,
+                      })
+                    }
                     className={adminInputClass}
                   >
-                    <option value="processed" className={adminOptionClass}>Processed</option>
-                    <option value="rejected" className={adminOptionClass}>Rejected</option>
+                    <option value="processed" className={adminOptionClass}>
+                      Processed
+                    </option>
+                    <option value="rejected" className={adminOptionClass}>
+                      Rejected
+                    </option>
                   </select>
                   <input
                     type="text"
                     value={withdrawalAction.referenceId}
-                    onChange={(e) => setWithdrawalAction({ ...withdrawalAction, referenceId: e.target.value })}
+                    onChange={(e) =>
+                      setWithdrawalAction({
+                        ...withdrawalAction,
+                        referenceId: e.target.value,
+                      })
+                    }
                     placeholder="Reference ID (optional)"
                     className={adminInputClass}
                   />
                   <input
                     type="text"
                     value={withdrawalAction.adminNote}
-                    onChange={(e) => setWithdrawalAction({ ...withdrawalAction, adminNote: e.target.value })}
+                    onChange={(e) =>
+                      setWithdrawalAction({
+                        ...withdrawalAction,
+                        adminNote: e.target.value,
+                      })
+                    }
                     placeholder="Admin note (optional)"
                     className={adminInputClass}
                   />
@@ -4061,12 +4939,22 @@ const AdminDashboard = () => {
                 >
                   Process Withdrawal
                 </button>
-                {withdrawalStatus && <div className="mt-2 text-sm text-emerald-400">{withdrawalStatus}</div>}
-                {withdrawalError && <div className="mt-2 text-sm text-rose-400">{withdrawalError}</div>}
+                {withdrawalStatus && (
+                  <div className="mt-2 text-sm text-emerald-400">
+                    {withdrawalStatus}
+                  </div>
+                )}
+                {withdrawalError && (
+                  <div className="mt-2 text-sm text-rose-400">
+                    {withdrawalError}
+                  </div>
+                )}
 
                 {withdrawalPreview.length > 0 && (
                   <div className="mt-6">
-                    <h4 className="text-md font-semibold text-slate-900 dark:text-white mb-3">Pending Withdrawals</h4>
+                    <h4 className="text-md font-semibold text-slate-900 dark:text-white mb-3">
+                      Pending Withdrawals
+                    </h4>
                     <div className="space-y-2">
                       {withdrawalPreview.map((withdrawal) => (
                         <div
@@ -4074,12 +4962,20 @@ const AdminDashboard = () => {
                           className="flex items-center justify-between p-4 rounded-lg bg-white/90 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 transition-colors"
                         >
                           <div>
-                            <div className="text-sm font-semibold text-slate-900 dark:text-white">ID: {withdrawal.id}</div>
-                            <div className="text-xs text-slate-900 dark:text-white/60">{formatDate(withdrawal.createdAt)}</div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                              ID: {withdrawal.id}
+                            </div>
+                            <div className="text-xs text-slate-900 dark:text-white/60">
+                              {formatDate(withdrawal.createdAt)}
+                            </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm font-semibold text-slate-900 dark:text-white">INR {formatAmount(withdrawal.amount)}</div>
-                            <div className={`text-xs font-semibold ${getStatusClasses(withdrawal.status)}`}>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                              INR {formatAmount(withdrawal.amount)}
+                            </div>
+                            <div
+                              className={`text-xs font-semibold ${getStatusClasses(withdrawal.status)}`}
+                            >
                               {withdrawal.status}
                             </div>
                           </div>
@@ -4112,7 +5008,10 @@ const AdminDashboard = () => {
                             withdrawal?.Wallet?.User?.name ||
                             withdrawal?.Wallet?.User?.email ||
                             "-";
-                          const reason = withdrawal?.rejectionReason || withdrawal?.adminNote || "-";
+                          const reason =
+                            withdrawal?.rejectionReason ||
+                            withdrawal?.adminNote ||
+                            "-";
                           return (
                             <tr
                               key={withdrawal.id}
@@ -4128,7 +5027,9 @@ const AdminDashboard = () => {
                                 INR {formatAmount(withdrawal.amount)}
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(withdrawal.status)}`}>
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(withdrawal.status)}`}
+                                >
                                   {withdrawal.status}
                                 </span>
                               </td>
@@ -4157,15 +5058,24 @@ const AdminDashboard = () => {
             <section id="finance" className="space-y-6 mt-12">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Finance & Revenue</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Finance & Revenue
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Vendor recharges, tech fee earnings, payout liabilities, and settlement reporting.
+                    Vendor recharges, tech fee earnings, payout liabilities, and
+                    settlement reporting.
                   </p>
                 </div>
               </div>
 
-              {financeLoading && <div className="text-slate-900 dark:text-white/60">Loading finance summary...</div>}
-              {financeError && <div className="text-rose-400">{financeError}</div>}
+              {financeLoading && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading finance summary...
+                </div>
+              )}
+              {financeError && (
+                <div className="text-rose-400">{financeError}</div>
+              )}
 
               {financeSummary && (
                 <>
@@ -4173,50 +5083,82 @@ const AdminDashboard = () => {
                     <div className={adminCardClass}>
                       <div className={statLabelClass}>Vendor Recharges</div>
                       <div className="flex items-center justify-between">
-                        <span className={statValueClass}>INR {formatAmount(financeSummary.vendorRecharges)}</span>
-                        <Wallet className="text-slate-300 dark:text-white/20" size={24} />
+                        <span className={statValueClass}>
+                          INR {formatAmount(financeSummary.vendorRecharges)}
+                        </span>
+                        <Wallet
+                          className="text-slate-300 dark:text-white/20"
+                          size={24}
+                        />
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1">{financeSummary.vendorRechargeCount || 0} deposits</div>
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        {financeSummary.vendorRechargeCount || 0} deposits
+                      </div>
                     </div>
 
                     <div className={adminCardClass}>
                       <div className={statLabelClass}>Tech Fee Earnings</div>
                       <div className="flex items-center justify-between">
-                        <span className={statValueClass}>INR {formatAmount(financeSummary.techFeeEarnings)}</span>
-                        <TrendingUp className="text-slate-300 dark:text-white/20" size={24} />
+                        <span className={statValueClass}>
+                          INR {formatAmount(financeSummary.techFeeEarnings)}
+                        </span>
+                        <TrendingUp
+                          className="text-slate-300 dark:text-white/20"
+                          size={24}
+                        />
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1">From QR print fees</div>
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        From QR print fees
+                      </div>
                     </div>
 
                     <div className={adminCardClass}>
                       <div className={statLabelClass}>Payout Liabilities</div>
                       <div className="flex items-center justify-between">
-                        <span className={statValueClass}>INR {formatAmount(financeSummary.payoutLiabilities)}</span>
-                        <HandCoins className="text-slate-300 dark:text-white/20" size={24} />
+                        <span className={statValueClass}>
+                          INR {formatAmount(financeSummary.payoutLiabilities)}
+                        </span>
+                        <HandCoins
+                          className="text-slate-300 dark:text-white/20"
+                          size={24}
+                        />
                       </div>
                       <div className="text-[10px] text-slate-400 mt-1">
-                        {financeSummary.withdrawals?.pending?.count || 0} pending payouts
+                        {financeSummary.withdrawals?.pending?.count || 0}{" "}
+                        pending payouts
                       </div>
                     </div>
 
                     <div className={adminCardClass}>
                       <div className={statLabelClass}>Wallet Float</div>
                       <div className="flex items-center justify-between">
-                        <span className={statValueClass}>INR {formatAmount(financeSummary.walletFloat)}</span>
-                        <Banknote className="text-slate-300 dark:text-white/20" size={24} />
+                        <span className={statValueClass}>
+                          INR {formatAmount(financeSummary.walletFloat)}
+                        </span>
+                        <Banknote
+                          className="text-slate-300 dark:text-white/20"
+                          size={24}
+                        />
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-1">Total wallet balances</div>
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        Total wallet balances
+                      </div>
                     </div>
                   </div>
 
                   <div className={`${adminPanelClass} overflow-hidden`}>
                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 dark:border-white/10">
                       <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Settlement Reports</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Recent payouts and campaign settlements.</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                          Settlement Reports
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Recent payouts and campaign settlements.
+                        </p>
                       </div>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        Showing {financeSummary.settlements?.length || 0} records
+                        Showing {financeSummary.settlements?.length || 0}{" "}
+                        records
                       </span>
                     </div>
 
@@ -4242,22 +5184,33 @@ const AdminDashboard = () => {
                               user?.email ||
                               "-";
                             const amountClass =
-                              tx.type === "debit" ? "text-rose-500 dark:text-rose-300" : "text-emerald-500 dark:text-emerald-300";
+                              tx.type === "debit"
+                                ? "text-rose-500 dark:text-rose-300"
+                                : "text-emerald-500 dark:text-emerald-300";
                             return (
                               <tr
                                 key={tx.id}
                                 className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                               >
-                                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(tx.createdAt)}</td>
-                                <td className="px-4 py-3 text-slate-900 dark:text-white">{partyLabel}</td>
+                                <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                                  {formatDate(tx.createdAt)}
+                                </td>
+                                <td className="px-4 py-3 text-slate-900 dark:text-white">
+                                  {partyLabel}
+                                </td>
                                 <td className="px-4 py-3 text-slate-900 dark:text-white/70 text-xs tracking-wide">
                                   {(tx.category || "N/A").replace(/_/g, " ")}
                                 </td>
-                                <td className={`px-4 py-3 text-right font-semibold ${amountClass}`}>
-                                  {tx.type === "debit" ? "-" : "+"}INR {formatAmount(tx.amount)}
+                                <td
+                                  className={`px-4 py-3 text-right font-semibold ${amountClass}`}
+                                >
+                                  {tx.type === "debit" ? "-" : "+"}INR{" "}
+                                  {formatAmount(tx.amount)}
                                 </td>
                                 <td className="px-4 py-3">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(tx.status)}`}>
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(tx.status)}`}
+                                  >
                                     {tx.status}
                                   </span>
                                 </td>
@@ -4278,10 +5231,13 @@ const AdminDashboard = () => {
             <section id="transactions" className="space-y-6 mt-12">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Vendor Transactions</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Vendor Transactions
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-300 max-w-xl">
-                    Manual admin recharges are hidden so the table stays focused on vendor payouts and
-                    cashback settlements tied to campaigns.
+                    Manual admin recharges are hidden so the table stays focused
+                    on vendor payouts and cashback settlements tied to
+                    campaigns.
                   </p>
                 </div>
                 {vendorTransactions.length > 8 && (
@@ -4289,14 +5245,24 @@ const AdminDashboard = () => {
                     onClick={() => setShowAllTransactions((prev) => !prev)}
                     className={`${adminGhostButtonClass} whitespace-nowrap`}
                   >
-                    {showAllTransactions ? "Show less" : `View all (${vendorTransactions.length})`}
+                    {showAllTransactions
+                      ? "Show less"
+                      : `View all (${vendorTransactions.length})`}
                   </button>
                 )}
               </div>
-              {isLoadingTransactions && <div className="text-slate-900 dark:text-white/60">Loading...</div>}
-              {transactionsError && <div className="text-rose-400">{transactionsError}</div>}
+              {isLoadingTransactions && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading...
+                </div>
+              )}
+              {transactionsError && (
+                <div className="text-rose-400">{transactionsError}</div>
+              )}
               {!isLoadingTransactions && vendorTransactions.length === 0 ? (
-                <div className="text-slate-900 dark:text-white/60">No vendor settlements yet.</div>
+                <div className="text-slate-900 dark:text-white/60">
+                  No vendor settlements yet.
+                </div>
               ) : (
                 <div className={`${adminPanelClass} overflow-hidden`}>
                   <div className="overflow-x-auto">
@@ -4315,25 +5281,38 @@ const AdminDashboard = () => {
                         {limitedVendorTransactions.map((tx) => {
                           const vendor = tx.Wallet?.Vendor;
                           const vendorName =
-                            vendor?.businessName || vendor?.User?.name || vendor?.id || "Vendor";
+                            vendor?.businessName ||
+                            vendor?.User?.name ||
+                            vendor?.id ||
+                            "Vendor";
                           const vendorContact =
                             vendor?.contactEmail ||
                             vendor?.User?.email ||
                             vendor?.contactPhone ||
                             vendor?.User?.name ||
                             "-";
-                          const campaignLabel = extractCampaignTitle(tx.description);
+                          const campaignLabel = extractCampaignTitle(
+                            tx.description,
+                          );
                           const amountClass =
-                            tx.type === "debit" ? "text-rose-500 dark:text-rose-300" : "text-emerald-500 dark:text-emerald-300";
+                            tx.type === "debit"
+                              ? "text-rose-500 dark:text-rose-300"
+                              : "text-emerald-500 dark:text-emerald-300";
                           return (
                             <tr
                               key={tx.id}
                               className="border-t border-slate-200/70 dark:border-white/5 last:border-b-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                             >
-                              <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{formatDate(tx.createdAt)}</td>
+                              <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                                {formatDate(tx.createdAt)}
+                              </td>
                               <td className="px-4 py-3 text-slate-900 dark:text-white">
-                                <div className="font-semibold">{vendorName}</div>
-                                <div className="text-[11px] text-slate-500 dark:text-slate-400">{vendorContact}</div>
+                                <div className="font-semibold">
+                                  {vendorName}
+                                </div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                  {vendorContact}
+                                </div>
                               </td>
                               <td className="px-4 py-3 text-slate-800 dark:text-slate-200 max-w-[180px] whitespace-normal">
                                 {campaignLabel}
@@ -4341,8 +5320,11 @@ const AdminDashboard = () => {
                               <td className="px-4 py-3 text-slate-900 dark:text-white/70 text-xs tracking-wide">
                                 {(tx.category || "N/A").replace(/_/g, " ")}
                               </td>
-                              <td className={`px-4 py-3 text-right font-semibold ${amountClass}`}>
-                                {tx.type === "debit" ? "-" : "+"}INR {formatAmount(tx.amount)}
+                              <td
+                                className={`px-4 py-3 text-right font-semibold ${amountClass}`}
+                              >
+                                {tx.type === "debit" ? "-" : "+"}INR{" "}
+                                {formatAmount(tx.amount)}
                               </td>
                               <td className="px-4 py-3">
                                 <span
@@ -4366,7 +5348,9 @@ const AdminDashboard = () => {
           {isUsersRoute && (
             <section id="users" className="space-y-6 mt-12">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Users Management</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Users Management
+                </h2>
                 <div className="flex gap-2">
                   <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-sm text-emerald-400">
                     Active: {effectiveUserStatusCounts.active || 0}
@@ -4387,18 +5371,24 @@ const AdminDashboard = () => {
                     >
                       Show Less
                     </button>
-                  ) : filteredUsers.length > 6 && (
-                    <button
-                      onClick={() => setShowAllUsers(true)}
-                      className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
-                    >
-                      View All ({filteredUsers.length})
-                    </button>
+                  ) : (
+                    filteredUsers.length > 6 && (
+                      <button
+                        onClick={() => setShowAllUsers(true)}
+                        className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
+                      >
+                        View All ({filteredUsers.length})
+                      </button>
+                    )
                   )}
                 </div>
               </div>
 
-              {isLoadingUsers && <div className="text-slate-900 dark:text-white/60">Loading users...</div>}
+              {isLoadingUsers && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading users...
+                </div>
+              )}
               {usersError && <div className="text-rose-400">{usersError}</div>}
 
               {limitedUsers.length > 0 && (
@@ -4407,13 +5397,27 @@ const AdminDashboard = () => {
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 dark:bg-white/5">
                         <tr>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Name</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Email</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Phone</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Status</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Wallet</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Joined</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Actions</th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Name
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Email
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Phone
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Status
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Wallet
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Joined
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4422,33 +5426,75 @@ const AdminDashboard = () => {
                             key={user.id}
                             className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                           >
-                            <td className="py-4 px-6 text-slate-900 dark:text-white font-medium">{user.name || '-'}</td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">{user.email}</td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">{user.phoneNumber || '-'}</td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white font-medium">
+                              {user.name || "-"}
+                            </td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
+                              {user.email}
+                            </td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
+                              {user.phoneNumber || "-"}
+                            </td>
                             <td className="py-4 px-6">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(user.status)}`}>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(user.status)}`}
+                              >
                                 {user.status}
                               </span>
                             </td>
                             <td className="py-4 px-6 text-slate-900 dark:text-white/70 text-sm">
-                              {user?.Wallet ? `INR ${formatAmount(user.Wallet.balance)}` : "-"}
+                              {user?.Wallet
+                                ? `INR ${formatAmount(user.Wallet.balance)}`
+                                : "-"}
                             </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60 text-xs">{formatDate(user.createdAt)}</td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60 text-xs">
+                              {formatDate(user.createdAt)}
+                            </td>
                             <td className="py-4 px-6">
                               <select
-                                value={userStatusUpdates[user.id] || user.status}
-                                onChange={(e) => setUserStatusUpdates({ ...userStatusUpdates, [user.id]: e.target.value })}
+                                value={
+                                  userStatusUpdates[user.id] || user.status
+                                }
+                                onChange={(e) =>
+                                  setUserStatusUpdates({
+                                    ...userStatusUpdates,
+                                    [user.id]: e.target.value,
+                                  })
+                                }
                                 className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#059669]"
                               >
-                                <option value="active" className={adminOptionClass}>Active</option>
-                                <option value="inactive" className={adminOptionClass}>Inactive</option>
-                                <option value="blocked" className={adminOptionClass}>Blocked</option>
+                                <option
+                                  value="active"
+                                  className={adminOptionClass}
+                                >
+                                  Active
+                                </option>
+                                <option
+                                  value="inactive"
+                                  className={adminOptionClass}
+                                >
+                                  Inactive
+                                </option>
+                                <option
+                                  value="blocked"
+                                  className={adminOptionClass}
+                                >
+                                  Blocked
+                                </option>
                               </select>
                               <button
-                                onClick={() => handleUserStatusSave(user.id, user.status)}
+                                onClick={() =>
+                                  handleUserStatusSave(user.id, user.status)
+                                }
                                 className="ml-2 px-3 py-1 rounded-lg bg-[#059669] hover:bg-[#047857] text-slate-900 dark:text-white text-xs font-semibold transition-colors"
                               >
                                 Save
+                              </button>
+                              <button
+                                onClick={() => setSelectedUser(user)}
+                                className="ml-2 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
+                              >
+                                View
                               </button>
                               <button
                                 onClick={() => {
@@ -4465,8 +5511,16 @@ const AdminDashboard = () => {
                       </tbody>
                     </table>
                   </div>
-                  {userActionStatus && <div className="p-4 text-sm text-emerald-400">{userActionStatus}</div>}
-                  {userActionError && <div className="p-4 text-sm text-rose-400">{userActionError}</div>}
+                  {userActionStatus && (
+                    <div className="p-4 text-sm text-emerald-400">
+                      {userActionStatus}
+                    </div>
+                  )}
+                  {userActionError && (
+                    <div className="p-4 text-sm text-rose-400">
+                      {userActionError}
+                    </div>
+                  )}
                 </div>
               )}
             </section>
@@ -4477,9 +5531,12 @@ const AdminDashboard = () => {
             <section id="support" className="space-y-6 mt-12">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Disputes & Support</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Disputes & Support
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Review customer issues, respond to disputes, and close tickets.
+                    Review customer issues, respond to disputes, and close
+                    tickets.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -4489,10 +5546,24 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {supportLoading && <div className="text-slate-900 dark:text-white/60">Loading tickets...</div>}
-              {supportError && <div className="text-rose-400">{supportError}</div>}
-              {supportActionStatus && <div className="text-emerald-400 text-sm">{supportActionStatus}</div>}
-              {supportActionError && <div className="text-rose-400 text-sm">{supportActionError}</div>}
+              {supportLoading && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading tickets...
+                </div>
+              )}
+              {supportError && (
+                <div className="text-rose-400">{supportError}</div>
+              )}
+              {supportActionStatus && (
+                <div className="text-emerald-400 text-sm">
+                  {supportActionStatus}
+                </div>
+              )}
+              {supportActionError && (
+                <div className="text-rose-400 text-sm">
+                  {supportActionError}
+                </div>
+              )}
 
               {supportTickets.length > 0 ? (
                 <div className={`${adminPanelClass} overflow-hidden`}>
@@ -4500,32 +5571,56 @@ const AdminDashboard = () => {
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 dark:bg-white/5">
                         <tr>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Ticket</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Customer</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Status</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Message</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Response</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Actions</th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Ticket
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Customer
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Status
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Message
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Response
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {supportTickets.map((ticket) => {
                           const draft = supportReplies[ticket.id] || {};
-                          const responseValue = draft.response ?? ticket.response ?? "";
-                          const statusValue = draft.status ?? ticket.status ?? "open";
+                          const responseValue =
+                            draft.response ?? ticket.response ?? "";
+                          const statusValue =
+                            draft.status ?? ticket.status ?? "open";
                           return (
                             <tr
                               key={ticket.id}
                               className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors align-top"
                             >
                               <td className="py-4 px-6 text-slate-900 dark:text-white">
-                                <div className="font-semibold">{ticket.subject || "Support Ticket"}</div>
-                                <div className="text-[10px] text-slate-400">ID: {ticket.id?.slice(0, 8)}</div>
-                                <div className="text-[10px] text-slate-400 mt-1">{formatDate(ticket.createdAt)}</div>
+                                <div className="font-semibold">
+                                  {ticket.subject || "Support Ticket"}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  ID: {ticket.id?.slice(0, 8)}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-1">
+                                  {formatDate(ticket.createdAt)}
+                                </div>
                               </td>
                               <td className="py-4 px-6 text-slate-900 dark:text-white/70">
-                                <div className="font-semibold">{ticket.User?.name || "Customer"}</div>
-                                <div className="text-[11px] text-slate-400">{ticket.User?.email || "-"}</div>
+                                <div className="font-semibold">
+                                  {ticket.User?.name || "Customer"}
+                                </div>
+                                <div className="text-[11px] text-slate-400">
+                                  {ticket.User?.email || "-"}
+                                </div>
                               </td>
                               <td className="py-4 px-6">
                                 <select
@@ -4533,18 +5628,38 @@ const AdminDashboard = () => {
                                   onChange={(e) =>
                                     setSupportReplies((prev) => ({
                                       ...prev,
-                                      [ticket.id]: { ...draft, status: e.target.value },
+                                      [ticket.id]: {
+                                        ...draft,
+                                        status: e.target.value,
+                                      },
                                     }))
                                   }
                                   className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#059669]"
                                 >
-                                  <option value="open" className={adminOptionClass}>Open</option>
-                                  <option value="in_review" className={adminOptionClass}>In Review</option>
-                                  <option value="resolved" className={adminOptionClass}>Resolved</option>
+                                  <option
+                                    value="open"
+                                    className={adminOptionClass}
+                                  >
+                                    Open
+                                  </option>
+                                  <option
+                                    value="in_review"
+                                    className={adminOptionClass}
+                                  >
+                                    In Review
+                                  </option>
+                                  <option
+                                    value="resolved"
+                                    className={adminOptionClass}
+                                  >
+                                    Resolved
+                                  </option>
                                 </select>
                               </td>
                               <td className="py-4 px-6 text-slate-600 dark:text-slate-300 max-w-[220px]">
-                                <div className="text-xs whitespace-pre-wrap">{ticket.message || "-"}</div>
+                                <div className="text-xs whitespace-pre-wrap">
+                                  {ticket.message || "-"}
+                                </div>
                               </td>
                               <td className="py-4 px-6">
                                 <textarea
@@ -4553,7 +5668,10 @@ const AdminDashboard = () => {
                                   onChange={(e) =>
                                     setSupportReplies((prev) => ({
                                       ...prev,
-                                      [ticket.id]: { ...draft, response: e.target.value },
+                                      [ticket.id]: {
+                                        ...draft,
+                                        response: e.target.value,
+                                      },
                                     }))
                                   }
                                   placeholder="Write a response..."
@@ -4577,7 +5695,9 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 !supportLoading && (
-                  <div className="text-sm text-slate-500 dark:text-slate-400">No disputes or support tickets.</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    No disputes or support tickets.
+                  </div>
                 )
               )}
             </section>
@@ -4589,7 +5709,9 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {isSubscriptionsRoute ? "Subscriptions" : "Vendors Management"}
+                    {isSubscriptionsRoute
+                      ? "Subscriptions"
+                      : "Vendors Management"}
                   </h2>
                   {isSubscriptionsRoute && (
                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -4612,13 +5734,15 @@ const AdminDashboard = () => {
                       >
                         Show Less
                       </button>
-                    ) : filteredVendors.length > 6 && (
-                      <button
-                        onClick={() => setShowAllVendors(true)}
-                        className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
-                      >
-                        View All ({filteredVendors.length})
-                      </button>
+                    ) : (
+                      filteredVendors.length > 6 && (
+                        <button
+                          onClick={() => setShowAllVendors(true)}
+                          className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
+                        >
+                          View All ({filteredVendors.length})
+                        </button>
+                      )
                     )}
                   </div>
                 )}
@@ -4645,17 +5769,24 @@ const AdminDashboard = () => {
                     </div>
                     <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
                       {subscriptionBuckets.active.slice(0, 3).map((sub) => (
-                        <li key={sub.id} className="flex items-center justify-between">
+                        <li
+                          key={sub.id}
+                          className="flex items-center justify-between"
+                        >
                           <div className="text-slate-900 dark:text-white">
                             {sub.Brand?.name || "Brand"}
                           </div>
                           <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {sub.Brand?.Vendor?.businessName || sub.Brand?.Vendor?.User?.name || "Vendor"}
+                            {sub.Brand?.Vendor?.businessName ||
+                              sub.Brand?.Vendor?.User?.name ||
+                              "Vendor"}
                           </span>
                         </li>
                       ))}
                       {!subscriptionBuckets.active.length && (
-                        <li className="text-xs text-slate-500">No active subscriptions yet.</li>
+                        <li className="text-xs text-slate-500">
+                          No active subscriptions yet.
+                        </li>
                       )}
                     </ul>
                   </div>
@@ -4673,13 +5804,21 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <span className="text-xs font-semibold text-amber-500">
-                        {subscriptionBuckets.paused.length + subscriptionBuckets.expired.length}
+                        {subscriptionBuckets.paused.length +
+                          subscriptionBuckets.expired.length}
                       </span>
                     </div>
                     <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                      {[...subscriptionBuckets.paused, ...subscriptionBuckets.expired].slice(0, 4).map(
-                        (sub) => (
-                          <li key={sub.id} className="flex items-center justify-between">
+                      {[
+                        ...subscriptionBuckets.paused,
+                        ...subscriptionBuckets.expired,
+                      ]
+                        .slice(0, 4)
+                        .map((sub) => (
+                          <li
+                            key={sub.id}
+                            className="flex items-center justify-between"
+                          >
                             <div className="text-slate-900 dark:text-white">
                               {sub.Brand?.name || "Brand"}
                             </div>
@@ -4687,18 +5826,23 @@ const AdminDashboard = () => {
                               {sub.status}
                             </span>
                           </li>
-                        )
-                      )}
-                      {!subscriptionBuckets.paused.length && !subscriptionBuckets.expired.length && (
-                        <li className="text-xs text-slate-500">All subscriptions are active.</li>
-                      )}
+                        ))}
+                      {!subscriptionBuckets.paused.length &&
+                        !subscriptionBuckets.expired.length && (
+                          <li className="text-xs text-slate-500">
+                            All subscriptions are active.
+                          </li>
+                        )}
                     </ul>
                   </div>
                 </div>
               )}
 
               {showSubscriptionControls && (
-                <div id="subscriptions" className={`${adminPanelClass} space-y-4`}>
+                <div
+                  id="subscriptions"
+                  className={`${adminPanelClass} space-y-4`}
+                >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -4722,7 +5866,9 @@ const AdminDashboard = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Vendor</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Vendor
+                      </label>
                       <select
                         value={subscriptionForm.vendorId}
                         onChange={handleSubscriptionFormChange("vendorId")}
@@ -4740,7 +5886,9 @@ const AdminDashboard = () => {
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Action</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Action
+                      </label>
                       <select
                         value={subscriptionForm.action}
                         onChange={handleSubscriptionFormChange("action")}
@@ -4755,10 +5903,14 @@ const AdminDashboard = () => {
                     </div>
                     {subscriptionForm.action === "renew" && (
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Duration</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Duration
+                        </label>
                         <select
                           value={subscriptionForm.subscriptionType}
-                          onChange={handleSubscriptionFormChange("subscriptionType")}
+                          onChange={handleSubscriptionFormChange(
+                            "subscriptionType",
+                          )}
                           className={adminInputClass}
                         >
                           {subscriptionOptions.map((option) => (
@@ -4778,17 +5930,23 @@ const AdminDashboard = () => {
                           type="number"
                           min={1}
                           value={subscriptionForm.extendMonths}
-                          onChange={handleSubscriptionFormChange("extendMonths")}
+                          onChange={handleSubscriptionFormChange(
+                            "extendMonths",
+                          )}
                           className={adminInputClass}
                           placeholder="6"
                         />
                       </div>
                     )}
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Filter view</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Filter view
+                      </label>
                       <select
                         value={subscriptionFilter}
-                        onChange={(event) => setSubscriptionFilter(event.target.value)}
+                        onChange={(event) =>
+                          setSubscriptionFilter(event.target.value)
+                        }
                         className={adminInputClass}
                       >
                         {subscriptionFilterOptions.map((option) => (
@@ -4805,30 +5963,50 @@ const AdminDashboard = () => {
                     onClick={handleSubscriptionAction}
                     className={adminPrimaryButtonClass}
                   >
-                    {isUpdatingSubscription ? "Updating subscription..." : "Apply subscription update"}
+                    {isUpdatingSubscription
+                      ? "Updating subscription..."
+                      : "Apply subscription update"}
                   </button>
                   {subscriptionMessage && (
-                    <div className="text-xs text-emerald-600">{subscriptionMessage}</div>
+                    <div className="text-xs text-emerald-600">
+                      {subscriptionMessage}
+                    </div>
                   )}
                   {subscriptionError && (
-                    <div className="text-xs text-rose-600">{subscriptionError}</div>
+                    <div className="text-xs text-rose-600">
+                      {subscriptionError}
+                    </div>
                   )}
                   {isLoadingSubscriptions && (
-                    <div className="text-sm text-slate-500">Loading subscriptions...</div>
+                    <div className="text-sm text-slate-500">
+                      Loading subscriptions...
+                    </div>
                   )}
                   {subscriptionsError && (
-                    <div className="text-xs text-rose-500">{subscriptionsError}</div>
+                    <div className="text-xs text-rose-500">
+                      {subscriptionsError}
+                    </div>
                   )}
                   {subscriptions.length > 0 && (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 dark:bg-white/5">
                           <tr>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Brand</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">QR Price</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Vendor</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Status</th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">Ends</th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Brand
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              QR Price
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Vendor
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Status
+                            </th>
+                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
+                              Ends
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -4841,7 +6019,9 @@ const AdminDashboard = () => {
                                 {subscription.Brand?.name || "Brand"}
                               </td>
                               <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                {Number.isFinite(Number(subscription.Brand?.qrPricePerUnit))
+                                {Number.isFinite(
+                                  Number(subscription.Brand?.qrPricePerUnit),
+                                )
                                   ? `INR ${formatAmount(subscription.Brand?.qrPricePerUnit)}/QR`
                                   : "-"}
                               </td>
@@ -4854,7 +6034,7 @@ const AdminDashboard = () => {
                               <td className="py-3 px-3">
                                 <span
                                   className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(
-                                    subscription.status
+                                    subscription.status,
                                   )}`}
                                 >
                                   {subscription.status}
@@ -4872,12 +6052,16 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {(showVendorTable || showSubscriptionControls) && isLoadingVendors && (
-                <div className="text-slate-900 dark:text-white/60">Loading vendors...</div>
-              )}
-              {(showVendorTable || showSubscriptionControls) && vendorsError && (
-                <div className="text-rose-400">{vendorsError}</div>
-              )}
+              {(showVendorTable || showSubscriptionControls) &&
+                isLoadingVendors && (
+                  <div className="text-slate-900 dark:text-white/60">
+                    Loading vendors...
+                  </div>
+                )}
+              {(showVendorTable || showSubscriptionControls) &&
+                vendorsError && (
+                  <div className="text-rose-400">{vendorsError}</div>
+                )}
 
               {showVendorTable && limitedVendors.length > 0 && (
                 <div className={`${adminPanelClass} overflow-hidden`}>
@@ -4885,27 +6069,48 @@ const AdminDashboard = () => {
                     <table className="w-full min-w-[1000px] text-sm table-auto">
                       <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200/70 dark:border-white/5">
                         <tr>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">Brand & Vendor</th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">Contact Info</th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">Subscription</th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">QR Price</th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">Status</th>
-                          <th className="text-right py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">Actions</th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Brand & Vendor
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Contact Info
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Subscription
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            QR Price
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Status
+                          </th>
+                          <th className="text-right py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                         {limitedVendors.map((vendor) => {
                           const brandName = vendor.Brand?.name || "No Brand";
-                          const businessName = vendor.businessName || vendor.User?.name || "Vendor";
+                          const businessName =
+                            vendor.businessName ||
+                            vendor.User?.name ||
+                            "Vendor";
                           const brandLogo = vendor.Brand?.logoUrl;
-                          const subscriptionStatus = vendor.Brand?.Subscription?.status;
-                          const subscriptionEnds = vendor.Brand?.Subscription?.endDate;
+                          const subscriptionStatus =
+                            vendor.Brand?.Subscription?.status;
+                          const subscriptionEnds =
+                            vendor.Brand?.Subscription?.endDate;
                           const qrPrice = vendor.Brand?.qrPricePerUnit;
                           const qrPriceLabel = Number.isFinite(Number(qrPrice))
                             ? `INR ${formatAmount(qrPrice)}`
                             : "-";
-                          const contactPhone = vendor.contactPhone || vendor.User?.phoneNumber || "-";
-                          const contactEmail = vendor.contactEmail || vendor.User?.email || "-";
+                          const contactPhone =
+                            vendor.contactPhone ||
+                            vendor.User?.phoneNumber ||
+                            "-";
+                          const contactEmail =
+                            vendor.contactEmail || vendor.User?.email || "-";
 
                           return (
                             <tr
@@ -4923,14 +6128,23 @@ const AdminDashboard = () => {
                                         src={brandLogo}
                                         alt={brandName}
                                         className="absolute inset-0 h-10 w-10 rounded-xl object-cover border border-slate-200/70 dark:border-white/10 bg-white"
-                                        onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                        onError={(e) => {
+                                          e.currentTarget.style.display =
+                                            "none";
+                                        }}
                                       />
                                     )}
                                   </div>
                                   <div className="flex flex-col">
-                                    <span className="font-bold text-slate-900 dark:text-white leading-tight">{brandName}</span>
-                                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{businessName}</span>
-                                    <span className="text-[10px] text-slate-400 mt-0.5 font-mono">ID: {vendor.id.slice(0, 8)}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white leading-tight">
+                                      {brandName}
+                                    </span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                      {businessName}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                                      ID: {vendor.id.slice(0, 8)}
+                                    </span>
                                   </div>
                                 </div>
                               </td>
@@ -4940,7 +6154,12 @@ const AdminDashboard = () => {
                                   {contactEmail !== "-" && (
                                     <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
                                       <Mail size={12} className="opacity-50" />
-                                      <span className="truncate max-w-[180px]" title={contactEmail}>{contactEmail}</span>
+                                      <span
+                                        className="truncate max-w-[180px]"
+                                        title={contactEmail}
+                                      >
+                                        {contactEmail}
+                                      </span>
                                     </div>
                                   )}
                                   {contactPhone !== "-" && (
@@ -4972,19 +6191,32 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
-                                <span className="font-semibold text-slate-900 dark:text-white text-sm">{qrPriceLabel}</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-sm">
+                                  {qrPriceLabel}
+                                </span>
                               </td>
 
                               <td className="py-4 px-6 align-top">
                                 <button
                                   type="button"
-                                  onClick={() => handleAccountView({ vendorId: vendor.id, brandId: vendor.Brand?.id, initialTab: 'profile' })}
+                                  onClick={() =>
+                                    handleAccountView({
+                                      vendorId: vendor.id,
+                                      brandId: vendor.Brand?.id,
+                                      initialTab: "profile",
+                                    })
+                                  }
                                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusClasses(vendor.status)} bg-opacity-10 hover:bg-opacity-20 transition-all cursor-pointer`}
                                   title="Click to update status"
                                 >
-                                  <span className={`w-1.5 h-1.5 rounded-full ${vendor.status === 'active' ? 'bg-emerald-500' :
-                                    vendor.status === 'paused' ? 'bg-amber-500' : 'bg-slate-400'
-                                    }`} />
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${vendor.status === "active"
+                                      ? "bg-emerald-500"
+                                      : vendor.status === "paused"
+                                        ? "bg-amber-500"
+                                        : "bg-slate-400"
+                                      }`}
+                                  />
                                   {vendor.status}
                                 </button>
                               </td>
@@ -4992,7 +6224,12 @@ const AdminDashboard = () => {
                               <td className="py-4 px-6 align-top text-right">
                                 <button
                                   type="button"
-                                  onClick={() => handleAccountView({ vendorId: vendor.id, brandId: vendor.Brand?.id })}
+                                  onClick={() =>
+                                    handleAccountView({
+                                      vendorId: vendor.id,
+                                      brandId: vendor.Brand?.id,
+                                    })
+                                  }
                                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow dark:shadow-white/5 active:scale-95"
                                 >
                                   Manage
@@ -5005,11 +6242,18 @@ const AdminDashboard = () => {
                       </tbody>
                     </table>
                   </div>
-                  {vendorActionStatus && <div className="p-4 text-sm text-emerald-400">{vendorActionStatus}</div>}
-                  {vendorActionError && <div className="p-4 text-sm text-rose-400">{vendorActionError}</div>}
+                  {vendorActionStatus && (
+                    <div className="p-4 text-sm text-emerald-400">
+                      {vendorActionStatus}
+                    </div>
+                  )}
+                  {vendorActionError && (
+                    <div className="p-4 text-sm text-rose-400">
+                      {vendorActionError}
+                    </div>
+                  )}
                 </div>
               )}
-
             </section>
           )}
 
@@ -5017,7 +6261,9 @@ const AdminDashboard = () => {
           {isQrsRoute && (
             <section id="qrs" className="space-y-6 mt-12">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">QR Code Registry</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  QR Code Registry
+                </h2>
                 <div className="flex gap-2">
                   <span className="px-3 py-1 rounded-lg bg-[#059669]/20 text-sm text-[#059669]">
                     Active: {qrStatusCounts.active || 0}
@@ -5036,8 +6282,8 @@ const AdminDashboard = () => {
                       Load More
                     </button>
                   )}
-                  {qrs.length > 8 && (
-                    showAllQrs ? (
+                  {qrs.length > 8 &&
+                    (showAllQrs ? (
                       <button
                         onClick={() => setShowAllQrs(false)}
                         className={adminGhostButtonClass}
@@ -5051,12 +6297,15 @@ const AdminDashboard = () => {
                       >
                         View All ({qrsTotalLabel})
                       </button>
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
 
-              {isLoadingQrs && <div className="text-slate-900 dark:text-white/60">Loading QR codes...</div>}
+              {isLoadingQrs && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading QR codes...
+                </div>
+              )}
               {qrsError && <div className="text-rose-400">{qrsError}</div>}
 
               {limitedQrs.length > 0 && (
@@ -5065,12 +6314,24 @@ const AdminDashboard = () => {
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 dark:bg-white/5">
                         <tr>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">QR ID</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Vendor ID</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Campaign</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Status</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Scans</th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">Created</th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            QR ID
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Vendor ID
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Campaign
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Status
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Scans
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
+                            Created
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -5079,16 +6340,28 @@ const AdminDashboard = () => {
                             key={qr.id}
                             className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                           >
-                            <td className="py-4 px-6 text-slate-900 dark:text-white font-mono text-xs">{qr.id.substring(0, 8)}...</td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">{qr.vendorId || '-'}</td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">{qr.campaignId || '-'}</td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white font-mono text-xs">
+                              {qr.id.substring(0, 8)}...
+                            </td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
+                              {qr.vendorId || "-"}
+                            </td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
+                              {qr.campaignId || "-"}
+                            </td>
                             <td className="py-4 px-6">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(qr.status)}`}>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(qr.status)}`}
+                              >
                                 {qr.status}
                               </span>
                             </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white">{qr.scanCount || 0}</td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60 text-xs">{formatDate(qr.createdAt)}</td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white">
+                              {qr.scanCount || 0}
+                            </td>
+                            <td className="py-4 px-6 text-slate-900 dark:text-white/60 text-xs">
+                              {formatDate(qr.createdAt)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -5099,13 +6372,17 @@ const AdminDashboard = () => {
             </section>
           )}
 
-
           {/* Activity Logs Section */}
           {isLogsRoute && (
-            <section id="logs" className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section
+              id="logs"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Activity Logs</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Activity Logs
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     Audit trail of all system activities and user actions.
                   </p>
@@ -5137,14 +6414,14 @@ const AdminDashboard = () => {
                   <div className="flex gap-1">
                     <button
                       disabled={logsPage <= 1}
-                      onClick={() => setLogsPage(p => p - 1)}
+                      onClick={() => setLogsPage((p) => p - 1)}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 disabled:opacity-50"
                     >
                       <ChevronRight className="rotate-180" size={16} />
                     </button>
                     <button
                       disabled={logs.length < 50} // Assuming default limit
-                      onClick={() => setLogsPage(p => p + 1)}
+                      onClick={() => setLogsPage((p) => p + 1)}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 disabled:opacity-50"
                     >
                       <ChevronRight size={16} />
@@ -5153,7 +6430,9 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {logsLoading && <div className="text-slate-500">Loading logs...</div>}
+              {logsLoading && (
+                <div className="text-slate-500">Loading logs...</div>
+              )}
               {logsError && <div className="text-rose-500">{logsError}</div>}
 
               {!logsLoading && filteredLogs.length > 0 && (
@@ -5162,27 +6441,49 @@ const AdminDashboard = () => {
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50 dark:bg-white/5">
                         <tr>
-                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Time</th>
-                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Action</th>
-                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Actor</th>
-                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">Details</th>
+                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
+                            Time
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
+                            Action
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
+                            Actor
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-slate-500 dark:text-slate-400">
+                            Details
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                         {filteredLogs.map((log) => (
-                          <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
+                          <tr
+                            key={log.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]"
+                          >
                             <td className="py-3 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                               {new Date(log.createdAt).toLocaleString()}
                             </td>
                             <td className="py-3 px-4">
-                              <span className="font-medium text-slate-900 dark:text-white block">{log.action}</span>
-                              <span className="text-xs text-slate-500">{log.entityType} • {log.entityId?.slice(0, 8)}</span>
+                              <span className="font-medium text-slate-900 dark:text-white block">
+                                {log.action}
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {log.entityType} ï¿½ {log.entityId?.slice(0, 8)}
+                              </span>
                             </td>
                             <td className="py-3 px-4">
-                              <div className="text-slate-900 dark:text-white">{log.User?.name || "System"}</div>
-                              <div className="text-xs text-slate-500">{log.User?.email || log.actorRole}</div>
+                              <div className="text-slate-900 dark:text-white">
+                                {log.User?.name || "System"}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {log.User?.email || log.actorRole}
+                              </div>
                             </td>
-                            <td className="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-md truncate" title={JSON.stringify(log.metadata)}>
+                            <td
+                              className="py-3 px-4 text-slate-600 dark:text-slate-300 max-w-md truncate"
+                              title={JSON.stringify(log.metadata)}
+                            >
                               {log.details || "-"}
                             </td>
                           </tr>
@@ -5202,52 +6503,87 @@ const AdminDashboard = () => {
 
           {/* System Settings Section */}
           {isSettingsRoute && (
-            <section id="settings" className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section
+              id="settings"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">System Settings</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    System Settings
+                  </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Global platform configuration. Changes affect all users immediately.
+                    Global platform configuration. Changes affect all users
+                    immediately.
                   </p>
                 </div>
               </div>
 
-              {settingsLoading && <div className="text-slate-500">Loading settings...</div>}
-              {settingsError && <div className="text-rose-500">{settingsError}</div>}
-              {settingsMessage && <div className="text-emerald-500">{settingsMessage}</div>}
+              {settingsLoading && (
+                <div className="text-slate-500">Loading settings...</div>
+              )}
+              {settingsError && (
+                <div className="text-rose-500">{settingsError}</div>
+              )}
+              {settingsMessage && (
+                <div className="text-emerald-500">{settingsMessage}</div>
+              )}
 
               {settings && (
                 <div className={`${adminPanelClass} p-6 max-w-3xl space-y-6`}>
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Financial Controls</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Financial Controls
+                    </h3>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tech Fee per QR (INR)</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Tech Fee per QR (INR)
+                        </label>
                         <input
                           type="number"
                           step="0.01"
                           value={settings.techFeePerQr ?? ""}
-                          onChange={(e) => setSettings({ ...settings, techFeePerQr: parseFloat(e.target.value) })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              techFeePerQr: parseFloat(e.target.value),
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Min. Payout Amount (INR)</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Min. Payout Amount (INR)
+                        </label>
                         <input
                           type="number"
                           step="1"
                           value={settings.minPayoutAmount ?? ""}
-                          onChange={(e) => setSettings({ ...settings, minPayoutAmount: parseFloat(e.target.value) })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              minPayoutAmount: parseFloat(e.target.value),
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Max Daily Payout (INR)</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Max Daily Payout (INR)
+                        </label>
                         <input
                           type="number"
                           step="1"
                           value={settings.maxDailyPayout ?? ""}
-                          onChange={(e) => setSettings({ ...settings, maxDailyPayout: parseFloat(e.target.value) })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              maxDailyPayout: parseFloat(e.target.value),
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
@@ -5255,42 +6591,72 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="border-t border-slate-200/60 dark:border-white/10 pt-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Platform Details</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Platform Details
+                    </h3>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Platform Name</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Platform Name
+                        </label>
                         <input
                           type="text"
                           value={settings.platformName ?? ""}
-                          onChange={(e) => setSettings({ ...settings, platformName: e.target.value })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              platformName: e.target.value,
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Support Email</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Support Email
+                        </label>
                         <input
                           type="email"
                           value={settings.supportEmail ?? ""}
-                          onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              supportEmail: e.target.value,
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Terms URL</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Terms URL
+                        </label>
                         <input
                           type="text"
                           value={settings.termsUrl ?? ""}
-                          onChange={(e) => setSettings({ ...settings, termsUrl: e.target.value })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              termsUrl: e.target.value,
+                            })
+                          }
                           placeholder="https://example.com/terms"
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Privacy URL</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Privacy URL
+                        </label>
                         <input
                           type="text"
                           value={settings.privacyUrl ?? ""}
-                          onChange={(e) => setSettings({ ...settings, privacyUrl: e.target.value })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              privacyUrl: e.target.value,
+                            })
+                          }
                           placeholder="https://example.com/privacy"
                           className={adminInputClass}
                         />
@@ -5299,22 +6665,36 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="border-t border-slate-200/60 dark:border-white/10 pt-6 space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Fraud & QR Rules</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Fraud & QR Rules
+                    </h3>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Default QR Expiry (Days)</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Default QR Expiry (Days)
+                        </label>
                         <input
                           type="number"
                           value={settings.qrExpiryDays ?? ""}
-                          onChange={(e) => setSettings({ ...settings, qrExpiryDays: parseInt(e.target.value) })}
+                          onChange={(e) =>
+                            setSettings({
+                              ...settings,
+                              qrExpiryDays: parseInt(e.target.value),
+                            })
+                          }
                           className={adminInputClass}
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Max Redemptions per User</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Max Redemptions per User
+                        </label>
                         <input
                           type="number"
-                          value={settings.fraudThresholds?.maxRedemptionsPerUser ?? ""}
+                          value={
+                            settings.fraudThresholds?.maxRedemptionsPerUser ??
+                            ""
+                          }
                           onChange={(e) =>
                             setSettings({
                               ...settings,
@@ -5328,16 +6708,23 @@ const AdminDashboard = () => {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Max Redeemer Share (%)</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          Max Redeemer Share (%)
+                        </label>
                         <input
                           type="number"
-                          value={settings.fraudThresholds?.maxRedeemerSharePercent ?? ""}
+                          value={
+                            settings.fraudThresholds?.maxRedeemerSharePercent ??
+                            ""
+                          }
                           onChange={(e) =>
                             setSettings({
                               ...settings,
                               fraudThresholds: {
                                 ...(settings.fraudThresholds || {}),
-                                maxRedeemerSharePercent: parseFloat(e.target.value),
+                                maxRedeemerSharePercent: parseFloat(
+                                  e.target.value,
+                                ),
                               },
                             })
                           }
@@ -5350,7 +6737,9 @@ const AdminDashboard = () => {
                   <div className="border-t border-slate-200/60 dark:border-white/10 pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Home Banners</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                          Home Banners
+                        </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           These banners appear on the customer home screen.
                         </p>
@@ -5366,7 +6755,8 @@ const AdminDashboard = () => {
 
                     {homeBanners.length === 0 && (
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        No banners configured yet. Add one to populate the home screen.
+                        No banners configured yet. Add one to populate the home
+                        screen.
                       </div>
                     )}
 
@@ -5391,39 +6781,71 @@ const AdminDashboard = () => {
 
                           <div className="grid md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Title</label>
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Title
+                              </label>
                               <input
                                 type="text"
                                 value={banner?.title || ""}
-                                onChange={(e) => handleBannerFieldChange(index, "title", e.target.value)}
+                                onChange={(e) =>
+                                  handleBannerFieldChange(
+                                    index,
+                                    "title",
+                                    e.target.value,
+                                  )
+                                }
                                 className={adminInputClass}
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Subtitle</label>
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Subtitle
+                              </label>
                               <input
                                 type="text"
                                 value={banner?.subtitle || ""}
-                                onChange={(e) => handleBannerFieldChange(index, "subtitle", e.target.value)}
+                                onChange={(e) =>
+                                  handleBannerFieldChange(
+                                    index,
+                                    "subtitle",
+                                    e.target.value,
+                                  )
+                                }
                                 className={adminInputClass}
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Accent Gradient</label>
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Accent Gradient
+                              </label>
                               <input
                                 type="text"
                                 value={banner?.accent || ""}
-                                onChange={(e) => handleBannerFieldChange(index, "accent", e.target.value)}
+                                onChange={(e) =>
+                                  handleBannerFieldChange(
+                                    index,
+                                    "accent",
+                                    e.target.value,
+                                  )
+                                }
                                 placeholder="from-blue-600 to-indigo-900"
                                 className={adminInputClass}
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Link (Optional)</label>
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Link (Optional)
+                              </label>
                               <input
                                 type="text"
                                 value={banner?.link || ""}
-                                onChange={(e) => handleBannerFieldChange(index, "link", e.target.value)}
+                                onChange={(e) =>
+                                  handleBannerFieldChange(
+                                    index,
+                                    "link",
+                                    e.target.value,
+                                  )
+                                }
                                 placeholder="/brand-details"
                                 className={adminInputClass}
                               />
@@ -5439,7 +6861,9 @@ const AdminDashboard = () => {
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <span className="text-[10px] text-slate-400">No image</span>
+                                <span className="text-[10px] text-slate-400">
+                                  No image
+                                </span>
                               )}
                             </div>
                             <div className="flex-1 space-y-2">
@@ -5462,7 +6886,13 @@ const AdminDashboard = () => {
                                 <input
                                   type="text"
                                   value={banner?.img || ""}
-                                  onChange={(e) => handleBannerFieldChange(index, "img", e.target.value)}
+                                  onChange={(e) =>
+                                    handleBannerFieldChange(
+                                      index,
+                                      "img",
+                                      e.target.value,
+                                    )
+                                  }
                                   placeholder="Image URL"
                                   className={adminInputClass}
                                 />
@@ -5512,6 +6942,18 @@ const AdminDashboard = () => {
             />
           )}
 
+          {/* User Account Manager Modal */}
+          {selectedUser && !isUserWalletOpen && (
+            <UserAccountManager
+              user={selectedUser}
+              token={token}
+              onClose={() => setSelectedUser(null)}
+              onUpdate={() => {
+                loadUsers(token);
+              }}
+            />
+          )}
+
           {isUserWalletOpen && selectedUser && (
             <UserWalletModal
               user={selectedUser}
@@ -5524,7 +6966,7 @@ const AdminDashboard = () => {
           )}
         </main>
       </div>
-    </div >
+    </div>
   );
 };
 

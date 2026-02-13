@@ -29,7 +29,7 @@ import {
     rejectAdminCredentialRequest,
     getAdminCampaignAnalytics,
     updateAdminCampaignStatus
-} from "../../services/api";
+} from "../../lib/api";
 
 const COLORS = ['#059669', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6'];
 const QR_BASE_URL = import.meta.env.VITE_QR_BASE_URL || "https://shakti-gold-rewards.vercel.app/q";
