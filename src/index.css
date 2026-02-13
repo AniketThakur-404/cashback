@@ -157,7 +157,7 @@
 
 html,
 body {
-  overscroll-behavior-y: none;
+  /* overscroll-behavior-y: none; Removed to enable native refresh */
 }
 
 .font-admin-body {
