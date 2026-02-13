@@ -489,7 +489,7 @@ const Home = () => {
         )}
 
         {/* --- 3 – QUICK ACTIONS --- */}
-        <div className="quick-actions grid grid-cols-2 gap-4">
+        <div className="quick-actions grid grid-cols-4 gap-2">
           {quickActions.map((item, i) => (
             <Link
               key={i}
@@ -497,17 +497,17 @@ const Home = () => {
               className="quick-action active:scale-[0.95] transition-transform"
               style={{ opacity: 1, visibility: "visible", transform: "none" }}
             >
-              <div className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm">
+              <div className="flex flex-col items-center text-center gap-2 p-2.5 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                   style={{
                     background: item.gradient,
-                    boxShadow: `0 6px 16px ${item.shadow}`,
+                    boxShadow: `0 4px 12px ${item.shadow}`,
                   }}
                 >
-                  <item.icon size={22} className="text-white" />
+                  <item.icon size={18} className="text-white" />
                 </div>
-                <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                <span className="text-[10px] font-bold text-zinc-900 dark:text-gray-100 truncate w-full">
                   {item.label}
                 </span>
               </div>
@@ -515,7 +515,7 @@ const Home = () => {
           ))}
         </div>
 
-        {/* --- 4 � YOUR ACTIVITY STATS --- */}
+        {/* --- 4 – YOUR ACTIVITY STATS --- */}
         <div
           className="home-activity-section"
           style={{
@@ -560,19 +560,19 @@ const Home = () => {
                   Your Activity
                 </span>
               </div>
-              <div className="flex flex-col gap-3" style={{ opacity: 1 }}>
+              <div className="grid grid-cols-3 gap-2.5" style={{ opacity: 1 }}>
                 {statItems.map((s, i) => (
                   <div
                     key={i}
-                    className="home-stat-box rounded-2xl p-4 flex items-center justify-between"
+                    className="home-stat-box rounded-2xl p-3 flex flex-col items-center justify-center text-center"
                     style={{
                       opacity: 1,
                       background: s.bg,
-                      border: `2px solid ${s.border}`,
+                      border: `1px solid ${s.border}`,
                     }}
                   >
                     <div
-                      className="text-[12px] font-black uppercase"
+                      className="text-[9px] font-black uppercase mb-1"
                       style={{
                         letterSpacing: "0.1em",
                         color: s.color,
@@ -583,12 +583,12 @@ const Home = () => {
                     </div>
                     {isLoading ? (
                       <div
-                        className="h-8 rounded-lg animate-pulse w-16"
+                        className="h-6 rounded-lg animate-pulse w-10"
                         style={{ background: "rgba(0,0,0,0.15)", opacity: 1 }}
                       />
                     ) : (
                       <div
-                        className="text-[28px] font-black leading-none"
+                        className="text-[18px] font-black leading-none"
                         style={{
                           opacity: 1,
                           color: s.color,
