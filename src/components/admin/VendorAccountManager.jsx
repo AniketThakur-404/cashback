@@ -35,25 +35,6 @@ import {
 import { jsPDF } from "jspdf";
 import { QRCodeCanvas } from "qrcode.react";
 import {
-<<<<<<< HEAD
-    getAdminVendorOverview,
-    updateAdminVendorDetails,
-    updateAdminVendorStatus,
-    getAdminBrandOverview,
-    updateAdminBrandDetails,
-    updateAdminBrandStatus,
-    getAdminTransactionsFiltered,
-    getAdminOrders,
-    updateAdminOrderStatus,
-    getAdminQrBatch,
-    uploadImage,
-    updateAdminVendorCredentials,
-    getAdminVendorCredentialRequests,
-    approveAdminCredentialRequest,
-    rejectAdminCredentialRequest,
-    getAdminCampaignAnalytics,
-    updateAdminCampaignStatus
-=======
   getAdminVendorOverview,
   updateAdminVendorDetails,
   updateAdminVendorStatus,
@@ -71,7 +52,6 @@ import {
   rejectAdminCredentialRequest,
   getAdminCampaignAnalytics,
   updateAdminCampaignStatus,
->>>>>>> 03d250a79e2c85bc5e016be293fc661d287e8090
 } from "../../lib/api";
 
 const COLORS = ["#059669", "#f43f5e", "#3b82f6", "#f59e0b", "#8b5cf6"];
@@ -125,11 +105,10 @@ const MetricItem = ({ label, value, subtext }) => (
 const NavButton = ({ active, onClick, icon: Icon, label, badge }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
-      active
+    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${active
         ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm font-semibold"
         : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200"
-    }`}
+      }`}
   >
     <div className="flex items-center gap-3">
       <Icon
@@ -359,7 +338,7 @@ const VendorAccountManager = ({
           logoUrl: bData.brand?.logoUrl || "",
           qrPricePerUnit:
             bData.brand?.qrPricePerUnit !== undefined &&
-            bData.brand?.qrPricePerUnit !== null
+              bData.brand?.qrPricePerUnit !== null
               ? String(bData.brand.qrPricePerUnit)
               : "",
         });
@@ -1008,11 +987,10 @@ const VendorAccountManager = ({
                 {/* Status Message */}
                 {actionMessage.text && (
                   <div
-                    className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${
-                      actionMessage.type === "error"
+                    className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${actionMessage.type === "error"
                         ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
                         : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
-                    }`}
+                      }`}
                   >
                     {actionMessage.type === "error" ? (
                       <AlertCircle size={16} />
@@ -1061,7 +1039,7 @@ const VendorAccountManager = ({
                               Exp:{" "}
                               {formatDate(
                                 vendorData?.subscription?.endDate ||
-                                  brandData?.subscription?.endDate,
+                                brandData?.subscription?.endDate,
                               )}
                             </span>
                           </div>
@@ -1393,7 +1371,7 @@ const VendorAccountManager = ({
                           disabled={
                             isSaving ||
                             vendorStatusForm.status ===
-                              vendorData?.vendor?.status
+                            vendorData?.vendor?.status
                           }
                           className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold transition-all disabled:opacity-50"
                         >
@@ -1962,10 +1940,10 @@ const VendorAccountManager = ({
                         ))}
                         {(brandData?.campaigns || vendorData?.campaigns || [])
                           .length === 0 && (
-                          <div className="text-center py-10 text-slate-400">
-                            <p>No campaigns found</p>
-                          </div>
-                        )}
+                            <div className="text-center py-10 text-slate-400">
+                              <p>No campaigns found</p>
+                            </div>
+                          )}
                       </>
                     ) : (
                       /* CAMPAIGN DETAIL VIEW */
@@ -2264,73 +2242,73 @@ const VendorAccountManager = ({
 
                               {(analyticsData.budget ||
                                 analyticsData.topRedeemers?.length) && (
-                                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">
-                                      Budget Check
+                                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                      <div className="text-xs font-bold text-slate-500 uppercase mb-2">
+                                        Budget Check
+                                      </div>
+                                      <div className="text-sm text-slate-900 dark:text-white">
+                                        Total:{" "}
+                                        {analyticsData.budget?.total !== null &&
+                                          analyticsData.budget?.total !== undefined
+                                          ? `INR ${formatAmount(analyticsData.budget.total)}`
+                                          : "Not set"}
+                                      </div>
+                                      <div className="text-xs text-slate-500 mt-1">
+                                        Used: INR{" "}
+                                        {formatAmount(
+                                          analyticsData.budget?.used || 0,
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-slate-500">
+                                        Remaining:{" "}
+                                        {analyticsData.budget?.remaining !==
+                                          null &&
+                                          analyticsData.budget?.remaining !==
+                                          undefined
+                                          ? `INR ${formatAmount(analyticsData.budget.remaining)}`
+                                          : "-"}
+                                      </div>
+                                      <div className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        Usage:{" "}
+                                        {analyticsData.budget?.usagePercent ?? 0}%
+                                      </div>
                                     </div>
-                                    <div className="text-sm text-slate-900 dark:text-white">
-                                      Total:{" "}
-                                      {analyticsData.budget?.total !== null &&
-                                      analyticsData.budget?.total !== undefined
-                                        ? `INR ${formatAmount(analyticsData.budget.total)}`
-                                        : "Not set"}
-                                    </div>
-                                    <div className="text-xs text-slate-500 mt-1">
-                                      Used: INR{" "}
-                                      {formatAmount(
-                                        analyticsData.budget?.used || 0,
+                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                      <div className="text-xs font-bold text-slate-500 uppercase mb-2">
+                                        Top Redeemers
+                                      </div>
+                                      {analyticsData.topRedeemers?.length ? (
+                                        <div className="space-y-2 text-xs text-slate-500">
+                                          {analyticsData.topRedeemers
+                                            .slice(0, 3)
+                                            .map((redeemer, idx) => (
+                                              <div
+                                                key={idx}
+                                                className="flex items-center justify-between"
+                                              >
+                                                <span>
+                                                  User{" "}
+                                                  {redeemer.redeemedByUserId?.slice(
+                                                    0,
+                                                    6,
+                                                  ) || "Unknown"}
+                                                </span>
+                                                <span>
+                                                  {redeemer._count?._all || 0}{" "}
+                                                  scans
+                                                </span>
+                                              </div>
+                                            ))}
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-slate-500">
+                                          No redeemer data yet.
+                                        </div>
                                       )}
                                     </div>
-                                    <div className="text-xs text-slate-500">
-                                      Remaining:{" "}
-                                      {analyticsData.budget?.remaining !==
-                                        null &&
-                                      analyticsData.budget?.remaining !==
-                                        undefined
-                                        ? `INR ${formatAmount(analyticsData.budget.remaining)}`
-                                        : "-"}
-                                    </div>
-                                    <div className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                      Usage:{" "}
-                                      {analyticsData.budget?.usagePercent ?? 0}%
-                                    </div>
                                   </div>
-                                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">
-                                      Top Redeemers
-                                    </div>
-                                    {analyticsData.topRedeemers?.length ? (
-                                      <div className="space-y-2 text-xs text-slate-500">
-                                        {analyticsData.topRedeemers
-                                          .slice(0, 3)
-                                          .map((redeemer, idx) => (
-                                            <div
-                                              key={idx}
-                                              className="flex items-center justify-between"
-                                            >
-                                              <span>
-                                                User{" "}
-                                                {redeemer.redeemedByUserId?.slice(
-                                                  0,
-                                                  6,
-                                                ) || "Unknown"}
-                                              </span>
-                                              <span>
-                                                {redeemer._count?._all || 0}{" "}
-                                                scans
-                                              </span>
-                                            </div>
-                                          ))}
-                                      </div>
-                                    ) : (
-                                      <div className="text-xs text-slate-500">
-                                        No redeemer data yet.
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
+                                )}
                             </div>
                           )}
                         </div>
