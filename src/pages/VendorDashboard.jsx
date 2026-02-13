@@ -13,7 +13,6 @@ import {
   Package,
   Wallet,
   QrCode,
-  ScanLine,
   ShieldCheck,
   LogOut,
   ChevronRight,
@@ -69,9 +68,7 @@ import {
   deleteVendorQrBatch,
   orderVendorQrs,
   rechargeVendorWallet,
-  scanQR,
   updateVendorProfile,
-  verifyPublicQr,
   payVendorCampaign,
   downloadVendorOrderPdf,
   downloadCampaignQrPdf,
@@ -339,7 +336,6 @@ const VendorDashboard = () => {
     "campaigns",
     "products",
     "wallet",
-    "scan",
     "redemptions",
     "support",
   ]);
@@ -417,16 +413,6 @@ const VendorDashboard = () => {
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
 
-  const [scanHash, setScanHash] = useState("");
-  const [scanStatus, setScanStatus] = useState("");
-  const [scanError, setScanError] = useState("");
-  const [verifyData, setVerifyData] = useState(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [activeQr, setActiveQr] = useState(null);
-  const [qrActionStatus, setQrActionStatus] = useState("");
-  const qrCarouselRef = useRef(null);
-  const lastAutoFilledCashbackRef = useRef(null);
   const [showAllInventory, setShowAllInventory] = useState(false);
 
   const [companyProfile, setCompanyProfile] = useState({
@@ -675,6 +661,7 @@ const VendorDashboard = () => {
   const [productImageUploadError, setProductImageUploadError] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [productModalContext, setProductModalContext] = useState(null); // 'campaign' or 'qr'
   const [failedProductImages, setFailedProductImages] = useState(
     () => new Set(),
   );
@@ -786,8 +773,7 @@ const VendorDashboard = () => {
 
   const getStatusClasses = (status) => {
     const normalized = String(status || "").toLowerCase();
-    if (normalized === "redeemed")
-      return "text-primary dark:text-primary";
+    if (normalized === "redeemed") return "text-primary dark:text-primary";
     if (normalized === "paid" || normalized === "shipped") {
       return "text-primary dark:text-primary";
     }
@@ -1573,16 +1559,35 @@ const VendorDashboard = () => {
           payload.brandId = effectiveBrandId;
         }
         // Add new product
-        await addVendorProduct(token, payload);
+        const newProduct = await addVendorProduct(token, payload);
+        const newProductId = newProduct?.id || newProduct?.data?.id;
+
         setProductStatus("Product added successfully!");
+
+        // Refresh product list
+        await loadProducts();
+
+        // Auto-select the new product if context exists
+        if (newProductId) {
+          if (productModalContext === "campaign") {
+            setCampaignForm((prev) => ({ ...prev, productId: newProductId }));
+          } else if (productModalContext === "qr") {
+            setSelectedQrProduct(newProductId);
+          }
+        }
       }
 
       // Refresh product list
-      await loadProducts();
+      if (!editingProduct?.id) {
+        // already handled above for new products to ensure timing
+      } else {
+        await loadProducts();
+      }
 
       // Close modal
       setShowProductModal(false);
       setEditingProduct(null);
+      setProductModalContext(null);
 
       // Clear status after 3 seconds
       setTimeout(() => setProductStatus(""), 3000);
@@ -1611,13 +1616,21 @@ const VendorDashboard = () => {
 
     try {
       await deleteVendorProduct(token, productId);
-      setProductStatus("Product deleted successfully!");
+      setProductStatus(
+        "Product and associated campaigns deleted successfully!",
+      );
 
-      // Refresh product list
+      // Reset selected campaign state (campaigns may have been deleted)
+      setSelectedPendingCampaign(null);
+      setSelectedActiveCampaign(null);
+
+      // Refresh all related data
       await Promise.all([
         loadProducts(),
         loadCampaigns(token),
+        loadCampaignStats(token),
         loadQrs(token, { page: 1, append: false }),
+        loadOrders(token, { page: 1, append: false }),
       ]);
 
       // Clear status after 3 seconds
@@ -2194,56 +2207,6 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleVerifyQr = async () => {
-    if (!scanHash.trim()) {
-      setScanError("Enter a QR hash to verify.");
-      return;
-    }
-    setIsVerifying(true);
-    setScanError("");
-    setScanStatus("");
-    setVerifyData(null);
-    try {
-      const data = await verifyPublicQr(scanHash.trim());
-      setVerifyData(data);
-      setScanStatus("QR verified.");
-    } catch (err) {
-      setScanError(err.message || "Verification failed.");
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const handleRedeemQr = async () => {
-    const trimmedHash = scanHash.trim();
-    if (!trimmedHash) {
-      setScanError("Enter a QR hash to redeem.");
-      return;
-    }
-    setIsRedeeming(true);
-    setScanError("");
-    setScanStatus("");
-    try {
-      const result = await scanQR(trimmedHash, token);
-      setScanStatus(
-        `Redeemed. Added INR ${formatAmount(result.amount)} to wallet.`,
-      );
-      setQrs((prev) =>
-        prev.map((qr) =>
-          qr.uniqueHash === trimmedHash ? { ...qr, status: "redeemed" } : qr,
-        ),
-      );
-      setScanHash("");
-      await loadWallet();
-      await loadQrs();
-    } catch (err) {
-      if (handleVendorAccessError(err)) return;
-      setScanError(err.message || "Redemption failed.");
-    } finally {
-      setIsRedeeming(false);
-    }
-  };
-
   const handleCompanyChange = (field) => (event) => {
     setCompanyProfile((prev) => ({ ...prev, [field]: event.target.value }));
     setRegistrationStatus("");
@@ -2446,7 +2409,14 @@ const VendorDashboard = () => {
   };
 
   const handleCampaignChange = (field) => (event) => {
-    setCampaignForm((prev) => ({ ...prev, [field]: event.target.value }));
+    const value = event.target.value;
+    if (field === "productId" && value === "ADD_NEW_PRODUCT") {
+      setProductModalContext("campaign");
+      setEditingProduct(null);
+      setShowProductModal(true);
+      return;
+    }
+    setCampaignForm((prev) => ({ ...prev, [field]: value }));
     setCampaignStatus("");
     setCampaignError("");
   };
@@ -2465,6 +2435,10 @@ const VendorDashboard = () => {
       setCampaignError("Please select a product before creating a campaign.");
       return;
     }
+    if (!campaignForm.description.trim()) {
+      setCampaignError("Short campaign summary is required.");
+      return;
+    }
 
     const rowsWithAnyInput = campaignRows.filter((row) => {
       const cashbackInput = String(row.cashbackAmount ?? "").trim();
@@ -2474,7 +2448,9 @@ const VendorDashboard = () => {
     });
 
     if (!rowsWithAnyInput.length) {
-      setCampaignError("Add at least one allocation with cashback and quantity.");
+      setCampaignError(
+        "Add at least one allocation with cashback and quantity.",
+      );
       return;
     }
 
@@ -2495,11 +2471,15 @@ const VendorDashboard = () => {
       const derivedTotal = getAllocationRowTotal(row);
 
       if (cb === null || cb <= 0) {
-        setCampaignError("Cashback amount must be greater than 0.");
+        setCampaignError(
+          "Cashback amount must be greater than 0 for all allocations.",
+        );
         return;
       }
       if (qtyValue === null || qtyValue <= 0) {
-        setCampaignError("Quantity must be greater than 0.");
+        setCampaignError(
+          "Quantity must be greater than 0 for all allocations.",
+        );
         return;
       }
       if (derivedTotal === null || derivedTotal <= 0) {
@@ -2581,6 +2561,7 @@ const VendorDashboard = () => {
 
       const result = await createVendorCampaign(token, {
         brandId: effectiveBrandId,
+        productId: campaignForm.productId || undefined,
         title: campaignForm.title.trim(),
         description: campaignForm.description.trim() || undefined,
         cashbackAmount: cashbackValue > 0 ? cashbackValue : null,
@@ -3802,11 +3783,6 @@ const VendorDashboard = () => {
                               label: "Support",
                               icon: HelpCircle,
                             },
-                            {
-                              id: "scan",
-                              label: "Scan & Redeem",
-                              icon: ScanLine,
-                            },
                           ].map((item) => {
                             const isActive = activeTab === item.id;
                             if (isActive) {
@@ -4735,15 +4711,23 @@ const VendorDashboard = () => {
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                  Product
-                                </label>
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                    Product
+                                  </label>
+                                </div>
                                 <select
                                   value={campaignForm.productId}
                                   onChange={handleCampaignChange("productId")}
                                   className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                 >
                                   <option value="">Select Product...</option>
+                                  <option
+                                    value="ADD_NEW_PRODUCT"
+                                    className="text-primary font-bold"
+                                  >
+                                    + Add New Product
+                                  </option>
                                   {products.map((p) => (
                                     <option key={p.id} value={p.id}>
                                       {p.name}
@@ -4811,7 +4795,7 @@ const VendorDashboard = () => {
                                     </div>
                                     <div className="col-span-4 space-y-1">
                                       <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                        Total (?)
+                                        Total ({"\u20B9"})
                                       </label>
                                       <input
                                         type="number"
@@ -4853,7 +4837,7 @@ const VendorDashboard = () => {
                                   QRs)
                                 </span>
                                 <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                  ?
+                                  {"\u20B9"}
                                   {formatAmount(
                                     campaignAllocationSummary.subtotal,
                                   )}
@@ -4935,19 +4919,32 @@ const VendorDashboard = () => {
                                       </select>
                                     </div>
                                     <div className="space-y-2">
-                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                        Product
-                                      </label>
+                                      <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                          Product
+                                        </label>
+                                      </div>
                                       <select
                                         value={selectedQrProduct}
-                                        onChange={(event) =>
-                                          setSelectedQrProduct(
-                                            event.target.value,
-                                          )
-                                        }
+                                        onChange={(event) => {
+                                          const value = event.target.value;
+                                          if (value === "ADD_NEW_PRODUCT") {
+                                            setProductModalContext("qr");
+                                            setEditingProduct(null);
+                                            setShowProductModal(true);
+                                          } else {
+                                            setSelectedQrProduct(value);
+                                          }
+                                        }}
                                         className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                       >
                                         <option value="">Select product</option>
+                                        <option
+                                          value="ADD_NEW_PRODUCT"
+                                          className="text-primary font-bold"
+                                        >
+                                          + Add New Product
+                                        </option>
                                         {products.map((product) => (
                                           <option
                                             key={product.id}
@@ -5349,7 +5346,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                         Cashback Amount
                                                       </div>
                                                       <div className="text-lg font-bold text-primary">
-                                                        ?
+                                                        {"\u20B9"}
                                                         {formatAmount(
                                                           group.price,
                                                         )}
@@ -5374,7 +5371,8 @@ Quantity: ${invoiceData.quantity} QRs
                                       <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
                                         <span>
                                           Total: {totalQty} QR
-                                          {totalQty !== 1 ? "s" : ""} - Budget ?
+                                          {totalQty !== 1 ? "s" : ""} - Budget{" "}
+                                          {"\u20B9"}
                                           {formatAmount(totalBudget)}
                                         </span>
                                         <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -5489,13 +5487,19 @@ Quantity: ${invoiceData.quantity} QRs
                                               className="bg-white dark:bg-zinc-900"
                                             >
                                               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                                INR {formatAmount(alloc.cashbackAmount)}
+                                                INR{" "}
+                                                {formatAmount(
+                                                  alloc.cashbackAmount,
+                                                )}
                                               </td>
                                               <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
                                                 {alloc.quantity}
                                               </td>
                                               <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                                INR {formatAmount(alloc.totalBudget)}
+                                                INR{" "}
+                                                {formatAmount(
+                                                  alloc.totalBudget,
+                                                )}
                                               </td>
                                             </tr>
                                           ))}
@@ -5680,7 +5684,7 @@ Quantity: ${invoiceData.quantity} QRs
                                         Budget
                                       </div>
                                       <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                        ?
+                                        {"\u20B9"}
                                         {formatAmount(
                                           activeCampaignDetails.totalBudget,
                                         )}
@@ -5752,7 +5756,8 @@ Quantity: ${invoiceData.quantity} QRs
                                                 className="bg-white dark:bg-zinc-900"
                                               >
                                                 <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                                  INR {formatAmount(row.cashback)}
+                                                  INR{" "}
+                                                  {formatAmount(row.cashback)}
                                                 </td>
                                                 <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
                                                   {row.quantity}
@@ -6004,7 +6009,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                         Cashback Amount
                                                       </div>
                                                       <div className="text-lg font-bold text-primary">
-                                                        ?
+                                                        {"\u20B9"}
                                                         {formatAmount(
                                                           priceGroup.price,
                                                         )}
@@ -6483,73 +6488,6 @@ Quantity: ${invoiceData.quantity} QRs
                       {activeTab === "support" && (
                         <VendorSupport token={token} />
                       )}
-
-                      {activeTab === "scan" && (
-                        <div
-                          className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3"
-                          id="scan"
-                        >
-                          <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                            <ScanLine
-                              size={16}
-                              className="text-primary-strong"
-                            />
-                            Scan and redeem
-                          </div>
-                          <input
-                            type="text"
-                            value={scanHash}
-                            onChange={(event) =>
-                              setScanHash(event.target.value)
-                            }
-                            placeholder="Paste QR hash"
-                            className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                          />
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={handleVerifyQr}
-                              disabled={isVerifying}
-                              className="w-full rounded-xl bg-gray-100 text-gray-800 text-sm font-semibold py-2 shadow-sm disabled:opacity-60 dark:bg-zinc-800 dark:text-gray-200 cursor-pointer"
-                            >
-                              {isVerifying ? "Verifying..." : "Verify"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleRedeemQr}
-                              disabled={isRedeeming}
-                              className="w-full rounded-xl bg-primary text-white text-sm font-semibold py-2 shadow-md disabled:opacity-60 cursor-pointer"
-                            >
-                              {isRedeeming ? "Redeeming..." : "Redeem"}
-                            </button>
-                          </div>
-                          {verifyData && (
-                            <div className="rounded-xl border border-gray-100 dark:border-zinc-800 p-3 space-y-1">
-                              <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                <BadgeCheck
-                                  size={14}
-                                  className="text-primary"
-                                />
-                                {verifyData.campaign || "QR verified"}
-                              </div>
-                              <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                {verifyData.brand} - INR{" "}
-                                {formatAmount(verifyData.amount)}
-                              </div>
-                            </div>
-                          )}
-                          {scanStatus && (
-                            <div className="text-xs text-primary font-semibold">
-                              {scanStatus}
-                            </div>
-                          )}
-                          {scanError && (
-                            <div className="text-xs text-red-600 font-semibold">
-                              {scanError}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </main>
                   </div>
                 </div>
@@ -6704,62 +6642,6 @@ Quantity: ${invoiceData.quantity} QRs
                   type="success"
                   showCancel={false}
                 />
-                {activeQr && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-                    <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                          {activeQr.Campaign?.title || "QR preview"}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveQr(null)}
-                          className="text-xs font-semibold text-gray-500 dark:text-gray-400 cursor-pointer"
-                        >
-                          Close
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-center rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-950 p-4">
-                        <QRCodeCanvas
-                          id={getQrCanvasId(activeQr.uniqueHash)}
-                          value={getQrValue(activeQr.uniqueHash)}
-                          size={220}
-                          level="M"
-                          includeMargin
-                        />
-                      </div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400 break-all">
-                        {activeQr.uniqueHash}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-xs font-semibold">
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadQr(activeQr.uniqueHash)}
-                          className="rounded-xl bg-primary text-white py-2 cursor-pointer"
-                        >
-                          Download
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handlePrintQr(activeQr.uniqueHash)}
-                          className="rounded-xl bg-gray-900 text-white py-2 dark:bg-white dark:text-gray-900 cursor-pointer"
-                        >
-                          Print
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyHash(activeQr.uniqueHash)}
-                          className="rounded-xl bg-gray-100 text-gray-700 py-2 dark:bg-zinc-800 dark:text-gray-200 cursor-pointer"
-                        >
-                          Copy
-                        </button>
-                      </div>
-                      <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                        Encoded: {getQrValue(activeQr.uniqueHash)}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Product Edit Modal */}
                 {showProductModal && (
