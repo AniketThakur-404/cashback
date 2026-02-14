@@ -192,7 +192,7 @@ const HeroCarousel = ({ items }) => {
 
           <div className="absolute bottom-3 right-3 w-[120px] h-[120px] opacity-60">
             <FallbackImage
-              src={b.img}
+              src={resolveBrandLogoUrl(b.img)}
               alt="Offer"
               className="w-full h-full object-contain drop-shadow-xl"
               fallback={
