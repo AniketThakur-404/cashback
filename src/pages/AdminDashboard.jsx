@@ -436,6 +436,182 @@ const Sparkline = ({
   );
 };
 
+/** Professional SVG Bar Chart */
+const BarChart = ({
+  data = [],
+  labels = [],
+  barColor = "#059669",
+  height = 220,
+  showLabels = true,
+}) => {
+  if (!data || data.length === 0)
+    return (
+      <div className="h-[220px] w-full rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs text-slate-400">
+        No data
+      </div>
+    );
+  const max = Math.max(...data, 1);
+  const count = data.length;
+  const barW = Math.max(100 / count - 2, 2);
+  const gap = (100 - barW * count) / (count + 1);
+  const gridLines = 4;
+  const fmtValue = (v) =>
+    v >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v);
+
+  return (
+    <div className="w-full" style={{ height }}>
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="w-full h-full overflow-visible"
+      >
+        {/* Grid lines */}
+        {Array.from({ length: gridLines + 1 }, (_, i) => {
+          const y = (i / gridLines) * 100;
+          return (
+            <line
+              key={i}
+              x1="0"
+              y1={y}
+              x2="100"
+              y2={y}
+              stroke="currentColor"
+              className="text-slate-200 dark:text-white/5"
+              strokeWidth="0.3"
+            />
+          );
+        })}
+        {/* Bars */}
+        {data.map((val, i) => {
+          const h = (val / max) * 90;
+          const x = gap + i * (barW + gap);
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={100 - h}
+                width={barW}
+                height={h}
+                rx="0.8"
+                fill={barColor}
+                opacity="0.85"
+                className="hover:opacity-100 transition-opacity"
+              />
+            </g>
+          );
+        })}
+      </svg>
+      {showLabels && labels.length > 0 && (
+        <div className="flex justify-between mt-1.5 px-0.5">
+          {labels
+            .filter((_, i) => {
+              const step = Math.max(1, Math.floor(count / 7));
+              return i % step === 0 || i === count - 1;
+            })
+            .map((label, i) => (
+              <span
+                key={i}
+                className="text-[9px] text-slate-400 dark:text-slate-500"
+              >
+                {label}
+              </span>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** Professional SVG Line Chart with Area Fill */
+const LineChartComponent = ({
+  data = [],
+  labels = [],
+  lineColor = "#059669",
+  fillColor = "rgba(5,150,105,0.1)",
+  height = 220,
+  showLabels = true,
+}) => {
+  if (!data || data.length === 0)
+    return (
+      <div className="h-[220px] w-full rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs text-slate-400">
+        No data
+      </div>
+    );
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+  const padding = 5;
+  const count = data.length;
+  const gridLines = 4;
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / Math.max(count - 1, 1)) * (100 - padding * 2);
+    const y = padding + (1 - (val - min) / range) * (100 - padding * 2);
+    return { x, y };
+  });
+  const line = points.map((p) => `${p.x},${p.y}`).join(" ");
+  const area = `${points[0].x},${100 - padding} ${line} ${points[points.length - 1].x},${100 - padding}`;
+
+  return (
+    <div className="w-full" style={{ height }}>
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="w-full h-full overflow-visible"
+      >
+        {/* Grid */}
+        {Array.from({ length: gridLines + 1 }, (_, i) => {
+          const y = padding + (i / gridLines) * (100 - padding * 2);
+          return (
+            <line
+              key={i}
+              x1={padding}
+              y1={y}
+              x2={100 - padding}
+              y2={y}
+              stroke="currentColor"
+              className="text-slate-200 dark:text-white/5"
+              strokeWidth="0.3"
+            />
+          );
+        })}
+        {/* Area */}
+        <polygon points={area} fill={fillColor} />
+        {/* Line */}
+        <polyline
+          points={line}
+          fill="none"
+          stroke={lineColor}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Data points */}
+        {points.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="0.8" fill={lineColor} />
+        ))}
+      </svg>
+      {showLabels && labels.length > 0 && (
+        <div className="flex justify-between mt-1.5 px-0.5">
+          {labels
+            .filter((_, i) => {
+              const step = Math.max(1, Math.floor(count / 7));
+              return i % step === 0 || i === count - 1;
+            })
+            .map((label, i) => (
+              <span
+                key={i}
+                className="text-[9px] text-slate-400 dark:text-slate-500"
+              >
+                {label}
+              </span>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { section, subSection } = useParams();
@@ -757,7 +933,7 @@ const AdminDashboard = () => {
   const activeSubSection = subSection || "";
   const activeNav =
     (activeSection === "vendors" || activeSection === "users") &&
-      activeSubSection
+    activeSubSection
       ? `${activeSection}-${activeSubSection}`
       : activeSection;
 
@@ -1308,7 +1484,12 @@ const AdminDashboard = () => {
     } else if (isCampaignsRoute) {
       tasks.push(loadCampaigns(authToken));
     } else if (isOrdersRoute) {
-      tasks.push(loadOrders(authToken), loadQrs(authToken));
+      tasks.push(
+        loadOrders(authToken),
+        loadQrs(authToken),
+        loadVendors(authToken),
+        loadBrands(authToken),
+      );
     } else if (isPayoutsRoute) {
       tasks.push(loadWithdrawals(authToken), loadTransactions(authToken));
     } else if (isFinanceRoute) {
@@ -3090,6 +3271,14 @@ const AdminDashboard = () => {
     effectiveQrs,
   ]);
 
+  // Time-of-day greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   // Analytics Stats Cards
   const totalUsersCount = dashboardStats?.users || users.length || 0;
   const totalVendorsCount = dashboardStats?.vendors || vendors.length || 0;
@@ -3362,7 +3551,7 @@ const AdminDashboard = () => {
                   {headerTitle}
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-white/60">
-                  Hi {adminInfo?.name || email || "Admin"}, welcome back!
+                  {getGreeting()}, {adminInfo?.name || email || "Admin"} 👋
                 </p>
               </div>
             </div>
@@ -3398,73 +3587,39 @@ const AdminDashboard = () => {
           {isOverviewRoute && (
             <section
               id="overview"
-              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+              className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
-              {/* Dashboard Filters */}
-              <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm mb-2">
+              {/* Filters Bar */}
+              <div className="flex flex-col md:flex-row gap-3 bg-white dark:bg-[#111113] p-4 rounded-xl border border-slate-200 dark:border-white/[0.06]">
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Brand
-                  </label>
-                  <select
-                    value={filterBrandId}
-                    onChange={(e) => {
-                      setFilterBrandId(e.target.value);
-                      setFilterVendorId("all");
-                      setFilterCampaignId("all");
-                    }}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Brands</option>
-                    {brands.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                    {/* Fallback if brands not loaded but present in vendors */}
-                    {brands.length === 0 &&
-                      vendors
-                        .map((v) => v.Brand)
-                        .filter(
-                          (b, i, self) =>
-                            b && self.findIndex((s) => s.id === b.id) === i,
-                        )
-                        .map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
-                          </option>
-                        ))}
-                  </select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Vendor
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
+                    Vendor / Brand
                   </label>
                   <select
                     value={filterVendorId}
                     onChange={(e) => {
-                      setFilterVendorId(e.target.value);
+                      const vId = e.target.value;
+                      setFilterVendorId(vId);
+                      if (vId === "all") {
+                        setFilterBrandId("all");
+                      } else {
+                        const v = vendors.find((v) => v.id === vId);
+                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
+                      }
                       setFilterCampaignId("all");
                     }}
                     className={adminInputClass}
                   >
                     <option value="all">All Vendors</option>
-                    {vendors
-                      .filter(
-                        (v) =>
-                          filterBrandId === "all" ||
-                          v.brandId === filterBrandId ||
-                          v.Brand?.id === filterBrandId,
-                      )
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.businessName || v.User?.name || v.contactEmail}
-                        </option>
-                      ))}
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.businessName || v.User?.name || v.contactEmail}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
                     Campaign
                   </label>
                   <select
@@ -3475,15 +3630,15 @@ const AdminDashboard = () => {
                     <option value="all">All Campaigns</option>
                     {campaigns
                       .filter((c) => {
-                        const matchesVendor =
+                        const mv =
                           filterVendorId === "all" ||
                           c.vendorId === filterVendorId ||
                           c.Vendor?.id === filterVendorId;
-                        const matchesBrand =
+                        const mb =
                           filterBrandId === "all" ||
                           c.brandId === filterBrandId ||
                           c.Brand?.id === filterBrandId;
-                        return matchesVendor && matchesBrand;
+                        return mv && mb;
                       })
                       .map((c) => (
                         <option key={c.id} value={c.id}>
@@ -3494,161 +3649,318 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Quick Stats Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {/* Total Customers */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Total Customers</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>{totalUsersCount}</span>
-                    <Users
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
-                    />
-                  </div>
-                </div>
+              {/* KPI Cards — 2 rows of 3 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[
+                  {
+                    label: "Customers",
+                    value: totalUsersCount,
+                    sub: `${effectiveUserStatusCounts.active} active`,
+                    icon: Users,
+                    color: "emerald",
+                    nav: "users",
+                  },
+                  {
+                    label: "Vendors",
+                    value: totalVendorsCount,
+                    sub: `${effectiveVendorStatusCounts.active || 0} active`,
+                    icon: Store,
+                    color: "blue",
+                    nav: "vendors",
+                  },
+                  {
+                    label: "Campaigns",
+                    value: dashboardStats?.activeCampaigns || 0,
+                    sub: `${campaigns.length} total`,
+                    icon: Megaphone,
+                    color: "violet",
+                    nav: "campaigns",
+                  },
+                  {
+                    label: "Wallet Float",
+                    value: `₹${formatAmount(totalBalance)}`,
+                    sub: "All vendor wallets",
+                    icon: Wallet,
+                    color: "amber",
+                    nav: "operations",
+                  },
+                  {
+                    label: "Revenue",
+                    value: `₹${formatAmount(platformRevenue)}`,
+                    sub: "Platform tech fees",
+                    icon: TrendingUp,
+                    color: "emerald",
+                    nav: "finance",
+                  },
+                  {
+                    label: "Pending Payouts",
+                    value: pendingWithdrawalCount,
+                    sub:
+                      pendingWithdrawalCount > 0 ? "Needs review" : "All clear",
+                    icon: HandCoins,
+                    color: pendingWithdrawalCount > 0 ? "amber" : "emerald",
+                    nav: "payouts",
+                  },
+                ].map((card) => {
+                  const Icon = card.icon;
+                  const colorMap = {
+                    emerald: {
+                      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+                      text: "text-emerald-600 dark:text-emerald-400",
+                      sub: "text-emerald-600/70 dark:text-emerald-400/60",
+                    },
+                    blue: {
+                      bg: "bg-blue-50 dark:bg-blue-500/10",
+                      text: "text-blue-600 dark:text-blue-400",
+                      sub: "text-blue-600/70 dark:text-blue-400/60",
+                    },
+                    violet: {
+                      bg: "bg-violet-50 dark:bg-violet-500/10",
+                      text: "text-violet-600 dark:text-violet-400",
+                      sub: "text-violet-600/70 dark:text-violet-400/60",
+                    },
+                    amber: {
+                      bg: "bg-amber-50 dark:bg-amber-500/10",
+                      text: "text-amber-600 dark:text-amber-400",
+                      sub: "text-amber-600/70 dark:text-amber-400/60",
+                    },
+                  };
+                  const c = colorMap[card.color] || colorMap.emerald;
+                  return (
+                    <button
+                      key={card.label}
+                      onClick={() => handleNavClick(card.nav)}
+                      className="group flex items-start gap-4 bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5 text-left hover:border-slate-300 dark:hover:border-white/10 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-black/20 transition-all duration-200"
+                    >
+                      <div
+                        className={`w-11 h-11 shrink-0 rounded-lg ${c.bg} flex items-center justify-center`}
+                      >
+                        <Icon className={c.text} size={20} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                          {card.label}
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                          {card.value}
+                        </div>
+                        <div className={`text-xs mt-1 font-medium ${c.sub}`}>
+                          {card.sub}
+                        </div>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className="mt-1 text-slate-300 dark:text-white/10 group-hover:text-slate-400 dark:group-hover:text-white/30 transition-colors"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Total Vendors */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Total Vendors</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>{totalVendorsCount}</span>
-                    <Store
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
-                    />
+              {/* Platform Activity Chart */}
+              <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Platform Activity
+                    </h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                      Transaction volume over the last 7 days
+                    </p>
                   </div>
-                </div>
-
-                {/* Active Campaigns */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Active Campaigns</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>
-                      {dashboardStats?.activeCampaigns || 0}
+                  <div className="flex items-center gap-4 text-xs font-medium">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
+                      Credits
                     </span>
-                    <Megaphone
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
-                    />
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />{" "}
+                      Debits
+                    </span>
                   </div>
                 </div>
-
-                {/* Total Wallet Float */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Total Wallet Float</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>
-                      INR {formatAmount(totalBalance)}
-                    </span>
-                    <Wallet
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                      Credits
+                    </div>
+                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+                      ₹{formatAmount(transactionTotals.credit)}
+                    </div>
+                    <Sparkline
+                      data={transactionSeries.credit}
+                      stroke="#059669"
+                      fill="rgba(5,150,105,0.08)"
                     />
                   </div>
-                </div>
-
-                {/* Platform Revenue */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Platform Revenue</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>
-                      INR {formatAmount(platformRevenue)}
-                    </span>
-                    <TrendingUp
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
-                    />
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-1">
-                    From tech fees
-                  </div>
-                </div>
-
-                {/* Pending Payouts */}
-                <div className={adminCardClass}>
-                  <div className={statLabelClass}>Pending Payouts</div>
-                  <div className="flex items-center justify-between">
-                    <span className={statValueClass}>
-                      {pendingWithdrawalCount}
-                    </span>
-                    <HandCoins
-                      className="text-slate-300 dark:text-white/20"
-                      size={24}
+                  <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
+                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                      Debits
+                    </div>
+                    <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-2">
+                      ₹{formatAmount(transactionTotals.debit)}
+                    </div>
+                    <Sparkline
+                      data={transactionSeries.debit}
+                      stroke="#e11d48"
+                      fill="rgba(225,29,72,0.06)"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Attention Required Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Pending Actions Card */}
-                <div className={`${adminCardClass} lg:col-span-2`}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Activity className="text-[#059669]" size={18} />
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      Requires Attention
+              {/* Action Items + Notifications */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                {/* Action Items */}
+                <div className="lg:col-span-3 bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      Action Required
                     </h3>
+                    {pendingWithdrawalCount +
+                      orderAttentionCount +
+                      pendingQrOrderCount >
+                      0 && (
+                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+                        {pendingWithdrawalCount +
+                          orderAttentionCount +
+                          pendingQrOrderCount}{" "}
+                        pending
+                      </span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs text-slate-500 font-medium">
-                            Pending Withdrawals
+                  <div className="space-y-3">
+                    {[
+                      {
+                        label: "Pending Withdrawals",
+                        count: pendingWithdrawalCount,
+                        icon: HandCoins,
+                        nav: "payouts",
+                        accent: "amber",
+                      },
+                      {
+                        label: "Orders Awaiting Action",
+                        count: orderAttentionCount,
+                        icon: Package,
+                        nav: "orders",
+                        accent: "blue",
+                      },
+                      {
+                        label: "Pending QR Orders",
+                        count: pendingQrOrderCount,
+                        icon: QrCode,
+                        nav: "orders",
+                        accent: "violet",
+                      },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const accentColors = {
+                        amber: {
+                          dot: "bg-amber-500",
+                          text: "text-amber-600 dark:text-amber-400",
+                          iconBg: "bg-amber-50 dark:bg-amber-500/10",
+                        },
+                        blue: {
+                          dot: "bg-blue-500",
+                          text: "text-blue-600 dark:text-blue-400",
+                          iconBg: "bg-blue-50 dark:bg-blue-500/10",
+                        },
+                        violet: {
+                          dot: "bg-violet-500",
+                          text: "text-violet-600 dark:text-violet-400",
+                          iconBg: "bg-violet-50 dark:bg-violet-500/10",
+                        },
+                      };
+                      const ac = accentColors[item.accent];
+                      return (
+                        <button
+                          key={item.label}
+                          onClick={() => handleNavClick(item.nav)}
+                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50/80 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.06] transition-all duration-150 text-left group"
+                        >
+                          <div
+                            className={`w-9 h-9 shrink-0 rounded-lg ${ac.iconBg} flex items-center justify-center`}
+                          >
+                            <Icon className={ac.text} size={16} />
                           </div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">
-                            {pendingWithdrawalCount}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              {item.label}
+                            </div>
                           </div>
-                        </div>
-                        <HandCoins className="text-amber-400/50" size={28} />
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs text-slate-500 font-medium">
-                            Orders Awaiting Action
+                          <div className="flex items-center gap-2">
+                            {item.count > 0 && (
+                              <span className="relative flex h-2 w-2">
+                                <span
+                                  className={`animate-ping absolute inline-flex h-full w-full rounded-full ${ac.dot} opacity-75`}
+                                />
+                                <span
+                                  className={`relative inline-flex rounded-full h-2 w-2 ${ac.dot}`}
+                                />
+                              </span>
+                            )}
+                            <span
+                              className={`text-lg font-bold ${item.count > 0 ? ac.text : "text-slate-300 dark:text-white/20"}`}
+                            >
+                              {item.count}
+                            </span>
+                            <ChevronRight
+                              size={14}
+                              className="text-slate-300 dark:text-white/10 group-hover:text-slate-400 dark:group-hover:text-white/30 transition-colors"
+                            />
                           </div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">
-                            {orderAttentionCount}
-                          </div>
-                        </div>
-                        <Package className="text-amber-400/50" size={28} />
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs text-slate-500 font-medium">
-                            Pending QR Orders
-                          </div>
-                          <div className="text-xl font-bold text-amber-500 mt-1">
-                            {pendingQrOrderCount}
-                          </div>
-                        </div>
-                        <QrCode className="text-amber-400/50" size={28} />
-                      </div>
-                    </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Recent Activities */}
-                <RecentActivitiesCard
-                  title="Vendor Requests & Notifications"
-                  activities={vendorNotificationActivities}
-                  emptyMessage={
-                    isLoadingNotifications
-                      ? "Loading notifications..."
-                      : "No pending requests."
-                  }
-                  onItemClick={handleRequestClick}
-                />
-                {notificationsError && (
-                  <div className="text-xs text-rose-400 mt-2">
-                    {notificationsError}
-                  </div>
-                )}
+                {/* Notifications */}
+                <div className="lg:col-span-2">
+                  <RecentActivitiesCard
+                    title="Notifications"
+                    activities={vendorNotificationActivities}
+                    emptyMessage={
+                      isLoadingNotifications
+                        ? "Loading..."
+                        : "No pending requests."
+                    }
+                    onItemClick={handleRequestClick}
+                  />
+                  {notificationsError && (
+                    <div className="text-xs text-rose-400 mt-2">
+                      {notificationsError}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Navigate */}
+              <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Zap
+                    className="text-emerald-600 dark:text-emerald-400"
+                    size={14}
+                  />
+                  <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    Quick Navigate
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <button
+                        key={action.id}
+                        onClick={() => handleNavClick(action.id)}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.04] text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-200 dark:hover:border-emerald-500/20 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all duration-150"
+                      >
+                        <Icon size={14} />
+                        {action.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           )}
@@ -3657,26 +3969,28 @@ const AdminDashboard = () => {
           {isAnalyticsRoute && (
             <section
               id="analytics"
-              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+              className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
+              {/* Header + Range Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                     Analytics
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Platform performance metrics
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex bg-slate-100 dark:bg-white/5 rounded-lg p-0.5">
                   {rangeOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => setAnalyticsRange(option.value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${analyticsRange === option.value
-                        ? "bg-[#059669] text-white shadow-lg shadow-[#059669]/20"
-                        : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:bg-slate-200 dark:hover:bg-white/10"
-                        }`}
+                      className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
+                        analyticsRange === option.value
+                          ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                          : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60"
+                      }`}
                     >
                       {option.label}
                     </button>
@@ -3684,70 +3998,37 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Dashboard Filters */}
-              <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm">
+              {/* Filters — combined Vendor/Brand + Campaign */}
+              <div className="flex flex-col md:flex-row gap-3 bg-white dark:bg-[#111113] p-4 rounded-xl border border-slate-200 dark:border-white/[0.06]">
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Brand
-                  </label>
-                  <select
-                    value={filterBrandId}
-                    onChange={(e) => {
-                      setFilterBrandId(e.target.value);
-                      setFilterVendorId("all");
-                      setFilterCampaignId("all");
-                    }}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Brands</option>
-                    {brands.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                    {brands.length === 0 &&
-                      vendors
-                        .map((v) => v.Brand)
-                        .filter(
-                          (b, i, self) =>
-                            b && self.findIndex((s) => s.id === b.id) === i,
-                        )
-                        .map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name}
-                          </option>
-                        ))}
-                  </select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Vendor
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
+                    Vendor / Brand
                   </label>
                   <select
                     value={filterVendorId}
                     onChange={(e) => {
-                      setFilterVendorId(e.target.value);
+                      const vId = e.target.value;
+                      setFilterVendorId(vId);
+                      if (vId === "all") {
+                        setFilterBrandId("all");
+                      } else {
+                        const v = vendors.find((v) => v.id === vId);
+                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
+                      }
                       setFilterCampaignId("all");
                     }}
                     className={adminInputClass}
                   >
                     <option value="all">All Vendors</option>
-                    {vendors
-                      .filter(
-                        (v) =>
-                          filterBrandId === "all" ||
-                          v.brandId === filterBrandId ||
-                          v.Brand?.id === filterBrandId,
-                      )
-                      .map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.businessName || v.User?.name || v.contactEmail}
-                        </option>
-                      ))}
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.businessName || v.User?.name || v.contactEmail}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
                     Campaign
                   </label>
                   <select
@@ -3777,70 +4058,465 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Stats Cards */}
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {analyticsStats.map((stat) => (
-                  <div key={stat.label} className={adminCardClass}>
-                    <div className={statLabelClass}>{stat.label}</div>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                {analyticsStats.map((stat) => {
+                  const icons = {
+                    "Total Users": Users,
+                    "Active Vendors": Building2,
+                    "Total QRs": QrCode,
+                    "Platform Balance": Wallet,
+                  };
+                  const colors = {
+                    "Total Users": "blue",
+                    "Active Vendors": "emerald",
+                    "Total QRs": "violet",
+                    "Platform Balance": "amber",
+                  };
+                  const colorMap = {
+                    blue: {
+                      bg: "bg-blue-50 dark:bg-blue-500/10",
+                      text: "text-blue-600 dark:text-blue-400",
+                    },
+                    emerald: {
+                      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+                      text: "text-emerald-600 dark:text-emerald-400",
+                    },
+                    violet: {
+                      bg: "bg-violet-50 dark:bg-violet-500/10",
+                      text: "text-violet-600 dark:text-violet-400",
+                    },
+                    amber: {
+                      bg: "bg-amber-50 dark:bg-amber-500/10",
+                      text: "text-amber-600 dark:text-amber-400",
+                    },
+                  };
+                  const Icon = icons[stat.label] || Activity;
+                  const c = colorMap[colors[stat.label]] || colorMap.emerald;
+                  return (
                     <div
-                      className={`${statValueClass} break-all leading-tight`}
+                      key={stat.label}
+                      className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-4 flex items-start gap-3"
                     >
-                      {isLoadingDashboard
-                        ? "..."
-                        : stat.isCurrency
-                          ? `INR ${formatAmount(stat.value)}`
-                          : (stat.value ?? "-")}
+                      <div
+                        className={`w-10 h-10 shrink-0 rounded-lg ${c.bg} flex items-center justify-center`}
+                      >
+                        <Icon className={c.text} size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                          {stat.label}
+                        </div>
+                        <div className="text-xl font-bold text-slate-900 dark:text-white truncate">
+                          {isLoadingDashboard
+                            ? "..."
+                            : stat.isCurrency
+                              ? `₹${formatAmount(stat.value)}`
+                              : (stat.value ?? "-")}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {dashboardError && (
-                <div className="text-sm text-rose-400">{dashboardError}</div>
+                <div className="text-xs text-rose-400">{dashboardError}</div>
               )}
 
-              {/* Transaction Flow Card */}
-              <div className={`${adminCardClass} !p-6`}>
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="text-[#059669]" size={18} />
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      Transaction Flow
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Last {analyticsRange} days
-                    </p>
+              {/* Charts — 2 column layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* Credit vs Debit Bar Chart */}
+                <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                        <BarChart3
+                          className="text-emerald-600 dark:text-emerald-400"
+                          size={16}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          Revenue Breakdown
+                        </h3>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                          Credits vs Debits · Last {analyticsRange}d
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                          Credits
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                          Debits
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="grid gap-4 md:grid-cols-3 mb-6">
-                  <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">
-                      Credits
+                  {/* Summary row */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-emerald-50/60 dark:bg-emerald-500/5 rounded-lg px-3 py-2.5 border border-emerald-100 dark:border-emerald-500/10">
+                      <div className="text-[10px] font-bold text-emerald-600/60 dark:text-emerald-400/50 uppercase tracking-wider">
+                        Total Credits
+                      </div>
+                      <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        ₹{formatAmount(transactionTotals.credit)}
+                      </div>
                     </div>
-                    <div className="text-xl font-bold text-emerald-500 mt-1">
-                      INR {formatAmount(transactionTotals.credit)}
+                    <div className="bg-rose-50/60 dark:bg-rose-500/5 rounded-lg px-3 py-2.5 border border-rose-100 dark:border-rose-500/10">
+                      <div className="text-[10px] font-bold text-rose-600/60 dark:text-rose-400/50 uppercase tracking-wider">
+                        Total Debits
+                      </div>
+                      <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+                        ₹{formatAmount(transactionTotals.debit)}
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">
-                      Debits
-                    </div>
-                    <div className="text-xl font-bold text-rose-500 mt-1">
-                      INR {formatAmount(transactionTotals.debit)}
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 border border-slate-100 dark:border-white/5 text-center">
-                    <div className="text-xs text-slate-500 font-medium">
-                      Net Flow
-                    </div>
-                    <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-                      INR{" "}
-                      {formatAmount(
-                        transactionTotals.credit - transactionTotals.debit,
+                  {/* Dual bar chart: credits + debits stacked */}
+                  <div className="relative">
+                    <BarChart
+                      data={transactionSeries.credit.map(
+                        (c, i) => c + (transactionSeries.debit[i] || 0),
                       )}
+                      labels={
+                        transactionSeries.buckets?.map((d) => {
+                          const date = d.date || new Date(d.key || d);
+                          return `${date.getDate()}/${date.getMonth() + 1}`;
+                        }) || []
+                      }
+                      barColor="#059669"
+                      height={200}
+                    />
+                    {/* Overlay debit bars */}
+                    <div
+                      className="absolute inset-0"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      <BarChart
+                        data={transactionSeries.debit}
+                        labels={[]}
+                        barColor="#e11d48"
+                        height={200}
+                        showLabels={false}
+                      />
                     </div>
                   </div>
                 </div>
-                <Sparkline data={transactionSeries.net} />
+
+                {/* Net Flow Line Chart */}
+                <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                        <TrendingUp
+                          className="text-blue-600 dark:text-blue-400"
+                          size={16}
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          Net Cash Flow
+                        </h3>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                          Trend over last {analyticsRange} days
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Net value */}
+                  <div className="bg-slate-50/80 dark:bg-white/[0.02] rounded-lg px-3 py-2.5 border border-slate-100 dark:border-white/[0.04] mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                          Net Flow
+                        </div>
+                        <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                          ₹
+                          {formatAmount(
+                            transactionTotals.credit - transactionTotals.debit,
+                          )}
+                        </div>
+                      </div>
+                      <div
+                        className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                          transactionTotals.credit - transactionTotals.debit >=
+                          0
+                            ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
+                            : "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10"
+                        }`}
+                      >
+                        {transactionTotals.credit - transactionTotals.debit >= 0
+                          ? "Positive"
+                          : "Negative"}
+                      </div>
+                    </div>
+                  </div>
+                  <LineChartComponent
+                    data={transactionSeries.net}
+                    labels={
+                      transactionSeries.buckets?.map((d) => {
+                        const date = d.date || new Date(d.key || d);
+                        return `${date.getDate()}/${date.getMonth() + 1}`;
+                      }) || []
+                    }
+                    lineColor="#3b82f6"
+                    fillColor="rgba(59,130,246,0.08)"
+                    height={200}
+                  />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* QR Processing Section */}
+          {isOrdersRoute && (
+            <section
+              id="orders"
+              className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    QR Processing
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    Manage and download generated QR batches
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-md">
+                    Total: {ordersTotal} batches
+                  </span>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-white/5 p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm">
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Vendor / Brand
+                  </label>
+                  <select
+                    value={filterVendorId}
+                    onChange={(e) => {
+                      const vId = e.target.value;
+                      setFilterVendorId(vId);
+                      if (vId === "all") {
+                        setFilterBrandId("all");
+                      } else {
+                        const v = vendors.find((v) => v.id === vId);
+                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
+                      }
+                      setFilterCampaignId("all");
+                    }}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#059669] focus:outline-none focus:ring-1 focus:ring-[#059669] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="all">All Vendors</option>
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.businessName || v.User?.name || v.contactEmail}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Product / Campaign
+                  </label>
+                  <select
+                    value={filterCampaignId}
+                    onChange={(e) => setFilterCampaignId(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-[#059669] focus:outline-none focus:ring-1 focus:ring-[#059669] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="all">All Campaigns</option>
+                    {campaigns
+                      .filter((c) => {
+                        const matchesVendor =
+                          filterVendorId === "all" ||
+                          c.vendorId === filterVendorId ||
+                          c.Vendor?.id === filterVendorId;
+                        const matchesBrand =
+                          filterBrandId === "all" ||
+                          c.brandId === filterBrandId ||
+                          c.Brand?.id === filterBrandId;
+                        return matchesVendor && matchesBrand;
+                      })
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title || "Untitled"}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Batches Table */}
+              <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Vendor & Brand
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Campaign (Product)
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Quantity
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Created At
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                      {isLoadingOrders ? (
+                        <tr>
+                          <td
+                            colSpan="6"
+                            className="p-8 text-center text-slate-500"
+                          >
+                            Loading batches...
+                          </td>
+                        </tr>
+                      ) : orders.filter((order) => {
+                          const matchesVendor =
+                            filterVendorId === "all" ||
+                            order.vendorId === filterVendorId ||
+                            order.vendor?.id === filterVendorId;
+                          const matchesCampaign =
+                            filterCampaignId === "all" ||
+                            order.campaignId === filterCampaignId;
+                          return matchesVendor && matchesCampaign;
+                        }).length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="6"
+                            className="p-8 text-center text-slate-500"
+                          >
+                            No QR batches found matching filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        orders
+                          .filter((order) => {
+                            const matchesVendor =
+                              filterVendorId === "all" ||
+                              order.vendorId === filterVendorId ||
+                              order.vendor?.id === filterVendorId;
+                            const matchesCampaign =
+                              filterCampaignId === "all" ||
+                              order.campaignId === filterCampaignId;
+                            return matchesVendor && matchesCampaign;
+                          })
+                          .map((order) => {
+                            const vendorName =
+                              order.vendor?.businessName ||
+                              order.vendor?.name ||
+                              "Unknown Vendor";
+                            const brandName =
+                              order.brandName || order.vendor?.brandName || "-";
+                            const isPaid =
+                              order.status === "paid" ||
+                              order.status === "shipped";
+
+                            return (
+                              <tr
+                                key={order.id}
+                                className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"
+                              >
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
+                                  <div>
+                                    <div className="font-medium text-slate-900 dark:text-white">
+                                      {vendorName}
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                      {brandName}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
+                                  <div className="font-medium text-slate-700 dark:text-slate-200">
+                                    {order.campaignTitle || "Untitled Campaign"}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    ID: {String(order.id).slice(0, 8)}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
+                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <QrCode size={12} />
+                                    {order.quantity}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
+                                  {formatDate(order.createdAt)}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                      order.status === "paid"
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                        : order.status === "shipped"
+                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                                          : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                    }`}
+                                  >
+                                    {order.status || "pending"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5 text-right">
+                                  <button
+                                    onClick={() =>
+                                      handleDownloadOrderPdf(order)
+                                    }
+                                    disabled={isPreparingBatchPdf}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#059669] text-white hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
+                                  >
+                                    {isPreparingBatchPdf &&
+                                    batchQrs.length > 0 &&
+                                    batchQrs[0].orderId === order.id ? (
+                                      <>
+                                        <RefreshCw
+                                          size={12}
+                                          className="animate-spin"
+                                        />
+                                        Generating...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Download size={12} />
+                                        Download PDF
+                                      </>
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination if needed, currently showing all loaded */}
+                {orders.length > 0 && (
+                  <div className="p-4 border-t border-slate-200 dark:border-white/10 text-xs text-center text-slate-500">
+                    Showing recent batches. Use "Reports" for older history.
+                  </div>
+                )}
               </div>
             </section>
           )}
@@ -4077,7 +4753,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionPerQr ||
-                            0,
+                              0,
                           )}
                         </div>
                       </div>
@@ -4087,7 +4763,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionTotal ||
-                            0,
+                              0,
                           )}
                         </div>
                       </div>
@@ -4135,7 +4811,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-900 dark:text-white">
                           Total:{" "}
                           {campaignAnalytics.budget?.total !== null &&
-                            campaignAnalytics.budget?.total !== undefined
+                          campaignAnalytics.budget?.total !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.total)}`
                             : "Not set"}
                         </div>
@@ -4146,7 +4822,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-500">
                           Remaining:{" "}
                           {campaignAnalytics.budget?.remaining !== null &&
-                            campaignAnalytics.budget?.remaining !== undefined
+                          campaignAnalytics.budget?.remaining !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.remaining)}`
                             : "-"}
                         </div>
@@ -6210,12 +6886,13 @@ const AdminDashboard = () => {
                                   title="Click to update status"
                                 >
                                   <span
-                                    className={`w-1.5 h-1.5 rounded-full ${vendor.status === "active"
-                                      ? "bg-emerald-500"
-                                      : vendor.status === "paused"
-                                        ? "bg-amber-500"
-                                        : "bg-slate-400"
-                                      }`}
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      vendor.status === "active"
+                                        ? "bg-emerald-500"
+                                        : vendor.status === "paused"
+                                          ? "bg-amber-500"
+                                          : "bg-slate-400"
+                                    }`}
                                   />
                                   {vendor.status}
                                 </button>
@@ -6402,10 +7079,11 @@ const AdminDashboard = () => {
                       <button
                         key={filter.id}
                         onClick={() => setLogsFilter(filter.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${logsFilter === filter.id
-                          ? "bg-[#059669] text-white"
-                          : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
-                          }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          logsFilter === filter.id
+                            ? "bg-[#059669] text-white"
+                            : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                        }`}
                       >
                         {filter.label}
                       </button>
