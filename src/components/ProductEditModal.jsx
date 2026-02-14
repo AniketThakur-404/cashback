@@ -107,8 +107,8 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -123,7 +123,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]" style={{ scrollbarWidth: 'thin' }}>
+                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto ios-scroll max-h-[calc(92dvh-180px)] sm:max-h-[calc(85vh-180px)]" style={{ scrollbarWidth: 'thin' }}>
                     <div className="space-y-5">
                         {/* Product Name */}
                         <div className="space-y-2">

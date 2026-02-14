@@ -4,20 +4,22 @@ import { X } from "lucide-react";
 
 const WalletActionModal = ({ isOpen, onClose, title, children }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    if (!isOpen) return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
     };
   }, [isOpen]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 pt-safe">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -33,7 +35,7 @@ const WalletActionModal = ({ isOpen, onClose, title, children }) => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "20%", opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden max-h-[90dvh] overflow-y-auto"
+            className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden max-h-[calc(100dvh-2rem-var(--safe-area-top)-var(--safe-area-bottom))] sm:max-h-[90dvh] overflow-y-auto ios-scroll"
           >
             <div className="p-4 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md z-10">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">

@@ -98,12 +98,12 @@ const Layout = ({ children }) => {
   }, [authToken, isHome]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center">
+    <div className="min-h-[100dvh] bg-gray-100 flex justify-center safe-area-x">
       {/* Mobile Container - limits width on desktop to look like a phone */}
       <div className="w-full max-w-md bg-white dark:bg-zinc-950 min-h-[100dvh] shadow-2xl relative flex flex-col transition-colors duration-300">
         {/* TOP HEADER */}
         <header
-          className={`bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 ${isHome ? "py-3" : "py-3"} sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 flex items-center transition-colors duration-300 ${
+          className={`bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe ${isHome ? "py-3" : "py-3"} sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 flex items-center transition-colors duration-300 ${
             isHome ? "justify-between" : "justify-start"
           }`}
         >
@@ -165,9 +165,9 @@ const Layout = ({ children }) => {
         {/* MAIN CONTENT AREA (Scrollable) */}
         <main
           ref={mainRef}
-          className="flex-1 transition-colors duration-300 touch-pan-y overflow-x-hidden"
+          className="flex-1 transition-colors duration-300 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain ios-scroll"
         >
-          <div className="pb-32">{children}</div>
+          <div className="pb-dock-safe">{children}</div>
         </main>
 
         {/* BOTTOM NAVIGATION */}

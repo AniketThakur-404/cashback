@@ -3135,7 +3135,7 @@ const VendorDashboard = () => {
     <>
       {/* Download Progress Modal - Portal Overlay */}
       {downloadProgress.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md">
             <div className="text-center space-y-6">
               {/* Icon */}
@@ -3340,8 +3340,8 @@ const VendorDashboard = () => {
 
             {/* Onboarding / Registration Modal */}
             {showOnboarding && !isAuthenticated && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+              <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
+                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 sticky top-0 z-10">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       <BadgeCheck className="text-primary" size={24} />
@@ -5417,8 +5417,8 @@ Quantity: ${invoiceData.quantity} QRs
 
                           {/* Pending Campaign Details Modal */}
                           {selectedPendingCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-zinc-800">
+                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                                 <div className="p-6 space-y-6">
                                   <div className="flex items-center justify-between">
                                     <div>
@@ -5617,8 +5617,8 @@ Quantity: ${invoiceData.quantity} QRs
 
                           {/* Active Campaign Details Modal */}
                           {activeCampaignDetails && activeCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-zinc-800">
+                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                                 <div className="p-6 space-y-6">
                                   <div className="flex items-center justify-between">
                                     <div>
