@@ -73,7 +73,10 @@ export const apiRequest = async (path, { method = "GET", body, token, headers } 
   const data = await parseResponse(response);
 
   if (!response.ok) {
-    const message = data?.message || data?.error || `Request failed (${response.status})`;
+    const baseMessage = data?.message || data?.error || `Request failed (${response.status})`;
+    const detail =
+      data?.error && data.error !== baseMessage ? `: ${data.error}` : "";
+    const message = `${baseMessage}${detail}`;
     const error = new Error(message);
     error.status = response.status;
     error.data = data;

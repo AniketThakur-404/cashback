@@ -32,6 +32,8 @@ const Layout = ({ children }) => {
     if (location.pathname.startsWith("/admin")) return "Admin Console";
     if (location.pathname.startsWith("/brand-details")) return "Brand Details";
     if (location.pathname.startsWith("/product-info")) return "Product Info";
+    if (location.pathname.startsWith("/product-report"))
+      return "Product Reports";
     if (location.pathname.startsWith("/history")) return "History";
     return "Assured Rewards";
   })();

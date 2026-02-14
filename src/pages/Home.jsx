@@ -347,7 +347,7 @@ const Home = () => {
       shadow: "rgba(245,158,11,0.3)",
     },
     {
-      to: "/history",
+      to: "/product-report",
       icon: Shield,
       label: "Reports",
       gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
@@ -775,7 +775,7 @@ const Home = () => {
 
         {/* --- 7 � PRODUCT REPORTS --- */}
         <Link
-          to="/history"
+          to="/product-report"
           className="block active:scale-[0.98] transition-transform"
         >
           <div

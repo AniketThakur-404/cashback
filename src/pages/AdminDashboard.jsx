@@ -199,6 +199,16 @@ const toFiniteNumber = (value) => {
   return Number.isFinite(numeric) ? numeric : 0;
 };
 
+const getVendorTechFee = (vendor) => {
+  const vendorFee = Number(vendor?.techFeePerQr);
+  if (Number.isFinite(vendorFee) && vendorFee > 0) return vendorFee;
+
+  const legacyQrFee = Number(vendor?.Brand?.qrPricePerUnit);
+  if (Number.isFinite(legacyQrFee) && legacyQrFee > 0) return legacyQrFee;
+
+  return 0;
+};
+
 const formatDate = (value) => {
   if (!value) return "-";
   const date = new Date(value);
@@ -645,6 +655,8 @@ const AdminDashboard = () => {
   const [vendorsError, setVendorsError] = useState("");
   const [isLoadingVendors, setIsLoadingVendors] = useState(false);
   const [vendorStatusUpdates, setVendorStatusUpdates] = useState({});
+  const [vendorTechFeeDrafts, setVendorTechFeeDrafts] = useState({});
+  const [vendorTechFeeSaving, setVendorTechFeeSaving] = useState({});
   const [vendorActionStatus, setVendorActionStatus] = useState("");
   const [vendorActionError, setVendorActionError] = useState("");
   const [brandForm, setBrandForm] = useState(() => getDefaultBrandFormState());
@@ -828,6 +840,8 @@ const AdminDashboard = () => {
     setVendorsError("");
     setIsLoadingVendors(false);
     setVendorStatusUpdates({});
+    setVendorTechFeeDrafts({});
+    setVendorTechFeeSaving({});
     setVendorActionStatus("");
     setVendorActionError("");
     setBrandForm(getDefaultBrandFormState());
@@ -952,6 +966,8 @@ const AdminDashboard = () => {
   const isSubscriptionsRoute = activeSection === "subscriptions";
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
+  const isAccountRoute = activeSection === "account";
+  const isSecurityRoute = activeSection === "security";
 
   const vendorView = isVendorsRoute ? activeSubSection || "all" : "all";
   const userView = isUsersRoute ? activeSubSection || "all" : "all";
@@ -960,6 +976,8 @@ const AdminDashboard = () => {
     isSubscriptionsRoute || (isVendorsRoute && vendorView === "all");
   const showVendorTable = isVendorsRoute; // Always show table if vendors route
   const shouldRenderVendorsSection = isVendorsRoute || isSubscriptionsRoute;
+  const isActiveVendorListRoute =
+    isVendorsRoute && activeSubSection === "active";
 
   const subscriptionBuckets = useMemo(() => {
     const buckets = { active: [], paused: [], expired: [] };
@@ -1541,6 +1559,33 @@ const AdminDashboard = () => {
   }, [token, subscriptionFilter, isSubscriptionsRoute, isVendorsRoute]);
 
   useEffect(() => {
+    setVendorTechFeeDrafts((prev) => {
+      const next = { ...prev };
+      const vendorIds = new Set();
+      let changed = false;
+
+      (vendors || []).forEach((vendor) => {
+        if (!vendor?.id) return;
+        vendorIds.add(vendor.id);
+        if (next[vendor.id] === undefined) {
+          const fee = getVendorTechFee(vendor);
+          next[vendor.id] = fee > 0 ? Number(fee).toFixed(2) : "";
+          changed = true;
+        }
+      });
+
+      Object.keys(next).forEach((vendorId) => {
+        if (!vendorIds.has(vendorId)) {
+          delete next[vendorId];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [vendors]);
+
+  useEffect(() => {
     if (!token || !campaignAnalyticsId) return;
     loadCampaignAnalytics(token, campaignAnalyticsId);
   }, [token, campaignAnalyticsId]);
@@ -1640,6 +1685,50 @@ const AdminDashboard = () => {
         setVendorActionError,
         "Unable to update vendor status.",
       );
+    }
+  };
+
+  const handleVendorTechFeeChange = (vendorId, value) => {
+    setVendorTechFeeDrafts((prev) => ({ ...prev, [vendorId]: value }));
+    setVendorActionStatus("");
+    setVendorActionError("");
+  };
+
+  const handleVendorTechFeeSave = async (vendor) => {
+    if (!vendor?.id) return;
+
+    const rawValue = vendorTechFeeDrafts[vendor.id];
+    const nextFee = Number(rawValue);
+    if (
+      !Number.isFinite(nextFee) ||
+      nextFee <= 0 ||
+      nextFee > MAX_QR_PRICE
+    ) {
+      setVendorActionError(
+        `Tech fee must be between 0.01 and ${MAX_QR_PRICE}.`,
+      );
+      return;
+    }
+
+    setVendorActionStatus("");
+    setVendorActionError("");
+    setVendorTechFeeSaving((prev) => ({ ...prev, [vendor.id]: true }));
+
+    try {
+      const normalizedFee = Number(nextFee.toFixed(2));
+      await updateAdminVendorDetails(token, vendor.id, {
+        techFeePerQr: normalizedFee,
+      });
+      setVendorActionStatus("Tech fee updated.");
+      setVendorTechFeeDrafts((prev) => ({
+        ...prev,
+        [vendor.id]: normalizedFee.toFixed(2),
+      }));
+      await loadVendors(token);
+    } catch (err) {
+      handleRequestError(err, setVendorActionError, "Unable to update tech fee.");
+    } finally {
+      setVendorTechFeeSaving((prev) => ({ ...prev, [vendor.id]: false }));
     }
   };
 
@@ -6672,7 +6761,7 @@ const AdminDashboard = () => {
                               Brand
                             </th>
                             <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              QR Price
+                              Tech Fee
                             </th>
                             <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
                               Vendor
@@ -6695,11 +6784,23 @@ const AdminDashboard = () => {
                                 {subscription.Brand?.name || "Brand"}
                               </td>
                               <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                {Number.isFinite(
-                                  Number(subscription.Brand?.qrPricePerUnit),
-                                )
-                                  ? `INR ${formatAmount(subscription.Brand?.qrPricePerUnit)}/QR`
-                                  : "-"}
+                                {(() => {
+                                  const vendorFee = Number(
+                                    subscription.Brand?.Vendor?.techFeePerQr,
+                                  );
+                                  const legacyQrFee = Number(
+                                    subscription.Brand?.qrPricePerUnit,
+                                  );
+                                  const techFee =
+                                    Number.isFinite(vendorFee) &&
+                                    vendorFee > 0
+                                      ? vendorFee
+                                      : legacyQrFee;
+                                  return Number.isFinite(Number(techFee)) &&
+                                    Number(techFee) > 0
+                                    ? `INR ${formatAmount(techFee)}`
+                                    : "-";
+                                })()}
                               </td>
                               <td className="py-3 px-3 text-slate-900 dark:text-white">
                                 {subscription.Brand?.Vendor?.businessName ||
@@ -6755,7 +6856,7 @@ const AdminDashboard = () => {
                             Subscription
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
-                            QR Price
+                            Tech Fee
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
                             Status
@@ -6777,10 +6878,43 @@ const AdminDashboard = () => {
                             vendor.Brand?.Subscription?.status;
                           const subscriptionEnds =
                             vendor.Brand?.Subscription?.endDate;
-                          const qrPrice = vendor.Brand?.qrPricePerUnit;
-                          const qrPriceLabel = Number.isFinite(Number(qrPrice))
-                            ? `INR ${formatAmount(qrPrice)}`
-                            : "-";
+                          const currentTechFee = getVendorTechFee(vendor);
+                          const currentTechFeeValue = Number.isFinite(
+                            Number(currentTechFee),
+                          )
+                            ? Number(Number(currentTechFee).toFixed(2))
+                            : null;
+                          const techFeeDraft =
+                            vendorTechFeeDrafts[vendor.id] ??
+                            (currentTechFeeValue !== null &&
+                            currentTechFeeValue > 0
+                              ? currentTechFeeValue.toFixed(2)
+                              : "");
+                          const parsedTechFeeDraft = Number(techFeeDraft);
+                          const normalizedTechFeeDraft = Number.isFinite(
+                            parsedTechFeeDraft,
+                          )
+                            ? Number(parsedTechFeeDraft.toFixed(2))
+                            : null;
+                          const isTechFeeValid =
+                            normalizedTechFeeDraft !== null &&
+                            normalizedTechFeeDraft > 0 &&
+                            normalizedTechFeeDraft <= MAX_QR_PRICE;
+                          const hasTechFeeChanged =
+                            normalizedTechFeeDraft !== currentTechFeeValue;
+                          const isSavingTechFee = Boolean(
+                            vendorTechFeeSaving[vendor.id],
+                          );
+                          const canSaveTechFee =
+                            isActiveVendorListRoute &&
+                            isTechFeeValid &&
+                            hasTechFeeChanged &&
+                            !isSavingTechFee;
+                          const techFeeLabel =
+                            currentTechFeeValue !== null &&
+                            currentTechFeeValue > 0
+                              ? `INR ${formatAmount(currentTechFeeValue)}`
+                              : "-";
                           const contactPhone =
                             vendor.contactPhone ||
                             vendor.User?.phoneNumber ||
@@ -6867,9 +7001,45 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
-                                <span className="font-semibold text-slate-900 dark:text-white text-sm">
-                                  {qrPriceLabel}
-                                </span>
+                                {isActiveVendorListRoute ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                        INR
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        max={MAX_QR_PRICE}
+                                        value={techFeeDraft}
+                                        onChange={(event) =>
+                                          handleVendorTechFeeChange(
+                                            vendor.id,
+                                            event.target.value,
+                                          )
+                                        }
+                                        className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${
+                                          techFeeDraft !== "" && !isTechFeeValid
+                                            ? "border-rose-300 dark:border-rose-500/50"
+                                            : "border-slate-200 dark:border-white/10"
+                                        }`}
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleVendorTechFeeSave(vendor)}
+                                      disabled={!canSaveTechFee}
+                                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {isSavingTechFee ? "Saving..." : "Save"}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="font-semibold text-slate-900 dark:text-white text-sm">
+                                    {techFeeLabel}
+                                  </span>
+                                )}
                               </td>
 
                               <td className="py-4 px-6 align-top">
@@ -7603,6 +7773,133 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+            </section>
+          )}
+
+          {/* Account Settings Section */}
+          {isAccountRoute && (
+            <section
+              id="account"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Account Settings
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Your admin profile and session information.
+                  </p>
+                </div>
+              </div>
+
+              <div className={`${adminPanelClass} p-6 max-w-3xl space-y-6`}>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Name
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                      {adminInfo?.name || "Admin"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Email
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                      {adminInfo?.email || "Not available"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Role
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
+                      {adminInfo?.role || "admin"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Session
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                      Active
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleNavClick("security")}
+                    className={adminGhostButtonClass}
+                  >
+                    Open Security
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavClick("settings")}
+                    className={adminGhostButtonClass}
+                  >
+                    Open System Settings
+                  </button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Security Section */}
+          {isSecurityRoute && (
+            <section
+              id="security"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Security
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Session safety and sign-in controls.
+                  </p>
+                </div>
+              </div>
+
+              <div className={`${adminPanelClass} p-6 max-w-3xl space-y-5`}>
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Current Session Token
+                  </p>
+                  <p className="mt-2 text-sm font-mono text-slate-800 dark:text-slate-200 break-all">
+                    {token ? `${token.slice(0, 12)}...${token.slice(-6)}` : "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-amber-200/80 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/5 p-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Use sign out if this browser is shared or you suspect
+                    unauthorized access.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavClick("account")}
+                    className={adminGhostButtonClass}
+                  >
+                    Back to Account
+                  </button>
+                </div>
+              </div>
             </section>
           )}
 

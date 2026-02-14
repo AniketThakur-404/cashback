@@ -43,6 +43,11 @@ export const getUserDashboard = (token) =>
     token,
   });
 
+export const getUserRedemptionHistory = (token) =>
+  apiRequest("/api/user/redemptions", {
+    token: resolveAuthToken(token),
+  });
+
 // Claim QR APIs
 export const getClaimPreview = (token) =>
   apiRequest(`/api/claim/preview?token=${encodeURIComponent(token)}`);
@@ -169,6 +174,18 @@ export const markUserNotificationRead = (token, notificationId) =>
   apiRequest(`/api/user/notifications/${encodeURIComponent(notificationId)}/read`, {
     method: "PUT",
     token,
+  });
+
+export const getUserSupportTickets = (token) =>
+  apiRequest("/api/user/support", {
+    token: resolveAuthToken(token),
+  });
+
+export const createUserSupportTicket = (payload, token) =>
+  apiRequest("/api/user/support", {
+    method: "POST",
+    token: resolveAuthToken(token),
+    body: payload,
   });
 
 export const getVendorWallet = (token) =>
@@ -358,6 +375,18 @@ export const updateAdminUserStatus = (token, userId, status) =>
     method: "PUT",
     token,
     body: { status },
+  });
+
+export const getAdminUserOverview = (token, userId) =>
+  apiRequest(`/api/admin/users/${encodeURIComponent(userId)}/overview`, {
+    token,
+  });
+
+export const updateAdminUserDetails = (token, userId, payload) =>
+  apiRequest(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    token,
+    body: payload,
   });
 
 export const getAdminVendors = (token, params) =>

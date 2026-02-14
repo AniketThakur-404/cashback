@@ -34,6 +34,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import ContactUs from './pages/ContactUs';
 import History from './pages/History';
+import ProductReport from './pages/ProductReport';
 
 function App() {
   const AppLayout = () => (
@@ -101,6 +102,7 @@ function App() {
               <Route path="/liquid-glass" element={<LiquidGlassDemo />} />
               <Route path="/help" element={<HelpSupport />} />
               <Route path="/history" element={<History />} />
+              <Route path="/product-report" element={<ProductReport />} />
             </Route>
           </Routes>
         </BrowserRouter>
