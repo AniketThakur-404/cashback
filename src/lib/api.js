@@ -760,6 +760,13 @@ export const getPublicGiftCardDetails = (giftCardId) =>
 
 export const getPublicStoreData = () => apiRequest("/api/public/store");
 
+export const redeemStoreProduct = (token, productId) =>
+  apiRequest("/api/user/store/redeem", {
+    method: "POST",
+    token: resolveAuthToken(token),
+    body: { productId },
+  });
+
 
 
 

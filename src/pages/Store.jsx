@@ -7,8 +7,11 @@ import {
   ShoppingBag,
   Sparkles,
   TicketPercent,
+  Wallet,
 } from "lucide-react";
-import { getPublicStoreData } from "../lib/api";
+import { getPublicStoreData, getWalletSummary, redeemStoreProduct } from "../lib/api";
+import { useAuth } from "../lib/auth";
+import { resolvePublicAssetUrl } from "../lib/apiClient";
 
 const FALLBACK_TABS = [
   { id: "vouchers", label: "Vouchers" },
@@ -23,8 +26,25 @@ const CATEGORY_STYLES = {
   Entertainment: "from-fuchsia-500 to-pink-600",
 };
 
+const INR_FORMATTER = new Intl.NumberFormat("en-IN", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const getItemAmount = (item) => {
+  const amount = Number(item?.amount ?? item?.points);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+};
+
+const formatInr = (value) => {
+  const amount = Number(value);
+  const normalized = Number.isFinite(amount) ? amount : 0;
+  return `INR ${INR_FORMATTER.format(normalized)}`;
+};
+
 const VoucherCard = ({ item }) => {
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
+  const amount = getItemAmount(item);
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 p-4 shadow-sm hover:shadow-xl transition-all duration-300">
@@ -54,23 +74,47 @@ const VoucherCard = ({ item }) => {
             {item.value || "INR 0"}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {item.points || 0} points
+            {formatInr(amount)} required
           </p>
         </div>
-        <button className="inline-flex items-center gap-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03]">
-          Redeem <ArrowRight size={14} />
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03]"
+        >
+          Use Voucher <ArrowRight size={14} />
         </button>
       </div>
     </article>
   );
 };
 
-const ProductCard = ({ item }) => {
+const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRedeem }) => {
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
+  const imageSrc = resolvePublicAssetUrl(item.image || item.imageUrl || "");
+  const amount = getItemAmount(item);
+  const stockValue = Number(item?.stock);
+  const isOutOfStock = Number.isFinite(stockValue) && stockValue <= 0;
+  const hasEnoughBalance = amount > 0 && walletBalance >= amount;
+
+  let actionLabel = "Redeem";
+  if (isRedeeming) actionLabel = "Processing...";
+  else if (!isAuthenticated) actionLabel = "Login to Redeem";
+  else if (isOutOfStock) actionLabel = "Out of Stock";
+  else if (!hasEnoughBalance) actionLabel = "Low Wallet";
+
+  const disableRedeem =
+    isRedeeming || !isAuthenticated || amount <= 0 || isOutOfStock || !hasEnoughBalance;
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-      <div className={`h-28 bg-gradient-to-br ${gradient} relative`}>
+      <div className={`h-28 bg-gradient-to-br ${gradient} relative overflow-hidden`}>
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt={item.name}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_20%,white,transparent_55%)]" />
         <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1 text-[11px] text-white backdrop-blur-md">
           <Box size={13} />
@@ -84,6 +128,11 @@ const ProductCard = ({ item }) => {
             <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
               {item.name}
             </h3>
+            {item.brand && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {item.brand}
+              </p>
+            )}
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[2.5rem]">
               {item.description || "Premium reward product from our store."}
             </p>
@@ -97,11 +146,26 @@ const ProductCard = ({ item }) => {
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400">Required</p>
             <p className="text-lg font-bold text-slate-900 dark:text-white">
-              {item.points || 0} pts
+              {formatInr(amount)}
             </p>
+            {item.value && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {item.value}
+              </p>
+            )}
+            {Number.isFinite(stockValue) && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Stock: {stockValue}
+              </p>
+            )}
           </div>
-          <button className="inline-flex items-center gap-1 rounded-full bg-primary hover:bg-primary-strong text-white px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03]">
-            Redeem <ArrowRight size={14} />
+          <button
+            type="button"
+            disabled={disableRedeem}
+            onClick={() => onRedeem(item)}
+            className="inline-flex items-center gap-1 rounded-full bg-primary hover:bg-primary-strong text-white px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {actionLabel} <ArrowRight size={14} />
           </button>
         </div>
       </div>
@@ -110,6 +174,7 @@ const ProductCard = ({ item }) => {
 };
 
 const Store = () => {
+  const { authToken, isAuthenticated } = useAuth();
   const [storeData, setStoreData] = useState({
     tabs: [],
     categories: [],
@@ -120,6 +185,12 @@ const Store = () => {
   const [activeCategory, setActiveCategory] = useState("Popular");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
+  const [walletError, setWalletError] = useState("");
+  const [redeemingProductId, setRedeemingProductId] = useState("");
+  const [redeemStatus, setRedeemStatus] = useState("");
+  const [redeemError, setRedeemError] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -150,6 +221,39 @@ const Store = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let live = true;
+
+    const loadWallet = async () => {
+      if (!isAuthenticated || !authToken) {
+        setWalletBalance(0);
+        setWalletError("");
+        setIsWalletLoading(false);
+        return;
+      }
+
+      setIsWalletLoading(true);
+      setWalletError("");
+      try {
+        const data = await getWalletSummary(authToken);
+        if (!live) return;
+        const numericBalance = Number(data?.wallet?.balance);
+        setWalletBalance(Number.isFinite(numericBalance) ? numericBalance : 0);
+      } catch (err) {
+        if (!live) return;
+        setWalletError(err.message || "Unable to load wallet balance.");
+      } finally {
+        if (live) setIsWalletLoading(false);
+      }
+    };
+
+    loadWallet();
+
+    return () => {
+      live = false;
+    };
+  }, [authToken, isAuthenticated]);
+
   const tabs = storeData.tabs.length ? storeData.tabs : FALLBACK_TABS;
   const categories = storeData.categories.length
     ? storeData.categories
@@ -171,14 +275,68 @@ const Store = () => {
     return list.filter((item) => item.category === activeCategory);
   }, [activeCategory, list]);
 
-  const totalPoints = useMemo(
+  const totalAmount = useMemo(
     () =>
       list.reduce((sum, item) => {
-        const points = Number(item?.points || 0);
-        return Number.isFinite(points) ? sum + points : sum;
+        const amount = getItemAmount(item);
+        return Number.isFinite(amount) ? sum + amount : sum;
       }, 0),
     [list],
   );
+
+  const handleRedeemProduct = async (item) => {
+    if (!isAuthenticated || !authToken) {
+      setRedeemError("Sign in to redeem products.");
+      setRedeemStatus("");
+      return;
+    }
+
+    const productId = String(item?.id || "").trim();
+    if (!productId) {
+      setRedeemError("Product is unavailable.");
+      setRedeemStatus("");
+      return;
+    }
+
+    const amount = getItemAmount(item);
+    if (amount <= 0) {
+      setRedeemError("This product has invalid pricing.");
+      setRedeemStatus("");
+      return;
+    }
+
+    if (walletBalance < amount) {
+      setRedeemError("Insufficient wallet balance.");
+      setRedeemStatus("");
+      return;
+    }
+
+    setRedeemingProductId(productId);
+    setRedeemError("");
+    setRedeemStatus("");
+    try {
+      const data = await redeemStoreProduct(authToken, productId);
+      const nextBalance = Number(data?.wallet?.balance);
+      setWalletBalance(Number.isFinite(nextBalance) ? nextBalance : 0);
+      setRedeemStatus(data?.message || "Product redeemed successfully.");
+
+      setStoreData((prev) => ({
+        ...prev,
+        products: (prev.products || []).map((entry) => {
+          if (entry?.id !== item?.id) return entry;
+          const stockValue = Number(entry?.stock);
+          if (Number.isFinite(stockValue) && stockValue > 0) {
+            return { ...entry, stock: stockValue - 1 };
+          }
+          return entry;
+        }),
+      }));
+    } catch (err) {
+      setRedeemError(err.message || "Unable to redeem this product.");
+    } finally {
+      setRedeemingProductId("");
+    }
+  };
 
   return (
     <div className="px-4 py-5 pb-8">
@@ -225,9 +383,22 @@ const Store = () => {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Points pool</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Required Pool</p>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {totalPoints}
+                {formatInr(totalAmount)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3 col-span-2 sm:col-span-1">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
+                <Wallet size={12} />
+                Wallet
+              </p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
+                {isAuthenticated
+                  ? isWalletLoading
+                    ? "Loading..."
+                    : formatInr(walletBalance)
+                  : "Sign in"}
               </p>
             </div>
           </div>
@@ -271,6 +442,21 @@ const Store = () => {
           {loadError}
         </div>
       )}
+      {walletError && isAuthenticated && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          {walletError}
+        </div>
+      )}
+      {redeemError && (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+          {redeemError}
+        </div>
+      )}
+      {redeemStatus && (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {redeemStatus}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -294,7 +480,14 @@ const Store = () => {
             activeTab === "vouchers" ? (
               <VoucherCard key={item.id} item={item} />
             ) : (
-              <ProductCard key={item.id} item={item} />
+              <ProductCard
+                key={item.id}
+                item={item}
+                isAuthenticated={isAuthenticated}
+                walletBalance={walletBalance}
+                isRedeeming={redeemingProductId === item.id}
+                onRedeem={handleRedeemProduct}
+              />
             ),
           )}
         </div>
