@@ -117,12 +117,8 @@ const ProductCard = ({
           </p>
         </div>
 
-<<<<<<< HEAD
-        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-3 mt-1">
-=======
         {/* Price Tag */}
         <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-2 mt-2">
->>>>>>> fa225a5e4af3ef6b892bc95d76d5cda100271cb2
           <div>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Required
