@@ -25,7 +25,7 @@ const Layout = ({ children }) => {
     if (location.pathname.startsWith("/gift-card-info"))
       return "Gift Card Info";
     if (location.pathname.startsWith("/gift-cards")) return "Store";
-    if (location.pathname.startsWith("/wallet")) return "vCash";
+    if (location.pathname.startsWith("/wallet")) return "Wallet";
     if (location.pathname.startsWith("/store")) return "Rewards Store";
     if (location.pathname.startsWith("/vendor-dashboard"))
       return "Vendor Dashboard";
@@ -175,7 +175,7 @@ const Layout = ({ children }) => {
           items={[
             { path: "/", icon: <Home size={20} />, label: "Home" },
             { path: "/gift-cards", icon: <Gift size={20} />, label: "Store" },
-            { path: "/wallet", icon: <Wallet size={20} />, label: "vCash" },
+            { path: "/wallet", icon: <Wallet size={20} />, label: "Wallet" },
           ]}
         />
       </div>

@@ -448,6 +448,8 @@ const adminPrimaryButtonClass =
   "px-6 py-2.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white font-semibold shadow-lg shadow-[#059669]/20 transition-all";
 const adminGhostButtonClass =
   "px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm text-slate-700 font-medium transition-colors dark:bg-white/5 dark:hover:bg-white/10 dark:text-white";
+const isProductReportSubject = (subject) =>
+  /^product report(?:\b|:|-)/i.test(String(subject || "").trim());
 const statLabelClass =
   "text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2";
 const statValueClass = "text-2xl font-bold text-slate-900 dark:text-white";
@@ -931,6 +933,7 @@ const AdminDashboard = () => {
   const [supportReplies, setSupportReplies] = useState({});
   const [supportActionStatus, setSupportActionStatus] = useState("");
   const [supportActionError, setSupportActionError] = useState("");
+  const [supportView, setSupportView] = useState("all");
 
   // User Wallet Modal
   const [selectedUser, setSelectedUser] = useState(null);
@@ -1096,7 +1099,9 @@ const AdminDashboard = () => {
   const isPayoutsRoute = activeSection === "payouts";
   const isFinanceRoute = activeSection === "finance";
   const isUsersRoute = activeSection === "users";
-  const isSupportRoute = activeSection === "support";
+  const isProductReportsRoute = activeSection === "product-reports";
+  const isSupportRoute =
+    activeSection === "support" || isProductReportsRoute;
   const isTransactionsRoute = activeSection === "transactions";
   const isQrsRoute = activeSection === "qrs";
   const isVendorsRoute = activeSection === "vendors";
@@ -1168,6 +1173,7 @@ const AdminDashboard = () => {
     "users-inactive": "/admin/users/inactive",
     "users-blocked": "/admin/users/blocked",
     support: "/admin/support",
+    "product-reports": "/admin/product-reports",
     vendors: "/admin/vendors",
     "vendors-create": "/admin/vendors/create",
     "vendors-active": "/admin/vendors/active",
@@ -1192,6 +1198,7 @@ const AdminDashboard = () => {
     finance: "Finance & Revenue",
     users: "Users",
     support: "Disputes & Support",
+    "product-reports": "Product Reports",
     vendors: "Vendors",
     subscriptions: "Subscriptions",
     transactions: "Transactions",
@@ -1716,6 +1723,11 @@ const AdminDashboard = () => {
   }, [token, activeSection, activeSubSection]);
 
   useEffect(() => {
+    if (!isSupportRoute) return;
+    setSupportView(isProductReportsRoute ? "product" : "all");
+  }, [isSupportRoute, isProductReportsRoute]);
+
+  useEffect(() => {
     if (!token) return;
     if (!isSubscriptionsRoute && !isVendorsRoute) return;
     loadSubscriptions(token, subscriptionFilter);
@@ -1803,6 +1815,7 @@ const AdminDashboard = () => {
     setFinanceSummary(null);
     setSupportTickets([]);
     setSupportReplies({});
+    setSupportView("all");
     setSelectedUser(null);
     setIsUserWalletOpen(false);
     setOrdersTotal(0);
@@ -3402,6 +3415,43 @@ const AdminDashboard = () => {
     return name.includes(searchLower) || email.includes(searchLower);
   });
   const limitedUsers = showAllUsers ? filteredUsers : filteredUsers.slice(0, 8);
+
+  const supportCounts = useMemo(() => {
+    const items = Array.isArray(supportTickets) ? supportTickets : [];
+    const product = items.filter((ticket) =>
+      isProductReportSubject(ticket?.subject),
+    ).length;
+    return {
+      total: items.length,
+      product,
+      other: Math.max(items.length - product, 0),
+    };
+  }, [supportTickets]);
+
+  const filteredSupportTickets = useMemo(() => {
+    const items = Array.isArray(supportTickets) ? supportTickets : [];
+    const byType = items.filter((ticket) => {
+      const isProduct = isProductReportSubject(ticket?.subject);
+      if (supportView === "product") return isProduct;
+      if (supportView === "other") return !isProduct;
+      return true;
+    });
+
+    if (!searchLower) return byType;
+
+    return byType.filter((ticket) => {
+      const haystack = [
+        ticket?.id,
+        ticket?.subject,
+        ticket?.message,
+        ticket?.User?.name,
+        ticket?.User?.email,
+      ]
+        .map((value) => String(value || "").toLowerCase())
+        .join(" ");
+      return haystack.includes(searchLower);
+    });
+  }, [supportTickets, supportView, searchLower]);
 
   const qrsTotalLabel = qrsTotal || qrs.length || 0;
   const qrStatusCounts = useMemo(() => {
@@ -6725,18 +6775,65 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    Disputes & Support
+                    {isProductReportsRoute
+                      ? "Product Reports"
+                      : "Disputes & Support"}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Review customer issues, respond to disputes, and close
-                    tickets.
+                    {isProductReportsRoute
+                      ? "Review user product issue reports and respond from one queue."
+                      : "Review customer issues, respond to disputes, and close tickets."}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-sm text-slate-900 dark:text-white/60">
-                    Total: {supportTickets.length}
+                    Total: {supportCounts.total}
+                  </span>
+                  <span className="px-3 py-1 rounded-lg bg-amber-100/70 dark:bg-amber-500/20 text-sm text-amber-700 dark:text-amber-300">
+                    Product: {supportCounts.product}
                   </span>
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSupportView("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "all"
+                      ? "bg-[#059669] text-white"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  All ({supportCounts.total})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupportView("product")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "product"
+                      ? "bg-amber-500 text-white"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  Product Reports ({supportCounts.product})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSupportView("other")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "other"
+                      ? "bg-slate-700 text-white dark:bg-slate-600"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  Other Tickets ({supportCounts.other})
+                </button>
+                {filteredSupportTickets.length !== supportCounts.total && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Showing {filteredSupportTickets.length}
+                  </span>
+                )}
               </div>
 
               {supportLoading && (
@@ -6758,7 +6855,7 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {supportTickets.length > 0 ? (
+              {filteredSupportTickets.length > 0 ? (
                 <div className={`${adminPanelClass} overflow-hidden`}>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -6785,12 +6882,15 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {supportTickets.map((ticket) => {
+                        {filteredSupportTickets.map((ticket) => {
                           const draft = supportReplies[ticket.id] || {};
                           const responseValue =
                             draft.response ?? ticket.response ?? "";
                           const statusValue =
                             draft.status ?? ticket.status ?? "open";
+                          const isProductReport = isProductReportSubject(
+                            ticket.subject,
+                          );
                           return (
                             <tr
                               key={ticket.id}
@@ -6800,6 +6900,11 @@ const AdminDashboard = () => {
                                 <div className="font-semibold">
                                   {ticket.subject || "Support Ticket"}
                                 </div>
+                                {isProductReport && (
+                                  <div className="inline-flex mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                                    Product Report
+                                  </div>
+                                )}
                                 <div className="text-[10px] text-slate-400">
                                   ID: {ticket.id?.slice(0, 8)}
                                 </div>
@@ -6889,7 +6994,9 @@ const AdminDashboard = () => {
               ) : (
                 !supportLoading && (
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    No disputes or support tickets.
+                    {supportView === "product"
+                      ? "No product report tickets found."
+                      : "No disputes or support tickets."}
                   </div>
                 )
               )}

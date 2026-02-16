@@ -260,7 +260,7 @@ const Home = () => {
               data.stats = {
                 productsOwned: s.productsOwned || 0,
                 productsReported: s.productsReported || 0,
-                vCashEarned: s.totalEarned || 0,
+                walletEarned: s.totalEarned || 0,
               };
           } catch (_) {}
         }
@@ -378,8 +378,8 @@ const Home = () => {
       border: "rgba(239,68,68,0.35)", // Stronger border
     },
     {
-      label: "vCash",
-      value: fmtCash(stats.vCashEarned),
+      label: "Wallet",
+      value: fmtCash(stats.walletEarned),
       color: "#059669",
       bg: "rgba(5,150,105,0.15)", // Increased opacity
       border: "rgba(5,150,105,0.35)", // Stronger border
