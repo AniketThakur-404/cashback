@@ -98,9 +98,13 @@ const Profile = () => {
         name: profile.name,
         email: profile.email,
       });
-      setSuccess("Profile updated successfully");
+
+      info(
+        "Profile Updated",
+        "Your profile details have been saved successfully.",
+      );
+      setShowEditModal(false);
       await loadProfile();
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to update profile");
     } finally {
@@ -204,10 +208,7 @@ const Profile = () => {
             disabled={isLoading}
             className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <RefreshCw
-              size={14}
-              className={isLoading ? "animate-spin" : ""}
-            />
+            <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
             {isLoading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
@@ -325,7 +326,7 @@ const Profile = () => {
 
         {/* Edit Profile Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 pt-safe bg-black/50 backdrop-blur-sm overflow-y-auto ios-scroll">
+          <div className="fixed inset-0 z-120 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 pt-safe bg-black/50 backdrop-blur-sm overflow-y-auto ios-scroll">
             <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md max-h-[calc(100dvh-1.5rem-var(--safe-area-top)-var(--safe-area-bottom))] sm:max-h-[90vh] overflow-y-auto ios-scroll">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">

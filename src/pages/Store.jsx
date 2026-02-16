@@ -1,22 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  BadgeDollarSign,
   Box,
   Gift,
   ShoppingBag,
   Sparkles,
-  TicketPercent,
   Wallet,
 } from "lucide-react";
-import { getPublicStoreData, getWalletSummary, redeemStoreProduct } from "../lib/api";
+import {
+  getPublicStoreData,
+  getWalletSummary,
+  redeemStoreProduct,
+} from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
-
-const FALLBACK_TABS = [
-  { id: "vouchers", label: "Vouchers" },
-  { id: "products", label: "Products" },
-];
 
 const CATEGORY_STYLES = {
   Popular: "from-emerald-600 to-teal-500",
@@ -26,8 +23,8 @@ const CATEGORY_STYLES = {
   Entertainment: "from-fuchsia-500 to-pink-600",
 };
 
-const INR_FORMATTER = new Intl.NumberFormat("en-IN", {
-  minimumFractionDigits: 2,
+const POINTS_FORMATTER = new Intl.NumberFormat("en-IN", {
+  minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
 
@@ -36,39 +33,36 @@ const getItemAmount = (item) => {
   return Number.isFinite(amount) && amount > 0 ? amount : 0;
 };
 
-const formatInr = (value) => {
+const formatPoints = (value) => {
   const amount = Number(value);
   const normalized = Number.isFinite(amount) ? amount : 0;
-  return `INR ${INR_FORMATTER.format(normalized)}`;
+  return `${POINTS_FORMATTER.format(normalized)} Points`;
 };
 
+<<<<<<< HEAD
 const VoucherCard = ({ item }) => {
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
   const amount = getItemAmount(item);
+=======
+const ProductCard = ({
+  item,
+  isAuthenticated,
+  walletBalance,
+  isRedeeming,
+  onRedeem,
+}) => {
+  const gradient =
+    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
+>>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
 
-  return (
-    <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 p-4 shadow-sm hover:shadow-xl transition-all duration-300">
-      <div
-        className={`rounded-2xl p-4 bg-gradient-to-br ${gradient} text-white`}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-white/75 font-semibold">
-              Voucher
-            </p>
-            <h3 className="text-xl font-bold leading-tight mt-1 truncate">
-              {item.name}
-            </h3>
-            <p className="text-sm text-white/80 mt-1 truncate">
-              {item.tagline || "Exclusive redemption partner"}
-            </p>
-          </div>
-          <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <TicketPercent size={18} />
-          </div>
-        </div>
-      </div>
+  // Robust image handling
+  const rawImage = item.image || item.imageUrl;
+  const hasValidImage =
+    rawImage && rawImage !== "null" && rawImage !== "undefined";
+  const imageSrc = hasValidImage ? resolvePublicAssetUrl(rawImage) : "";
+  const [imgError, setImgError] = useState(false);
 
+<<<<<<< HEAD
       <div className="mt-4 flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-slate-500 dark:text-slate-400">Value</p>
@@ -93,85 +87,128 @@ const VoucherCard = ({ item }) => {
 const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRedeem }) => {
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
   const imageSrc = resolvePublicAssetUrl(item.image || item.imageUrl || "");
+=======
+>>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
   const amount = getItemAmount(item);
   const stockValue = Number(item?.stock);
   const isOutOfStock = Number.isFinite(stockValue) && stockValue <= 0;
   const hasEnoughBalance = amount > 0 && walletBalance >= amount;
 
-  let actionLabel = "Redeem";
-  if (isRedeeming) actionLabel = "Processing...";
-  else if (!isAuthenticated) actionLabel = "Login to Redeem";
-  else if (isOutOfStock) actionLabel = "Out of Stock";
-  else if (!hasEnoughBalance) actionLabel = "Low Wallet";
+  // Compute action label
+  let actionLabel = "Redeem Now";
+  let buttonStyle =
+    "bg-primary hover:bg-primary-strong text-white shadow-lg shadow-primary/20";
+
+  if (isRedeeming) {
+    actionLabel = "Processing...";
+    buttonStyle = "bg-primary/70 text-white cursor-wait";
+  } else if (!isAuthenticated) {
+    actionLabel = "Login to Redeem";
+    buttonStyle =
+      "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400";
+  } else if (isOutOfStock) {
+    actionLabel = "Out of Stock";
+    buttonStyle =
+      "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600 cursor-not-allowed";
+  } else if (!hasEnoughBalance) {
+    actionLabel = "Insufficient Balance";
+    buttonStyle =
+      "bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-500 border border-amber-100 dark:border-amber-800/20";
+  }
 
   const disableRedeem =
+<<<<<<< HEAD
     isRedeeming || !isAuthenticated || amount <= 0 || isOutOfStock || !hasEnoughBalance;
+=======
+    isRedeeming ||
+    !isAuthenticated ||
+    amount <= 0 ||
+    isOutOfStock ||
+    !hasEnoughBalance;
+>>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
 
   return (
-    <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
-      <div className={`h-28 bg-gradient-to-br ${gradient} relative overflow-hidden`}>
-        {imageSrc ? (
+    <article className="group flex flex-col h-full rounded-[24px] bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+      {/* Image Section */}
+      <div
+        className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}
+      >
+        {imageSrc && !imgError ? (
           <img
             src={imageSrc}
             alt={item.name}
-            className="absolute inset-0 h-full w-full object-cover"
+            onError={() => setImgError(true)}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-        ) : null}
-        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_20%,white,transparent_55%)]" />
-        <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1 text-[11px] text-white backdrop-blur-md">
-          <Box size={13} />
-          Product
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ShoppingBag className="text-white/20 w-16 h-16" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-60" />
+
+        {/* Category Badge */}
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+          {item.category || "General"}
         </div>
       </div>
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
-              {item.name}
-            </h3>
-            {item.brand && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {item.brand}
-              </p>
-            )}
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[2.5rem]">
-              {item.description || "Premium reward product from our store."}
+      {/* Content Section */}
+      <div className="flex-1 p-5 flex flex-col">
+        {/* Brand & Title */}
+        <div className="mb-2">
+          {item.brand && (
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5 flex items-center gap-1">
+              <Sparkles size={10} /> {item.brand}
             </p>
-          </div>
-          <div className="h-9 w-9 rounded-xl border border-slate-200 dark:border-white/15 flex items-center justify-center text-slate-600 dark:text-slate-200 shrink-0">
-            <ShoppingBag size={16} />
-          </div>
+          )}
+          <h3
+            className="text-lg font-bold text-slate-900 dark:text-white leading-tight line-clamp-2 min-h-12"
+            title={item.name}
+          >
+            {item.name}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+            {item.description ||
+              "Premium reward product exclusively available for our loyal members."}
+          </p>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        {/* Price Tag */}
+        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-3 mt-1">
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Required
             </p>
-            <p className="text-lg font-bold text-slate-900 dark:text-white">
-              {formatInr(amount)}
-            </p>
-            {item.value && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {item.value}
-              </p>
-            )}
-            {Number.isFinite(stockValue) && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Stock: {stockValue}
-              </p>
-            )}
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+              {formatPoints(amount)}
+            </div>
           </div>
-          <button
-            type="button"
-            disabled={disableRedeem}
-            onClick={() => onRedeem(item)}
-            className="inline-flex items-center gap-1 rounded-full bg-primary hover:bg-primary-strong text-white px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {actionLabel} <ArrowRight size={14} />
-          </button>
+
+          {/* Stock Indicator */}
+          {Number.isFinite(stockValue) && (
+            <div
+              className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
+                stockValue < 5
+                  ? "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800/30 dark:text-rose-400"
+                  : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/30 dark:text-emerald-400"
+              }`}
+            >
+              {stockValue > 0 ? `${stockValue} LEFT` : "SOLD OUT"}
+            </div>
+          )}
         </div>
+
+        {/* Action Button */}
+        <button
+          type="button"
+          disabled={disableRedeem}
+          onClick={() => onRedeem(item)}
+          className={`w-full mt-4 py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${buttonStyle}`}
+        >
+          {actionLabel}
+          {!disableRedeem && <ArrowRight size={16} />}
+        </button>
       </div>
     </article>
   );
@@ -180,12 +217,9 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
 const Store = () => {
   const { authToken, isAuthenticated } = useAuth();
   const [storeData, setStoreData] = useState({
-    tabs: [],
     categories: [],
-    vouchers: [],
     products: [],
   });
-  const [activeTab, setActiveTab] = useState("vouchers");
   const [activeCategory, setActiveCategory] = useState("Popular");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -206,9 +240,7 @@ const Store = () => {
         const data = await getPublicStoreData();
         if (!live) return;
         setStoreData({
-          tabs: data?.tabs || [],
           categories: data?.categories || [],
-          vouchers: data?.vouchers || [],
           products: data?.products || [],
         });
       } catch (err) {
@@ -258,22 +290,15 @@ const Store = () => {
     };
   }, [authToken, isAuthenticated]);
 
-  const tabs = storeData.tabs.length ? storeData.tabs : FALLBACK_TABS;
   const categories = storeData.categories.length
     ? storeData.categories
     : ["Popular"];
 
   useEffect(() => {
-    const isValid = tabs.some((tab) => tab.id === activeTab);
-    if (!isValid && tabs.length) setActiveTab(tabs[0].id);
-  }, [activeTab, tabs]);
-
-  useEffect(() => {
     if (!categories.includes(activeCategory)) setActiveCategory(categories[0]);
   }, [activeCategory, categories]);
 
-  const list =
-    activeTab === "products" ? storeData.products : storeData.vouchers;
+  const list = storeData.products;
 
   const activeItems = useMemo(() => {
     if (activeCategory === "Popular") return list;
@@ -350,33 +375,37 @@ const Store = () => {
         <div className="absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-sky-500/15 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-5">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <p className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.18em] font-semibold text-primary">
+              <p className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.18em] font-bold text-primary">
                 <Sparkles size={12} /> Rewards Exchange
               </p>
-              <h1 className="text-3xl font-black text-slate-900 dark:text-white mt-2 leading-tight">
-                Vouchers and products worth your cashback
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                Redeem Your Cashback
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-xl">
-                Redeem instantly from curated partners and trending products.
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+                1 Point = ₹1
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/90 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
-              <BadgeDollarSign size={15} className="text-primary" />
-              {list.length} options
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Mode
-              </p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white capitalize mt-1">
-                {activeTab}
-              </p>
+            <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1.5 pr-4 shadow-sm">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <Wallet size={20} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wide">
+                  Your Balance
+                </p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  {isAuthenticated
+                    ? isWalletLoading
+                      ? "..."
+                      : formatPoints(walletBalance)
+                    : "Sign in"}
+                </p>
+              </div>
             </div>
+<<<<<<< HEAD
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Category
@@ -428,6 +457,8 @@ const Store = () => {
                 {tab.label}
               </button>
             ))}
+=======
+>>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
           </div>
 
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -487,20 +518,16 @@ const Store = () => {
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {activeItems.map((item) =>
-            activeTab === "vouchers" ? (
-              <VoucherCard key={item.id} item={item} />
-            ) : (
-              <ProductCard
-                key={item.id}
-                item={item}
-                isAuthenticated={isAuthenticated}
-                walletBalance={walletBalance}
-                isRedeeming={redeemingProductId === item.id}
-                onRedeem={handleRedeemProduct}
-              />
-            ),
-          )}
+          {activeItems.map((item) => (
+            <ProductCard
+              key={item.id}
+              item={item}
+              isAuthenticated={isAuthenticated}
+              walletBalance={walletBalance}
+              isRedeeming={redeemingProductId === item.id}
+              onRedeem={handleRedeemProduct}
+            />
+          ))}
         </div>
       )}
     </div>
