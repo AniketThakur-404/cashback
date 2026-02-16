@@ -230,6 +230,14 @@ button {
   }
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open .app-dock {
+  display: none !important;
+}
+
 .font-admin-body {
   font-family: "Manrope", "Space Grotesk", sans-serif;
 }

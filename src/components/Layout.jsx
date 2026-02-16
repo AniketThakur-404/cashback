@@ -165,7 +165,7 @@ const Layout = ({ children }) => {
         {/* MAIN CONTENT AREA (Scrollable) */}
         <main
           ref={mainRef}
-          className="flex-1 transition-colors duration-300 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain ios-scroll"
+          className="flex-1 transition-colors duration-300 overflow-x-hidden overflow-y-auto ios-scroll"
         >
           <div className="pb-dock-safe">{children}</div>
         </main>

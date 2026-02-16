@@ -151,12 +151,6 @@ const formatDate = (value) => {
 };
 
 const notificationTypeConfig = {
-  "brand-inquiry": {
-    icon: MessageSquare,
-    badgeClass:
-      "bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:text-primary dark:border-primary/30",
-    label: "Customer Query",
-  },
   "qr-redeemed": {
     icon: QrCode,
     badgeClass:
@@ -1242,9 +1236,6 @@ const VendorDashboard = () => {
     const metadataTab = notification?.metadata?.tab;
     let target = metadataTab ? `/vendor/${metadataTab}` : "/vendor/overview";
     switch (notification?.type) {
-      case "brand-inquiry":
-        target = "/vendor/support?focus=queries";
-        break;
       case "qr-redeemed":
         target = "/vendor/redemptions";
         break;

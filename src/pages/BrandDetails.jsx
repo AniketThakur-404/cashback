@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { BadgeCheck, ChevronRight, Globe, Mail, MessageCircle, Search } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, ChevronRight, Globe, Mail, Search } from 'lucide-react';
 import FallbackImage from '../components/FallbackImage';
 import HowItWorks from '../components/HowItWorks';
-import { getPublicBrandDetails, getPublicBrands, sendBrandInquiry } from '../lib/api';
+import { getPublicBrandDetails, getPublicBrands } from '../lib/api';
 import { getApiBaseUrl } from '../lib/apiClient';
-import { useToast } from '../components/ui';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -18,6 +17,17 @@ const resolvePublicAssetUrl = (value) => {
   return value;
 };
 
+const buildProductReportPath = (brand, product) => {
+  const params = new URLSearchParams();
+  if (brand?.id) params.set('brandId', brand.id);
+  if (brand?.name) params.set('brandName', brand.name);
+  if (product?.id) params.set('productId', product.id);
+  if (product?.name) params.set('productName', product.name);
+  if (product?.category) params.set('category', product.category);
+  const query = params.toString();
+  return query ? `/product-report?${query}` : '/product-report';
+};
+
 const BrandDetails = () => {
   const { id } = useParams();
   const [brandData, setBrandData] = useState(null);
@@ -25,16 +35,6 @@ const BrandDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [showInquiry, setShowInquiry] = useState(false);
-  const [inquiryForm, setInquiryForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: ''
-  });
-  const [inquiryStatus, setInquiryStatus] = useState('');
-  const [isSendingInquiry, setIsSendingInquiry] = useState(false);
-  const { success, error } = useToast();
 
   useEffect(() => {
     let isMounted = true;
@@ -79,44 +79,7 @@ const BrandDetails = () => {
   useEffect(() => {
     setQuery('');
     setActiveCategory('All');
-    setShowInquiry(false);
-    setInquiryStatus('');
-    setInquiryForm({ name: '', email: '', phone: '', message: '' });
   }, [brandData?.id]);
-
-  const handleInquiryChange = (field) => (event) => {
-    setInquiryForm((prev) => ({ ...prev, [field]: event.target.value }));
-    setInquiryStatus('');
-  };
-
-  const handleSendInquiry = async () => {
-    const trimmedMessage = inquiryForm.message.trim();
-    if (!trimmedMessage) {
-      setInquiryStatus('Please enter your message.');
-      return;
-    }
-    setIsSendingInquiry(true);
-    setInquiryStatus('');
-    try {
-      const response = await sendBrandInquiry(displayBrand.id, {
-        name: inquiryForm.name.trim() || undefined,
-        email: inquiryForm.email.trim() || undefined,
-        phone: inquiryForm.phone.trim() || undefined,
-        message: trimmedMessage
-      });
-      const message = response?.message || 'Message sent to the brand.';
-      setInquiryStatus(message);
-      success('Message Sent', message);
-      setInquiryForm({ name: '', email: '', phone: '', message: '' });
-      setShowInquiry(false);
-    } catch (err) {
-      const failureMessage = err.message || 'Failed to send message.';
-      setInquiryStatus(failureMessage);
-      error('Message Failed', failureMessage);
-    } finally {
-      setIsSendingInquiry(false);
-    }
-  };
 
   const brandProducts = useMemo(() => {
     const sourceProducts = brandData?.products || brandData?.Products || [];
@@ -194,14 +157,13 @@ const BrandDetails = () => {
                   Verified brand partner
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowInquiry((prev) => !prev)}
-                className="shrink-0 bg-primary text-white text-[11px] font-semibold px-3 py-2 rounded-full flex items-center gap-1 shadow-sm"
+              <Link
+                to={buildProductReportPath(displayBrand)}
+                className="shrink-0 bg-amber-500 text-white text-[11px] font-semibold px-3 py-2 rounded-full inline-flex items-center gap-1 shadow-sm hover:bg-amber-600 transition-colors"
               >
-                <MessageCircle size={14} />
-                {showInquiry ? 'Close' : 'Talk to Brand'}
-              </button>
+                <AlertTriangle size={14} />
+                Report Product
+              </Link>
             </div>
 
             <div className="flex flex-wrap gap-3 text-[11px] text-primary-strong">
@@ -253,66 +215,6 @@ const BrandDetails = () => {
                 <div className="text-lg font-bold text-sky-800">{categories.length - 1}</div>
               </div>
             </div>
-
-            {showInquiry && (
-              <div className="mt-2 rounded-2xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 space-y-3">
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                  Send a message to {displayBrand.name}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input
-                    type="text"
-                    value={inquiryForm.name}
-                    onChange={handleInquiryChange('name')}
-                    placeholder="Your name (optional)"
-                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                  />
-                  <input
-                    type="text"
-                    value={inquiryForm.phone}
-                    onChange={handleInquiryChange('phone')}
-                    placeholder="Phone (optional)"
-                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                  />
-                  <input
-                    type="email"
-                    value={inquiryForm.email}
-                    onChange={handleInquiryChange('email')}
-                    placeholder="Email (optional)"
-                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 sm:col-span-2"
-                  />
-                  <textarea
-                    rows={3}
-                    value={inquiryForm.message}
-                    onChange={handleInquiryChange('message')}
-                    placeholder="Write your query..."
-                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 sm:col-span-2"
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowInquiry(false)}
-                    className="px-4 py-2 rounded-full border border-gray-200 dark:border-zinc-700 text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSendInquiry}
-                    disabled={isSendingInquiry}
-                    className="px-4 py-2 rounded-full bg-primary text-white text-[11px] font-semibold shadow-sm disabled:opacity-60"
-                  >
-                    {isSendingInquiry ? 'Sending...' : 'Send Message'}
-                  </button>
-                </div>
-                {inquiryStatus && (
-                  <div className="text-[11px] font-semibold text-primary-strong">
-                    {inquiryStatus}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
@@ -362,40 +264,56 @@ const BrandDetails = () => {
               No products matched your search yet.
             </div>
           ) : (
-            filteredProducts.map((product) => (
-              <Link
-                key={product.id}
-                to={`/product-info/${product.id}`}
-                className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex items-center gap-3 shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
-              >
-                <FallbackImage
-                  src={product.image}
-                  alt={product.name}
-                  className="w-12 h-12 object-contain rounded-lg bg-primary/10 dark:bg-zinc-800"
-                />
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{product.name}</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400">{product.variant || product.category}</div>
-                  {product.scheme && (
-                    <div className="text-[10px] text-blue-700 dark:text-blue-400 font-medium mt-1">
-                      Running: {product.scheme}
+            filteredProducts.map((product) => {
+              const reportPath = buildProductReportPath(displayBrand, product);
+              return (
+                <div
+                  key={product.id}
+                  className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+                >
+                  <Link
+                    to={`/product-info/${product.id}`}
+                    className="flex items-center gap-3"
+                  >
+                    <FallbackImage
+                      src={product.image}
+                      alt={product.name}
+                      className="w-12 h-12 object-contain rounded-lg bg-primary/10 dark:bg-zinc-800"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{product.name}</div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400">{product.variant || product.category}</div>
+                      {product.scheme && (
+                        <div className="text-[10px] text-blue-700 dark:text-blue-400 font-medium mt-1">
+                          Running: {product.scheme}
+                        </div>
+                      )}
+                      <div className="text-[11px] text-green-600 dark:text-green-500 font-semibold mt-1 flex items-center gap-2">
+                        <span>{product.reward}</span>
+                        {product.category && (
+                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary-strong text-[10px]">{product.category}</span>
+                        )}
+                      </div>
+                      {product.description && (
+                        <div className="text-[10px] text-gray-400 mt-1 line-clamp-1">{product.description}</div>
+                      )}
                     </div>
-                  )}
-                  <div className="text-[11px] text-green-600 dark:text-green-500 font-semibold mt-1 flex items-center gap-2">
-                    <span>{product.reward}</span>
-                    {product.category && (
-                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary-strong text-[10px]">{product.category}</span>
-                    )}
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <ChevronRight size={16} className="text-primary-strong" />
+                    </div>
+                  </Link>
+                  <div className="mt-2 flex justify-end">
+                    <Link
+                      to={reportPath}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700"
+                    >
+                      <AlertTriangle size={12} />
+                      Report this product
+                    </Link>
                   </div>
-                  {product.description && (
-                    <div className="text-[10px] text-gray-400 mt-1 line-clamp-1">{product.description}</div>
-                  )}
                 </div>
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <ChevronRight size={16} className="text-primary-strong" />
-                </div>
-              </Link>
-            ))
+              );
+            })
           )}
         </div>
 

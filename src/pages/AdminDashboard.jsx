@@ -384,8 +384,26 @@ const getQrValue = (hash) => {
   return hash;
 };
 
-const getQrCanvasId = (hash) => `admin-qr-canvas-${hash}`;
-const getBatchCanvasId = (hash) => `admin-qr-batch-${hash}`;
+const getPdfCanvasId = (hash) => `admin-pdf-qr-${hash}`;
+
+const waitForPdfCanvases = async (items, timeoutMs = 5000) => {
+  const hashes = (Array.isArray(items) ? items : [])
+    .map((item) => item?.uniqueHash)
+    .filter(Boolean);
+  if (!hashes.length) return true;
+
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const allReady = hashes.every((hash) => {
+      const canvas = document.getElementById(getPdfCanvasId(hash));
+      return canvas && typeof canvas.toDataURL === "function";
+    });
+    if (allReady) return true;
+    await new Promise((resolve) => setTimeout(resolve, 60));
+  }
+
+  return false;
+};
 
 const getStatusClasses = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -2665,8 +2683,8 @@ const AdminDashboard = () => {
       setBatchQrs(qrsToPrint);
       setQrBatchStatus(`Generating PDF for ${qrsToPrint.length} QRs...`);
 
-      // Allow DOM to render hidden canvases
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wait until hidden QR canvases are rendered before reading image data.
+      await waitForPdfCanvases(qrsToPrint);
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -2714,7 +2732,7 @@ const AdminDashboard = () => {
       // Loop and draw QRs
       for (let i = 0; i < qrsToPrint.length; i++) {
         const qr = qrsToPrint[i];
-        const canvasId = `pdf-qr-${qr.uniqueHash}`;
+        const canvasId = getPdfCanvasId(qr.uniqueHash);
         const canvas = document.getElementById(canvasId);
 
         if (canvas) {
@@ -3215,7 +3233,7 @@ const AdminDashboard = () => {
       }
 
       setBatchQrs(items);
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      await waitForPdfCanvases(items);
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -3258,7 +3276,7 @@ const AdminDashboard = () => {
         const xPos = margin + col * (qrSize + spacing);
         const yPos = 46 + row * rowSpacing;
 
-        const canvas = document.getElementById(getBatchCanvasId(qr.uniqueHash));
+        const canvas = document.getElementById(getPdfCanvasId(qr.uniqueHash));
         if (!canvas) {
           skipped += 1;
           return;
@@ -6034,7 +6052,7 @@ const AdminDashboard = () => {
             {batchQrs.map((qr) => (
               <QRCodeCanvas
                 key={qr.uniqueHash}
-                id={`pdf-qr-${qr.uniqueHash}`}
+                id={getPdfCanvasId(qr.uniqueHash)}
                 value={getQrValue(qr.uniqueHash)} // Need getQrValue available here
                 size={256}
                 level="H"
