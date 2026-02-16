@@ -111,18 +111,23 @@ const ProductCard = ({
           >
             {item.name}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
             {item.description ||
               "Premium reward product exclusively available for our loyal members."}
           </p>
         </div>
 
+<<<<<<< HEAD
         <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-3 mt-1">
+=======
+        {/* Price Tag */}
+        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-2 mt-2">
+>>>>>>> fa225a5e4af3ef6b892bc95d76d5cda100271cb2
           <div>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Required
             </p>
-            <div className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-0">
               {formatPoints(amount)}
             </div>
           </div>
