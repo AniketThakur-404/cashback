@@ -65,7 +65,7 @@ const WalletAuth = ({ onLoginSuccess }) => {
                 <div className="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary">
                     <ShieldCheck size={24} />
                 </div>
-                Sign in to view vCash
+                Sign in to view Wallet
             </div>
 
             <div className="space-y-4">

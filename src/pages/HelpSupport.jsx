@@ -13,7 +13,7 @@ const HelpSupport = () => {
         },
         {
             question: "How long does cashback take to credit?",
-            answer: "Cashback is usually credited instantly to your vCash wallet after a successful code redemption."
+            answer: "Cashback is usually credited instantly to your wallet after a successful code redemption."
         },
         {
             question: "How do I transfer money to my UPI?",

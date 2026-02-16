@@ -66,7 +66,8 @@ const AdminSidebar = ({
                 { id: 'users-blocked', label: 'Blocked Users', icon: UserX },
             ]
         },
-        { id: 'support', label: 'Disputes', icon: LifeBuoy },
+        { id: 'support', label: 'Support Tickets', icon: LifeBuoy },
+        { id: 'product-reports', label: 'Product Reports', icon: FileText },
         {
             id: 'vendors',
             label: 'Vendor Management',

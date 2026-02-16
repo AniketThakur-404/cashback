@@ -43,13 +43,8 @@ const formatInr = (value) => {
 };
 
 const VoucherCard = ({ item }) => {
-<<<<<<< HEAD
-  const gradient =
-    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
-=======
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
   const amount = getItemAmount(item);
->>>>>>> 8dc8f5f198b1ad2c0e64210afaed64266a07181a
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 p-4 shadow-sm hover:shadow-xl transition-all duration-300">
@@ -95,11 +90,6 @@ const VoucherCard = ({ item }) => {
   );
 };
 
-<<<<<<< HEAD
-const ProductCard = ({ item }) => {
-  const gradient =
-    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
-=======
 const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRedeem }) => {
   const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
   const imageSrc = resolvePublicAssetUrl(item.image || item.imageUrl || "");
@@ -116,7 +106,6 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
 
   const disableRedeem =
     isRedeeming || !isAuthenticated || amount <= 0 || isOutOfStock || !hasEnoughBalance;
->>>>>>> 8dc8f5f198b1ad2c0e64210afaed64266a07181a
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
@@ -405,13 +394,7 @@ const Store = () => {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-<<<<<<< HEAD
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Points pool
-              </p>
-=======
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Required Pool</p>
->>>>>>> 8dc8f5f198b1ad2c0e64210afaed64266a07181a
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                 {formatInr(totalAmount)}
               </p>

@@ -34,7 +34,7 @@ const HowItWorks = () => {
       title: "Get Rewards",
       subtitle: "STEP THREE",
       description:
-        "Verify authentication and enjoy your vCash rewards instantly.",
+        "Verify authentication and enjoy your wallet rewards instantly.",
       icon: <Gift size={24} className="text-white" />,
       color: "from-green-500 to-emerald-800",
       glow: "rgba(5, 150, 105, 0.3)",

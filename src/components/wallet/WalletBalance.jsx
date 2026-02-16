@@ -23,7 +23,7 @@ const WalletBalance = ({ balance, onSignOut, isLoading }) => {
                             <Wallet size={24} className="text-primary-light" />
                         </div>
                         <div>
-                            <h2 className="text-sm font-medium text-gray-300">vCash Balance</h2>
+                            <h2 className="text-sm font-medium text-gray-300">Wallet Balance</h2>
                             <div className="flex items-center gap-1.5 text-[10px] text-green-400 bg-green-400/10 px-2 py-0.5 rounded-full w-fit mt-1">
                                 <BadgeCheck size={10} />
                                 Active
