@@ -6,8 +6,8 @@ const CampaignSuccessModal = ({ campaign, onClose, onGoToQrGeneration }) => {
     if (!campaign) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-6 animate-in slide-in-from-bottom-4 duration-500 max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll">
                 {/* Success Icon */}
                 <div className="flex flex-col items-center space-y-4">
                     <div className="relative">

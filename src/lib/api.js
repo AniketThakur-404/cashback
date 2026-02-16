@@ -350,11 +350,6 @@ export const createVendorSupportTicket = (token, payload) =>
     body: payload,
   });
 
-export const getVendorBrandInquiries = (token, params) =>
-  apiRequest(`/api/vendor/brand-inquiries${buildQueryString(params)}`, {
-    token,
-  });
-
 export const getAdminDashboard = (token) =>
   apiRequest("/api/admin/dashboard", {
     token,
@@ -738,12 +733,6 @@ export const getPublicBrands = () => apiRequest("/api/public/brands");
 export const getPublicBrandDetails = (brandId) =>
   apiRequest(`/api/public/brands/${encodeURIComponent(brandId)}`);
 
-export const sendBrandInquiry = (brandId, payload) =>
-  apiRequest(`/api/public/brands/${encodeURIComponent(brandId)}/inquiry`, {
-    method: "POST",
-    body: payload,
-  });
-
 export const getPublicFaqs = () => apiRequest("/api/public/faqs");
 
 export const getPublicContent = (slug) =>
@@ -759,6 +748,13 @@ export const getPublicGiftCardDetails = (giftCardId) =>
   apiRequest(`/api/public/giftcards/${encodeURIComponent(giftCardId)}`);
 
 export const getPublicStoreData = () => apiRequest("/api/public/store");
+
+export const redeemStoreProduct = (token, productId) =>
+  apiRequest("/api/user/store/redeem", {
+    method: "POST",
+    token: resolveAuthToken(token),
+    body: { productId },
+  });
 
 
 

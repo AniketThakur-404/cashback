@@ -151,12 +151,6 @@ const formatDate = (value) => {
 };
 
 const notificationTypeConfig = {
-  "brand-inquiry": {
-    icon: MessageSquare,
-    badgeClass:
-      "bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:text-primary dark:border-primary/30",
-    label: "Customer Query",
-  },
   "qr-redeemed": {
     icon: QrCode,
     badgeClass:
@@ -322,6 +316,23 @@ const buildAllocationGroups = (allocations) => {
   });
 
   return Array.from(grouped.values()).sort((a, b) => a.price - b.price);
+};
+
+const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
+  const allocations = Array.isArray(campaign?.allocations)
+    ? campaign.allocations
+    : [];
+  const totalQty = allocations.reduce(
+    (sum, allocation) => sum + (parseInt(allocation?.quantity, 10) || 0),
+    0,
+  );
+  const baseBudget = parseNumericValue(
+    campaign?.subtotal,
+    parseNumericValue(campaign?.totalBudget, 0),
+  );
+  const printCost = totalQty * parseNumericValue(qrPricePerUnit, 0);
+  const totalCost = baseBudget + printCost;
+  return { totalQty, baseBudget, printCost, totalCost };
 };
 
 const VendorDashboard = () => {
@@ -1225,9 +1236,6 @@ const VendorDashboard = () => {
     const metadataTab = notification?.metadata?.tab;
     let target = metadataTab ? `/vendor/${metadataTab}` : "/vendor/overview";
     switch (notification?.type) {
-      case "brand-inquiry":
-        target = "/vendor/support?focus=queries";
-        break;
       case "qr-redeemed":
         target = "/vendor/redemptions";
         break;
@@ -1940,73 +1948,48 @@ const VendorDashboard = () => {
   // So validation happens synchronously-ish.
 
   const handlePayCampaign = async (campaign) => {
-    if (!campaign) return;
+    if (!campaign || isPayingCampaign) return;
     setIsPayingCampaign(true);
     setCampaignError("");
 
     try {
-      const totalQty = (campaign.allocations || []).reduce(
-        (sum, a) => sum + (parseInt(a.quantity) || 0),
-        0,
-      );
-      const printCost = totalQty * qrPricePerUnit;
-      const baseBudget = parseNumericValue(
-        campaign.subtotal,
-        parseNumericValue(campaign.totalBudget, 0),
-      );
-      const totalCost = baseBudget + printCost;
-      const currentBalance = wallet ? parseFloat(wallet.balance) : 0;
+      const { totalCost } = getCampaignPaymentSummary(campaign, qrPricePerUnit);
+      const currentBalance = parseNumericValue(wallet?.balance, 0);
 
-      const proceedWithActivation = async () => {
-        try {
-          // Verify balance again just in case
-          // But practically we can just try paying
-          await payVendorCampaign(token, campaign.id);
-          setCampaignStatusWithTimeout("Campaign paid and activated!");
-          setSelectedPendingCampaign(null);
-          await loadWallet();
-          await loadTransactions();
-          await loadCampaigns();
-          await loadCampaignStats();
-          await loadQrs(token, { page: 1, append: false });
-          openSuccessModal(
-            "Campaign activated",
-            "Payment successful. Your campaign is now active.",
-          );
-        } catch (err) {
-          console.error("Activation error:", err);
-          alert(
-            err.message || "Activation failed after payment. Please try again.",
-          );
-        } finally {
-          setIsPayingCampaign(false);
-        }
-      };
-
-      if (currentBalance >= totalCost) {
-        await proceedWithActivation();
-      } else {
-        const shortfall = totalCost - currentBalance;
-        const roundedShortfall = Math.ceil(shortfall * 100) / 100; // Round up to 2 decimal places properly
-
-        if (
-          confirm(
-            `Insufficient balance. Pay INR ${roundedShortfall} to activate this campaign?`,
-          )
-        ) {
-          await initiateRazorpayPayment(
-            roundedShortfall,
-            `Top-up for Campaign #${campaign.id}`,
-            proceedWithActivation,
-          );
-        } else {
-          setIsPayingCampaign(false);
-        }
+      if (currentBalance < totalCost) {
+        const shortfall = Math.max(totalCost - currentBalance, 0);
+        setCampaignError(
+          `Insufficient wallet balance. Add INR ${shortfall.toFixed(2)} in Wallet before activating this campaign.`,
+        );
+        return;
       }
+
+      await payVendorCampaign(token, campaign.id);
+      setCampaignStatusWithTimeout("Campaign paid and activated!");
+      setSelectedPendingCampaign(null);
+      await loadWallet();
+      await loadTransactions();
+      await loadCampaigns();
+      await loadCampaignStats();
+      await loadQrs(token, { page: 1, append: false });
+      openSuccessModal(
+        "Campaign activated",
+        "Payment successful. Your campaign is now active.",
+      );
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      const requiredAmount = parseNumericValue(err?.data?.required, NaN);
+      const availableAmount = parseNumericValue(err?.data?.available, NaN);
+      if (Number.isFinite(requiredAmount) && Number.isFinite(availableAmount)) {
+        const shortfall = Math.max(requiredAmount - availableAmount, 0);
+        setCampaignError(
+          `Insufficient wallet balance. Add INR ${shortfall.toFixed(2)} in Wallet before activating this campaign.`,
+        );
+        return;
+      }
       console.error("Payment error:", err);
-      alert(err.message || "Payment flow failed");
+      setCampaignError(err.message || "Payment flow failed.");
+    } finally {
       setIsPayingCampaign(false);
     }
   };
@@ -3109,6 +3092,17 @@ const VendorDashboard = () => {
     };
   }, [selectedActiveCampaign, campaignQrMap, products, qrPricePerUnit]);
   const activeCampaign = activeCampaignDetails?.campaign;
+  const pendingCampaignPayment = useMemo(
+    () => getCampaignPaymentSummary(selectedPendingCampaign, qrPricePerUnit),
+    [selectedPendingCampaign, qrPricePerUnit],
+  );
+  const pendingWalletBalance = parseNumericValue(wallet?.balance, 0);
+  const pendingCampaignShortfall = Math.max(
+    pendingCampaignPayment.totalCost - pendingWalletBalance,
+    0,
+  );
+  const canPaySelectedPendingCampaign =
+    Boolean(selectedPendingCampaign) && pendingCampaignShortfall <= 0;
 
   const primaryQrRow = qrRows[0];
   const primaryQrCashback = parseNumericValue(primaryQrRow?.cashbackAmount, 0);
@@ -3132,7 +3126,7 @@ const VendorDashboard = () => {
     <>
       {/* Download Progress Modal - Portal Overlay */}
       {downloadProgress.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md">
             <div className="text-center space-y-6">
               {/* Icon */}
@@ -3337,8 +3331,8 @@ const VendorDashboard = () => {
 
             {/* Onboarding / Registration Modal */}
             {showOnboarding && !isAuthenticated && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+              <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
+                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
                   <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 sticky top-0 z-10">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       <BadgeCheck className="text-primary" size={24} />
@@ -5414,8 +5408,8 @@ Quantity: ${invoiceData.quantity} QRs
 
                           {/* Pending Campaign Details Modal */}
                           {selectedPendingCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-zinc-800">
+                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                                 <div className="p-6 space-y-6">
                                   <div className="flex items-center justify-between">
                                     <div>
@@ -5510,24 +5504,14 @@ Quantity: ${invoiceData.quantity} QRs
                                               Subtotal
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                              {(
-                                                selectedPendingCampaign.allocations ||
-                                                []
-                                              ).reduce(
-                                                (sum, a) =>
-                                                  sum +
-                                                  (parseInt(a.quantity) || 0),
-                                                0,
-                                              )}{" "}
+                                              {pendingCampaignPayment.totalQty}{" "}
                                               QRs
                                             </td>
                                             <td className="px-4 py-3 text-right">
-                                              ?
-                                              {parseFloat(
-                                                selectedPendingCampaign.subtotal ||
-                                                  selectedPendingCampaign.totalBudget ||
-                                                  0,
-                                              ).toFixed(2)}
+                                              INR{" "}
+                                              {pendingCampaignPayment.baseBudget.toFixed(
+                                                2,
+                                              )}
                                             </td>
                                           </tr>
                                           {/* QR Generation Cost Row */}
@@ -5541,17 +5525,9 @@ Quantity: ${invoiceData.quantity} QRs
                                             </td>
                                             <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
                                               + INR{" "}
-                                              {(
-                                                (
-                                                  selectedPendingCampaign.allocations ||
-                                                  []
-                                                ).reduce(
-                                                  (sum, a) =>
-                                                    sum +
-                                                    (parseInt(a.quantity) || 0),
-                                                  0,
-                                                ) * qrPricePerUnit
-                                              ).toFixed(2)}
+                                              {pendingCampaignPayment.printCost.toFixed(
+                                                2,
+                                              )}
                                             </td>
                                           </tr>
                                         </tfoot>
@@ -5565,7 +5541,7 @@ Quantity: ${invoiceData.quantity} QRs
                                         Wallet Balance
                                       </span>
                                       <span className="font-semibold text-gray-900 dark:text-white">
-                                        INR {formatAmount(wallet?.balance || 0)}
+                                        INR {formatAmount(pendingWalletBalance)}
                                       </span>
                                     </div>
                                     <div className="h-px bg-primary/20 dark:bg-primary-strong/30"></div>
@@ -5573,24 +5549,18 @@ Quantity: ${invoiceData.quantity} QRs
                                       <span>Total Payable</span>
                                       <span>
                                         INR{" "}
-                                        {(
-                                          parseFloat(
-                                            selectedPendingCampaign.subtotal ||
-                                              selectedPendingCampaign.totalBudget ||
-                                              0,
-                                          ) +
-                                          (
-                                            selectedPendingCampaign.allocations ||
-                                            []
-                                          ).reduce(
-                                            (sum, a) =>
-                                              sum + (parseInt(a.quantity) || 0),
-                                            0,
-                                          ) *
-                                            qrPricePerUnit
-                                        ).toFixed(2)}
+                                        {pendingCampaignPayment.totalCost.toFixed(
+                                          2,
+                                        )}
                                       </span>
                                     </div>
+                                    {pendingCampaignShortfall > 0 && (
+                                      <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                                        Add INR{" "}
+                                        {pendingCampaignShortfall.toFixed(2)} to
+                                        wallet to enable payment.
+                                      </p>
+                                    )}
                                   </div>
 
                                   <div className="flex items-center gap-3 pt-2">
@@ -5608,11 +5578,21 @@ Quantity: ${invoiceData.quantity} QRs
                                           selectedPendingCampaign,
                                         )
                                       }
-                                      disabled={isPayingCampaign}
-                                      className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2`}
+                                      disabled={
+                                        isPayingCampaign ||
+                                        !canPaySelectedPendingCampaign
+                                      }
+                                      className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
+                                        !canPaySelectedPendingCampaign &&
+                                        !isPayingCampaign
+                                          ? "opacity-60 cursor-not-allowed"
+                                          : ""
+                                      }`}
                                     >
                                       {isPayingCampaign ? (
                                         <>Processing...</>
+                                      ) : !canPaySelectedPendingCampaign ? (
+                                        <>Insufficient Balance</>
                                       ) : (
                                         <>
                                           <Wallet size={18} />
@@ -5628,8 +5608,8 @@ Quantity: ${invoiceData.quantity} QRs
 
                           {/* Active Campaign Details Modal */}
                           {activeCampaignDetails && activeCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-zinc-800">
+                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                                 <div className="p-6 space-y-6">
                                   <div className="flex items-center justify-between">
                                     <div>

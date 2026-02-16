@@ -2,6 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, Trash2, Info, CheckCircle } from 'lucide-react';
 import { Button } from './Button';
+import { lockModalScroll, unlockModalScroll } from '../../lib/modalScrollLock';
 
 const typeConfig = {
     danger: {
@@ -54,11 +55,13 @@ export function ConfirmModal({
     useEffect(() => {
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = 'hidden';
+            lockModalScroll();
         }
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = '';
+            if (isOpen) {
+                unlockModalScroll();
+            }
         };
     }, [isOpen, handleKeyDown]);
 

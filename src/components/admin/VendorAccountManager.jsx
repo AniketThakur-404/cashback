@@ -887,8 +887,8 @@ const VendorAccountManager = ({
   if (!vendorId && !brandId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl border border-slate-200/70 dark:border-white/10 bg-white/95 dark:bg-gradient-to-br dark:from-[#2a2a2c] dark:via-[#1e1e20] dark:to-[#1f1f21] flex flex-col overflow-hidden transition-all duration-300">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="relative w-full max-w-5xl h-[92dvh] sm:h-[85vh] rounded-2xl shadow-2xl border border-slate-200/70 dark:border-white/10 bg-white/95 dark:bg-gradient-to-br dark:from-[#2a2a2c] dark:via-[#1e1e20] dark:to-[#1f1f21] flex flex-col overflow-hidden transition-all duration-300">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex items-center gap-4">

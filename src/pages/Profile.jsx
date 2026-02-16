@@ -17,12 +17,14 @@ import {
   CheckCircle2,
   Shield,
   FileQuestion,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { getMe, updateUserProfile, uploadUserAvatar } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
 import { AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
 import { useToast } from "../components/ui/ToastContext";
+import { lockModalScroll, unlockModalScroll } from "../lib/modalScrollLock";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -51,6 +53,15 @@ const Profile = () => {
     }
     loadProfile();
   }, [token, navigate]);
+
+  useEffect(() => {
+    if (!showEditModal) return undefined;
+    lockModalScroll();
+
+    return () => {
+      unlockModalScroll();
+    };
+  }, [showEditModal]);
 
   const loadProfile = async () => {
     setIsLoading(true);
@@ -88,6 +99,7 @@ const Profile = () => {
         email: profile.email,
       });
       setSuccess("Profile updated successfully");
+      await loadProfile();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to update profile");
@@ -110,6 +122,7 @@ const Profile = () => {
         avatarUrl: data.avatarUrl,
       }));
       setSuccess("Profile picture updated");
+      await loadProfile();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to upload image");
@@ -181,10 +194,22 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300 font-admin-body">
       <div className="max-w-md mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center justify-between gap-4 mb-4">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Account
           </h1>
+          <button
+            type="button"
+            onClick={loadProfile}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RefreshCw
+              size={14}
+              className={isLoading ? "animate-spin" : ""}
+            />
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </button>
         </div>
 
         <div className="space-y-6">
@@ -300,8 +325,8 @@ const Profile = () => {
 
         {/* Edit Profile Modal */}
         {showEditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 pt-safe bg-black/50 backdrop-blur-sm overflow-y-auto ios-scroll">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-zinc-800 w-full max-w-md max-h-[calc(100dvh-1.5rem-var(--safe-area-top)-var(--safe-area-bottom))] sm:max-h-[90vh] overflow-y-auto ios-scroll">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Edit Profile
@@ -318,7 +343,7 @@ const Profile = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="space-y-5">
+              <form onSubmit={handleSave} className="space-y-5 pb-2">
                 <div className="space-y-4">
                   {/* Avatar Edit Section */}
                   <div className="flex flex-col items-center gap-3 pb-2">
@@ -343,9 +368,22 @@ const Profile = () => {
                         )}
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                      Profile Photo
-                    </span>
+                    <div className="text-center space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">
+                        Profile Photo
+                      </span>
+                      <label className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold cursor-pointer hover:bg-primary/20 transition-colors">
+                        <Camera size={14} />
+                        {isUploading ? "Uploading..." : "Upload Photo"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

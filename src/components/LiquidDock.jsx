@@ -114,7 +114,7 @@ const LiquidDock = ({ items }) => {
     }, [targetIndex]);
 
     return (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 flex justify-center pb-5 safe-area-bottom pointer-events-none">
+        <div className="app-dock fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 flex justify-center pb-safe-4 pointer-events-none">
             <motion.div
                 onMouseMove={(e) => mouseX.set(e.pageX)}
                 onMouseLeave={() => {

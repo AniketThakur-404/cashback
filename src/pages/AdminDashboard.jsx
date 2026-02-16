@@ -128,6 +128,109 @@ const defaultHomeBanners = [
 const cloneHomeBanners = (items) =>
   items.map((banner) => ({ ...(banner || {}) }));
 
+const defaultRedeemStoreTabs = [
+  { id: "vouchers", label: "Vouchers" },
+  { id: "products", label: "Products" },
+];
+
+const defaultRedeemStoreCategories = [
+  "Popular",
+  "Food",
+  "Shopping",
+  "Travel",
+  "Entertainment",
+];
+
+const slugifyValue = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const createRedeemProductDraft = () => {
+  const uniquePart = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return {
+    id: `redeem-product-${uniquePart}`,
+    name: "",
+    category: "Popular",
+    amount: "",
+    value: "",
+    brand: "",
+    stock: "",
+    description: "",
+    image: "",
+    status: "active",
+  };
+};
+
+const normalizeRedeemStoreTabs = (tabs) => {
+  const source = Array.isArray(tabs) && tabs.length ? tabs : defaultRedeemStoreTabs;
+  const seen = new Set();
+  return source
+    .map((tab) => {
+      const id = String(tab?.id || "")
+        .trim()
+        .toLowerCase();
+      const label = String(tab?.label || "").trim();
+      if (!id || !label || seen.has(id)) return null;
+      seen.add(id);
+      return { id, label };
+    })
+    .filter(Boolean);
+};
+
+const normalizeRedeemStoreCategories = (categories) => {
+  const source =
+    Array.isArray(categories) && categories.length
+      ? categories
+      : defaultRedeemStoreCategories;
+  const seen = new Set();
+  return source
+    .map((category) => String(category || "").trim())
+    .filter((category) => {
+      const key = category.toLowerCase();
+      if (!category || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const normalizeRedeemProductEntry = (product, index = 0) => {
+  const name = String(product?.name || "").trim();
+  const candidateId =
+    String(product?.id || "").trim() ||
+    slugifyValue(name) ||
+    `redeem-product-${index + 1}`;
+  const parsedAmount = Number(product?.amount ?? product?.points);
+  const parsedStock = Number(product?.stock);
+  return {
+    id: candidateId,
+    name,
+    category: String(product?.category || "Popular").trim() || "Popular",
+    amount:
+      Number.isFinite(parsedAmount) && parsedAmount >= 0 ? parsedAmount : 0,
+    value: String(product?.value || "").trim(),
+    brand: String(product?.brand || "").trim(),
+    stock:
+      Number.isFinite(parsedStock) && parsedStock >= 0
+        ? Math.floor(parsedStock)
+        : "",
+    description: String(product?.description || "").trim(),
+    image: String(product?.image || product?.imageUrl || "").trim(),
+    status: String(product?.status || "active").toLowerCase() === "inactive"
+      ? "inactive"
+      : "active",
+  };
+};
+
+const normalizeRedeemProducts = (products) => {
+  if (!Array.isArray(products)) return [];
+  return products
+    .map((product, index) => normalizeRedeemProductEntry(product, index))
+    .filter((product) => product.name);
+};
+
 const resolveAssetUrl = (value) => {
   if (!value) return "";
   if (/^https?:\/\//i.test(value)) return value;
@@ -281,8 +384,26 @@ const getQrValue = (hash) => {
   return hash;
 };
 
-const getQrCanvasId = (hash) => `admin-qr-canvas-${hash}`;
-const getBatchCanvasId = (hash) => `admin-qr-batch-${hash}`;
+const getPdfCanvasId = (hash) => `admin-pdf-qr-${hash}`;
+
+const waitForPdfCanvases = async (items, timeoutMs = 5000) => {
+  const hashes = (Array.isArray(items) ? items : [])
+    .map((item) => item?.uniqueHash)
+    .filter(Boolean);
+  if (!hashes.length) return true;
+
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const allReady = hashes.every((hash) => {
+      const canvas = document.getElementById(getPdfCanvasId(hash));
+      return canvas && typeof canvas.toDataURL === "function";
+    });
+    if (allReady) return true;
+    await new Promise((resolve) => setTimeout(resolve, 60));
+  }
+
+  return false;
+};
 
 const getStatusClasses = (status) => {
   const normalized = String(status || "").toLowerCase();
@@ -791,6 +912,17 @@ const AdminDashboard = () => {
   const [settingsError, setSettingsError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
   const [bannerUploadState, setBannerUploadState] = useState({});
+  const [redeemProductUploadState, setRedeemProductUploadState] = useState({});
+  const [isRedeemProductModalOpen, setIsRedeemProductModalOpen] =
+    useState(false);
+  const [redeemProductDraft, setRedeemProductDraft] = useState(() =>
+    createRedeemProductDraft(),
+  );
+  const [redeemProductDraftUpload, setRedeemProductDraftUpload] = useState({
+    status: "",
+    error: "",
+  });
+  const [redeemProductDraftError, setRedeemProductDraftError] = useState("");
 
   // Support Tickets (Disputes)
   const [supportTickets, setSupportTickets] = useState([]);
@@ -941,6 +1073,11 @@ const AdminDashboard = () => {
     setSettingsLoading(false);
     setSettingsError("");
     setSettingsMessage("");
+    setRedeemProductUploadState({});
+    setIsRedeemProductModalOpen(false);
+    setRedeemProductDraft(createRedeemProductDraft());
+    setRedeemProductDraftUpload({ status: "", error: "" });
+    setRedeemProductDraftError("");
   };
 
   const activeSection = section || "overview";
@@ -966,6 +1103,7 @@ const AdminDashboard = () => {
   const isSubscriptionsRoute = activeSection === "subscriptions";
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
+  const isRedeemCatalogRoute = activeSection === "redeem-catalog";
   const isAccountRoute = activeSection === "account";
   const isSecurityRoute = activeSection === "security";
 
@@ -1037,6 +1175,7 @@ const AdminDashboard = () => {
     subscriptions: "/admin/subscriptions",
     transactions: "/admin/transactions",
     qrs: "/admin/qrs",
+    "redeem-catalog": "/admin/redeem-catalog",
     logs: "/admin/logs",
     settings: "/admin/settings",
     account: "/admin/account",
@@ -1057,6 +1196,7 @@ const AdminDashboard = () => {
     subscriptions: "Subscriptions",
     transactions: "Transactions",
     qrs: "QR Registry",
+    "redeem-catalog": "Redeem Catalog",
     logs: "Logs & Audit",
     settings: "System Settings",
     account: "Account",
@@ -1393,6 +1533,27 @@ const AdminDashboard = () => {
       ) {
         normalizedMetadata.homeBanners = cloneHomeBanners(defaultHomeBanners);
       }
+      const rawRedeemStore =
+        normalizedMetadata.redeemStore &&
+        typeof normalizedMetadata.redeemStore === "object"
+          ? normalizedMetadata.redeemStore
+          : {};
+      const normalizedRedeemProducts = normalizeRedeemProducts(
+        rawRedeemStore.products,
+      );
+      const normalizedRedeemCategories = normalizeRedeemStoreCategories([
+        ...(Array.isArray(rawRedeemStore.categories)
+          ? rawRedeemStore.categories
+          : []),
+        ...normalizedRedeemProducts
+          .map((product) => product.category)
+          .filter(Boolean),
+      ]);
+      normalizedMetadata.redeemStore = {
+        tabs: normalizeRedeemStoreTabs(rawRedeemStore.tabs),
+        categories: normalizedRedeemCategories,
+        products: normalizedRedeemProducts,
+      };
       const normalized = {
         ...(data || {}),
         metadata: normalizedMetadata,
@@ -1532,6 +1693,8 @@ const AdminDashboard = () => {
       tasks.push(loadQrs(authToken));
     } else if (isLogsRoute) {
       tasks.push(loadLogs(authToken));
+    } else if (isRedeemCatalogRoute) {
+      tasks.push(loadSettings(authToken));
     } else if (isSettingsRoute) {
       tasks.push(loadSettings(authToken));
     }
@@ -2041,14 +2204,260 @@ const AdminDashboard = () => {
     }
   };
 
+  const getRedeemStoreConfig = () => {
+    const redeemStore = settings?.metadata?.redeemStore;
+    if (!redeemStore || typeof redeemStore !== "object") {
+      return {
+        tabs: normalizeRedeemStoreTabs(defaultRedeemStoreTabs),
+        categories: normalizeRedeemStoreCategories(defaultRedeemStoreCategories),
+        products: [],
+      };
+    }
+    return redeemStore;
+  };
+
+  const getRedeemStoreProducts = () => {
+    const products = getRedeemStoreConfig().products;
+    return Array.isArray(products) ? products : [];
+  };
+
+  const setRedeemStoreProducts = (nextProducts) => {
+    setSettings((prev) => {
+      const metadata = prev?.metadata || {};
+      const currentRedeemStore =
+        metadata?.redeemStore && typeof metadata.redeemStore === "object"
+          ? metadata.redeemStore
+          : {};
+      const normalizedProducts = Array.isArray(nextProducts) ? nextProducts : [];
+      const mergedCategories = normalizeRedeemStoreCategories([
+        ...(Array.isArray(currentRedeemStore.categories)
+          ? currentRedeemStore.categories
+          : []),
+        ...normalizedProducts.map((product) => product?.category).filter(Boolean),
+      ]);
+
+      return {
+        ...(prev || {}),
+        metadata: {
+          ...metadata,
+          redeemStore: {
+            tabs: normalizeRedeemStoreTabs(currentRedeemStore.tabs),
+            categories: mergedCategories,
+            products: normalizedProducts,
+          },
+        },
+      };
+    });
+  };
+
+  const handleAddRedeemProduct = () => {
+    if (!settings || isRedeemProductModalOpen) return;
+    setRedeemProductDraft(createRedeemProductDraft());
+    setRedeemProductDraftUpload({ status: "", error: "" });
+    setRedeemProductDraftError("");
+    setIsRedeemProductModalOpen(true);
+  };
+
+  const handleCloseRedeemProductModal = () => {
+    if (settingsLoading) return;
+    setIsRedeemProductModalOpen(false);
+    setRedeemProductDraft(createRedeemProductDraft());
+    setRedeemProductDraftUpload({ status: "", error: "" });
+    setRedeemProductDraftError("");
+  };
+
+  const handleRedeemProductDraftFieldChange = (field, value) => {
+    const nextValue =
+      field === "amount" || field === "stock"
+        ? value === ""
+          ? ""
+          : (() => {
+              const numeric = Number(value);
+              return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+            })()
+        : value;
+    setRedeemProductDraft((prev) => ({
+      ...(prev || {}),
+      [field]: nextValue,
+    }));
+    if (redeemProductDraftError) {
+      setRedeemProductDraftError("");
+    }
+  };
+
+  const handleRedeemProductDraftImageUpload = async (file) => {
+    if (!file) return;
+    if (!token) {
+      setRedeemProductDraftUpload({
+        status: "",
+        error: "Sign in to upload.",
+      });
+      return;
+    }
+
+    setRedeemProductDraftUpload({
+      status: "Uploading...",
+      error: "",
+    });
+
+    try {
+      const data = await uploadImage(token, file);
+      const uploadedUrl = data?.url;
+      if (!uploadedUrl) {
+        throw new Error("Upload failed. No URL returned.");
+      }
+      setRedeemProductDraft((prev) => ({
+        ...(prev || {}),
+        image: uploadedUrl,
+      }));
+      setRedeemProductDraftUpload({
+        status: "Product image uploaded.",
+        error: "",
+      });
+    } catch (err) {
+      setRedeemProductDraftUpload({
+        status: "",
+        error: err.message || "Upload failed.",
+      });
+    }
+  };
+
+  const handleConfirmAddRedeemProduct = () => {
+    if (!settings) return;
+    const currentProducts = getRedeemStoreProducts();
+    const normalizedDraft = normalizeRedeemProductEntry(
+      redeemProductDraft,
+      currentProducts.length,
+    );
+
+    if (!normalizedDraft.name) {
+      setRedeemProductDraftError("Product name is required.");
+      return;
+    }
+    if (!normalizedDraft.id) {
+      setRedeemProductDraftError("Product ID is required.");
+      return;
+    }
+    if (!Number.isFinite(normalizedDraft.amount) || normalizedDraft.amount <= 0) {
+      setRedeemProductDraftError("Redeem amount must be greater than 0.");
+      return;
+    }
+
+    const exists = currentProducts.some(
+      (product) =>
+        String(product?.id || "").toLowerCase() ===
+        String(normalizedDraft.id).toLowerCase(),
+    );
+    if (exists) {
+      setRedeemProductDraftError("Product ID already exists. Use a unique ID.");
+      return;
+    }
+
+    setRedeemStoreProducts([...currentProducts, normalizedDraft]);
+    handleCloseRedeemProductModal();
+  };
+
+  const handleRemoveRedeemProduct = (index) => {
+    if (!settings) return;
+    const currentProducts = getRedeemStoreProducts();
+    const nextProducts = currentProducts.filter((_, idx) => idx !== index);
+    setRedeemStoreProducts(nextProducts);
+    setRedeemProductUploadState((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([key, value]) => {
+        const numericKey = Number(key);
+        if (!Number.isFinite(numericKey) || numericKey === index) return;
+        next[numericKey > index ? numericKey - 1 : numericKey] = value;
+      });
+      return next;
+    });
+  };
+
+  const handleRedeemProductFieldChange = (index, field, value) => {
+    if (!settings) return;
+    const currentProducts = getRedeemStoreProducts();
+    const nextProducts = currentProducts.map((product, idx) => {
+      if (idx !== index) return product;
+      const nextValue =
+        field === "amount" || field === "stock"
+          ? value === ""
+            ? ""
+            : (() => {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+              })()
+          : value;
+      return {
+        ...(product || {}),
+        [field]: nextValue,
+      };
+    });
+    setRedeemStoreProducts(nextProducts);
+  };
+
+  const handleRedeemProductImageUpload = async (index, file) => {
+    if (!file) return;
+    if (!token) {
+      setRedeemProductUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "", error: "Sign in to upload." },
+      }));
+      return;
+    }
+
+    setRedeemProductUploadState((prev) => ({
+      ...prev,
+      [index]: { status: "Uploading...", error: "" },
+    }));
+
+    try {
+      const data = await uploadImage(token, file);
+      const uploadedUrl = data?.url;
+      if (!uploadedUrl) {
+        throw new Error("Upload failed. No URL returned.");
+      }
+      handleRedeemProductFieldChange(index, "image", uploadedUrl);
+      setRedeemProductUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "Product image uploaded.", error: "" },
+      }));
+    } catch (err) {
+      setRedeemProductUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "", error: err.message || "Upload failed." },
+      }));
+    }
+  };
+
   const handleSettingsUpdate = async () => {
     if (!settings) return;
     setSettingsMessage("");
     setSettingsError("");
     setSettingsLoading(true);
     try {
+      const currentRedeemStore =
+        settings?.metadata?.redeemStore &&
+        typeof settings.metadata.redeemStore === "object"
+          ? settings.metadata.redeemStore
+          : {};
+      const normalizedRedeemProducts = normalizeRedeemProducts(
+        currentRedeemStore.products,
+      );
+      const normalizedRedeemStore = {
+        tabs: normalizeRedeemStoreTabs(currentRedeemStore.tabs),
+        categories: normalizeRedeemStoreCategories([
+          ...(Array.isArray(currentRedeemStore.categories)
+            ? currentRedeemStore.categories
+            : []),
+          ...normalizedRedeemProducts
+            .map((product) => product.category)
+            .filter(Boolean),
+        ]),
+        products: normalizedRedeemProducts,
+      };
       const metadata = {
         ...(settings.metadata || {}),
+        redeemStore: normalizedRedeemStore,
         waitlistEnabled: settings.waitlistEnabled ?? false,
         fraudThresholds: settings.fraudThresholds,
       };
@@ -2274,8 +2683,8 @@ const AdminDashboard = () => {
       setBatchQrs(qrsToPrint);
       setQrBatchStatus(`Generating PDF for ${qrsToPrint.length} QRs...`);
 
-      // Allow DOM to render hidden canvases
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Wait until hidden QR canvases are rendered before reading image data.
+      await waitForPdfCanvases(qrsToPrint);
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -2323,7 +2732,7 @@ const AdminDashboard = () => {
       // Loop and draw QRs
       for (let i = 0; i < qrsToPrint.length; i++) {
         const qr = qrsToPrint[i];
-        const canvasId = `pdf-qr-${qr.uniqueHash}`;
+        const canvasId = getPdfCanvasId(qr.uniqueHash);
         const canvas = document.getElementById(canvasId);
 
         if (canvas) {
@@ -2824,7 +3233,7 @@ const AdminDashboard = () => {
       }
 
       setBatchQrs(items);
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      await waitForPdfCanvases(items);
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -2867,7 +3276,7 @@ const AdminDashboard = () => {
         const xPos = margin + col * (qrSize + spacing);
         const yPos = 46 + row * rowSpacing;
 
-        const canvas = document.getElementById(getBatchCanvasId(qr.uniqueHash));
+        const canvas = document.getElementById(getPdfCanvasId(qr.uniqueHash));
         if (!canvas) {
           skipped += 1;
           return;
@@ -3420,6 +3829,25 @@ const AdminDashboard = () => {
     maxRedeemerSharePercent: 40,
   };
   const homeBanners = getHomeBanners();
+  const redeemStoreProducts = getRedeemStoreProducts();
+  const redeemCatalogSummary = useMemo(() => {
+    const summary = {
+      total: redeemStoreProducts.length,
+      active: 0,
+      inactive: 0,
+      withImage: 0,
+      missingAmount: 0,
+    };
+    redeemStoreProducts.forEach((product) => {
+      const isInactive = String(product?.status || "active").toLowerCase() === "inactive";
+      if (isInactive) summary.inactive += 1;
+      else summary.active += 1;
+      if (String(product?.image || "").trim()) summary.withImage += 1;
+      const amount = Number(product?.amount ?? product?.points);
+      if (!Number.isFinite(amount) || amount <= 0) summary.missingAmount += 1;
+    });
+    return summary;
+  }, [redeemStoreProducts]);
   const topRedeemer = campaignAnalytics?.topRedeemers?.[0];
   const topRedeemerCount = topRedeemer?._count?._all || 0;
   const redeemedCount = campaignAnalytics?.metrics?.redeemedQrs || 0;
@@ -5624,7 +6052,7 @@ const AdminDashboard = () => {
             {batchQrs.map((qr) => (
               <QRCodeCanvas
                 key={qr.uniqueHash}
-                id={`pdf-qr-${qr.uniqueHash}`}
+                id={getPdfCanvasId(qr.uniqueHash)}
                 value={getQrValue(qr.uniqueHash)} // Need getQrValue available here
                 size={256}
                 level="H"
@@ -7349,6 +7777,442 @@ const AdminDashboard = () => {
             </section>
           )}
 
+          {/* Redeem Catalog Section */}
+          {isRedeemCatalogRoute && (
+            <section
+              id="redeem-catalog"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div className={`${adminPanelClass} p-5 space-y-5`}>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      Redeem Product Catalog
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Upload and manage products shown in the customer redeem store.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddRedeemProduct}
+                      disabled={
+                        !settings || settingsLoading || isRedeemProductModalOpen
+                      }
+                      className={`${adminPrimaryButtonClass} disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2`}
+                    >
+                      <Plus size={14} /> Add Product
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSettingsUpdate}
+                      disabled={!settings || settingsLoading}
+                      className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {settingsLoading ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+                  <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Total
+                    </p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                      {redeemCatalogSummary.total}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                      Active
+                    </p>
+                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-200 mt-1">
+                      {redeemCatalogSummary.active}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                      Inactive
+                    </p>
+                    <p className="text-lg font-bold text-amber-700 dark:text-amber-200 mt-1">
+                      {redeemCatalogSummary.inactive}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-blue-200/70 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                      With Image
+                    </p>
+                    <p className="text-lg font-bold text-blue-700 dark:text-blue-200 mt-1">
+                      {redeemCatalogSummary.withImage}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-rose-200/70 dark:border-rose-500/30 bg-rose-50/80 dark:bg-rose-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-wide text-rose-700 dark:text-rose-300">
+                      Missing Amount
+                    </p>
+                    <p className="text-lg font-bold text-rose-700 dark:text-rose-200 mt-1">
+                      {redeemCatalogSummary.missingAmount}
+                    </p>
+                  </div>
+                </div>
+
+                {settingsLoading && (
+                  <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                    Loading catalog...
+                  </div>
+                )}
+                {settingsError && (
+                  <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-300">
+                    {settingsError}
+                  </div>
+                )}
+                {settingsMessage && (
+                  <div className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
+                    {settingsMessage}
+                  </div>
+                )}
+              </div>
+
+              {settings && (
+                <div className={`${adminPanelClass} p-6 space-y-6`}>
+                  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Edit Products
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {redeemStoreProducts.length} item
+                      {redeemStoreProducts.length === 1 ? "" : "s"}
+                    </div>
+                  </div>
+
+                  {redeemStoreProducts.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/70 dark:bg-black/20 p-6 text-sm text-slate-500 dark:text-slate-400">
+                      <p>
+                        No redeem products yet. Click "Add Product" to create your
+                        first item.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleAddRedeemProduct}
+                        disabled={settingsLoading || isRedeemProductModalOpen}
+                        className={`${adminGhostButtonClass} mt-4 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Plus size={14} /> Create First Product
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    {redeemStoreProducts.map((product, index) => (
+                      <div
+                        key={`${product?.id || "redeem-product"}-${index}`}
+                        className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white to-slate-50 dark:from-black/20 dark:to-white/[0.02] p-5 space-y-4"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              Product {index + 1}
+                            </p>
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-1">
+                              {product?.name || "Untitled Product"}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                String(product?.status || "active").toLowerCase() ===
+                                "inactive"
+                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                              }`}
+                            >
+                              {String(product?.status || "active").toLowerCase() ===
+                              "inactive"
+                                ? "Inactive"
+                                : "Active"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveRedeemProduct(index)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300"
+                            >
+                              <X size={12} /> Remove
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Product Name
+                            </label>
+                            <input
+                              type="text"
+                              value={product?.name || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "name",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Wireless Earbuds"
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Product ID
+                            </label>
+                            <input
+                              type="text"
+                              value={product?.id || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "id",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="wireless-earbuds"
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Category
+                            </label>
+                            <input
+                              type="text"
+                              value={product?.category || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "category",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Popular"
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Redeem Amount (INR)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={product?.amount ?? ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "amount",
+                                  e.target.value,
+                                )
+                              }
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Value Label
+                            </label>
+                            <input
+                              type="text"
+                              value={product?.value || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "value",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="INR 1499"
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Brand
+                            </label>
+                            <input
+                              type="text"
+                              value={product?.brand || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "brand",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Incentify Select"
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Stock (Optional)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={product?.stock ?? ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "stock",
+                                  e.target.value,
+                                )
+                              }
+                              className={adminInputClass}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Status
+                            </label>
+                            <select
+                              value={product?.status || "active"}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "status",
+                                  e.target.value,
+                                )
+                              }
+                              className={adminInputClass}
+                            >
+                              <option value="active" className={adminOptionClass}>
+                                Active
+                              </option>
+                              <option
+                                value="inactive"
+                                className={adminOptionClass}
+                              >
+                                Inactive
+                              </option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2 xl:col-span-3">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                              Description
+                            </label>
+                            <textarea
+                              rows={3}
+                              value={product?.description || ""}
+                              onChange={(e) =>
+                                handleRedeemProductFieldChange(
+                                  index,
+                                  "description",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Short details visible on redeem store."
+                              className={adminInputClass}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4">
+                          <div className="grid md:grid-cols-[160px,1fr] gap-4 items-start">
+                            <div className="h-24 w-full rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center">
+                              {product?.image ? (
+                                <img
+                                  src={resolveAssetUrl(product.image)}
+                                  alt="Product preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-[10px] text-slate-400">
+                                  No image
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <label className="px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 w-fit">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      handleRedeemProductImageUpload(index, file);
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                  <span className="flex items-center gap-2">
+                                    <Upload size={14} /> Upload Image
+                                  </span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={product?.image || ""}
+                                  onChange={(e) =>
+                                    handleRedeemProductFieldChange(
+                                      index,
+                                      "image",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Image URL"
+                                  className={adminInputClass}
+                                />
+                              </div>
+                              {redeemProductUploadState[index]?.status && (
+                                <div className="text-[11px] text-emerald-500">
+                                  {redeemProductUploadState[index].status}
+                                </div>
+                              )}
+                              {redeemProductUploadState[index]?.error && (
+                                <div className="text-[11px] text-rose-500">
+                                  {redeemProductUploadState[index].error}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Tip: keep Product ID stable once published to avoid duplicate cache entries.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleAddRedeemProduct}
+                        disabled={
+                          !settings || settingsLoading || isRedeemProductModalOpen
+                        }
+                        className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Plus size={14} /> Add Another
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleSettingsUpdate}
+                        disabled={!settings || settingsLoading}
+                        className={`${adminPrimaryButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {settingsLoading ? "Saving..." : "Save Redeem Catalog"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {/* System Settings Section */}
           {isSettingsRoute && (
             <section
@@ -7901,6 +8765,257 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </section>
+          )}
+
+          {isRedeemProductModalOpen && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <div
+                className={`${adminPanelClass} w-full max-w-3xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-5`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Add Redeem Product
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Create one product and publish it to the Store list.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseRedeemProductModal}
+                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/70 dark:border-white/15 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                    aria-label="Close add product modal"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      value={redeemProductDraft?.name || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("name", e.target.value)
+                      }
+                      placeholder="Wireless Earbuds"
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Product ID
+                    </label>
+                    <input
+                      type="text"
+                      value={redeemProductDraft?.id || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("id", e.target.value)
+                      }
+                      placeholder="wireless-earbuds"
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={redeemProductDraft?.category || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange(
+                          "category",
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Popular"
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Redeem Amount (INR)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={redeemProductDraft?.amount ?? ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange(
+                          "amount",
+                          e.target.value,
+                        )
+                      }
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Value Label
+                    </label>
+                    <input
+                      type="text"
+                      value={redeemProductDraft?.value || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("value", e.target.value)
+                      }
+                      placeholder="INR 1499"
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Brand
+                    </label>
+                    <input
+                      type="text"
+                      value={redeemProductDraft?.brand || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("brand", e.target.value)
+                      }
+                      placeholder="Incentify Select"
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Stock (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={redeemProductDraft?.stock ?? ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("stock", e.target.value)
+                      }
+                      className={adminInputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Status
+                    </label>
+                    <select
+                      value={redeemProductDraft?.status || "active"}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange("status", e.target.value)
+                      }
+                      className={adminInputClass}
+                    >
+                      <option value="active" className={adminOptionClass}>
+                        Active
+                      </option>
+                      <option value="inactive" className={adminOptionClass}>
+                        Inactive
+                      </option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2 xl:col-span-3">
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={redeemProductDraft?.description || ""}
+                      onChange={(e) =>
+                        handleRedeemProductDraftFieldChange(
+                          "description",
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Short details visible on redeem store."
+                      className={adminInputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4">
+                  <div className="grid md:grid-cols-[160px,1fr] gap-4 items-start">
+                    <div className="h-24 w-full rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center">
+                      {redeemProductDraft?.image ? (
+                        <img
+                          src={resolveAssetUrl(redeemProductDraft.image)}
+                          alt="Product preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-slate-400">No image</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <label className="px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 w-fit">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              handleRedeemProductDraftImageUpload(file);
+                              e.target.value = "";
+                            }}
+                          />
+                          <span className="flex items-center gap-2">
+                            <Upload size={14} /> Upload Image
+                          </span>
+                        </label>
+                        <input
+                          type="text"
+                          value={redeemProductDraft?.image || ""}
+                          onChange={(e) =>
+                            handleRedeemProductDraftFieldChange(
+                              "image",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Image URL"
+                          className={adminInputClass}
+                        />
+                      </div>
+                      {redeemProductDraftUpload.status && (
+                        <div className="text-[11px] text-emerald-500">
+                          {redeemProductDraftUpload.status}
+                        </div>
+                      )}
+                      {redeemProductDraftUpload.error && (
+                        <div className="text-[11px] text-rose-500">
+                          {redeemProductDraftUpload.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {redeemProductDraftError && (
+                  <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-300">
+                    {redeemProductDraftError}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleCloseRedeemProductModal}
+                    className={adminGhostButtonClass}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmAddRedeemProduct}
+                    className={adminPrimaryButtonClass}
+                  >
+                    Add Product
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {isAccountModalOpen && (
