@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Box,
-  Gift,
-  ShoppingBag,
-  Sparkles,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, Gift, ShoppingBag, Sparkles, Wallet } from "lucide-react";
 import {
   getPublicStoreData,
   getWalletSummary,
@@ -39,11 +32,6 @@ const formatPoints = (value) => {
   return `${POINTS_FORMATTER.format(normalized)} Points`;
 };
 
-<<<<<<< HEAD
-const VoucherCard = ({ item }) => {
-  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
-  const amount = getItemAmount(item);
-=======
 const ProductCard = ({
   item,
   isAuthenticated,
@@ -51,50 +39,16 @@ const ProductCard = ({
   isRedeeming,
   onRedeem,
 }) => {
-  const gradient =
-    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
->>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
-
-  // Robust image handling
+  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
   const rawImage = item.image || item.imageUrl;
-  const hasValidImage =
-    rawImage && rawImage !== "null" && rawImage !== "undefined";
+  const hasValidImage = rawImage && rawImage !== "null" && rawImage !== "undefined";
   const imageSrc = hasValidImage ? resolvePublicAssetUrl(rawImage) : "";
   const [imgError, setImgError] = useState(false);
-
-<<<<<<< HEAD
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Value</p>
-          <p className="text-lg font-bold text-slate-900 dark:text-white">
-            {item.value || "INR 0"}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {formatInr(amount)} required
-          </p>
-        </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-xs font-semibold transition-transform group-hover:scale-[1.03]"
-        >
-          Use Voucher <ArrowRight size={14} />
-        </button>
-      </div>
-    </article>
-  );
-};
-
-const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRedeem }) => {
-  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
-  const imageSrc = resolvePublicAssetUrl(item.image || item.imageUrl || "");
-=======
->>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
   const amount = getItemAmount(item);
   const stockValue = Number(item?.stock);
   const isOutOfStock = Number.isFinite(stockValue) && stockValue <= 0;
   const hasEnoughBalance = amount > 0 && walletBalance >= amount;
 
-  // Compute action label
   let actionLabel = "Redeem Now";
   let buttonStyle =
     "bg-primary hover:bg-primary-strong text-white shadow-lg shadow-primary/20";
@@ -117,22 +71,15 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
   }
 
   const disableRedeem =
-<<<<<<< HEAD
-    isRedeeming || !isAuthenticated || amount <= 0 || isOutOfStock || !hasEnoughBalance;
-=======
     isRedeeming ||
     !isAuthenticated ||
     amount <= 0 ||
     isOutOfStock ||
     !hasEnoughBalance;
->>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
 
   return (
     <article className="group flex flex-col h-full rounded-[24px] bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
-      {/* Image Section */}
-      <div
-        className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}
-      >
+      <div className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}>
         {imageSrc && !imgError ? (
           <img
             src={imageSrc}
@@ -146,16 +93,12 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
           </div>
         )}
         <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-60" />
-
-        {/* Category Badge */}
         <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
           {item.category || "General"}
         </div>
       </div>
 
-      {/* Content Section */}
       <div className="flex-1 p-5 flex flex-col">
-        {/* Brand & Title */}
         <div className="mb-2">
           {item.brand && (
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1.5 flex items-center gap-1">
@@ -174,7 +117,6 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
           </p>
         </div>
 
-        {/* Price Tag */}
         <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-3 mt-1">
           <div>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -185,7 +127,6 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
             </div>
           </div>
 
-          {/* Stock Indicator */}
           {Number.isFinite(stockValue) && (
             <div
               className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
@@ -199,7 +140,6 @@ const ProductCard = ({ item, isAuthenticated, walletBalance, isRedeeming, onRede
           )}
         </div>
 
-        {/* Action Button */}
         <button
           type="button"
           disabled={disableRedeem}
@@ -284,7 +224,6 @@ const Store = () => {
     };
 
     loadWallet();
-
     return () => {
       live = false;
     };
@@ -384,7 +323,7 @@ const Store = () => {
                 Redeem Your Cashback
               </h1>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
-                1 Point = ₹1
+                1 Point = INR 1
               </p>
             </div>
 
@@ -405,7 +344,9 @@ const Store = () => {
                 </p>
               </div>
             </div>
-<<<<<<< HEAD
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Category
@@ -423,42 +364,13 @@ const Store = () => {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Required Pool</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {formatInr(totalAmount)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3 col-span-2 sm:col-span-1">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 inline-flex items-center gap-1">
-                <Wallet size={12} />
-                Wallet
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Required Pool
               </p>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {isAuthenticated
-                  ? isWalletLoading
-                    ? "Loading..."
-                    : formatInr(walletBalance)
-                  : "Sign in"}
+                {formatPoints(totalAmount)}
               </p>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/80 dark:bg-white/5 p-1 flex gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 rounded-xl text-sm font-semibold transition-all duration-200 py-2.5 ${
-                  activeTab === tab.id
-                    ? "bg-primary text-white shadow-lg shadow-primary/35"
-                    : "text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-=======
->>>>>>> 317a40bc3cf5171df079314b2c204ff3ef74f259
           </div>
 
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
