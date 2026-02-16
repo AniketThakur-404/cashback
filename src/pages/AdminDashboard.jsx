@@ -42,6 +42,7 @@ import {
   X,
   Mail,
   Phone,
+  Trash2,
   Clock,
   ArrowRight,
   Settings,
@@ -62,6 +63,7 @@ import VendorAccountManager from "../components/admin/VendorAccountManager";
 import UserAccountManager from "../components/admin/UserAccountManager";
 import { ModeToggle } from "../components/ModeToggle";
 import UserWalletModal from "../components/admin/UserWalletModal";
+import RedeemProductModal from "../components/admin/RedeemProductModal";
 import {
   loginWithEmail,
   getMe,
@@ -165,7 +167,8 @@ const createRedeemProductDraft = () => {
 };
 
 const normalizeRedeemStoreTabs = (tabs) => {
-  const source = Array.isArray(tabs) && tabs.length ? tabs : defaultRedeemStoreTabs;
+  const source =
+    Array.isArray(tabs) && tabs.length ? tabs : defaultRedeemStoreTabs;
   const seen = new Set();
   return source
     .map((tab) => {
@@ -218,9 +221,10 @@ const normalizeRedeemProductEntry = (product, index = 0) => {
         : "",
     description: String(product?.description || "").trim(),
     image: String(product?.image || product?.imageUrl || "").trim(),
-    status: String(product?.status || "active").toLowerCase() === "inactive"
-      ? "inactive"
-      : "active",
+    status:
+      String(product?.status || "active").toLowerCase() === "inactive"
+        ? "inactive"
+        : "active",
   };
 };
 
@@ -925,6 +929,11 @@ const AdminDashboard = () => {
     error: "",
   });
   const [redeemProductDraftError, setRedeemProductDraftError] = useState("");
+  const [editingRedeemProductIndex, setEditingRedeemProductIndex] =
+    useState(-1);
+  const [isDeleteRedeemProductModalOpen, setIsDeleteRedeemProductModalOpen] =
+    useState(false);
+  const [productToDeleteIndex, setProductToDeleteIndex] = useState(-1);
 
   // Support Tickets (Disputes)
   const [supportTickets, setSupportTickets] = useState([]);
@@ -1100,8 +1109,7 @@ const AdminDashboard = () => {
   const isFinanceRoute = activeSection === "finance";
   const isUsersRoute = activeSection === "users";
   const isProductReportsRoute = activeSection === "product-reports";
-  const isSupportRoute =
-    activeSection === "support" || isProductReportsRoute;
+  const isSupportRoute = activeSection === "support" || isProductReportsRoute;
   const isTransactionsRoute = activeSection === "transactions";
   const isQrsRoute = activeSection === "qrs";
   const isVendorsRoute = activeSection === "vendors";
@@ -1875,11 +1883,7 @@ const AdminDashboard = () => {
 
     const rawValue = vendorTechFeeDrafts[vendor.id];
     const nextFee = Number(rawValue);
-    if (
-      !Number.isFinite(nextFee) ||
-      nextFee <= 0 ||
-      nextFee > MAX_QR_PRICE
-    ) {
+    if (!Number.isFinite(nextFee) || nextFee <= 0 || nextFee > MAX_QR_PRICE) {
       setVendorActionError(
         `Tech fee must be between 0.01 and ${MAX_QR_PRICE}.`,
       );
@@ -1902,7 +1906,11 @@ const AdminDashboard = () => {
       }));
       await loadVendors(token);
     } catch (err) {
-      handleRequestError(err, setVendorActionError, "Unable to update tech fee.");
+      handleRequestError(
+        err,
+        setVendorActionError,
+        "Unable to update tech fee.",
+      );
     } finally {
       setVendorTechFeeSaving((prev) => ({ ...prev, [vendor.id]: false }));
     }
@@ -2222,7 +2230,9 @@ const AdminDashboard = () => {
     if (!redeemStore || typeof redeemStore !== "object") {
       return {
         tabs: normalizeRedeemStoreTabs(defaultRedeemStoreTabs),
-        categories: normalizeRedeemStoreCategories(defaultRedeemStoreCategories),
+        categories: normalizeRedeemStoreCategories(
+          defaultRedeemStoreCategories,
+        ),
         products: [],
       };
     }
@@ -2241,12 +2251,16 @@ const AdminDashboard = () => {
         metadata?.redeemStore && typeof metadata.redeemStore === "object"
           ? metadata.redeemStore
           : {};
-      const normalizedProducts = Array.isArray(nextProducts) ? nextProducts : [];
+      const normalizedProducts = Array.isArray(nextProducts)
+        ? nextProducts
+        : [];
       const mergedCategories = normalizeRedeemStoreCategories([
         ...(Array.isArray(currentRedeemStore.categories)
           ? currentRedeemStore.categories
           : []),
-        ...normalizedProducts.map((product) => product?.category).filter(Boolean),
+        ...normalizedProducts
+          .map((product) => product?.category)
+          .filter(Boolean),
       ]);
 
       return {
@@ -2265,6 +2279,7 @@ const AdminDashboard = () => {
 
   const handleAddRedeemProduct = () => {
     if (!settings || isRedeemProductModalOpen) return;
+    setEditingRedeemProductIndex(-1);
     setRedeemProductDraft(createRedeemProductDraft());
     setRedeemProductDraftUpload({ status: "", error: "" });
     setRedeemProductDraftError("");
@@ -2274,9 +2289,22 @@ const AdminDashboard = () => {
   const handleCloseRedeemProductModal = () => {
     if (settingsLoading) return;
     setIsRedeemProductModalOpen(false);
+    setEditingRedeemProductIndex(-1);
     setRedeemProductDraft(createRedeemProductDraft());
     setRedeemProductDraftUpload({ status: "", error: "" });
     setRedeemProductDraftError("");
+  };
+
+  const handleEditRedeemProduct = (index) => {
+    const product = redeemStoreProducts[index];
+    if (!product) return;
+
+    setEditingRedeemProductIndex(index);
+    setRedeemProductDraft({
+      ...product,
+      isEditing: true,
+    });
+    setIsRedeemProductModalOpen(true);
   };
 
   const handleRedeemProductDraftFieldChange = (field, value) => {
@@ -2335,55 +2363,152 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleConfirmAddRedeemProduct = () => {
+  const persistRedeemProductChanges = async (nextProducts) => {
     if (!settings) return;
-    const currentProducts = getRedeemStoreProducts();
-    const normalizedDraft = normalizeRedeemProductEntry(
-      redeemProductDraft,
-      currentProducts.length,
-    );
+    setSettingsLoading(true);
+    try {
+      const currentRedeemStore =
+        settings?.metadata?.redeemStore &&
+        typeof settings.metadata.redeemStore === "object"
+          ? settings.metadata.redeemStore
+          : {};
 
-    if (!normalizedDraft.name) {
+      const normalizedRedeemProducts = normalizeRedeemProducts(nextProducts);
+
+      const normalizedRedeemStore = {
+        tabs: normalizeRedeemStoreTabs(currentRedeemStore.tabs),
+        categories: normalizeRedeemStoreCategories([
+          ...(Array.isArray(currentRedeemStore.categories)
+            ? currentRedeemStore.categories
+            : []),
+          ...normalizedRedeemProducts
+            .map((product) => product.category)
+            .filter(Boolean),
+        ]),
+        products: normalizedRedeemProducts,
+      };
+
+      const metadata = {
+        ...(settings.metadata || {}),
+        redeemStore: normalizedRedeemStore,
+        waitlistEnabled: settings.waitlistEnabled ?? false,
+        fraudThresholds: settings.fraudThresholds,
+      };
+
+      await updateAdminSystemSettings(token, {
+        techFeePerQr: settings.techFeePerQr,
+        minPayoutAmount: settings.minPayoutAmount,
+        maxDailyPayout: settings.maxDailyPayout,
+        qrExpiryDays: settings.qrExpiryDays,
+        platformName: settings.platformName,
+        supportEmail: settings.supportEmail,
+        termsUrl: settings.termsUrl,
+        privacyUrl: settings.privacyUrl,
+        metadata,
+        waitlistEnabled: settings.waitlistEnabled,
+        fraudThresholds: settings.fraudThresholds,
+      });
+
+      setSettingsMessage("Store updated successfully.");
+      await loadSettings(token);
+    } catch (err) {
+      console.error("Failed to persist redeem products:", err);
+      setSettingsError("Failed to save changes. Please try again.");
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSaveRedeemProduct = async (productData) => {
+    if (!settings) return;
+
+    // Validate
+    if (!productData.name) {
       setRedeemProductDraftError("Product name is required.");
       return;
     }
-    if (!normalizedDraft.id) {
-      setRedeemProductDraftError("Product ID is required.");
-      return;
-    }
-    if (!Number.isFinite(normalizedDraft.amount) || normalizedDraft.amount <= 0) {
-      setRedeemProductDraftError("Redeem amount must be greater than 0.");
-      return;
-    }
 
-    const exists = currentProducts.some(
-      (product) =>
-        String(product?.id || "").toLowerCase() ===
-        String(normalizedDraft.id).toLowerCase(),
+    const currentProducts = getRedeemStoreProducts();
+    const normalizedData = normalizeRedeemProductEntry(
+      productData,
+      editingRedeemProductIndex >= 0
+        ? editingRedeemProductIndex
+        : currentProducts.length,
     );
-    if (exists) {
-      setRedeemProductDraftError("Product ID already exists. Use a unique ID.");
-      return;
+
+    // Check dupes only if adding new or changing ID
+    if (editingRedeemProductIndex === -1) {
+      const exists = currentProducts.some(
+        (p) =>
+          String(p?.id || "").toLowerCase() ===
+          String(normalizedData.id).toLowerCase(),
+      );
+      if (exists) {
+        setRedeemProductDraftError(
+          "Product ID already exists. Use a unique ID.",
+        );
+        return;
+      }
+    } else {
+      // If editing, check if ID clashes with *other* products
+      const exists = currentProducts.some(
+        (p, idx) =>
+          idx !== editingRedeemProductIndex &&
+          String(p?.id || "").toLowerCase() ===
+            String(normalizedData.id).toLowerCase(),
+      );
+      if (exists) {
+        setRedeemProductDraftError(
+          "Product ID already exists. Use a unique ID.",
+        );
+        return;
+      }
     }
 
-    setRedeemStoreProducts([...currentProducts, normalizedDraft]);
+    let nextProducts = [...currentProducts];
+    if (editingRedeemProductIndex >= 0) {
+      nextProducts[editingRedeemProductIndex] = normalizedData;
+    } else {
+      nextProducts.push(normalizedData);
+    }
+
+    setRedeemStoreProducts(nextProducts);
+    await persistRedeemProductChanges(nextProducts);
     handleCloseRedeemProductModal();
   };
 
   const handleRemoveRedeemProduct = (index) => {
     if (!settings) return;
+    setProductToDeleteIndex(index);
+    setIsDeleteRedeemProductModalOpen(true);
+  };
+
+  const confirmDeleteRedeemProduct = async () => {
+    if (!settings || productToDeleteIndex === -1) return;
     const currentProducts = getRedeemStoreProducts();
-    const nextProducts = currentProducts.filter((_, idx) => idx !== index);
+    const nextProducts = currentProducts.filter(
+      (_, idx) => idx !== productToDeleteIndex,
+    );
+
     setRedeemStoreProducts(nextProducts);
+
+    // Cleanup upload state (optional but good practice)
     setRedeemProductUploadState((prev) => {
       const next = {};
       Object.entries(prev).forEach(([key, value]) => {
         const numericKey = Number(key);
-        if (!Number.isFinite(numericKey) || numericKey === index) return;
-        next[numericKey > index ? numericKey - 1 : numericKey] = value;
+        if (!Number.isFinite(numericKey) || numericKey === productToDeleteIndex)
+          return;
+        next[numericKey > productToDeleteIndex ? numericKey - 1 : numericKey] =
+          value;
       });
       return next;
     });
+
+    setIsDeleteRedeemProductModalOpen(false);
+    setProductToDeleteIndex(-1);
+
+    await persistRedeemProductChanges(nextProducts);
   };
 
   const handleRedeemProductFieldChange = (index, field, value) => {
@@ -3760,6 +3885,9 @@ const AdminDashboard = () => {
   // QRs
   const limitedQrs = showAllQrs ? effectiveQrs : effectiveQrs.slice(0, 12);
 
+  // Campaigns
+  const limitedCampaigns = showAllCampaigns ? campaigns : campaigns.slice(0, 6);
+
   // Analytics - Transaction Series (these were missing)
   const transactionSeries = useMemo(
     () => buildTransactionSeries(effectiveTransactions, analyticsRange),
@@ -3889,7 +4017,8 @@ const AdminDashboard = () => {
       missingAmount: 0,
     };
     redeemStoreProducts.forEach((product) => {
-      const isInactive = String(product?.status || "active").toLowerCase() === "inactive";
+      const isInactive =
+        String(product?.status || "active").toLowerCase() === "inactive";
       if (isInactive) summary.inactive += 1;
       else summary.active += 1;
       if (String(product?.image || "").trim()) summary.withImage += 1;
@@ -4996,9 +5125,6 @@ const AdminDashboard = () => {
                               "Unknown Vendor";
                             const brandName =
                               order.brandName || order.vendor?.brandName || "-";
-                            const isPaid =
-                              order.status === "paid" ||
-                              order.status === "shipped";
 
                             return (
                               <tr
@@ -7327,8 +7453,7 @@ const AdminDashboard = () => {
                                     subscription.Brand?.qrPricePerUnit,
                                   );
                                   const techFee =
-                                    Number.isFinite(vendorFee) &&
-                                    vendorFee > 0
+                                    Number.isFinite(vendorFee) && vendorFee > 0
                                       ? vendorFee
                                       : legacyQrFee;
                                   return Number.isFinite(Number(techFee)) &&
@@ -7563,7 +7688,9 @@ const AdminDashboard = () => {
                                     </div>
                                     <button
                                       type="button"
-                                      onClick={() => handleVendorTechFeeSave(vendor)}
+                                      onClick={() =>
+                                        handleVendorTechFeeSave(vendor)
+                                      }
                                       disabled={!canSaveTechFee}
                                       className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
@@ -7897,7 +8024,8 @@ const AdminDashboard = () => {
                       Redeem Product Catalog
                     </h2>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Upload and manage products shown in the customer redeem store.
+                      Upload and manage products shown in the customer redeem
+                      store.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -7997,8 +8125,8 @@ const AdminDashboard = () => {
                   {redeemStoreProducts.length === 0 && (
                     <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/70 dark:bg-black/20 p-6 text-sm text-slate-500 dark:text-slate-400">
                       <p>
-                        No redeem products yet. Click "Add Product" to create your
-                        first item.
+                        No redeem products yet. Click "Add Product" to create
+                        your first item.
                       </p>
                       <button
                         type="button"
@@ -8013,308 +8141,113 @@ const AdminDashboard = () => {
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    {redeemStoreProducts.map((product, index) => (
-                      <div
-                        key={`${product?.id || "redeem-product"}-${index}`}
-                        className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white to-slate-50 dark:from-black/20 dark:to-white/[0.02] p-5 space-y-4"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                          <div>
-                            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                              Product {index + 1}
-                            </p>
-                            <h3 className="text-base font-semibold text-slate-900 dark:text-white mt-1">
-                              {product?.name || "Untitled Product"}
-                            </h3>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                                String(product?.status || "active").toLowerCase() ===
-                                "inactive"
-                                  ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
-                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-                              }`}
+                  <div className="overflow-hidden rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-black/20">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 dark:bg-white/5 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">
+                          <tr>
+                            <th className="px-5 py-3">Product</th>
+                            <th className="px-5 py-3">Category</th>
+                            <th className="px-5 py-3">Points</th>
+                            <th className="px-5 py-3">Stock</th>
+                            <th className="px-5 py-3">Status</th>
+                            <th className="px-5 py-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200/70 dark:divide-white/5">
+                          {redeemStoreProducts.map((product, index) => (
+                            <tr
+                              key={`${product?.id || "product"}-${index}`}
+                              className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
                             >
-                              {String(product?.status || "active").toLowerCase() ===
-                              "inactive"
-                                ? "Inactive"
-                                : "Active"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveRedeemProduct(index)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300"
-                            >
-                              <X size={12} /> Remove
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Product Name
-                            </label>
-                            <input
-                              type="text"
-                              value={product?.name || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "name",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Wireless Earbuds"
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Product ID
-                            </label>
-                            <input
-                              type="text"
-                              value={product?.id || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "id",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="wireless-earbuds"
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Category
-                            </label>
-                            <input
-                              type="text"
-                              value={product?.category || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "category",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Popular"
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Redeem Amount (INR)
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={product?.amount ?? ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "amount",
-                                  e.target.value,
-                                )
-                              }
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Value Label
-                            </label>
-                            <input
-                              type="text"
-                              value={product?.value || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "value",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="INR 1499"
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Brand
-                            </label>
-                            <input
-                              type="text"
-                              value={product?.brand || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "brand",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Incentify Select"
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Stock (Optional)
-                            </label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={product?.stock ?? ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "stock",
-                                  e.target.value,
-                                )
-                              }
-                              className={adminInputClass}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Status
-                            </label>
-                            <select
-                              value={product?.status || "active"}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "status",
-                                  e.target.value,
-                                )
-                              }
-                              className={adminInputClass}
-                            >
-                              <option value="active" className={adminOptionClass}>
-                                Active
-                              </option>
-                              <option
-                                value="inactive"
-                                className={adminOptionClass}
-                              >
-                                Inactive
-                              </option>
-                            </select>
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2 xl:col-span-3">
-                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                              Description
-                            </label>
-                            <textarea
-                              rows={3}
-                              value={product?.description || ""}
-                              onChange={(e) =>
-                                handleRedeemProductFieldChange(
-                                  index,
-                                  "description",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Short details visible on redeem store."
-                              className={adminInputClass}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4">
-                          <div className="grid md:grid-cols-[160px,1fr] gap-4 items-start">
-                            <div className="h-24 w-full rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center">
-                              {product?.image ? (
-                                <img
-                                  src={resolveAssetUrl(product.image)}
-                                  alt="Product preview"
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <span className="text-[10px] text-slate-400">
-                                  No image
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                    {product?.image ? (
+                                      <img
+                                        src={resolveAssetUrl(product.image)}
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="h-full w-full flex items-center justify-center text-slate-300">
+                                        <Package size={16} />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-slate-900 dark:text-white">
+                                      {product?.name || "Untitled"}
+                                    </div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                                      {product?.id}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                                {product?.category || "-"}
+                              </td>
+                              <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
+                                {product?.amount}
+                              </td>
+                              <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                                {product?.stock !== "" ? product.stock : "-"}
+                              </td>
+                              <td className="px-5 py-3">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    String(product?.status).toLowerCase() ===
+                                    "inactive"
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                  }`}
+                                >
+                                  {String(product?.status).toLowerCase() ===
+                                  "inactive"
+                                    ? "Inactive"
+                                    : "Active"}
                                 </span>
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                <label className="px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 w-fit">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      handleRedeemProductImageUpload(index, file);
-                                      e.target.value = "";
-                                    }}
-                                  />
-                                  <span className="flex items-center gap-2">
-                                    <Upload size={14} /> Upload Image
-                                  </span>
-                                </label>
-                                <input
-                                  type="text"
-                                  value={product?.image || ""}
-                                  onChange={(e) =>
-                                    handleRedeemProductFieldChange(
-                                      index,
-                                      "image",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Image URL"
-                                  className={adminInputClass}
-                                />
-                              </div>
-                              {redeemProductUploadState[index]?.status && (
-                                <div className="text-[11px] text-emerald-500">
-                                  {redeemProductUploadState[index].status}
+                              </td>
+                              <td className="px-5 py-3 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() =>
+                                      handleEditRedeemProduct(index)
+                                    }
+                                    className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-white/10 transition-colors"
+                                    title="Edit"
+                                  >
+                                    <FileText size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleRemoveRedeemProduct(index)
+                                    }
+                                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
+                                    title="Remove"
+                                  >
+                                    <X size={16} />
+                                  </button>
                                 </div>
-                              )}
-                              {redeemProductUploadState[index]?.error && (
-                                <div className="text-[11px] text-rose-500">
-                                  {redeemProductUploadState[index].error}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Tip: keep Product ID stable once published to avoid duplicate cache entries.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={handleAddRedeemProduct}
-                        disabled={
-                          !settings || settingsLoading || isRedeemProductModalOpen
-                        }
-                        className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Plus size={14} /> Add Another
-                        </span>
-                      </button>
-                      <button
-                        onClick={handleSettingsUpdate}
-                        disabled={!settings || settingsLoading}
-                        className={`${adminPrimaryButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {settingsLoading ? "Saving..." : "Save Redeem Catalog"}
-                      </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
+
+                  {isRedeemProductModalOpen && (
+                    <RedeemProductModal
+                      product={redeemProductDraft}
+                      onClose={handleCloseRedeemProductModal}
+                      onSave={handleSaveRedeemProduct}
+                      isSaving={settingsLoading}
+                      onUploadImage={handleRedeemProductDraftImageUpload}
+                      uploadState={redeemProductDraftUpload}
+                    />
+                  )}
                 </div>
               )}
             </section>
@@ -8874,257 +8807,6 @@ const AdminDashboard = () => {
             </section>
           )}
 
-          {isRedeemProductModalOpen && (
-            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div
-                className={`${adminPanelClass} w-full max-w-3xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-5`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                      Add Redeem Product
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Create one product and publish it to the Store list.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCloseRedeemProductModal}
-                    className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200/70 dark:border-white/15 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
-                    aria-label="Close add product modal"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Product Name
-                    </label>
-                    <input
-                      type="text"
-                      value={redeemProductDraft?.name || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("name", e.target.value)
-                      }
-                      placeholder="Wireless Earbuds"
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Product ID
-                    </label>
-                    <input
-                      type="text"
-                      value={redeemProductDraft?.id || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("id", e.target.value)
-                      }
-                      placeholder="wireless-earbuds"
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Category
-                    </label>
-                    <input
-                      type="text"
-                      value={redeemProductDraft?.category || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange(
-                          "category",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Popular"
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Redeem Amount (INR)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={redeemProductDraft?.amount ?? ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange(
-                          "amount",
-                          e.target.value,
-                        )
-                      }
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Value Label
-                    </label>
-                    <input
-                      type="text"
-                      value={redeemProductDraft?.value || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("value", e.target.value)
-                      }
-                      placeholder="INR 1499"
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Brand
-                    </label>
-                    <input
-                      type="text"
-                      value={redeemProductDraft?.brand || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("brand", e.target.value)
-                      }
-                      placeholder="Incentify Select"
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Stock (Optional)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={redeemProductDraft?.stock ?? ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("stock", e.target.value)
-                      }
-                      className={adminInputClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Status
-                    </label>
-                    <select
-                      value={redeemProductDraft?.status || "active"}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange("status", e.target.value)
-                      }
-                      className={adminInputClass}
-                    >
-                      <option value="active" className={adminOptionClass}>
-                        Active
-                      </option>
-                      <option value="inactive" className={adminOptionClass}>
-                        Inactive
-                      </option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5 md:col-span-2 xl:col-span-3">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Description
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={redeemProductDraft?.description || ""}
-                      onChange={(e) =>
-                        handleRedeemProductDraftFieldChange(
-                          "description",
-                          e.target.value,
-                        )
-                      }
-                      placeholder="Short details visible on redeem store."
-                      className={adminInputClass}
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-black/20 p-4">
-                  <div className="grid md:grid-cols-[160px,1fr] gap-4 items-start">
-                    <div className="h-24 w-full rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center">
-                      {redeemProductDraft?.image ? (
-                        <img
-                          src={resolveAssetUrl(redeemProductDraft.image)}
-                          alt="Product preview"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-[10px] text-slate-400">No image</span>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <label className="px-3 py-2 rounded-lg border border-slate-200/60 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 w-fit">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              handleRedeemProductDraftImageUpload(file);
-                              e.target.value = "";
-                            }}
-                          />
-                          <span className="flex items-center gap-2">
-                            <Upload size={14} /> Upload Image
-                          </span>
-                        </label>
-                        <input
-                          type="text"
-                          value={redeemProductDraft?.image || ""}
-                          onChange={(e) =>
-                            handleRedeemProductDraftFieldChange(
-                              "image",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="Image URL"
-                          className={adminInputClass}
-                        />
-                      </div>
-                      {redeemProductDraftUpload.status && (
-                        <div className="text-[11px] text-emerald-500">
-                          {redeemProductDraftUpload.status}
-                        </div>
-                      )}
-                      {redeemProductDraftUpload.error && (
-                        <div className="text-[11px] text-rose-500">
-                          {redeemProductDraftUpload.error}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {redeemProductDraftError && (
-                  <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-300">
-                    {redeemProductDraftError}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-end gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleCloseRedeemProductModal}
-                    className={adminGhostButtonClass}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmAddRedeemProduct}
-                    className={adminPrimaryButtonClass}
-                  >
-                    Add Product
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {isAccountModalOpen && (
             <VendorAccountManager
               vendorId={selectedVendorId}
@@ -9160,6 +8842,48 @@ const AdminDashboard = () => {
                 setSelectedUser(null);
               }}
             />
+          )}
+
+          {isDeleteRedeemProductModalOpen && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div
+                className={`${adminPanelClass} w-full max-w-sm p-6 space-y-4 shadow-xl scale-100 animate-in zoom-in-95 duration-200`}
+              >
+                <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                  <div className="p-2 rounded-full bg-rose-100 dark:bg-rose-500/10">
+                    <Trash2 size={24} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    Delete Product?
+                  </h3>
+                </div>
+
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Are you sure you want to delete this product? This action
+                  cannot be undone.
+                </p>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDeleteRedeemProductModalOpen(false);
+                      setProductToDeleteIndex(-1);
+                    }}
+                    className={adminGhostButtonClass}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDeleteRedeemProduct}
+                    className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    Delete Product
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </main>
       </div>
