@@ -39,22 +39,14 @@ const ProductCard = ({
   isRedeeming,
   onRedeem,
 }) => {
-<<<<<<< HEAD
   const gradient =
     CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
 
-  // Robust image handling
-=======
-  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
->>>>>>> ae26360d625403dfc5f94d7c865518121c2c24a4
   const rawImage = item.image || item.imageUrl;
-  const hasValidImage = rawImage && rawImage !== "null" && rawImage !== "undefined";
+  const hasValidImage =
+    rawImage && rawImage !== "null" && rawImage !== "undefined";
   const imageSrc = hasValidImage ? resolvePublicAssetUrl(rawImage) : "";
   const [imgError, setImgError] = useState(false);
-<<<<<<< HEAD
-
-=======
->>>>>>> ae26360d625403dfc5f94d7c865518121c2c24a4
   const amount = getItemAmount(item);
   const stockValue = Number(item?.stock);
   const isOutOfStock = Number.isFinite(stockValue) && stockValue <= 0;
@@ -90,7 +82,9 @@ const ProductCard = ({
 
   return (
     <article className="group flex flex-col h-full rounded-[24px] bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
-      <div className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}>
+      <div
+        className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}
+      >
         {imageSrc && !imgError ? (
           <img
             src={imageSrc}
@@ -109,15 +103,10 @@ const ProductCard = ({
         </div>
       </div>
 
-<<<<<<< HEAD
       {/* Content Section */}
-      <div className="flex-1 p-3 flex flex-col">
-        {/* Brand & Title */}
-        <div className="mb-0">
-=======
       <div className="flex-1 p-5 flex flex-col">
+        {/* Brand & Title */}
         <div className="mb-2">
->>>>>>> ae26360d625403dfc5f94d7c865518121c2c24a4
           {item.brand && (
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
               <Sparkles size={10} /> {item.brand}
@@ -263,15 +252,6 @@ const Store = () => {
     return list.filter((item) => item.category === activeCategory);
   }, [activeCategory, list]);
 
-  const totalAmount = useMemo(
-    () =>
-      list.reduce((sum, item) => {
-        const amount = getItemAmount(item);
-        return Number.isFinite(amount) ? sum + amount : sum;
-      }, 0),
-    [list],
-  );
-
   const handleRedeemProduct = async (item) => {
     if (!isAuthenticated || !authToken) {
       setRedeemError("Sign in to redeem products.");
@@ -363,52 +343,6 @@ const Store = () => {
                 </p>
               </div>
             </div>
-          </div>
-
-<<<<<<< HEAD
-=======
-          <div className="grid grid-cols-3 gap-2.5">
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Category
-              </p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {activeCategory}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Visible
-              </p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {activeItems.length}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Required Pool
-              </p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
-                {formatPoints(totalAmount)}
-              </p>
-            </div>
-          </div>
-
->>>>>>> ae26360d625403dfc5f94d7c865518121c2c24a4
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide transition duration-200 ${
-                  activeCategory === category
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                    : "border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-300 bg-white/70 dark:bg-white/5"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
           </div>
         </div>
       </div>
