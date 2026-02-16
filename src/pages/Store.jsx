@@ -24,11 +24,14 @@ const CATEGORY_STYLES = {
 };
 
 const VoucherCard = ({ item }) => {
-  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
+  const gradient =
+    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 p-4 shadow-sm hover:shadow-xl transition-all duration-300">
-      <div className={`rounded-2xl p-4 bg-gradient-to-br ${gradient} text-white`}>
+      <div
+        className={`rounded-2xl p-4 bg-gradient-to-br ${gradient} text-white`}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] uppercase tracking-[0.16em] text-white/75 font-semibold">
@@ -66,7 +69,8 @@ const VoucherCard = ({ item }) => {
 };
 
 const ProductCard = ({ item }) => {
-  const gradient = CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
+  const gradient =
+    CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
 
   return (
     <article className="group rounded-3xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
@@ -95,7 +99,9 @@ const ProductCard = ({ item }) => {
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Required</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Required
+            </p>
             <p className="text-lg font-bold text-slate-900 dark:text-white">
               {item.points || 0} pts
             </p>
@@ -164,7 +170,8 @@ const Store = () => {
     if (!categories.includes(activeCategory)) setActiveCategory(categories[0]);
   }, [activeCategory, categories]);
 
-  const list = activeTab === "products" ? storeData.products : storeData.vouchers;
+  const list =
+    activeTab === "products" ? storeData.products : storeData.vouchers;
 
   const activeItems = useMemo(() => {
     if (activeCategory === "Popular") return list;
@@ -207,25 +214,33 @@ const Store = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Mode</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Mode
+              </p>
               <p className="text-sm font-bold text-slate-900 dark:text-white capitalize mt-1">
                 {activeTab}
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Category</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Category
+              </p>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                 {activeCategory}
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Visible</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Visible
+              </p>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                 {activeItems.length}
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 px-3 py-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Points pool</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Points pool
+              </p>
               <p className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                 {totalPoints}
               </p>
