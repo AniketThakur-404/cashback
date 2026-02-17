@@ -14,6 +14,44 @@ const resolveAuthToken = (token) => {
   return localStorage.getItem(AUTH_TOKEN_KEY) || "";
 };
 
+const downloadAuthedFile = async (token, path, fallbackName) => {
+  const authToken = resolveAuthToken(token);
+  const url = buildApiUrl(path);
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to download file");
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get("content-disposition") || "";
+  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+  let derivedFileName = null;
+  if (fileNameMatch?.[1]) {
+    const rawFileName = fileNameMatch[1].replace(/"/g, "");
+    try {
+      derivedFileName = decodeURIComponent(rawFileName);
+    } catch (_) {
+      derivedFileName = rawFileName;
+    }
+  }
+
+  const fileName = derivedFileName || fallbackName;
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = blobUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  window.setTimeout(() => link.click(), 0);
+  window.setTimeout(() => link.remove(), 300);
+  window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+};
+
 export const sendOtp = (phoneNumber) =>
   apiRequest("/api/auth/send-otp", {
     method: "POST",
@@ -52,11 +90,11 @@ export const getUserRedemptionHistory = (token) =>
 export const getClaimPreview = (token) =>
   apiRequest(`/api/claim/preview?token=${encodeURIComponent(token)}`);
 
-export const redeemClaim = (authToken, token) =>
+export const redeemClaim = (authToken, token, payload = {}) =>
   apiRequest("/api/claim/redeem", {
     method: "POST",
     token: authToken,
-    body: { token },
+    body: { token, ...payload },
   });
 
 export const getWalletSummary = (token) =>
@@ -64,10 +102,11 @@ export const getWalletSummary = (token) =>
     token: resolveAuthToken(token),
   });
 
-export const scanQR = (hash, token) =>
+export const scanQR = (hash, token, payload = {}) =>
   apiRequest(`/api/user/scan-qr/${encodeURIComponent(hash)}`, {
     method: "POST",
     token: resolveAuthToken(token),
+    body: payload,
   });
 
 // Wallet APIs
@@ -198,6 +237,18 @@ export const getVendorTransactions = (token, params) =>
     token,
   });
 
+export const getVendorWalletTransactionsDetailed = (token, params) =>
+  apiRequest(`/api/vendor/wallet/transactions${buildQueryString(params)}`, {
+    token,
+  });
+
+export const exportVendorWalletTransactions = (token, params) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/wallet/transactions/export${buildQueryString(params)}`,
+    `vendor-wallet-transactions-${Date.now()}.csv`
+  );
+
 export const rechargeVendorWallet = (token, amount) =>
   apiRequest("/api/vendor/wallet/recharge", {
     method: "POST",
@@ -219,11 +270,35 @@ export const verifyPayment = (token, paymentData) =>
     body: paymentData,
   });
 
-export const orderVendorQrs = (token, campaignId, quantity, cashbackAmount) =>
+export const orderVendorQrs = (
+  token,
+  campaignId,
+  quantity,
+  cashbackAmount,
+  seriesCode = null,
+) =>
   apiRequest("/api/vendor/qrs/order", {
     method: "POST",
     token,
-    body: { campaignId, quantity, cashbackAmount },
+    body: { campaignId, quantity, cashbackAmount, seriesCode },
+  });
+
+export const rechargeVendorQrs = (
+  token,
+  campaignId,
+  quantity,
+  cashbackAmount,
+  seriesCode = null,
+) =>
+  apiRequest("/api/vendor/qrs/recharge", {
+    method: "POST",
+    token,
+    body: { campaignId, quantity, cashbackAmount, seriesCode },
+  });
+
+export const getVendorQrInventorySeries = (token, params) =>
+  apiRequest(`/api/vendor/qrs/inventory/series${buildQueryString(params)}`, {
+    token,
   });
 
 export const getVendorQrs = (token, params) =>
@@ -337,6 +412,35 @@ export const getVendorRedemptions = (token, params) =>
     token,
   });
 
+export const exportVendorRedemptions = (token, params) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/redemptions/export${buildQueryString(params)}`,
+    `vendor-redemptions-${Date.now()}.csv`
+  );
+
+export const getVendorRedemptionsMap = (token, params) =>
+  apiRequest(`/api/vendor/redemptions/map${buildQueryString(params)}`, {
+    token,
+  });
+
+export const getVendorSummaryAnalytics = (token, params) =>
+  apiRequest(`/api/vendor/analytics/summary${buildQueryString(params)}`, {
+    token,
+  });
+
+export const getVendorCustomers = (token, params) =>
+  apiRequest(`/api/vendor/customers${buildQueryString(params)}`, {
+    token,
+  });
+
+export const exportVendorCustomers = (token, params) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/customers/export${buildQueryString(params)}`,
+    `vendor-customers-${Date.now()}.csv`
+  );
+
 // Vendor Support Tickets (B13)
 export const getVendorSupportTickets = (token, params) =>
   apiRequest(`/api/vendor/support${buildQueryString(params)}`, {
@@ -349,6 +453,36 @@ export const createVendorSupportTicket = (token, payload) =>
     token,
     body: payload,
   });
+
+export const getVendorInvoices = (token, params) =>
+  apiRequest(`/api/vendor/invoices${buildQueryString(params)}`, {
+    token,
+  });
+
+export const downloadVendorInvoicePdf = (token, invoiceId) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/invoices/${encodeURIComponent(invoiceId)}/pdf`,
+    `invoice-${invoiceId}.pdf`
+  );
+
+export const shareVendorInvoice = (token, invoiceId) =>
+  apiRequest(`/api/vendor/invoices/${encodeURIComponent(invoiceId)}/share`, {
+    method: "POST",
+    token,
+  });
+
+export const getVendorProductReports = (token, params) =>
+  apiRequest(`/api/vendor/product-reports${buildQueryString(params)}`, {
+    token,
+  });
+
+export const downloadVendorProductReport = (token, reportId) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/product-reports/${encodeURIComponent(reportId)}/download`,
+    `product-report-${reportId}.txt`
+  );
 
 export const getAdminDashboard = (token) =>
   apiRequest("/api/admin/dashboard", {

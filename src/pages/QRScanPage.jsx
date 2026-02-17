@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { scanQR } from '../lib/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { AUTH_TOKEN_KEY, storePostLoginRedirect } from '../lib/auth';
+import { captureClientLocation } from '../lib/location';
 
 const QRScanPage = () => {
     const { hash } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
     const [status, setStatus] = useState('checking'); // checking, validating, error
 
     useEffect(() => {
@@ -26,7 +26,8 @@ const QRScanPage = () => {
 
             try {
                 // Call backend to scan and redeem
-                const response = await scanQR(hash, token);
+                const locationPayload = await captureClientLocation();
+                const response = await scanQR(hash, token, locationPayload);
 
                 // Navigate to result page with success data
                 navigate('/scan/result', {
