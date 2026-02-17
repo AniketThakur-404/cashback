@@ -119,9 +119,9 @@ const HeroCarousel = ({ items }) => {
 
   return (
     <div
-      className="hero-carousel relative w-full h-[210px] rounded-[28px] overflow-hidden"
+      className="hero-carousel relative isolate w-full h-[224px] sm:h-[244px] rounded-[30px] overflow-hidden border border-white/20"
       style={{
-        boxShadow: "0 20px 50px -12px rgba(0,0,0,0.18)",
+        boxShadow: "0 24px 56px -16px rgba(15, 23, 42, 0.32)",
         touchAction: "pan-y",
       }}
     >
@@ -137,71 +137,80 @@ const HeroCarousel = ({ items }) => {
           exit={{ opacity: 0, x: -60 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0"
-          style={{
-            background: b.gradient || "linear-gradient(135deg,#1a7842,#059669)",
-          }}
         >
           <div
-            className="absolute -top-12 -right-12 w-44 h-44 rounded-full blur-2xl"
-            style={{ background: "rgba(255,255,255,0.07)" }}
+            className="absolute inset-0"
+            style={{
+              background:
+                b.gradient || "linear-gradient(135deg,#14532d,#15803d,#059669)",
+            }}
           />
           <div
-            className="absolute bottom-0 -left-8 w-32 h-32 rounded-full blur-2xl"
-            style={{ background: "rgba(255,255,255,0.05)" }}
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 16% 22%, rgba(255,255,255,0.28), transparent 42%), radial-gradient(circle at 82% 86%, rgba(255,255,255,0.16), transparent 44%)",
+            }}
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/35" />
+          <div className="absolute -top-20 -right-14 w-56 h-56 rounded-full blur-3xl bg-white/10" />
+          <div className="absolute -bottom-24 left-8 w-44 h-44 rounded-full blur-3xl bg-black/20" />
 
-          <div className="relative z-10 p-6 h-full flex flex-col justify-between">
-            <div>
+          <div className="relative z-10 h-full px-5 sm:px-6 py-5 sm:py-6 grid grid-cols-12 gap-3 sm:gap-4">
+            <div className="col-span-8 sm:col-span-7 min-w-0 flex flex-col justify-between">
               <div
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border mb-3"
+                className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full border mb-3 backdrop-blur-md"
                 style={{
-                  background: "rgba(255,255,255,0.15)",
-                  borderColor: "rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.18)",
+                  borderColor: "rgba(255,255,255,0.28)",
                 }}
               >
                 <Zap size={10} className="text-yellow-300" />
                 <span
-                  className="text-[9px] font-bold text-white uppercase"
+                  className="text-[10px] font-bold text-white uppercase"
                   style={{ letterSpacing: "0.15em" }}
                 >
                   Exclusive
                 </span>
               </div>
               <h3
-                className="text-[26px] font-black text-white leading-[1.1] max-w-[60%] tracking-tight"
-                style={{ textShadow: "0 2px 10px rgba(0,0,0,0.15)" }}
+                className="text-[34px] sm:text-[38px] font-black text-white leading-[0.95] tracking-tight max-w-[11ch]"
+                style={{ textShadow: "0 6px 20px rgba(0,0,0,0.24)" }}
               >
                 {b.title}
               </h3>
               <p
-                className="text-[13px] mt-1.5 font-medium"
-                style={{ color: "rgba(255,255,255,0.7)" }}
+                className="text-[12px] sm:text-[13px] mt-2 font-medium"
+                style={{ color: "rgba(255,255,255,0.82)" }}
               >
                 {b.subtitle}
               </p>
+              <Link to="/brand-details" className="self-start mt-3">
+                <div
+                  className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[12px] font-bold px-5 py-2.5 rounded-full active:scale-[0.95] transition-transform"
+                  style={{ boxShadow: "0 10px 24px rgba(15, 23, 42, 0.34)" }}
+                >
+                  Explore <ArrowRight size={14} />
+                </div>
+              </Link>
             </div>
-            <Link to="/brand-details" className="self-start">
-              <div
-                className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[11px] font-bold px-5 py-2.5 rounded-full active:scale-[0.94] transition-transform"
-                style={{ boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}
-              >
-                Explore <ArrowRight size={13} />
-              </div>
-            </Link>
-          </div>
 
-          <div className="absolute bottom-3 right-3 w-[120px] h-[120px] opacity-60">
-            <FallbackImage
-              src={resolveBrandLogoUrl(b.img)}
-              alt="Offer"
-              className="w-full h-full object-contain drop-shadow-xl"
-              fallback={
-                <Sparkles
-                  className="w-full h-full"
-                  style={{ color: "rgba(255,255,255,0.1)" }}
+            <div className="col-span-4 sm:col-span-5 flex items-end justify-end pb-2">
+              <div className="relative w-full max-w-[192px] sm:max-w-[216px] aspect-[4/3] rounded-[20px] overflow-hidden border border-white/35 shadow-2xl bg-black/20">
+                <FallbackImage
+                  src={resolveBrandLogoUrl(b.img)}
+                  alt="Offer"
+                  className="w-full h-full object-cover scale-[1.03]"
+                  fallback={
+                    <Sparkles
+                      className="w-full h-full"
+                      style={{ color: "rgba(255,255,255,0.22)" }}
+                    />
+                  }
                 />
-              }
-            />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/10" />
+              </div>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -221,7 +230,7 @@ const HeroCarousel = ({ items }) => {
         />
       </div>
       {/* Dots */}
-      <div className="absolute bottom-3 left-6 flex gap-1.5 z-30">
+      <div className="absolute bottom-4 left-5 sm:left-6 flex gap-1.5 z-30">
         {banners.map((_, i) => (
           <button
             key={i}
