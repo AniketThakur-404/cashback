@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { QrCode, Scan } from "lucide-react";
 import { scanQR } from "../../lib/api";
+import { captureClientLocation } from "../../lib/location";
 
 const formatAmount = (value) => {
     if (value === undefined || value === null) return "0.00";
@@ -25,7 +26,8 @@ const RedeemCard = ({ token, onRedeemSuccess }) => {
         setStatus("idle");
         setIsScanning(true);
         try {
-            const result = await scanQR(scanHash.trim(), token);
+            const locationPayload = await captureClientLocation();
+            const result = await scanQR(scanHash.trim(), token, locationPayload);
             setScanMessage(`Successfully redeemed! Added ${formatAmount(result.amount)} to wallet.`);
             setStatus("success");
             setScanHash("");

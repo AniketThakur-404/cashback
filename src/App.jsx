@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate, useParams } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import GiftCards from './pages/GiftCards';
@@ -42,6 +42,10 @@ function App() {
       <Outlet />
     </Layout>
   );
+  const VendorPanelRedirect = () => {
+    const { section } = useParams();
+    return <Navigate to={`/vendor/${section || 'overview'}`} replace />;
+  };
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
@@ -54,6 +58,8 @@ function App() {
             <Route path="/vendor-dashboard" element={<VendorDashboard />} />
             <Route path="/vendor" element={<VendorLandingPage />} />
             <Route path="/vendor/:section" element={<VendorDashboard />} />
+            <Route path="/vendor-panel" element={<Navigate to="/vendor/overview" replace />} />
+            <Route path="/vendor-panel/:section" element={<VendorPanelRedirect />} />
             <Route path="/vendor-signup" element={<VendorSignup />} />
             <Route path="/redeem/:hash" element={<RedeemQr />} />
             <Route path="/claim" element={<Claim />} />

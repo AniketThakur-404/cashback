@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { verifyPublicQr, scanQR } from '../lib/api';
 import { AUTH_TOKEN_KEY, storePostLoginRedirect } from '../lib/auth';
 import { Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { captureClientLocation } from '../lib/location';
 
 const RedeemQr = () => {
     const { hash } = useParams();
@@ -36,7 +37,8 @@ const RedeemQr = () => {
         const autoClaim = async () => {
             setRedeeming(true);
             try {
-                const res = await scanQR(hash, token);
+                const locationPayload = await captureClientLocation();
+                const res = await scanQR(hash, token, locationPayload);
                 setRedeemStatus({ success: true, message: res.message, amount: res.amount });
             } catch (err) {
                 if (err?.status === 401) {
@@ -51,7 +53,7 @@ const RedeemQr = () => {
         };
 
         autoClaim();
-    }, [hash, redeemStatus, redeeming, shouldAutoClaim]);
+    }, [hash, redeemStatus, redeeming, shouldAutoClaim, navigate]);
 
     const handleRedeem = async () => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -63,7 +65,8 @@ const RedeemQr = () => {
 
         setRedeeming(true);
         try {
-            const res = await scanQR(hash, token);
+            const locationPayload = await captureClientLocation();
+            const res = await scanQR(hash, token, locationPayload);
             setRedeemStatus({ success: true, message: res.message, amount: res.amount });
         } catch (err) {
             if (err?.status === 401) {

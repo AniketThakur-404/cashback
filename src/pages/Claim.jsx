@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
 import { getClaimPreview, getWalletSummary, redeemClaim } from "../lib/api";
 import { AUTH_TOKEN_KEY } from "../lib/auth";
 import WalletAuth from "../components/wallet/WalletAuth";
+import { captureClientLocation } from "../lib/location";
 
 const formatAmount = (value) => {
   const numeric = Number(value);
@@ -45,12 +46,13 @@ const Claim = () => {
     loadPreview();
   }, [token]);
 
-  const handleRedeem = async () => {
+  const handleRedeem = useCallback(async () => {
     if (!authToken || !token) return;
     setRedeeming(true);
     setError("");
     try {
-      const result = await redeemClaim(authToken, token);
+      const locationPayload = await captureClientLocation();
+      const result = await redeemClaim(authToken, token, locationPayload);
       setRedeemStatus({
         success: true,
         message: result.status === "claimed" ? "Already claimed. Wallet updated." : "Reward credited to wallet."
@@ -67,13 +69,13 @@ const Claim = () => {
     } finally {
       setRedeeming(false);
     }
-  };
+  }, [authToken, token]);
 
   useEffect(() => {
     if (!authToken || !preview || redeeming || redeemStatus) return;
     if (preview.status === "expired") return;
     handleRedeem();
-  }, [authToken, preview, redeeming, redeemStatus]);
+  }, [authToken, preview, redeeming, redeemStatus, handleRedeem]);
 
   if (loadingPreview) {
     return (

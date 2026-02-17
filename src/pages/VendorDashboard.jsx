@@ -49,6 +49,7 @@ import {
 import {
   getMe,
   getVendorQrs,
+  getVendorQrInventorySeries,
   getVendorWallet,
   getVendorTransactions,
   getVendorBrand,
@@ -81,7 +82,18 @@ import {
   changeUserPassword,
   sendEmailOtp,
   resetPasswordWithOtp,
+  getVendorRedemptionsMap,
+  getVendorCustomers,
+  exportVendorCustomers,
+  getVendorInvoices,
+  downloadVendorInvoicePdf,
+  shareVendorInvoice,
+  getVendorProductReports,
+  downloadVendorProductReport,
 } from "../lib/api";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
 import VendorRedemptions from "../components/vendor/VendorRedemptions";
@@ -101,6 +113,15 @@ import {
   LINK_BUTTON,
   getTabButtonClass,
 } from "../styles/buttonStyles";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
 const VENDOR_TOKEN_KEY = "cashback_vendor_token";
 const formatAmount = (value) => {
   if (value === undefined || value === null) return "0.00";
@@ -351,8 +372,17 @@ const VendorDashboard = () => {
     "wallet",
     "redemptions",
     "support",
+    "locations",
+    "customers",
+    "billing",
+    "reports",
   ]);
-  const normalizedSection = section === "qr-generation" ? "campaigns" : section;
+  const normalizedSection =
+    section === "qr-generation"
+      ? "campaigns"
+      : section === "settings"
+        ? "brand"
+        : section;
   const activeTab = allowedTabs.has(normalizedSection)
     ? normalizedSection
     : "overview";
@@ -400,6 +430,8 @@ const VendorDashboard = () => {
   const [lastBatchSummary, setLastBatchSummary] = useState(null);
   const [selectedQrCampaign, setSelectedQrCampaign] = useState("");
   const [selectedQrProduct, setSelectedQrProduct] = useState("");
+  const [selectedQrSeries, setSelectedQrSeries] = useState("");
+  const [qrInventorySeries, setQrInventorySeries] = useState([]);
   const [qrRows, setQrRows] = useState([
     { id: Date.now(), cashbackAmount: "", quantity: 10 },
   ]);
@@ -425,6 +457,21 @@ const VendorDashboard = () => {
   const [transactionsError, setTransactionsError] = useState("");
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [dashboardFilters, setDashboardFilters] = useState({
+    dateFrom: "",
+    dateTo: "",
+    campaignId: "",
+    city: "",
+    mobile: "",
+    invoiceNo: "",
+  });
+  const [locationsData, setLocationsData] = useState([]);
+  const [customersData, setCustomersData] = useState([]);
+  const [invoicesData, setInvoicesData] = useState([]);
+  const [reportsData, setReportsData] = useState([]);
+  const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
+  const [extraTabError, setExtraTabError] = useState("");
+  const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
 
   const [showAllInventory, setShowAllInventory] = useState(false);
 
@@ -1378,6 +1425,113 @@ const VendorDashboard = () => {
     }
   };
 
+  const loadQrInventorySeries = async (authToken = token) => {
+    if (!authToken) return;
+    try {
+      const data = await getVendorQrInventorySeries(authToken);
+      setQrInventorySeries(Array.isArray(data?.series) ? data.series : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setQrInventorySeries([]);
+    }
+  };
+
+  const buildExtraFilterParams = () => {
+    const params = {};
+    if (dashboardFilters.dateFrom) params.dateFrom = dashboardFilters.dateFrom;
+    if (dashboardFilters.dateTo) params.dateTo = dashboardFilters.dateTo;
+    if (dashboardFilters.campaignId)
+      params.campaignId = dashboardFilters.campaignId;
+    if (dashboardFilters.city) params.city = dashboardFilters.city.trim();
+    if (dashboardFilters.mobile)
+      params.mobile = dashboardFilters.mobile.trim();
+    if (dashboardFilters.invoiceNo)
+      params.invoiceNo = dashboardFilters.invoiceNo.trim();
+    return params;
+  };
+
+  const loadLocationsData = async (authToken = token) => {
+    if (!authToken) return;
+    setIsLoadingExtraTab(true);
+    setExtraTabError("");
+    try {
+      const data = await getVendorRedemptionsMap(authToken, buildExtraFilterParams());
+      setLocationsData(Array.isArray(data?.points) ? data.points : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setExtraTabError(err.message || "Unable to load locations.");
+    } finally {
+      setIsLoadingExtraTab(false);
+    }
+  };
+
+  const loadCustomersData = async (authToken = token) => {
+    if (!authToken) return;
+    setIsLoadingExtraTab(true);
+    setExtraTabError("");
+    try {
+      const data = await getVendorCustomers(authToken, buildExtraFilterParams());
+      setCustomersData(Array.isArray(data?.customers) ? data.customers : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setExtraTabError(err.message || "Unable to load customers.");
+    } finally {
+      setIsLoadingExtraTab(false);
+    }
+  };
+
+  const loadInvoicesData = async (authToken = token) => {
+    if (!authToken) return;
+    setIsLoadingExtraTab(true);
+    setExtraTabError("");
+    try {
+      const data = await getVendorInvoices(authToken, buildExtraFilterParams());
+      setInvoicesData(Array.isArray(data?.invoices) ? data.invoices : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setExtraTabError(err.message || "Unable to load invoices.");
+    } finally {
+      setIsLoadingExtraTab(false);
+    }
+  };
+
+  const loadReportsData = async (authToken = token) => {
+    if (!authToken) return;
+    setIsLoadingExtraTab(true);
+    setExtraTabError("");
+    try {
+      const data = await getVendorProductReports(
+        authToken,
+        buildExtraFilterParams(),
+      );
+      setReportsData(Array.isArray(data?.reports) ? data.reports : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setExtraTabError(err.message || "Unable to load product reports.");
+    } finally {
+      setIsLoadingExtraTab(false);
+    }
+  };
+
+  const loadExtraTabData = async (authToken = token) => {
+    if (!authToken) return;
+    if (activeTab === "locations") {
+      await loadLocationsData(authToken);
+      return;
+    }
+    if (activeTab === "customers") {
+      await loadCustomersData(authToken);
+      return;
+    }
+    if (activeTab === "billing") {
+      await loadInvoicesData(authToken);
+      return;
+    }
+    if (activeTab === "reports") {
+      await loadReportsData(authToken);
+    }
+  };
+
   const loadCompanyProfile = async (authToken = token) => {
     if (!authToken) return;
     setRegistrationError("");
@@ -1675,6 +1829,7 @@ const VendorDashboard = () => {
       if (!canContinue) return;
       await Promise.all([
         loadQrs(token),
+        loadQrInventorySeries(token),
         loadOrders(token),
         loadTransactions(token),
         loadCompanyProfile(token),
@@ -1686,6 +1841,19 @@ const VendorDashboard = () => {
     };
     initializeVendorData();
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    if (
+      activeTab !== "locations" &&
+      activeTab !== "customers" &&
+      activeTab !== "billing" &&
+      activeTab !== "reports"
+    ) {
+      return;
+    }
+    loadExtraTabData(token);
+  }, [token, activeTab]);
 
   useEffect(() => {
     if (!token) return;
@@ -1896,6 +2064,23 @@ const VendorDashboard = () => {
     setCampaigns([]);
     setCampaignId("");
     setLastBatchSummary(null);
+    setSelectedQrSeries("");
+    setQrInventorySeries([]);
+    setDashboardFilters({
+      dateFrom: "",
+      dateTo: "",
+      campaignId: "",
+      city: "",
+      mobile: "",
+      invoiceNo: "",
+    });
+    setLocationsData([]);
+    setCustomersData([]);
+    setInvoicesData([]);
+    setReportsData([]);
+    setIsLoadingExtraTab(false);
+    setExtraTabError("");
+    setInvoiceShareStatus("");
   };
 
   const loadRazorpayScript = () => {
@@ -2006,7 +2191,10 @@ const VendorDashboard = () => {
 
     try {
       const { totalCost } = getCampaignPaymentSummary(campaign, qrPricePerUnit);
-      const currentBalance = parseNumericValue(wallet?.balance, 0);
+      const currentBalance = parseNumericValue(
+        wallet?.availableBalance,
+        parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+      );
 
       if (currentBalance < totalCost) {
         const shortfall = Math.max(totalCost - currentBalance, 0);
@@ -2157,6 +2345,7 @@ const VendorDashboard = () => {
             selectedQrCampaign,
             Number(row.quantity),
             Number(row.cashbackAmount),
+            selectedQrSeries || null,
           );
           successes += result.count || 0;
           if (result?.order?.id) {
@@ -2219,6 +2408,7 @@ const VendorDashboard = () => {
           totalQrs: successes,
           totalCost: batchTiers.reduce((sum, tier) => sum + tier.cost, 0),
           totalPrintCost,
+          selectedSeries: selectedQrSeries || null,
           orderIds: newOrderIds,
           hashes: newHashes.slice(0, 50),
         });
@@ -2228,6 +2418,7 @@ const VendorDashboard = () => {
         await loadWallet();
         await loadTransactions();
         await loadQrs();
+        await loadQrInventorySeries();
         await loadOrders();
         await loadCampaignStats();
       }
@@ -3153,7 +3344,10 @@ const VendorDashboard = () => {
     () => getCampaignPaymentSummary(selectedPendingCampaign, qrPricePerUnit),
     [selectedPendingCampaign, qrPricePerUnit],
   );
-  const pendingWalletBalance = parseNumericValue(wallet?.balance, 0);
+  const pendingWalletBalance = parseNumericValue(
+    wallet?.availableBalance,
+    parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+  );
   const pendingCampaignShortfall = Math.max(
     pendingCampaignPayment.totalCost - pendingWalletBalance,
     0,
@@ -3173,11 +3367,28 @@ const VendorDashboard = () => {
     primaryQrCashback > 0 &&
     primaryQrQuantity > 0;
 
-  const walletBalance = wallet?.balance;
-  const lockedBalance = wallet?.lockedBalance;
+  const walletBalance = parseNumericValue(
+    wallet?.availableBalance,
+    parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+  );
+  const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
   const displayedTransactions = showAllTransactions
     ? transactions
     : transactions.slice(0, 5);
+  const locationMapCenter = useMemo(() => {
+    if (!locationsData.length) return [20.5937, 78.9629];
+    const firstPoint = locationsData.find(
+      (point) =>
+        Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)),
+    );
+    if (!firstPoint) return [20.5937, 78.9629];
+    return [Number(firstPoint.lat), Number(firstPoint.lng)];
+  }, [locationsData]);
+
+  const handleApplyExtraFilters = () => {
+    if (!token) return;
+    loadExtraTabData(token);
+  };
 
   return (
     <>
@@ -3774,7 +3985,7 @@ const VendorDashboard = () => {
                           >
                             <div className="flex flex-col items-center justify-center w-full">
                               <div className="text-[10px] text-gray-500 mb-0.5">
-                                Wallet
+                                Available
                               </div>
                               <div
                                 className="text-sm font-bold text-primary truncate max-w-full"
@@ -3823,11 +4034,31 @@ const VendorDashboard = () => {
                               label: "Redemptions",
                               icon: Users,
                             },
+                            {
+                              id: "locations",
+                              label: "Locations",
+                              icon: Globe,
+                            },
+                            {
+                              id: "customers",
+                              label: "Customers",
+                              icon: Users,
+                            },
                             { id: "wallet", label: "Wallet", icon: Wallet },
                             {
+                              id: "billing",
+                              label: "Billing",
+                              icon: FileText,
+                            },
+                            {
                               id: "brand",
-                              label: "Profile Settings",
+                              label: "Settings",
                               icon: ShieldCheck,
+                            },
+                            {
+                              id: "reports",
+                              label: "Product Reports",
+                              icon: TicketCheck,
                             },
                             {
                               id: "support",
@@ -5051,7 +5282,7 @@ const VendorDashboard = () => {
                                       QR codes.
                                     </div>
                                   </div>
-                                  <div className="grid gap-3 md:grid-cols-2">
+                                  <div className="grid gap-3 md:grid-cols-3">
                                     <div className="space-y-2">
                                       <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                                         Campaign
@@ -5117,6 +5348,44 @@ const VendorDashboard = () => {
                                           </option>
                                         ))}
                                       </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                          QR Series
+                                        </label>
+                                        <button
+                                          type="button"
+                                          onClick={() => loadQrInventorySeries()}
+                                          className="text-[10px] text-primary hover:underline"
+                                        >
+                                          Refresh
+                                        </button>
+                                      </div>
+                                      <select
+                                        value={selectedQrSeries}
+                                        onChange={(event) =>
+                                          setSelectedQrSeries(event.target.value)
+                                        }
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                      >
+                                        <option value="">
+                                          Any available series
+                                        </option>
+                                        {qrInventorySeries.map((series) => (
+                                          <option
+                                            key={`${series.seriesCode}-${series.sourceBatch || "na"}`}
+                                            value={series.seriesCode}
+                                          >
+                                            {series.seriesCode} ({series.availableCount})
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                                        {qrInventorySeries.length
+                                          ? "Series values come from your pre-provisioned inventory."
+                                          : "No explicit series found. Recharge will use any available inventory."}
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="flex justify-end">
@@ -6449,7 +6718,7 @@ Quantity: ${invoiceData.quantity} QRs
                             {/* Available Balance */}
                             <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
                               <div className="text-xs font-medium text-gray-500 mb-2">
-                                Balance
+                                Available balance
                               </div>
                               <div
                                 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
@@ -6628,6 +6897,588 @@ Quantity: ${invoiceData.quantity} QRs
                       {/* Redemptions Tab - Customer redemption history */}
                       {activeTab === "redemptions" && (
                         <VendorRedemptions token={token} />
+                      )}
+
+                      {activeTab === "locations" && (
+                        <div className="space-y-4">
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateFrom}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateFrom: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateTo}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateTo: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <select
+                                value={dashboardFilters.campaignId}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    campaignId: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              >
+                                <option value="">All campaigns</option>
+                                {campaigns.map((campaign) => (
+                                  <option key={campaign.id} value={campaign.id}>
+                                    {campaign.title}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="City"
+                                value={dashboardFilters.city}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    city: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Mobile"
+                                value={dashboardFilters.mobile}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    mobile: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyExtraFilters}
+                                className={`${PRIMARY_BUTTON} rounded-lg`}
+                              >
+                                Apply
+                              </button>
+                            </div>
+                            {extraTabError && (
+                              <p className="mt-3 text-xs text-rose-500">
+                                {extraTabError}
+                              </p>
+                            )}
+                          </div>
+
+                          {isLoadingExtraTab ? (
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
+                              Loading locations...
+                            </div>
+                          ) : (
+                            <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                              <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
+                                <div className="h-[480px]">
+                                  <MapContainer
+                                    center={locationMapCenter}
+                                    zoom={5}
+                                    className="h-full w-full"
+                                  >
+                                    <TileLayer
+                                      attribution='&copy; OpenStreetMap contributors'
+                                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                    {locationsData
+                                      .filter(
+                                        (point) =>
+                                          Number.isFinite(Number(point?.lat)) &&
+                                          Number.isFinite(Number(point?.lng)),
+                                      )
+                                      .map((point, index) => (
+                                        <Marker
+                                          key={`${point.lat}-${point.lng}-${index}`}
+                                          position={[
+                                            Number(point.lat),
+                                            Number(point.lng),
+                                          ]}
+                                        >
+                                          <Popup>
+                                            <div className="text-xs">
+                                              <div className="font-semibold">
+                                                {point.city || "Unknown city"}
+                                              </div>
+                                              <div>{point.count || 0} scans</div>
+                                            </div>
+                                          </Popup>
+                                        </Marker>
+                                      ))}
+                                  </MapContainer>
+                                </div>
+                              </div>
+                              <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
+                                <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                  Clusters
+                                </div>
+                                <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+                                  {locationsData.length === 0 ? (
+                                    <div className="text-xs text-gray-500">
+                                      No locations found.
+                                    </div>
+                                  ) : (
+                                    locationsData.map((point, index) => (
+                                      <div
+                                        key={`${point.lat}-${point.lng}-${index}-list`}
+                                        className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
+                                      >
+                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                          {point.city || "Unknown"}
+                                        </div>
+                                        <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                          {point.count || 0} scans
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {activeTab === "customers" && (
+                        <div className="space-y-4">
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateFrom}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateFrom: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateTo}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateTo: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <select
+                                value={dashboardFilters.campaignId}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    campaignId: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              >
+                                <option value="">All campaigns</option>
+                                {campaigns.map((campaign) => (
+                                  <option key={campaign.id} value={campaign.id}>
+                                    {campaign.title}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="City"
+                                value={dashboardFilters.city}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    city: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Mobile"
+                                value={dashboardFilters.mobile}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    mobile: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyExtraFilters}
+                                className={`${PRIMARY_BUTTON} rounded-lg`}
+                              >
+                                Apply
+                              </button>
+                            </div>
+                            <div className="mt-3 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  exportVendorCustomers(token, buildExtraFilterParams())
+                                }
+                                className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
+                              >
+                                <Download size={14} />
+                                Export CSV
+                              </button>
+                            </div>
+                            {extraTabError && (
+                              <p className="mt-3 text-xs text-rose-500">
+                                {extraTabError}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                            <table className="w-full text-xs text-left">
+                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                                <tr>
+                                  <th className="px-4 py-3">Customer</th>
+                                  <th className="px-4 py-3">Mobile</th>
+                                  <th className="px-4 py-3">Codes</th>
+                                  <th className="px-4 py-3">Rewards Earned</th>
+                                  <th className="px-4 py-3">First Scan Location</th>
+                                  <th className="px-4 py-3">Member Since</th>
+                                  <th className="px-4 py-3">Last Scanned</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                {isLoadingExtraTab ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      Loading customers...
+                                    </td>
+                                  </tr>
+                                ) : customersData.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      No customers found.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  customersData.map((customer) => (
+                                    <tr key={customer.userId || customer.mobile}>
+                                      <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                                        {customer.name || "-"}
+                                      </td>
+                                      <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                        {customer.mobile || "-"}
+                                      </td>
+                                      <td className="px-4 py-3">{customer.codeCount || 0}</td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(customer.rewardsEarned)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {customer.firstScanLocation || "-"}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {formatDate(customer.memberSince)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {formatDate(customer.lastScanned)}
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "billing" && (
+                        <div className="space-y-4">
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateFrom}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateFrom: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="date"
+                                value={dashboardFilters.dateTo}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    dateTo: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Invoice number"
+                                value={dashboardFilters.invoiceNo}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    invoiceNo: event.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyExtraFilters}
+                                className={`${PRIMARY_BUTTON} rounded-lg`}
+                              >
+                                Apply
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => loadInvoicesData(token)}
+                                className={`${SECONDARY_BUTTON} rounded-lg`}
+                              >
+                                Refresh
+                              </button>
+                            </div>
+                            {invoiceShareStatus && (
+                              <p className="mt-3 text-xs text-primary">
+                                {invoiceShareStatus}
+                              </p>
+                            )}
+                            {extraTabError && (
+                              <p className="mt-3 text-xs text-rose-500">
+                                {extraTabError}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                            <table className="w-full text-xs text-left">
+                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                                <tr>
+                                  <th className="px-4 py-3">Invoice No.</th>
+                                  <th className="px-4 py-3">Type</th>
+                                  <th className="px-4 py-3">Issued</th>
+                                  <th className="px-4 py-3">Subtotal</th>
+                                  <th className="px-4 py-3">Tax</th>
+                                  <th className="px-4 py-3">Total</th>
+                                  <th className="px-4 py-3">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                {isLoadingExtraTab ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      Loading invoices...
+                                    </td>
+                                  </tr>
+                                ) : invoicesData.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      No invoices found.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  invoicesData.map((invoice) => (
+                                    <tr key={invoice.id}>
+                                      <td className="px-4 py-3 font-mono text-[11px]">
+                                        {invoice.number || invoice.id}
+                                      </td>
+                                      <td className="px-4 py-3">{invoice.type}</td>
+                                      <td className="px-4 py-3">{formatDate(invoice.issuedAt)}</td>
+                                      <td className="px-4 py-3">INR {formatAmount(invoice.subtotal)}</td>
+                                      <td className="px-4 py-3">INR {formatAmount(invoice.tax)}</td>
+                                      <td className="px-4 py-3">INR {formatAmount(invoice.total)}</td>
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              downloadVendorInvoicePdf(token, invoice.id)
+                                            }
+                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
+                                          >
+                                            Download
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={async () => {
+                                              try {
+                                                const response = await shareVendorInvoice(
+                                                  token,
+                                                  invoice.id,
+                                                );
+                                                const shareUrl =
+                                                  response?.shareUrl ||
+                                                  response?.url ||
+                                                  "";
+                                                if (
+                                                  shareUrl &&
+                                                  navigator?.clipboard?.writeText
+                                                ) {
+                                                  await navigator.clipboard.writeText(
+                                                    shareUrl,
+                                                  );
+                                                  setInvoiceShareStatus(
+                                                    "Share link copied to clipboard.",
+                                                  );
+                                                } else if (shareUrl) {
+                                                  setInvoiceShareStatus(shareUrl);
+                                                } else {
+                                                  setInvoiceShareStatus(
+                                                    "Share link generated.",
+                                                  );
+                                                }
+                                              } catch (error) {
+                                                setInvoiceShareStatus(
+                                                  error.message ||
+                                                    "Unable to generate share link.",
+                                                );
+                                              }
+                                            }}
+                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
+                                          >
+                                            Share
+                                          </button>
+                                          {invoice.shareToken && (
+                                            <a
+                                              href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center`}
+                                            >
+                                              Open
+                                            </a>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "reports" && (
+                        <div className="space-y-4">
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Product Reports
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => loadReportsData(token)}
+                                className={`${SECONDARY_BUTTON} rounded-lg inline-flex items-center gap-2`}
+                              >
+                                <RefreshCw size={14} />
+                                Refresh
+                              </button>
+                            </div>
+                            {extraTabError && (
+                              <p className="mt-3 text-xs text-rose-500">
+                                {extraTabError}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                            <table className="w-full text-xs text-left">
+                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                                <tr>
+                                  <th className="px-4 py-3">Title</th>
+                                  <th className="px-4 py-3">Product</th>
+                                  <th className="px-4 py-3">Customer</th>
+                                  <th className="px-4 py-3">Created</th>
+                                  <th className="px-4 py-3">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                {isLoadingExtraTab ? (
+                                  <tr>
+                                    <td
+                                      colSpan={5}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      Loading reports...
+                                    </td>
+                                  </tr>
+                                ) : reportsData.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={5}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      No reports found.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  reportsData.map((report) => (
+                                    <tr key={report.id}>
+                                      <td className="px-4 py-3">{report.title || "-"}</td>
+                                      <td className="px-4 py-3">
+                                        {report.Product?.name || "-"}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {report.User?.name || "-"}
+                                      </td>
+                                      <td className="px-4 py-3">{formatDate(report.createdAt)}</td>
+                                      <td className="px-4 py-3">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            downloadVendorProductReport(
+                                              token,
+                                              report.id,
+                                            )
+                                          }
+                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center gap-1`}
+                                        >
+                                          <Download size={12} />
+                                          Download
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       )}
 
                       {/* Support Tab - Create and view support tickets */}
