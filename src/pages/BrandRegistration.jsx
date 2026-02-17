@@ -7,6 +7,7 @@ import {
   Check,
   Building2,
   Globe,
+  MapPin,
   Upload,
   FileText,
   Briefcase,
@@ -290,11 +291,20 @@ const BrandRegistration = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Username validation state
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState(null); // 'available' or 'taken'
+
   // Form State
   const [formData, setFormData] = useState({
     // Account Fields
     contactName: "",
+    companyName: "",
+    designation: "",
     email: "",
+    phoneNumber: "",
+    alternatePhone: "",
+    username: "",
     password: "",
     confirmPassword: "",
 
@@ -306,6 +316,11 @@ const BrandRegistration = () => {
     logoFile: null, // Store actual file
     logoPreview: null, // Store local preview URL
     description: "",
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    gstNumber: "",
   });
 
   const totalSteps = STEPS.length - 1; // 0 to 4
@@ -314,6 +329,25 @@ const BrandRegistration = () => {
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (error) setError("");
+    if (field === "username") {
+      setUsernameStatus(null);
+    }
+  };
+
+  const checkUsernameAvailability = async (username) => {
+    if (!username || username.length < 3) return;
+    setIsCheckingUsername(true);
+    try {
+      const res = await apiRequest("/api/auth/check-username", {
+        method: "POST",
+        body: { username: username.trim() },
+      });
+      setUsernameStatus(res.available ? "available" : "taken");
+    } catch (err) {
+      console.error("Username check failed", err);
+    } finally {
+      setIsCheckingUsername(false);
+    }
   };
 
   const handleLogoChange = (e) => {
@@ -344,8 +378,12 @@ const BrandRegistration = () => {
     switch (step) {
       case 0: // Account
         if (!formData.contactName.trim()) return "Contact name is required.";
+        if (!formData.designation.trim()) return "Designation is required.";
+        if (!formData.phoneNumber.trim()) return "Phone number is required.";
         if (!formData.email.trim() || !formData.email.includes("@"))
           return "Valid email is required.";
+        if (!formData.username.trim()) return "Username is required.";
+        if (usernameStatus === "taken") return "Username is already taken.";
         // Password is only required for new users (not logged in)
         if (!isLoggedIn) {
           if (formData.password.length < 6)
@@ -363,7 +401,8 @@ const BrandRegistration = () => {
             return "Passwords do not match.";
         }
         return "";
-      case 1:
+      case 1: // Identity
+        if (!formData.companyName.trim()) return "Company name is required.";
         if (!formData.name.trim()) return "Brand name is required.";
         if (formData.website && !formData.website.includes("."))
           return "Please enter a valid website URL.";
@@ -371,9 +410,14 @@ const BrandRegistration = () => {
       case 2:
         if (!formData.industry) return "Please select an industry.";
         return "";
-      case 3:
+      case 3: // Details
         if (!formData.description.trim())
-          return "Please provide a short description.";
+          return "Brand description is required.";
+        if (!formData.address.trim()) return "Street address is required.";
+        if (!formData.city.trim()) return "City is required.";
+        if (!formData.state.trim()) return "State is required.";
+        if (!formData.pincode.trim()) return "Pincode is required.";
+        if (!formData.gstNumber.trim()) return "GST number is required.";
         return "";
       default:
         return "";
@@ -421,6 +465,7 @@ const BrandRegistration = () => {
           body: {
             name: formData.contactName,
             email: formData.email,
+            username: formData.username,
             password: formData.password,
             role: "vendor",
           },
@@ -467,6 +512,23 @@ const BrandRegistration = () => {
         }
       }
 
+      // 2. Update Vendor Profile with Business Info
+      await apiRequest("/api/vendor/profile", {
+        method: "PUT",
+        body: {
+          businessName: formData.companyName,
+          contactPhone: formData.phoneNumber,
+          alternatePhone: formData.alternatePhone,
+          designation: formData.designation,
+          gstin: formData.gstNumber,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+        },
+        token: activeToken,
+      });
+
       // 4. Create Brand
       await apiRequest("/api/vendor/brands", {
         method: "POST",
@@ -482,7 +544,7 @@ const BrandRegistration = () => {
 
       // Success
       // alert("Welcome! Your brand has been registered.");
-      navigate("/vendor"); // Redirect to Dashboard
+      navigate("/vendor-dashboard"); // Redirect to Dashboard
     } catch (err) {
       console.error("Submission error:", err);
       setError(err.message || "Failed to process request. Please try again.");
@@ -540,6 +602,52 @@ const BrandRegistration = () => {
       )}
       <div className="space-y-4">
         <div className="space-y-2">
+          <Label className="text-base text-gray-900">Username</Label>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <User className="w-5 h-5" />
+            </div>
+            <Input
+              placeholder="unique_username"
+              className={cn(
+                "pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all",
+                usernameStatus === "available" &&
+                  "border-green-500 bg-green-50/30",
+                usernameStatus === "taken" && "border-red-500 bg-red-50/30",
+              )}
+              value={formData.username}
+              onChange={(e) => {
+                const val = e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, "");
+                handleFieldChange("username", val);
+              }}
+              onBlur={(e) => checkUsernameAvailability(e.target.value)}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+              {isCheckingUsername && (
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              )}
+              {!isCheckingUsername && usernameStatus === "available" && (
+                <Check className="w-5 h-5 text-green-500" />
+              )}
+              {!isCheckingUsername && usernameStatus === "taken" && (
+                <X className="w-5 h-5 text-red-500" />
+              )}
+            </div>
+          </div>
+          {usernameStatus === "taken" && (
+            <p className="text-xs text-red-500 mt-1 ml-1">
+              Username already taken.
+            </p>
+          )}
+          {usernameStatus === "available" && (
+            <p className="text-xs text-green-600 mt-1 ml-1">
+              Username is available!
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
           <Label className="text-base text-gray-900">Full Name</Label>
           <div className="relative">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -551,6 +659,60 @@ const BrandRegistration = () => {
               value={formData.contactName}
               onChange={(e) => handleFieldChange("contactName", e.target.value)}
               autoFocus
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">Designation</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <Input
+                placeholder="e.g. CEO, Director"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.designation}
+                onChange={(e) =>
+                  handleFieldChange("designation", e.target.value)
+                }
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">Phone Number</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <Phone className="w-5 h-5" />
+              </div>
+              <Input
+                type="tel"
+                placeholder="10-digit mobile"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.phoneNumber}
+                onChange={(e) =>
+                  handleFieldChange("phoneNumber", e.target.value)
+                }
+              />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-base text-gray-900">
+            Alternate Mobile (Optional)
+          </Label>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <Phone className="w-5 h-5" />
+            </div>
+            <Input
+              type="tel"
+              placeholder="Alternate mobile number"
+              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+              value={formData.alternatePhone}
+              onChange={(e) =>
+                handleFieldChange("alternatePhone", e.target.value)
+              }
             />
           </div>
         </div>
@@ -671,18 +833,32 @@ const BrandRegistration = () => {
 
       <div className="space-y-6">
         <div className="space-y-2">
+          <Label className="text-base text-gray-900">Company Name</Label>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <Input
+              placeholder="e.g. Acme Corp Pvt Ltd"
+              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+              value={formData.companyName}
+              onChange={(e) => handleFieldChange("companyName", e.target.value)}
+              autoFocus={currentStep === 1}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Label className="text-base text-gray-900">Brand Name</Label>
           <div className="relative">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <Building2 className="w-5 h-5" />
             </div>
             <Input
-              placeholder="e.g. Acme Corp"
+              placeholder="e.g. Acme Brand"
               className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
               value={formData.name}
               onChange={(e) => handleFieldChange("name", e.target.value)}
-              // Autofocus only if starting here
-              autoFocus={currentStep === 1}
             />
           </div>
         </div>
@@ -821,6 +997,83 @@ const BrandRegistration = () => {
             />
           </div>
         </div>
+
+        <div className="space-y-2">
+          <Label className="text-base text-gray-900">Street Address</Label>
+          <div className="relative">
+            <div className="absolute left-4 top-4 text-gray-400">
+              <MapPin className="w-5 h-5" />
+            </div>
+            <Textarea
+              placeholder="e.g. 123 Main St, Suite 100"
+              className="pl-12 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all min-h-[100px]"
+              value={formData.address}
+              onChange={(e) => handleFieldChange("address", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">City</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <Input
+                placeholder="City"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.city}
+                onChange={(e) => handleFieldChange("city", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">State</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <Input
+                placeholder="State"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.state}
+                onChange={(e) => handleFieldChange("state", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">Pincode</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <Input
+                placeholder="6-digit pincode"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.pincode}
+                onChange={(e) => handleFieldChange("pincode", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">GST Number</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <FileText className="w-5 h-5" />
+              </div>
+              <Input
+                placeholder="GSTIN"
+                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                value={formData.gstNumber}
+                onChange={(e) => handleFieldChange("gstNumber", e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -878,24 +1131,58 @@ const BrandRegistration = () => {
           </p>
         </div>
 
-        {/* Account Summary if new user */}
-        {!token && (
-          <div className="p-6 md:p-8 space-y-2 bg-white/50">
-            <h4 className="text-sm font-medium text-gray-400 uppercase tracking-widest">
-              Account
-            </h4>
-            <div className="flex items-center gap-4 text-gray-700">
+        {/* Account & Company Summary */}
+        <div className="p-6 md:p-8 space-y-4 bg-white/50">
+          <h4 className="text-sm font-medium text-gray-400 uppercase tracking-widest">
+            Registration Details
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400">Contact</p>
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-primary" />
-                {formData.contactName}
+                <span className="font-medium">{formData.contactName}</span>
+                <span className="text-gray-400 text-sm">
+                  ({formData.designation})
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
-                {formData.email}
+                <span>{formData.email}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400">Company</p>
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-primary" />
+                <span className="font-medium">{formData.companyName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                <span>{formData.phoneNumber}</span>
+                {formData.alternatePhone && (
+                  <span className="text-gray-400 text-sm">
+                    / {formData.alternatePhone}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <p className="text-xs text-gray-400">Compliance & Location</p>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <span className="text-sm">GST: {formData.gstNumber}</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-primary mt-0.5" />
+                <span className="text-sm line-clamp-2">
+                  {formData.address}, {formData.city}, {formData.state} -{" "}
+                  {formData.pincode}
+                </span>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex items-center justify-center gap-3 text-gray-400 text-sm">
@@ -948,7 +1235,7 @@ const BrandRegistration = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 py-24 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-6 pt-24 pb-40 relative z-10">
         <div className="w-full">
           <AnimatePresence mode="wait">
             <motion.div

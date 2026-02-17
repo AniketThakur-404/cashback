@@ -43,6 +43,8 @@ import {
   Image as ImageIcon,
   FileText,
   Save,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import {
   getMe,
@@ -432,6 +434,11 @@ const VendorDashboard = () => {
     contactEmail: "",
     gstin: "",
     address: "",
+    designation: "",
+    alternatePhone: "",
+    city: "",
+    state: "",
+    pincode: "",
   });
 
   const [accountProfile, setAccountProfile] = useState({
@@ -1378,20 +1385,30 @@ const VendorDashboard = () => {
       const data = await getVendorProfile(authToken);
       setCompanyProfile({
         businessName: data.businessName || "",
-        contactPhone: data.contactPhone || "",
-        contactEmail: data.contactEmail || "",
+        contactPhone: data.contactPhone || accountProfile.phoneNumber || "",
+        contactEmail: data.contactEmail || accountProfile.email || "",
         gstin: data.gstin || "",
         address: data.address || "",
+        designation: data.designation || "",
+        alternatePhone: data.alternatePhone || "",
+        city: data.city || "",
+        state: data.state || "",
+        pincode: data.pincode || "",
       });
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err.status === 404) {
         setCompanyProfile({
           businessName: "",
-          contactPhone: "",
-          contactEmail: "",
+          contactPhone: accountProfile.phoneNumber || "",
+          contactEmail: accountProfile.email || "",
           gstin: "",
           address: "",
+          designation: "",
+          alternatePhone: "",
+          city: "",
+          state: "",
+          pincode: "",
         });
       } else {
         setRegistrationError(err.message || "Unable to load company profile.");
@@ -1721,6 +1738,36 @@ const VendorDashboard = () => {
   }, [vendorInfo]);
 
   useEffect(() => {
+    const companyUpdates = {};
+    if (accountProfile.email && !companyProfile.contactEmail) {
+      companyUpdates.contactEmail = accountProfile.email;
+    }
+    if (accountProfile.phoneNumber && !companyProfile.contactPhone) {
+      companyUpdates.contactPhone = accountProfile.phoneNumber;
+    }
+
+    if (Object.keys(companyUpdates).length > 0) {
+      setCompanyProfile((prev) => ({
+        ...prev,
+        ...companyUpdates,
+      }));
+    }
+
+    // Sync back to account if empty
+    if (companyProfile.contactPhone && !accountProfile.phoneNumber) {
+      setAccountProfile((prev) => ({
+        ...prev,
+        phoneNumber: companyProfile.contactPhone,
+      }));
+    }
+  }, [
+    accountProfile.email,
+    accountProfile.phoneNumber,
+    companyProfile.contactEmail,
+    companyProfile.contactPhone,
+  ]);
+
+  useEffect(() => {
     setImageLoadError(false);
   }, [brandProfile.logoUrl]);
 
@@ -1805,6 +1852,11 @@ const VendorDashboard = () => {
       contactEmail: "",
       gstin: "",
       address: "",
+      designation: "",
+      alternatePhone: "",
+      city: "",
+      state: "",
+      pincode: "",
     });
     setBrandProfile({
       id: "",
@@ -2216,6 +2268,11 @@ const VendorDashboard = () => {
           contactEmail: companyProfile.contactEmail.trim() || null,
           gstin: companyProfile.gstin.trim() || null,
           address: companyProfile.address.trim() || null,
+          designation: companyProfile.designation.trim() || null,
+          alternatePhone: companyProfile.alternatePhone.trim() || null,
+          city: companyProfile.city.trim() || null,
+          state: companyProfile.state.trim() || null,
+          pincode: companyProfile.pincode.trim() || null,
         }),
         upsertVendorBrand(token, {
           name: brandProfile.name.trim(),
@@ -4131,208 +4188,317 @@ const VendorDashboard = () => {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Company name
-                                </label>
-                                <input
-                                  type="text"
-                                  value={companyProfile.businessName}
-                                  onChange={handleCompanyChange("businessName")}
-                                  placeholder="Legal company name"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Brand name
-                                </label>
-                                <input
-                                  type="text"
-                                  value={brandProfile.name}
-                                  onChange={(event) =>
-                                    setBrandProfile((prev) => ({
-                                      ...prev,
-                                      name: event.target.value,
-                                    }))
-                                  }
-                                  placeholder="Brand display name"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                />
+                            <div className="space-y-6">
+                              {/* Business Identity */}
+                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
+                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                  <Building2 size={16} />
+                                  Business Identity
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Company name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={companyProfile.businessName}
+                                      onChange={handleCompanyChange(
+                                        "businessName",
+                                      )}
+                                      placeholder="Legal company name"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Brand name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={brandProfile.name}
+                                      onChange={(event) =>
+                                        setBrandProfile((prev) => ({
+                                          ...prev,
+                                          name: event.target.value,
+                                        }))
+                                      }
+                                      placeholder="Brand display name"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Designation
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={companyProfile.designation}
+                                      onChange={handleCompanyChange(
+                                        "designation",
+                                      )}
+                                      placeholder="e.g. CEO, Manager"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      GSTIN
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={companyProfile.gstin}
+                                      onChange={handleCompanyChange("gstin")}
+                                      placeholder="GST Number"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="space-y-2 md:col-span-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Brand Logo
-                                </label>
-                                <div className="flex items-center gap-6 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
-                                  <div className="relative group shrink-0">
-                                    <input
-                                      type="file"
-                                      id="brand-logo-upload"
-                                      className="hidden"
-                                      accept="image/*"
-                                      onChange={handleBrandLogoUpload}
-                                      disabled={isUploadingBrandLogo}
-                                    />
-                                    <label
-                                      htmlFor="brand-logo-upload"
-                                      className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
-                                    >
-                                      {brandLogoPreviewSrc &&
-                                      !imageLoadError ? (
-                                        <img
-                                          src={brandLogoPreviewSrc}
-                                          alt="Brand logo"
-                                          className="h-full w-full object-contain p-1"
-                                          onError={() =>
-                                            setImageLoadError(true)
-                                          }
-                                        />
-                                      ) : (
-                                        <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                                          <ImageIcon size={32} />
-                                        </div>
-                                      )}
-                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Upload
-                                          size={24}
-                                          className="text-white"
-                                        />
-                                      </div>
+                              {/* Contact Information */}
+                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
+                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                  <Phone size={16} />
+                                  Contact Details
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Contact phone
                                     </label>
-                                    {isUploadingBrandLogo && (
-                                      <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded-2xl">
-                                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                      </div>
-                                    )}
+                                    <div className="relative">
+                                      <Phone
+                                        size={18}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                      />
+                                      <input
+                                        type="tel"
+                                        value={companyProfile.contactPhone}
+                                        onChange={handleCompanyChange(
+                                          "contactPhone",
+                                        )}
+                                        placeholder="Primary contact"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
                                   </div>
-                                  <div className="flex-1 space-y-3">
-                                    <div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Alternate Mobile
+                                    </label>
+                                    <div className="relative">
+                                      <Phone
+                                        size={18}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                      />
+                                      <input
+                                        type="tel"
+                                        value={companyProfile.alternatePhone}
+                                        onChange={handleCompanyChange(
+                                          "alternatePhone",
+                                        )}
+                                        placeholder="Alternate contact"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Contact email
+                                    </label>
+                                    <div className="relative">
+                                      <Mail
+                                        size={18}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                      />
+                                      <input
+                                        type="email"
+                                        value={companyProfile.contactEmail}
+                                        onChange={handleCompanyChange(
+                                          "contactEmail",
+                                        )}
+                                        placeholder="contact@brand.com"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Website
+                                    </label>
+                                    <div className="relative">
+                                      <Globe
+                                        size={18}
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={brandProfile.website}
+                                        onChange={(event) =>
+                                          setBrandProfile((prev) => ({
+                                            ...prev,
+                                            website: event.target.value,
+                                          }))
+                                        }
+                                        placeholder="https://brand.com"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Brand Assets */}
+                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-6">
+                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                  <ImageIcon size={16} />
+                                  Brand Assets
+                                </h4>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Brand Logo
+                                  </label>
+                                  <div className="flex items-center gap-6 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
+                                    <div className="relative group shrink-0">
+                                      <input
+                                        type="file"
+                                        id="brand-logo-upload"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleBrandLogoUpload}
+                                        disabled={isUploadingBrandLogo}
+                                      />
                                       <label
                                         htmlFor="brand-logo-upload"
-                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors shadow-sm"
+                                        className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
                                       >
-                                        <Upload
-                                          size={18}
-                                          className="text-primary"
-                                        />
-                                        {brandProfile.logoUrl
-                                          ? "Change Logo"
-                                          : "Upload Logo"}
+                                        {brandLogoPreviewSrc &&
+                                        !imageLoadError ? (
+                                          <img
+                                            src={brandLogoPreviewSrc}
+                                            alt="Brand logo"
+                                            className="h-full w-full object-contain p-1"
+                                            onError={() =>
+                                              setImageLoadError(true)
+                                            }
+                                          />
+                                        ) : (
+                                          <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                                            <ImageIcon size={32} />
+                                          </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <Upload
+                                            size={24}
+                                            className="text-white"
+                                          />
+                                        </div>
                                       </label>
+                                      {isUploadingBrandLogo && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded-2xl">
+                                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                      )}
                                     </div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                      Recommended: Square image (e.g.,
-                                      512x512px). Supports JPG, PNG.
-                                    </p>
-                                    {brandLogoError && (
-                                      <p className="text-sm text-red-500 font-medium">
-                                        {brandLogoError}
+                                    <div className="flex-1 space-y-3">
+                                      <div>
+                                        <label
+                                          htmlFor="brand-logo-upload"
+                                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors shadow-sm"
+                                        >
+                                          <Upload
+                                            size={18}
+                                            className="text-primary"
+                                          />
+                                          {brandProfile.logoUrl
+                                            ? "Change Logo"
+                                            : "Upload Logo"}
+                                        </label>
+                                      </div>
+                                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Recommended: Square image (e.g.,
+                                        512x512px). Supports JPG, PNG.
                                       </p>
-                                    )}
-                                    {brandLogoStatus && (
-                                      <p className="text-sm text-primary font-medium">
-                                        {brandLogoStatus}
-                                      </p>
-                                    )}
+                                      {brandLogoError && (
+                                        <p className="text-sm text-red-500 font-medium">
+                                          {brandLogoError}
+                                        </p>
+                                      )}
+                                      {brandLogoStatus && (
+                                        <p className="text-sm text-primary font-medium">
+                                          {brandLogoStatus}
+                                        </p>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Website
-                                </label>
-                                <div className="relative">
-                                  <Globe
-                                    size={18}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={brandProfile.website}
-                                    onChange={(event) =>
-                                      setBrandProfile((prev) => ({
-                                        ...prev,
-                                        website: event.target.value,
-                                      }))
-                                    }
-                                    placeholder="https://brand.com"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
+                              {/* Registered Address */}
+                              <div className="pt-2">
+                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                  <MapPin size={16} />
+                                  Registered Address
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-2 md:col-span-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Street Address
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={companyProfile.address}
+                                      onChange={handleCompanyChange("address")}
+                                      placeholder="Block, Street, Area"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      City
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={companyProfile.city}
+                                      onChange={handleCompanyChange("city")}
+                                      placeholder="City"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                          State
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={companyProfile.state}
+                                          onChange={handleCompanyChange(
+                                            "state",
+                                          )}
+                                          placeholder="State"
+                                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                          Pincode
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={companyProfile.pincode}
+                                          onChange={handleCompanyChange(
+                                            "pincode",
+                                          )}
+                                          placeholder="Pincode"
+                                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Contact phone
-                                </label>
-                                <div className="relative">
-                                  <Phone
-                                    size={18}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                  />
-                                  <input
-                                    type="tel"
-                                    value={companyProfile.contactPhone}
-                                    onChange={handleCompanyChange(
-                                      "contactPhone",
-                                    )}
-                                    placeholder="Primary contact"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Contact email
-                                </label>
-                                <div className="relative">
-                                  <Mail
-                                    size={18}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                  />
-                                  <input
-                                    type="email"
-                                    value={companyProfile.contactEmail}
-                                    onChange={handleCompanyChange(
-                                      "contactEmail",
-                                    )}
-                                    placeholder="support@brand.com"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  GSTIN
-                                </label>
-                                <div className="relative">
-                                  <FileText
-                                    size={18}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={companyProfile.gstin}
-                                    onChange={handleCompanyChange("gstin")}
-                                    placeholder="GSTIN"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2 md:col-span-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                  Registered address
-                                </label>
-                                <textarea
-                                  rows="3"
-                                  value={companyProfile.address}
-                                  onChange={handleCompanyChange("address")}
-                                  placeholder="Full registered address"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none placeholder:text-gray-400"
-                                />
                               </div>
                             </div>
 
