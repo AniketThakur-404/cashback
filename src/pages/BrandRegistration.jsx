@@ -252,7 +252,7 @@ const OptionCard = ({ selected, onClick, label, description, icon: Icon }) => (
           : "bg-transparent border-gray-200 text-transparent group-hover:border-gray-300",
       )}
     >
-      <Check className="w-3.5 h-3.5 stroke-[3]" />
+      <Check className="w-3.5 h-3.5 stroke-3" />
     </div>
   </motion.button>
 );
