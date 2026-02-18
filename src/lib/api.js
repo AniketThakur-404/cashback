@@ -851,6 +851,20 @@ export const payVendorCampaign = (token, campaignId) =>
     token,
   });
 
+export const assignSheetCashback = (token, campaignId, { sheetIndex, cashbackAmount }) =>
+  apiRequest(`/api/vendor/campaigns/${campaignId}/sheet-cashback`, {
+    method: "PUT",
+    token,
+    body: { sheetIndex, cashbackAmount },
+  });
+
+export const paySheetCashback = (token, campaignId, { sheetIndex, cashbackAmount }) =>
+  apiRequest(`/api/vendor/campaigns/${campaignId}/sheet-pay`, {
+    method: "POST",
+    token,
+    body: { sheetIndex, cashbackAmount },
+  });
+
 // --- Public APIs ---
 export const getPublicHome = () => apiRequest("/api/public/home");
 
