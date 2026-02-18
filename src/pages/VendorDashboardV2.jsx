@@ -57,7 +57,8 @@ import "leaflet/dist/leaflet.css";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
@@ -102,7 +103,9 @@ const VendorDashboardV2 = () => {
     [section],
   );
 
-  const [token, setToken] = useState(() => localStorage.getItem(VENDOR_TOKEN_KEY) || "");
+  const [token, setToken] = useState(
+    () => localStorage.getItem(VENDOR_TOKEN_KEY) || "",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -117,21 +120,40 @@ const VendorDashboardV2 = () => {
   const [selectedBrandId, setSelectedBrandId] = useState("");
   const [campaigns, setCampaigns] = useState([]);
 
-  const [filters, setFilters] = useState({ dateFrom: "", dateTo: "", campaignId: "", city: "", mobile: "" });
+  const [filters, setFilters] = useState({
+    dateFrom: "",
+    dateTo: "",
+    campaignId: "",
+    city: "",
+    mobile: "",
+  });
 
   const [overview, setOverview] = useState({ summary: {}, trend: [] });
   const [redemptions, setRedemptions] = useState([]);
   const [mapPoints, setMapPoints] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [walletTx, setWalletTx] = useState([]);
-  const [walletSummary, setWalletSummary] = useState({ credit: 0, debit: 0, closingBalance: 0 });
+  const [walletSummary, setWalletSummary] = useState({
+    credit: 0,
+    debit: 0,
+    closingBalance: 0,
+  });
   const [invoices, setInvoices] = useState([]);
   const [reports, setReports] = useState([]);
 
   const [rechargeAmount, setRechargeAmount] = useState("");
   const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
-  const [profileForm, setProfileForm] = useState({ businessName: "", contactPhone: "", contactEmail: "", address: "" });
-  const [brandForm, setBrandForm] = useState({ name: "", website: "", logoUrl: "" });
+  const [profileForm, setProfileForm] = useState({
+    businessName: "",
+    contactPhone: "",
+    contactEmail: "",
+    address: "",
+  });
+  const [brandForm, setBrandForm] = useState({
+    name: "",
+    website: "",
+    logoUrl: "",
+  });
   const [settingsStatus, setSettingsStatus] = useState("");
 
   useEffect(() => {
@@ -141,12 +163,13 @@ const VendorDashboardV2 = () => {
   }, [section, navigate]);
 
   const loadBase = useCallback(async () => {
-    const [walletData, profileData, brandsData, campaignsData] = await Promise.all([
-      getVendorWallet(token),
-      getVendorProfile(token),
-      getVendorBrands(token),
-      getVendorCampaigns(token),
-    ]);
+    const [walletData, profileData, brandsData, campaignsData] =
+      await Promise.all([
+        getVendorWallet(token),
+        getVendorProfile(token),
+        getVendorBrands(token),
+        getVendorCampaigns(token),
+      ]);
     setWallet(walletData || null);
     setVendorProfile(profileData || null);
     setBrands(Array.isArray(brandsData) ? brandsData : []);
@@ -174,7 +197,9 @@ const VendorDashboardV2 = () => {
       }
       if (activeSection === "redemptions") {
         const data = await getVendorRedemptions(token, filters);
-        setRedemptions(Array.isArray(data?.redemptions) ? data.redemptions : []);
+        setRedemptions(
+          Array.isArray(data?.redemptions) ? data.redemptions : [],
+        );
       }
       if (activeSection === "locations") {
         const data = await getVendorRedemptionsMap(token, filters);
@@ -187,7 +212,9 @@ const VendorDashboardV2 = () => {
       if (activeSection === "wallet") {
         const data = await getVendorWalletTransactionsDetailed(token, filters);
         setWalletTx(Array.isArray(data?.transactions) ? data.transactions : []);
-        setWalletSummary(data?.summary || { credit: 0, debit: 0, closingBalance: 0 });
+        setWalletSummary(
+          data?.summary || { credit: 0, debit: 0, closingBalance: 0 },
+        );
       }
       if (activeSection === "billing") {
         const data = await getVendorInvoices(token, filters);
@@ -222,9 +249,13 @@ const VendorDashboardV2 = () => {
       <div className="min-h-screen bg-gradient-to-br from-[#e8f3ec] via-[#f6faf7] to-[#e7f0ff] p-6">
         <div className="mx-auto mt-24 max-w-md rounded-3xl border border-[#d5e4dc] bg-white/95 p-8 shadow-xl">
           <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-xl bg-[#eaf6f1] p-2 text-[#0e6b53]"><Building2 className="h-5 w-5" /></div>
+            <div className="rounded-xl bg-[#eaf6f1] p-2 text-[#0e6b53]">
+              <Building2 className="h-5 w-5" />
+            </div>
             <div>
-              <h1 className="text-xl font-semibold text-[#12231b]">Vendor Dashboard</h1>
+              <h1 className="text-xl font-semibold text-[#12231b]">
+                Vendor Dashboard
+              </h1>
               <p className="text-sm text-[#5f6f68]">Sign in to continue</p>
             </div>
           </div>
@@ -250,11 +281,33 @@ const VendorDashboardV2 = () => {
               }
             }}
           >
-            <input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
-            <input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
-            {authError ? <p className="text-sm text-red-600">{authError}</p> : null}
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a5a45]" type="submit" disabled={authLoading}>
-              {authLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <input
+              className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              required
+            />
+            <input
+              className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              required
+            />
+            {authError ? (
+              <p className="text-sm text-red-600">{authError}</p>
+            ) : null}
+            <button
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a5a45]"
+              type="submit"
+              disabled={authLoading}
+            >
+              {authLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
               {authLoading ? "Signing in..." : "Sign in"}
             </button>
           </form>
@@ -268,8 +321,12 @@ const VendorDashboardV2 = () => {
       <div className="mx-auto flex max-w-[1500px] gap-4 p-4 md:p-6">
         <aside className="hidden w-64 shrink-0 rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm lg:block">
           <div className="mb-4 border-b border-[#e2ece6] pb-4">
-            <p className="text-xs uppercase tracking-wide text-[#6e7f75]">Dashboard</p>
-            <p className="mt-1 text-lg font-semibold">{vendorProfile?.businessName || "Vendor"}</p>
+            <p className="text-xs uppercase tracking-wide text-[#6e7f75]">
+              Dashboard
+            </p>
+            <p className="mt-1 text-lg font-semibold">
+              {vendorProfile?.businessName || "Vendor"}
+            </p>
           </div>
           <nav className="space-y-1">
             {NAV_ITEMS.map((item) => {
@@ -310,7 +367,9 @@ const VendorDashboardV2 = () => {
                   key={`mobile-${item.key}`}
                   onClick={() => navigate(`/vendor/${item.key}`)}
                   className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs ${
-                    isActive ? "bg-[#e5f4ec] text-[#0f6d54]" : "text-[#33463d] hover:bg-[#f1f7f3]"
+                    isActive
+                      ? "bg-[#e5f4ec] text-[#0f6d54]"
+                      : "text-[#33463d] hover:bg-[#f1f7f3]"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -323,8 +382,12 @@ const VendorDashboardV2 = () => {
           <header className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-[#6e7f75]">Vendor Panel</p>
-                <h1 className="text-xl font-semibold">{NAV_ITEMS.find((x) => x.key === activeSection)?.label}</h1>
+                <p className="text-xs uppercase tracking-wide text-[#6e7f75]">
+                  Vendor Panel
+                </p>
+                <h1 className="text-xl font-semibold">
+                  {NAV_ITEMS.find((x) => x.key === activeSection)?.label}
+                </h1>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
@@ -332,28 +395,97 @@ const VendorDashboardV2 = () => {
                   value={selectedBrandId}
                   onChange={(event) => setSelectedBrandId(event.target.value)}
                 >
-                  {(brands.length ? brands : [{ id: "", name: "No brand" }]).map((brand) => (
-                    <option key={brand.id || "none"} value={brand.id || ""}>{brand.name}</option>
+                  {(brands.length
+                    ? brands
+                    : [{ id: "", name: "No brand" }]
+                  ).map((brand) => (
+                    <option key={brand.id || "none"} value={brand.id || ""}>
+                      {brand.name}
+                    </option>
                   ))}
                 </select>
-                <div className="rounded-xl border border-[#d9e6df] bg-[#f4fbf7] px-3 py-2 text-sm">Available: <span className="font-semibold">INR {formatAmount(wallet?.availableBalance ?? wallet?.balance ?? 0)}</span></div>
-                <div className="rounded-xl border border-[#d9e6df] bg-[#f8faf2] px-3 py-2 text-sm">Locked: <span className="font-semibold">INR {formatAmount(wallet?.lockedBalance ?? 0)}</span></div>
-                <button onClick={reload} className="flex items-center gap-2 rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh</button>
+                <div className="rounded-xl border border-[#d9e6df] bg-[#f4fbf7] px-3 py-2 text-sm">
+                  Available:{" "}
+                  <span className="font-semibold">
+                    INR{" "}
+                    {formatAmount(
+                      wallet?.availableBalance ?? wallet?.balance ?? 0,
+                    )}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[#d9e6df] bg-[#f8faf2] px-3 py-2 text-sm">
+                  Locked:{" "}
+                  <span className="font-semibold">
+                    INR {formatAmount(wallet?.lockedBalance ?? 0)}
+                  </span>
+                </div>
+                <button
+                  onClick={reload}
+                  className="flex items-center gap-2 rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </button>
               </div>
             </div>
           </header>
 
           <section className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <input type="date" className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" value={filters.dateFrom} onChange={(e) => setFilters((p) => ({ ...p, dateFrom: e.target.value }))} />
-              <input type="date" className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" value={filters.dateTo} onChange={(e) => setFilters((p) => ({ ...p, dateTo: e.target.value }))} />
-              <select className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" value={filters.campaignId} onChange={(e) => setFilters((p) => ({ ...p, campaignId: e.target.value }))}>
+              <input
+                type="date"
+                className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                value={filters.dateFrom}
+                onChange={(e) =>
+                  setFilters((p) => ({ ...p, dateFrom: e.target.value }))
+                }
+              />
+              <input
+                type="date"
+                className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                value={filters.dateTo}
+                onChange={(e) =>
+                  setFilters((p) => ({ ...p, dateTo: e.target.value }))
+                }
+              />
+              <select
+                className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                value={filters.campaignId}
+                onChange={(e) =>
+                  setFilters((p) => ({ ...p, campaignId: e.target.value }))
+                }
+              >
                 <option value="">All campaigns</option>
-                {campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.title}</option>)}
+                {campaigns.map((campaign) => (
+                  <option key={campaign.id} value={campaign.id}>
+                    {campaign.title}
+                  </option>
+                ))}
               </select>
-              <input className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="City" value={filters.city} onChange={(e) => setFilters((p) => ({ ...p, city: e.target.value }))} />
-              <input className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Mobile" value={filters.mobile} onChange={(e) => setFilters((p) => ({ ...p, mobile: e.target.value }))} />
-              <button onClick={reload} className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b5b45]">Apply</button>
+              <input
+                className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                placeholder="City"
+                value={filters.city}
+                onChange={(e) =>
+                  setFilters((p) => ({ ...p, city: e.target.value }))
+                }
+              />
+              <input
+                className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                placeholder="Mobile"
+                value={filters.mobile}
+                onChange={(e) =>
+                  setFilters((p) => ({ ...p, mobile: e.target.value }))
+                }
+              />
+              <button
+                onClick={reload}
+                className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b5b45]"
+              >
+                Apply
+              </button>
             </div>
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
           </section>
@@ -361,51 +493,343 @@ const VendorDashboardV2 = () => {
           {activeSection === "overview" ? (
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Total Scans</p><p className="text-2xl font-semibold">{overview?.summary?.totalScans || 0}</p></div>
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Unique Users</p><p className="text-2xl font-semibold">{overview?.summary?.uniqueUsers || 0}</p></div>
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Repeated Users</p><p className="text-2xl font-semibold">{overview?.summary?.repeatedUsers || 0}</p></div>
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Top City</p><p className="text-2xl font-semibold">{overview?.summary?.topCity || "-"}</p></div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Total Scans</p>
+                  <p className="text-2xl font-semibold">
+                    {overview?.summary?.totalScans || 0}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Unique Users</p>
+                  <p className="text-2xl font-semibold">
+                    {overview?.summary?.uniqueUsers || 0}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Repeated Users</p>
+                  <p className="text-2xl font-semibold">
+                    {overview?.summary?.repeatedUsers || 0}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Top City</p>
+                  <p className="text-2xl font-semibold">
+                    {overview?.summary?.topCity || "-"}
+                  </p>
+                </div>
               </div>
               <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
-                <div className="h-72"><ResponsiveContainer width="100%" height="100%"><LineChart data={overview?.trend || []}><CartesianGrid strokeDasharray="3 3" stroke="#dce9e2" /><XAxis dataKey="date" /><YAxis /><Tooltip /><Line type="monotone" dataKey="count" stroke="#0f6d54" strokeWidth={2.5} dot={false} /></LineChart></ResponsiveContainer></div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={overview?.trend || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#dce9e2" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#0f6d54"
+                        strokeWidth={2.5}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           ) : null}
 
           {activeSection === "redemptions" ? (
             <section className="space-y-3 rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
-              <div className="flex justify-end"><button onClick={() => exportVendorRedemptions(token, filters)} className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"><Download className="mr-1 inline h-4 w-4" />Export</button></div>
-              <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr><th className="px-2 py-2">Date</th><th className="px-2 py-2">Type</th><th className="px-2 py-2">Amount</th><th className="px-2 py-2">Campaign</th><th className="px-2 py-2">City</th></tr></thead><tbody>{redemptions.map((row) => <tr key={row.id} className="border-t"><td className="px-2 py-2">{formatDate(row.createdAt)}</td><td className="px-2 py-2">{row.type}</td><td className="px-2 py-2">INR {formatAmount(row.amount)}</td><td className="px-2 py-2">{row.campaign?.title || "-"}</td><td className="px-2 py-2">{row.city || "-"}</td></tr>)}</tbody></table></div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => exportVendorRedemptions(token, filters)}
+                  className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"
+                >
+                  <Download className="mr-1 inline h-4 w-4" />
+                  Export
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2">Date</th>
+                      <th className="px-2 py-2">Type</th>
+                      <th className="px-2 py-2">Amount</th>
+                      <th className="px-2 py-2">Campaign</th>
+                      <th className="px-2 py-2">City</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {redemptions.map((row) => (
+                      <tr key={row.id} className="border-t">
+                        <td className="px-2 py-2">
+                          {formatDate(row.createdAt)}
+                        </td>
+                        <td className="px-2 py-2">{row.type}</td>
+                        <td className="px-2 py-2">
+                          INR {formatAmount(row.amount)}
+                        </td>
+                        <td className="px-2 py-2">
+                          {row.campaign?.title || "-"}
+                        </td>
+                        <td className="px-2 py-2">{row.city || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           ) : null}
 
           {activeSection === "locations" ? (
-            <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]"><div className="overflow-hidden rounded-3xl border border-[#d6e4db] bg-white/90 shadow-sm"><div className="h-[420px]"><MapContainer center={mapCenter} zoom={5} className="h-full w-full"><TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{mapPoints.map((point, i) => <Marker key={`${point.lat}-${point.lng}-${i}`} position={[Number(point.lat), Number(point.lng)]}><Popup><p>{point.city || "Unknown"}</p><p>{point.count} scans</p></Popup></Marker>)}</MapContainer></div></div><div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm"><h3 className="mb-3 text-sm font-semibold">Clusters</h3><div className="space-y-2">{mapPoints.map((point, i) => <div key={i} className="rounded-xl border p-2 text-sm"><p>{point.city || "Unknown"}</p><p>{point.count} scans</p></div>)}</div></div></section>
+            <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+              <div className="overflow-hidden rounded-3xl border border-[#d6e4db] bg-white/90 shadow-sm">
+                <div className="h-[420px]">
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={5}
+                    className="h-full w-full"
+                  >
+                    <TileLayer
+                      attribution="&copy; OpenStreetMap"
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {mapPoints.map((point, i) => (
+                      <Marker
+                        key={`${point.lat}-${point.lng}-${i}`}
+                        position={[Number(point.lat), Number(point.lng)]}
+                      >
+                        <Popup>
+                          <p>{point.city || "Unknown"}</p>
+                          <p>{point.count} scans</p>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+                </div>
+              </div>
+              <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
+                <h3 className="mb-3 text-sm font-semibold">Clusters</h3>
+                <div className="space-y-2">
+                  {mapPoints.map((point, i) => (
+                    <div key={i} className="rounded-xl border p-2 text-sm">
+                      <p>{point.city || "Unknown"}</p>
+                      <p>{point.count} scans</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
           ) : null}
 
           {activeSection === "customers" ? (
             <section className="space-y-3 rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
-              <div className="flex justify-end"><button onClick={() => exportVendorCustomers(token, filters)} className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"><Download className="mr-1 inline h-4 w-4" />Export</button></div>
-              <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr><th className="px-2 py-2">Mobile</th><th className="px-2 py-2">Codes</th><th className="px-2 py-2">Earned</th><th className="px-2 py-2">First Scan</th><th className="px-2 py-2">Last Scan</th></tr></thead><tbody>{customers.map((entry) => <tr key={entry.userId} className="border-t"><td className="px-2 py-2">{entry.mobile || "-"}</td><td className="px-2 py-2">{entry.codeCount}</td><td className="px-2 py-2">INR {formatAmount(entry.rewardsEarned)}</td><td className="px-2 py-2">{entry.firstScanLocation || "-"}</td><td className="px-2 py-2">{formatDate(entry.lastScanned)}</td></tr>)}</tbody></table></div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => exportVendorCustomers(token, filters)}
+                  className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"
+                >
+                  <Download className="mr-1 inline h-4 w-4" />
+                  Export
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2">Mobile</th>
+                      <th className="px-2 py-2">Codes</th>
+                      <th className="px-2 py-2">Earned</th>
+                      <th className="px-2 py-2">First Scan</th>
+                      <th className="px-2 py-2">Last Scan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.map((entry) => (
+                      <tr key={entry.userId} className="border-t">
+                        <td className="px-2 py-2">{entry.mobile || "-"}</td>
+                        <td className="px-2 py-2">{entry.codeCount}</td>
+                        <td className="px-2 py-2">
+                          INR {formatAmount(entry.rewardsEarned)}
+                        </td>
+                        <td className="px-2 py-2">
+                          {entry.firstScanLocation || "-"}
+                        </td>
+                        <td className="px-2 py-2">
+                          {formatDate(entry.lastScanned)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           ) : null}
 
           {activeSection === "wallet" ? (
             <section className="space-y-4">
               <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Credits</p><p className="text-2xl font-semibold">INR {formatAmount(walletSummary.credit)}</p></div>
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Debits</p><p className="text-2xl font-semibold">INR {formatAmount(walletSummary.debit)}</p></div>
-                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4"><p className="text-xs text-[#5f6f68]">Closing</p><p className="text-2xl font-semibold">INR {formatAmount(walletSummary.closingBalance)}</p></div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Credits</p>
+                  <p className="text-2xl font-semibold">
+                    INR {formatAmount(walletSummary.credit)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Debits</p>
+                  <p className="text-2xl font-semibold">
+                    INR {formatAmount(walletSummary.debit)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#dbe6df] bg-white/90 p-4">
+                  <p className="text-xs text-[#5f6f68]">Closing</p>
+                  <p className="text-2xl font-semibold">
+                    INR {formatAmount(walletSummary.closingBalance)}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#d6e4db] bg-white/90 p-4"><input type="number" className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Top-up amount" value={rechargeAmount} onChange={(e) => setRechargeAmount(e.target.value)} /><button onClick={async () => { const amount = Number(rechargeAmount); if (!Number.isFinite(amount) || amount <= 0) return; await rechargeVendorWallet(token, amount); setRechargeAmount(""); await reload(); }} className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b5b45]">Top-up</button><button onClick={() => exportVendorWalletTransactions(token, filters)} className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"><Download className="mr-1 inline h-4 w-4" />Export</button></div>
-              <div className="overflow-x-auto rounded-3xl border border-[#d6e4db] bg-white/90 p-2 shadow-sm"><table className="min-w-full text-sm"><thead><tr><th className="px-2 py-2">Date</th><th className="px-2 py-2">Txn</th><th className="px-2 py-2">Type</th><th className="px-2 py-2">Category</th><th className="px-2 py-2">Amount</th></tr></thead><tbody>{walletTx.map((tx) => <tr key={tx.id} className="border-t"><td className="px-2 py-2">{formatDate(tx.createdAt)}</td><td className="px-2 py-2 font-mono text-xs">{tx.id.slice(-8)}</td><td className="px-2 py-2">{tx.type}</td><td className="px-2 py-2">{tx.category}</td><td className="px-2 py-2">INR {formatAmount(tx.amount)}</td></tr>)}</tbody></table></div>
+              <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#d6e4db] bg-white/90 p-4">
+                <input
+                  type="number"
+                  className="rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                  placeholder="Top-up amount"
+                  value={rechargeAmount}
+                  onChange={(e) => setRechargeAmount(e.target.value)}
+                />
+                <button
+                  onClick={async () => {
+                    const amount = Number(rechargeAmount);
+                    if (!Number.isFinite(amount) || amount <= 0) return;
+                    await rechargeVendorWallet(token, amount);
+                    setRechargeAmount("");
+                    await reload();
+                  }}
+                  className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0b5b45]"
+                >
+                  Top-up
+                </button>
+                <button
+                  onClick={() => exportVendorWalletTransactions(token, filters)}
+                  className="rounded-xl border border-[#d8e5dd] px-3 py-2 text-sm hover:bg-[#f3f7f5]"
+                >
+                  <Download className="mr-1 inline h-4 w-4" />
+                  Export
+                </button>
+              </div>
+              <div className="overflow-x-auto rounded-3xl border border-[#d6e4db] bg-white/90 p-2 shadow-sm">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2">Date</th>
+                      <th className="px-2 py-2">Txn</th>
+                      <th className="px-2 py-2">Type</th>
+                      <th className="px-2 py-2">Category</th>
+                      <th className="px-2 py-2">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {walletTx.map((tx) => (
+                      <tr key={tx.id} className="border-t">
+                        <td className="px-2 py-2">
+                          {formatDate(tx.createdAt)}
+                        </td>
+                        <td className="px-2 py-2 font-mono text-xs">
+                          {tx.id.slice(-8)}
+                        </td>
+                        <td className="px-2 py-2">{tx.type}</td>
+                        <td className="px-2 py-2">{tx.category}</td>
+                        <td className="px-2 py-2">
+                          INR {formatAmount(tx.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           ) : null}
 
           {activeSection === "billing" ? (
             <section className="space-y-3 rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
-              {invoiceShareStatus ? <p className="text-sm text-[#2c5445]">{invoiceShareStatus}</p> : null}
-              <div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr><th className="px-2 py-2">Invoice</th><th className="px-2 py-2">Type</th><th className="px-2 py-2">Issued</th><th className="px-2 py-2">Total</th><th className="px-2 py-2">Actions</th></tr></thead><tbody>{invoices.map((invoice) => <tr key={invoice.id} className="border-t"><td className="px-2 py-2 font-mono text-xs">{invoice.number}</td><td className="px-2 py-2">{invoice.type}</td><td className="px-2 py-2">{formatDate(invoice.issuedAt)}</td><td className="px-2 py-2">INR {formatAmount(invoice.total)}</td><td className="px-2 py-2"><button onClick={() => downloadVendorInvoicePdf(token, invoice.id)} className="mr-2 rounded-lg border px-2 py-1 text-xs">Download</button><button onClick={async () => { const r = await shareVendorInvoice(token, invoice.id); if (r?.shareUrl && navigator?.clipboard?.writeText) { await navigator.clipboard.writeText(r.shareUrl); setInvoiceShareStatus(`Share link copied: ${r.shareUrl}`); } else { setInvoiceShareStatus(r?.shareUrl || "Share link created."); } }} className="mr-2 rounded-lg border px-2 py-1 text-xs">Share</button>{invoice.shareToken ? <a href={`/api/public/invoices/shared/${invoice.shareToken}`} target="_blank" rel="noreferrer" className="rounded-lg border px-2 py-1 text-xs">Open</a> : null}</td></tr>)}</tbody></table></div>
+              {invoiceShareStatus ? (
+                <p className="text-sm text-[#2c5445]">{invoiceShareStatus}</p>
+              ) : null}
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2">Invoice</th>
+                      <th className="px-2 py-2">Type</th>
+                      <th className="px-2 py-2">Issued</th>
+                      <th className="px-2 py-2">Total</th>
+                      <th className="px-2 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((invoice) => (
+                      <tr key={invoice.id} className="border-t">
+                        <td className="px-2 py-2 font-mono text-xs">
+                          {invoice.number}
+                        </td>
+                        <td className="px-2 py-2">{invoice.type}</td>
+                        <td className="px-2 py-2">
+                          {formatDate(invoice.issuedAt)}
+                        </td>
+                        <td className="px-2 py-2">
+                          INR {formatAmount(invoice.total)}
+                        </td>
+                        <td className="px-2 py-2">
+                          <button
+                            onClick={() =>
+                              downloadVendorInvoicePdf(token, invoice.id)
+                            }
+                            className="mr-2 rounded-lg border px-2 py-1 text-xs"
+                          >
+                            Download
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const r = await shareVendorInvoice(
+                                token,
+                                invoice.id,
+                              );
+                              if (
+                                r?.shareUrl &&
+                                navigator?.clipboard?.writeText
+                              ) {
+                                await navigator.clipboard.writeText(r.shareUrl);
+                                setInvoiceShareStatus(
+                                  `Share link copied: ${r.shareUrl}`,
+                                );
+                              } else {
+                                setInvoiceShareStatus(
+                                  r?.shareUrl || "Share link created.",
+                                );
+                              }
+                            }}
+                            className="mr-2 rounded-lg border px-2 py-1 text-xs"
+                          >
+                            Share
+                          </button>
+                          {invoice.shareToken ? (
+                            <a
+                              href={`/api/public/invoices/shared/${invoice.shareToken}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-lg border px-2 py-1 text-xs"
+                            >
+                              Open
+                            </a>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           ) : null}
 
@@ -413,14 +837,155 @@ const VendorDashboardV2 = () => {
 
           {activeSection === "settings" ? (
             <section className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm"><h3 className="mb-3 text-sm font-semibold">Vendor Profile</h3><div className="space-y-2"><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Business name" value={profileForm.businessName} onChange={(e) => setProfileForm((p) => ({ ...p, businessName: e.target.value }))} /><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Contact phone" value={profileForm.contactPhone} onChange={(e) => setProfileForm((p) => ({ ...p, contactPhone: e.target.value }))} /><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Contact email" value={profileForm.contactEmail} onChange={(e) => setProfileForm((p) => ({ ...p, contactEmail: e.target.value }))} /><textarea className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Address" value={profileForm.address} onChange={(e) => setProfileForm((p) => ({ ...p, address: e.target.value }))} rows={3} /><button onClick={async () => { await updateVendorProfile(token, profileForm); setSettingsStatus("Profile updated."); await reload(); }} className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white"><Save className="mr-1 inline h-4 w-4" />Save</button></div></div>
-              <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm"><h3 className="mb-3 text-sm font-semibold">Brand Settings</h3><div className="space-y-2"><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Brand name" value={brandForm.name} onChange={(e) => setBrandForm((p) => ({ ...p, name: e.target.value }))} /><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Website" value={brandForm.website} onChange={(e) => setBrandForm((p) => ({ ...p, website: e.target.value }))} /><input className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm" placeholder="Logo URL" value={brandForm.logoUrl} onChange={(e) => setBrandForm((p) => ({ ...p, logoUrl: e.target.value }))} /><button onClick={async () => { await upsertVendorBrand(token, brandForm); setSettingsStatus("Brand updated."); await reload(); }} className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white"><Save className="mr-1 inline h-4 w-4" />Save</button></div></div>
-              {settingsStatus ? <div className="lg:col-span-2 rounded-xl border border-[#d8e7df] bg-[#f3faf6] px-3 py-2 text-sm text-[#2c5445]">{settingsStatus}</div> : null}
+              <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
+                <h3 className="mb-3 text-sm font-semibold">Vendor Profile</h3>
+                <div className="space-y-2">
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Business name"
+                    value={profileForm.businessName}
+                    onChange={(e) =>
+                      setProfileForm((p) => ({
+                        ...p,
+                        businessName: e.target.value,
+                      }))
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Contact phone"
+                    value={profileForm.contactPhone}
+                    onChange={(e) =>
+                      setProfileForm((p) => ({
+                        ...p,
+                        contactPhone: e.target.value,
+                      }))
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Contact email"
+                    value={profileForm.contactEmail}
+                    onChange={(e) =>
+                      setProfileForm((p) => ({
+                        ...p,
+                        contactEmail: e.target.value,
+                      }))
+                    }
+                  />
+                  <textarea
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Address"
+                    value={profileForm.address}
+                    onChange={(e) =>
+                      setProfileForm((p) => ({ ...p, address: e.target.value }))
+                    }
+                    rows={3}
+                  />
+                  <button
+                    onClick={async () => {
+                      await updateVendorProfile(token, profileForm);
+                      setSettingsStatus("Profile updated.");
+                      await reload();
+                    }}
+                    className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    <Save className="mr-1 inline h-4 w-4" />
+                    Save
+                  </button>
+                </div>
+              </div>
+              <div className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
+                <h3 className="mb-3 text-sm font-semibold">Brand Settings</h3>
+                <div className="space-y-2">
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Brand name"
+                    value={brandForm.name}
+                    onChange={(e) =>
+                      setBrandForm((p) => ({ ...p, name: e.target.value }))
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Website"
+                    value={brandForm.website}
+                    onChange={(e) =>
+                      setBrandForm((p) => ({ ...p, website: e.target.value }))
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-[#d2e0d8] px-3 py-2 text-sm"
+                    placeholder="Logo URL"
+                    value={brandForm.logoUrl}
+                    onChange={(e) =>
+                      setBrandForm((p) => ({ ...p, logoUrl: e.target.value }))
+                    }
+                  />
+                  <button
+                    onClick={async () => {
+                      await upsertVendorBrand(token, brandForm);
+                      setSettingsStatus("Brand updated.");
+                      await reload();
+                    }}
+                    className="rounded-xl bg-[#0f6d54] px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    <Save className="mr-1 inline h-4 w-4" />
+                    Save
+                  </button>
+                </div>
+              </div>
+              {settingsStatus ? (
+                <div className="lg:col-span-2 rounded-xl border border-[#d8e7df] bg-[#f3faf6] px-3 py-2 text-sm text-[#2c5445]">
+                  {settingsStatus}
+                </div>
+              ) : null}
             </section>
           ) : null}
 
           {activeSection === "reports" ? (
-            <section className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm"><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead><tr><th className="px-2 py-2">Title</th><th className="px-2 py-2">Product</th><th className="px-2 py-2">Reported By</th><th className="px-2 py-2">Created</th><th className="px-2 py-2">Download</th></tr></thead><tbody>{reports.map((report) => <tr key={report.id} className="border-t"><td className="px-2 py-2">{report.title}</td><td className="px-2 py-2">{report.Product?.name || "-"}</td><td className="px-2 py-2">{report.User?.name || "-"}</td><td className="px-2 py-2">{formatDate(report.createdAt)}</td><td className="px-2 py-2"><button onClick={() => downloadVendorProductReport(token, report.id)} className="rounded-lg border px-2 py-1 text-xs"><Download className="mr-1 inline h-3 w-3" />Download</button></td></tr>)}</tbody></table></div></section>
+            <section className="rounded-3xl border border-[#d6e4db] bg-white/90 p-4 shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-2">Title</th>
+                      <th className="px-2 py-2">Product</th>
+                      <th className="px-2 py-2">Reported By</th>
+                      <th className="px-2 py-2">Created</th>
+                      <th className="px-2 py-2">Download</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reports.map((report) => (
+                      <tr key={report.id} className="border-t">
+                        <td className="px-2 py-2">{report.title}</td>
+                        <td className="px-2 py-2">
+                          {report.Product?.name || "-"}
+                        </td>
+                        <td className="px-2 py-2">
+                          {report.User?.name || "-"}
+                        </td>
+                        <td className="px-2 py-2">
+                          {formatDate(report.createdAt)}
+                        </td>
+                        <td className="px-2 py-2">
+                          <button
+                            onClick={() =>
+                              downloadVendorProductReport(token, report.id)
+                            }
+                            className="rounded-lg border px-2 py-1 text-xs"
+                          >
+                            <Download className="mr-1 inline h-3 w-3" />
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           ) : null}
         </main>
       </div>

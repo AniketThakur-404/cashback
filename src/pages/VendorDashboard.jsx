@@ -1443,8 +1443,7 @@ const VendorDashboard = () => {
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
     if (dashboardFilters.city) params.city = dashboardFilters.city.trim();
-    if (dashboardFilters.mobile)
-      params.mobile = dashboardFilters.mobile.trim();
+    if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
     if (dashboardFilters.invoiceNo)
       params.invoiceNo = dashboardFilters.invoiceNo.trim();
     return params;
@@ -1455,7 +1454,10 @@ const VendorDashboard = () => {
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const data = await getVendorRedemptionsMap(authToken, buildExtraFilterParams());
+      const data = await getVendorRedemptionsMap(
+        authToken,
+        buildExtraFilterParams(),
+      );
       setLocationsData(Array.isArray(data?.points) ? data.points : []);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
@@ -1470,7 +1472,10 @@ const VendorDashboard = () => {
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const data = await getVendorCustomers(authToken, buildExtraFilterParams());
+      const data = await getVendorCustomers(
+        authToken,
+        buildExtraFilterParams(),
+      );
       setCustomersData(Array.isArray(data?.customers) ? data.customers : []);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
@@ -2193,7 +2198,8 @@ const VendorDashboard = () => {
       const { totalCost } = getCampaignPaymentSummary(campaign, qrPricePerUnit);
       const currentBalance = parseNumericValue(
         wallet?.availableBalance,
-        parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+        parseNumericValue(wallet?.balance, 0) -
+          parseNumericValue(wallet?.lockedBalance, 0),
       );
 
       if (currentBalance < totalCost) {
@@ -3346,7 +3352,8 @@ const VendorDashboard = () => {
   );
   const pendingWalletBalance = parseNumericValue(
     wallet?.availableBalance,
-    parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.balance, 0) -
+      parseNumericValue(wallet?.lockedBalance, 0),
   );
   const pendingCampaignShortfall = Math.max(
     pendingCampaignPayment.totalCost - pendingWalletBalance,
@@ -3369,7 +3376,8 @@ const VendorDashboard = () => {
 
   const walletBalance = parseNumericValue(
     wallet?.availableBalance,
-    parseNumericValue(wallet?.balance, 0) - parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.balance, 0) -
+      parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
   const displayedTransactions = showAllTransactions
@@ -3379,7 +3387,8 @@ const VendorDashboard = () => {
     if (!locationsData.length) return [20.5937, 78.9629];
     const firstPoint = locationsData.find(
       (point) =>
-        Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)),
+        Number.isFinite(Number(point?.lat)) &&
+        Number.isFinite(Number(point?.lng)),
     );
     if (!firstPoint) return [20.5937, 78.9629];
     return [Number(firstPoint.lat), Number(firstPoint.lng)];
@@ -5356,7 +5365,9 @@ const VendorDashboard = () => {
                                         </label>
                                         <button
                                           type="button"
-                                          onClick={() => loadQrInventorySeries()}
+                                          onClick={() =>
+                                            loadQrInventorySeries()
+                                          }
                                           className="text-[10px] text-primary hover:underline"
                                         >
                                           Refresh
@@ -5365,7 +5376,9 @@ const VendorDashboard = () => {
                                       <select
                                         value={selectedQrSeries}
                                         onChange={(event) =>
-                                          setSelectedQrSeries(event.target.value)
+                                          setSelectedQrSeries(
+                                            event.target.value,
+                                          )
                                         }
                                         className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                       >
@@ -5377,7 +5390,8 @@ const VendorDashboard = () => {
                                             key={`${series.seriesCode}-${series.sourceBatch || "na"}`}
                                             value={series.seriesCode}
                                           >
-                                            {series.seriesCode} ({series.availableCount})
+                                            {series.seriesCode} (
+                                            {series.availableCount})
                                           </option>
                                         ))}
                                       </select>
@@ -6995,7 +7009,7 @@ Quantity: ${invoiceData.quantity} QRs
                                     className="h-full w-full"
                                   >
                                     <TileLayer
-                                      attribution='&copy; OpenStreetMap contributors'
+                                      attribution="&copy; OpenStreetMap contributors"
                                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
                                     {locationsData
@@ -7017,7 +7031,9 @@ Quantity: ${invoiceData.quantity} QRs
                                               <div className="font-semibold">
                                                 {point.city || "Unknown city"}
                                               </div>
-                                              <div>{point.count || 0} scans</div>
+                                              <div>
+                                                {point.count || 0} scans
+                                              </div>
                                             </div>
                                           </Popup>
                                         </Marker>
@@ -7135,7 +7151,10 @@ Quantity: ${invoiceData.quantity} QRs
                               <button
                                 type="button"
                                 onClick={() =>
-                                  exportVendorCustomers(token, buildExtraFilterParams())
+                                  exportVendorCustomers(
+                                    token,
+                                    buildExtraFilterParams(),
+                                  )
                                 }
                                 className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
                               >
@@ -7158,7 +7177,9 @@ Quantity: ${invoiceData.quantity} QRs
                                   <th className="px-4 py-3">Mobile</th>
                                   <th className="px-4 py-3">Codes</th>
                                   <th className="px-4 py-3">Rewards Earned</th>
-                                  <th className="px-4 py-3">First Scan Location</th>
+                                  <th className="px-4 py-3">
+                                    First Scan Location
+                                  </th>
                                   <th className="px-4 py-3">Member Since</th>
                                   <th className="px-4 py-3">Last Scanned</th>
                                 </tr>
@@ -7184,16 +7205,21 @@ Quantity: ${invoiceData.quantity} QRs
                                   </tr>
                                 ) : (
                                   customersData.map((customer) => (
-                                    <tr key={customer.userId || customer.mobile}>
+                                    <tr
+                                      key={customer.userId || customer.mobile}
+                                    >
                                       <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
                                         {customer.name || "-"}
                                       </td>
                                       <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
                                         {customer.mobile || "-"}
                                       </td>
-                                      <td className="px-4 py-3">{customer.codeCount || 0}</td>
                                       <td className="px-4 py-3">
-                                        INR {formatAmount(customer.rewardsEarned)}
+                                        {customer.codeCount || 0}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR{" "}
+                                        {formatAmount(customer.rewardsEarned)}
                                       </td>
                                       <td className="px-4 py-3">
                                         {customer.firstScanLocation || "-"}
@@ -7316,17 +7342,30 @@ Quantity: ${invoiceData.quantity} QRs
                                       <td className="px-4 py-3 font-mono text-[11px]">
                                         {invoice.number || invoice.id}
                                       </td>
-                                      <td className="px-4 py-3">{invoice.type}</td>
-                                      <td className="px-4 py-3">{formatDate(invoice.issuedAt)}</td>
-                                      <td className="px-4 py-3">INR {formatAmount(invoice.subtotal)}</td>
-                                      <td className="px-4 py-3">INR {formatAmount(invoice.tax)}</td>
-                                      <td className="px-4 py-3">INR {formatAmount(invoice.total)}</td>
+                                      <td className="px-4 py-3">
+                                        {invoice.type}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {formatDate(invoice.issuedAt)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.subtotal)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.tax)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.total)}
+                                      </td>
                                       <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
                                           <button
                                             type="button"
                                             onClick={() =>
-                                              downloadVendorInvoicePdf(token, invoice.id)
+                                              downloadVendorInvoicePdf(
+                                                token,
+                                                invoice.id,
+                                              )
                                             }
                                             className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
                                           >
@@ -7336,17 +7375,19 @@ Quantity: ${invoiceData.quantity} QRs
                                             type="button"
                                             onClick={async () => {
                                               try {
-                                                const response = await shareVendorInvoice(
-                                                  token,
-                                                  invoice.id,
-                                                );
+                                                const response =
+                                                  await shareVendorInvoice(
+                                                    token,
+                                                    invoice.id,
+                                                  );
                                                 const shareUrl =
                                                   response?.shareUrl ||
                                                   response?.url ||
                                                   "";
                                                 if (
                                                   shareUrl &&
-                                                  navigator?.clipboard?.writeText
+                                                  navigator?.clipboard
+                                                    ?.writeText
                                                 ) {
                                                   await navigator.clipboard.writeText(
                                                     shareUrl,
@@ -7355,7 +7396,9 @@ Quantity: ${invoiceData.quantity} QRs
                                                     "Share link copied to clipboard.",
                                                   );
                                                 } else if (shareUrl) {
-                                                  setInvoiceShareStatus(shareUrl);
+                                                  setInvoiceShareStatus(
+                                                    shareUrl,
+                                                  );
                                                 } else {
                                                   setInvoiceShareStatus(
                                                     "Share link generated.",
@@ -7449,14 +7492,18 @@ Quantity: ${invoiceData.quantity} QRs
                                 ) : (
                                   reportsData.map((report) => (
                                     <tr key={report.id}>
-                                      <td className="px-4 py-3">{report.title || "-"}</td>
+                                      <td className="px-4 py-3">
+                                        {report.title || "-"}
+                                      </td>
                                       <td className="px-4 py-3">
                                         {report.Product?.name || "-"}
                                       </td>
                                       <td className="px-4 py-3">
                                         {report.User?.name || "-"}
                                       </td>
-                                      <td className="px-4 py-3">{formatDate(report.createdAt)}</td>
+                                      <td className="px-4 py-3">
+                                        {formatDate(report.createdAt)}
+                                      </td>
                                       <td className="px-4 py-3">
                                         <button
                                           type="button"
