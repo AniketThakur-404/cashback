@@ -137,27 +137,16 @@ const formatCompactAmount = (value) => {
   if (!Number.isFinite(numeric)) return String(value);
 
   const abs = Math.abs(numeric);
+  if (abs < 1000) return formatAmount(numeric);
+
   const sign = numeric < 0 ? "-" : "";
-  const units = [
-    { value: 1e12, suffix: "T" },
-    { value: 1e9, suffix: "B" },
-    { value: 1e6, suffix: "M" },
-    { value: 1e3, suffix: "K" },
-  ];
+  const inThousands = Math.trunc((abs / 1000) * 1000) / 1000;
+  let compactText = inThousands.toFixed(3);
+  compactText = compactText
+    .replace(/\.0+$/, "")
+    .replace(/(\.\d*[1-9])0+$/, "$1");
 
-  for (const unit of units) {
-    if (abs >= unit.value) {
-      const compact = abs / unit.value;
-      const decimals = compact >= 100 ? 0 : compact >= 10 ? 1 : 2;
-      let compactText = compact.toFixed(decimals);
-      compactText = compactText
-        .replace(/\.0+$/, "")
-        .replace(/(\.\d*[1-9])0+$/, "$1");
-      return `${sign}${compactText}${unit.suffix}`;
-    }
-  }
-
-  return formatAmount(numeric);
+  return `${sign}${compactText}K`;
 };
 
 const formatShortDate = (value) => {
@@ -412,6 +401,7 @@ const VendorDashboard = () => {
   const [isMarkingNotificationsRead, setIsMarkingNotificationsRead] =
     useState(false);
   const lastNotificationCountRef = useRef(null);
+  const lastAutoFilledCashbackRef = useRef(null);
   const notificationsDropdownRef = useRef(null);
   const notificationsTriggerRef = useRef(null);
   const { info, error: toastError } = useToast();
@@ -3105,8 +3095,8 @@ const VendorDashboard = () => {
       ),
     [campaigns],
   );
-  const showQrGenerator = true;
-  const showQrOrdersSection = true;
+  const showQrGenerator = false;
+  const showQrOrdersSection = false;
   const showOrderTracking = true;
 
   useEffect(() => {
@@ -5746,8 +5736,8 @@ Quantity: ${invoiceData.quantity} QRs
                                       No active campaign found.
                                     </div>
                                     <div>
-                                      Select a pending campaign above and click
-                                      Activate & Fund, or create a new campaign.
+                                      Create or activate a campaign from
+                                      Pending Campaigns to see details here.
                                     </div>
                                   </div>
                                 ) : (
