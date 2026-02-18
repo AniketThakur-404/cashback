@@ -301,6 +301,13 @@ export const getVendorQrInventorySeries = (token, params) =>
     token,
   });
 
+export const downloadVendorInventoryQrPdf = (token, params = {}) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/qrs/inventory/download${buildQueryString(params)}`,
+    `vendor-inventory-qr-${Date.now()}.pdf`
+  );
+
 export const getVendorQrs = (token, params) =>
   apiRequest(`/api/vendor/qrs${buildQueryString(params)}`, {
     token,
@@ -845,10 +852,11 @@ export const updateAdminOrderStatus = (token, orderId, status) =>
     body: { status },
   });
 
-export const payVendorCampaign = (token, campaignId) =>
+export const payVendorCampaign = (token, campaignId, payload = undefined) =>
   apiRequest(`/api/vendor/campaigns/${campaignId}/pay`, {
     method: "POST",
     token,
+    body: payload,
   });
 
 // --- Public APIs ---

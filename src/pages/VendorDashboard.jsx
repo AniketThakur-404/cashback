@@ -50,6 +50,7 @@ import {
   getMe,
   getVendorQrs,
   getVendorQrInventorySeries,
+  downloadVendorInventoryQrPdf,
   getVendorWallet,
   getVendorTransactions,
   getVendorBrand,
@@ -444,6 +445,7 @@ const VendorDashboard = () => {
   const [qrTotal, setQrTotal] = useState(0);
   const [qrStatusCounts, setQrStatusCounts] = useState({});
   const [qrHasMore, setQrHasMore] = useState(false);
+  const [qrActionStatus, setQrActionStatus] = useState("");
 
   const [orders, setOrders] = useState([]);
   const [ordersError, setOrdersError] = useState("");
@@ -761,6 +763,11 @@ const VendorDashboard = () => {
     () => campaigns.find((campaign) => campaign.id === selectedQrCampaign),
     [campaigns, selectedQrCampaign],
   );
+  const selectedCampaignStatus = String(selectedCampaign?.status || "")
+    .toLowerCase()
+    .trim();
+  const selectedCampaignIsPending = selectedCampaignStatus === "pending";
+  const selectedCampaignRequiresProduct = selectedCampaignStatus === "active";
 
   const campaignPriceHints = useMemo(() => {
     const map = {};
@@ -1087,6 +1094,32 @@ const VendorDashboard = () => {
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       const errorMsg = err.message || "Failed to download PDF.";
+      setStatusWithTimeout(errorMsg);
+      toastError("Download Failed", errorMsg);
+    } finally {
+      setIsDownloadingPdf(null);
+    }
+  };
+
+  const handleDownloadInventoryPdf = async () => {
+    if (!token) return;
+    const downloadKey = `inventory:${selectedQrSeries || "all"}`;
+    setIsDownloadingPdf(downloadKey);
+
+    try {
+      await runDownloadWithProgress(
+        () =>
+          downloadVendorInventoryQrPdf(token, {
+            seriesCode: selectedQrSeries || undefined,
+          }),
+        selectedQrSeries
+          ? `Preparing ${selectedQrSeries} inventory PDF...`
+          : "Preparing full inventory PDF...",
+      );
+      setStatusWithTimeout("Inventory QR PDF downloaded successfully.");
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      const errorMsg = err.message || "Failed to download inventory PDF.";
       setStatusWithTimeout(errorMsg);
       toastError("Download Failed", errorMsg);
     } finally {
@@ -2270,35 +2303,82 @@ const VendorDashboard = () => {
       setQrOrderError("Please select a campaign first.");
       return;
     }
-    if (!selectedQrProduct) {
-      setQrOrderError("Please select a product first.");
+
+    const campaign = campaigns.find((c) => c.id === selectedQrCampaign);
+    if (!campaign) {
+      setQrOrderError("Selected campaign was not found.");
       return;
     }
 
-    const campaign = campaigns.find((c) => c.id === selectedQrCampaign);
-    if (!campaign || campaign.status !== "active") {
+    if (campaign.status === "pending") {
+      setIsOrdering(true);
+      setQrOrderError("");
+      setQrOrderStatus("");
+      try {
+        await payVendorCampaign(token, campaign.id, {
+          seriesCode: selectedQrSeries || null,
+        });
+        setQrOrderStatus("Campaign activated and QRs funded successfully.");
+        openSuccessModal(
+          "Campaign activated",
+          "Campaign is active and QRs are funded from selected series.",
+        );
+        setCampaignTab("active");
+        await Promise.all([
+          loadWallet(),
+          loadTransactions(),
+          loadCampaigns(),
+          loadQrs(),
+          loadQrInventorySeries(),
+          loadOrders(),
+          loadCampaignStats(),
+        ]);
+      } catch (err) {
+        if (handleVendorAccessError(err)) return;
+        setQrOrderError(err.message || "Unable to activate campaign.");
+      } finally {
+        setIsOrdering(false);
+      }
+      return;
+    }
+
+    if (campaign.status !== "active") {
       setQrOrderError("Selected campaign is not active.");
       return;
     }
 
-    // Get cashback and quantity from campaignRows (allocations)
-    const validRows = campaignRows.filter(
-      (row) => Number(row.cashbackAmount) > 0 && Number(row.quantity) > 0,
-    );
+    if (!selectedQrProduct) {
+      setQrOrderError(
+        "Please select a product first (or assign product to this campaign).",
+      );
+      return;
+    }
 
-    // If no valid allocations in campaign, use campaign's default cashback
+    // Always fund from selected campaign's saved allocations.
+    const campaignAllocations = Array.isArray(campaign.allocations)
+      ? campaign.allocations
+      : [];
+    const validRows = campaignAllocations
+      .map((row) => ({
+        cashbackAmount: parseNumericValue(row?.cashbackAmount, 0),
+        quantity: Math.max(0, Math.floor(Number(row?.quantity) || 0)),
+      }))
+      .filter((row) => row.cashbackAmount > 0 && row.quantity > 0);
+
     const rowsToUse =
       validRows.length > 0
         ? validRows
         : [
             {
-              cashbackAmount: campaign.cashbackAmount || 0,
+              cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
               quantity: 1,
             },
           ];
 
     if (rowsToUse.length === 0 || rowsToUse[0].cashbackAmount <= 0) {
-      setQrOrderError("Please set cashback amount in campaign allocations.");
+      setQrOrderError(
+        "This campaign has no valid cashback allocation. Edit campaign allocations first.",
+      );
       return;
     }
 
@@ -2825,10 +2905,10 @@ const VendorDashboard = () => {
       // But we can just reload campaigns.
       await loadCampaigns();
       await loadCampaignStats();
-      setCampaignTab("pending");
+      setCampaignTab("active");
       openSuccessModal(
         "Campaign created",
-        "Your campaign has been created. Proceed to payment to activate it.",
+        "Your campaign is ready. Select a series and fund QRs from Campaigns & QR.",
       );
     } catch (err) {
       if (handleVendorAccessError(err)) return;
@@ -2953,10 +3033,13 @@ const VendorDashboard = () => {
       const numeric = Number(value);
       return Number.isFinite(numeric) ? numeric : 0;
     };
+    const fundedStatuses = new Set(["funded", "generated", "assigned", "active"]);
 
     if (Object.keys(statusCounts).length > 0) {
       let redeemed = 0;
       let inactive = 0;
+      let inventory = 0;
+      let fundedActive = 0;
       let countedTotal = 0;
 
       Object.entries(statusCounts).forEach(([status, value]) => {
@@ -2964,10 +3047,15 @@ const VendorDashboard = () => {
         const amount = toNumber(value);
         if (!amount) return;
         countedTotal += amount;
-        if (isRedeemedQrStatus(status)) {
+        const normalized = normalizeQrStatus(status);
+        if (normalized === "inventory") {
+          inventory += amount;
+        } else if (isRedeemedQrStatus(status)) {
           redeemed += amount;
-        } else if (isInactiveQrStatus(status)) {
+        } else if (isInactiveQrStatus(normalized)) {
           inactive += amount;
+        } else if (fundedStatuses.has(normalized)) {
+          fundedActive += amount;
         }
       });
 
@@ -2976,20 +3064,24 @@ const VendorDashboard = () => {
         Number.isFinite(qrTotal) && qrTotal > 0 ? qrTotal : 0;
       const total =
         totalFromCounts || countedTotal || totalFromApi || qrs.length;
-      const active = Math.max(0, total - redeemed - inactive);
-      return { total, redeemed, active };
+      const active = Math.max(0, total - redeemed - inactive - inventory);
+      return { total, redeemed, active, inventory, fundedActive };
     }
 
     const total = qrs.length;
     let redeemed = 0;
     let inactive = 0;
+    let inventory = 0;
+    let fundedActive = 0;
     qrs.forEach((qr) => {
       const status = normalizeQrStatus(qr.status);
-      if (isRedeemedQrStatus(status)) redeemed += 1;
+      if (status === "inventory") inventory += 1;
+      else if (isRedeemedQrStatus(status)) redeemed += 1;
       else if (isInactiveQrStatus(status)) inactive += 1;
+      else if (fundedStatuses.has(status)) fundedActive += 1;
     });
-    const active = Math.max(0, total - redeemed - inactive);
-    return { total, redeemed, active };
+    const active = Math.max(0, total - redeemed - inactive - inventory);
+    return { total, redeemed, active, inventory, fundedActive };
   }, [qrStatusCounts, qrTotal, qrs]);
   const notificationUnreadCount = notifications.filter(
     (item) => !item.isRead,
@@ -3005,9 +3097,62 @@ const VendorDashboard = () => {
     () => campaigns.filter((campaign) => campaign.status === "active"),
     [campaigns],
   );
-  const showQrGenerator = false;
-  const showQrOrdersSection = false;
-  const showOrderTracking = false;
+  const fundableCampaigns = useMemo(
+    () =>
+      campaigns.filter(
+        (campaign) =>
+          campaign.status === "active" || campaign.status === "pending",
+      ),
+    [campaigns],
+  );
+  const showQrGenerator = true;
+  const showQrOrdersSection = true;
+  const showOrderTracking = true;
+
+  useEffect(() => {
+    if (!fundableCampaigns.length) {
+      if (selectedQrCampaign) setSelectedQrCampaign("");
+      return;
+    }
+    const selectedStillActive = fundableCampaigns.some(
+      (campaign) => campaign.id === selectedQrCampaign,
+    );
+    if (!selectedStillActive) {
+      setSelectedQrCampaign(fundableCampaigns[0].id);
+    }
+  }, [fundableCampaigns, selectedQrCampaign]);
+
+  useEffect(() => {
+    if (!selectedQrCampaign || !products.length) return;
+
+    const campaign = fundableCampaigns.find(
+      (item) => item.id === selectedQrCampaign,
+    );
+    if (!campaign) return;
+
+    const allocationProductId = Array.isArray(campaign.allocations)
+      ? campaign.allocations.find((alloc) => alloc?.productId)?.productId
+      : null;
+    const suggestedProductId = campaign.productId || allocationProductId || "";
+    if (!suggestedProductId) return;
+
+    const suggestedExists = products.some(
+      (product) => product.id === suggestedProductId,
+    );
+    if (!suggestedExists) return;
+
+    if (!selectedQrProduct) {
+      setSelectedQrProduct(suggestedProductId);
+      return;
+    }
+
+    const currentExists = products.some(
+      (product) => product.id === selectedQrProduct,
+    );
+    if (!currentExists) {
+      setSelectedQrProduct(suggestedProductId);
+    }
+  }, [fundableCampaigns, products, selectedQrCampaign, selectedQrProduct]);
 
   const overviewCampaignOptions = useMemo(() => {
     const options = [{ id: "all", label: "All campaigns" }];
@@ -4005,10 +4150,10 @@ const VendorDashboard = () => {
                           >
                             <div className="flex flex-col items-center justify-center w-full">
                               <div className="text-[10px] text-gray-500 mb-0.5">
-                                Active QRs
+                                Inventory QRs
                               </div>
                               <div className="text-sm font-bold text-primary">
-                                {qrStats.active}
+                                {qrStats.inventory}
                               </div>
                             </div>
                           </StarBorder>
@@ -5268,20 +5413,70 @@ const VendorDashboard = () => {
                           {campaignTab === "active" && (
                             <div className="space-y-4">
                               {showQrGenerator && (
-                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 p-4 space-y-3">
-                                  <div className="flex items-center justify-between">
+                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 p-4 space-y-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
                                       <QrCode
                                         size={16}
                                         className="text-primary-strong"
                                       />
-                                      Generate QRs
+                                      Campaign QR Funding
                                     </div>
-                                    <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                      Select a campaign and product to generate
-                                      QR codes.
+                                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                      Prebuilt QRs {"->"} Download sheet {"->"}
+                                      Fund/recharge selected quantity
                                     </div>
                                   </div>
+
+                                  <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+                                    <div className="text-xs font-semibold text-primary">
+                                      How to use this section
+                                    </div>
+                                    <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4 text-[11px]">
+                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                          Step 1:
+                                        </span>{" "}
+                                        Create campaign
+                                      </div>
+                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                          Step 2:
+                                        </span>{" "}
+                                        Pay and activate campaign
+                                      </div>
+                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                          Step 3:
+                                        </span>{" "}
+                                        Download prebuilt QR sheet
+                                      </div>
+                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                        <span className="font-semibold text-gray-900 dark:text-white">
+                                          Step 4:
+                                        </span>{" "}
+                                        Generate QRs to lock cashback and make
+                                        them redeemable
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {fundableCampaigns.length === 0 && (
+                                    <div className="rounded-xl border border-amber-300/50 bg-amber-50/70 dark:bg-amber-900/10 px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                                      <div className="text-xs text-amber-800 dark:text-amber-200">
+                                        No campaign yet. Create campaign first,
+                                        then fund from your selected series.
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setCampaignTab("pending")}
+                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-400/60 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+                                      >
+                                        Open Pending Campaigns
+                                      </button>
+                                    </div>
+                                  )}
+
                                   <div className="grid gap-3 md:grid-cols-3">
                                     <div className="space-y-2">
                                       <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -5294,17 +5489,24 @@ const VendorDashboard = () => {
                                             event.target.value,
                                           )
                                         }
+                                        disabled={!fundableCampaigns.length}
                                         className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                       >
                                         <option value="">
                                           Select campaign
                                         </option>
-                                        {activeCampaigns.map((campaign) => (
+                                        {fundableCampaigns.map((campaign) => (
                                           <option
                                             key={campaign.id}
                                             value={campaign.id}
                                           >
-                                            {campaign.title}
+                                            {campaign.title} (
+                                            {String(
+                                              campaign.status || "",
+                                            ).toLowerCase() === "pending"
+                                              ? "Pending"
+                                              : "Active"}
+                                            )
                                           </option>
                                         ))}
                                       </select>
@@ -5327,6 +5529,7 @@ const VendorDashboard = () => {
                                             setSelectedQrProduct(value);
                                           }
                                         }}
+                                        disabled={!fundableCampaigns.length}
                                         className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                       >
                                         <option value="">Select product</option>
@@ -5388,20 +5591,60 @@ const VendorDashboard = () => {
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex justify-end">
+
+                                  <div className="grid gap-2 md:grid-cols-2 text-[11px]">
+                                    <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Download prebuilt:
+                                      </span>{" "}
+                                      gets printable inventory QRs. No wallet
+                                      deduction.
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Generate QRs:
+                                      </span>{" "}
+                                      allocates inventory to campaign and locks
+                                      cashback in wallet.
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={handleDownloadInventoryPdf}
+                                      disabled={
+                                        isDownloadingPdf ===
+                                        `inventory:${selectedQrSeries || "all"}`
+                                      }
+                                      className={SECONDARY_BUTTON}
+                                    >
+                                      {isDownloadingPdf ===
+                                      `inventory:${selectedQrSeries || "all"}`
+                                        ? "Downloading..."
+                                        : selectedQrSeries
+                                          ? `Download Prebuilt (${selectedQrSeries})`
+                                          : "Download Prebuilt QRs"}
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={handleOrderQrs}
                                       disabled={
+                                        !fundableCampaigns.length ||
                                         !selectedQrCampaign ||
-                                        !selectedQrProduct ||
+                                        (selectedCampaignRequiresProduct &&
+                                          !selectedQrProduct) ||
                                         isOrdering
                                       }
                                       className={SUCCESS_BUTTON}
                                     >
                                       {isOrdering
-                                        ? "Generating..."
-                                        : "Generate QRs"}
+                                        ? selectedCampaignIsPending
+                                          ? "Activating..."
+                                          : "Generating..."
+                                        : selectedCampaignIsPending
+                                          ? "Activate & Fund"
+                                          : "Generate QRs"}
                                     </button>
                                   </div>
                                   {qrOrderStatus && (
@@ -5498,8 +5741,14 @@ Quantity: ${invoiceData.quantity} QRs
 
                               <div className="space-y-2">
                                 {activeCampaigns.length === 0 ? (
-                                  <div className="text-xs text-center text-gray-500 py-4">
-                                    No active campaigns found.
+                                  <div className="text-xs text-center text-gray-500 py-4 space-y-2">
+                                    <div>
+                                      No active campaign found.
+                                    </div>
+                                    <div>
+                                      Select a pending campaign above and click
+                                      Activate & Fund, or create a new campaign.
+                                    </div>
                                   </div>
                                 ) : (
                                   activeCampaigns.map((campaign) => {
@@ -6226,7 +6475,7 @@ Quantity: ${invoiceData.quantity} QRs
                               id="qr-inventory"
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-base font-bold text-white">
+                                <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
                                   <ClipboardCheck
                                     size={18}
                                     className="text-primary"
@@ -6462,8 +6711,8 @@ Quantity: ${invoiceData.quantity} QRs
                                     : ""}
                                 </span>
                                 <span>
-                                  {qrStats.redeemed} redeemed - {qrStats.active}{" "}
-                                  active
+                                  {qrStats.redeemed} redeemed -{" "}
+                                  {qrStats.fundedActive} funded
                                 </span>
                               </div>
                               {qrActionStatus && (
