@@ -90,7 +90,7 @@ const VendorAnalytics = ({
       {/* ── Redemption Activity Chart ── */}
       <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
         <div className="flex items-center gap-3 mb-5">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center">
+          <div className="h-9 w-9 rounded-lg bg-linear-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center">
             <TrendingUp size={16} className="text-emerald-500" />
           </div>
           <div>
@@ -176,7 +176,7 @@ const VendorAnalytics = ({
       {/* ── Campaign Performance Chart ── */}
       <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
         <div className="flex items-center gap-3 mb-5">
-          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-600/10 flex items-center justify-center">
+          <div className="h-9 w-9 rounded-lg bg-linear-to-br from-blue-500/20 to-indigo-600/10 flex items-center justify-center">
             <Activity size={16} className="text-blue-500" />
           </div>
           <div>

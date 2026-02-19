@@ -30,6 +30,9 @@ import {
   X,
   Eye,
   EyeOff,
+  CreditCard, // Added
+  Banknote, // Added
+  ShieldCheck, // Added
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "../lib/apiClient";
@@ -104,11 +107,12 @@ const INDUSTRY_OPTIONS = [
 ];
 
 const STEPS = [
-  { id: 0, key: "account", label: "Account" },
-  { id: 1, key: "identity", label: "Brand Identity" },
-  { id: 2, key: "industry", label: "Industry" },
-  { id: 3, key: "details", label: "Brand Details" },
-  { id: 4, key: "review", label: "Review & Submit" },
+  { id: 0, key: "plan", label: "Choose Plan" },
+  { id: 1, key: "account", label: "Account" },
+  { id: 2, key: "identity", label: "Brand Identity" },
+  { id: 3, key: "industry", label: "Industry" },
+  { id: 4, key: "details", label: "Brand Details" },
+  { id: 5, key: "review", label: "Review & Submit" },
 ];
 
 // ============================================================================
@@ -297,6 +301,9 @@ const BrandRegistration = () => {
 
   // Form State
   const [formData, setFormData] = useState({
+    // Plan Field
+    planType: "prepaid",
+
     // Account Fields
     contactName: "",
     companyName: "",
@@ -323,7 +330,7 @@ const BrandRegistration = () => {
     gstNumber: "",
   });
 
-  const totalSteps = STEPS.length - 1; // 0 to 4
+  const totalSteps = STEPS.length - 1; // 0 to 5
 
   // Handlers
   const handleFieldChange = (field, value) => {
@@ -376,7 +383,10 @@ const BrandRegistration = () => {
 
   const validateStep = (step) => {
     switch (step) {
-      case 0: // Account
+      case 0: // Plan
+        if (!formData.planType) return "Please select a plan type.";
+        return "";
+      case 1: // Account
         if (!formData.contactName.trim()) return "Contact name is required.";
         if (!formData.designation.trim()) return "Designation is required.";
         if (!formData.phoneNumber.trim()) return "Phone number is required.";
@@ -401,16 +411,16 @@ const BrandRegistration = () => {
             return "Passwords do not match.";
         }
         return "";
-      case 1: // Identity
+      case 2: // Identity
         if (!formData.companyName.trim()) return "Company name is required.";
         if (!formData.name.trim()) return "Brand name is required.";
         if (formData.website && !formData.website.includes("."))
           return "Please enter a valid website URL.";
         return "";
-      case 2:
+      case 3: // Industry
         if (!formData.industry) return "Please select an industry.";
         return "";
-      case 3: // Details
+      case 4: // Details
         if (!formData.description.trim())
           return "Brand description is required.";
         if (!formData.address.trim()) return "Street address is required.";
@@ -430,7 +440,7 @@ const BrandRegistration = () => {
       setError(validationError);
       return;
     }
-    if (currentStep < 4) {
+    if (currentStep < 5) {
       setCurrentStep((curr) => curr + 1);
       setError("");
     }
@@ -447,7 +457,7 @@ const BrandRegistration = () => {
 
   const handleSubmit = async () => {
     const validationError = validateStep(currentStep);
-    if (validationError && currentStep !== 4) {
+    if (validationError && currentStep !== 5) {
       setError(validationError);
       return;
     }
@@ -538,6 +548,7 @@ const BrandRegistration = () => {
           industry: formData.industry,
           logoUrl: finalLogoUrl,
           description: formData.description,
+          defaultPlanType: formData.planType,
         },
         token: activeToken,
       });
@@ -566,8 +577,102 @@ const BrandRegistration = () => {
     }));
   };
 
+  // Render Plan Selection Step
+  const renderPlanStep = () => (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <StepHeader
+        title="Choose your billing plan"
+        subtitle="Select how you want to fund your cashback campaigns."
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Prepaid Plan */}
+        <button
+          type="button"
+          onClick={() => handleFieldChange("planType", "prepaid")}
+          className={cn(
+            "relative p-6 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-md flex flex-col h-full",
+            formData.planType === "prepaid"
+              ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+              : "border-gray-100 bg-white hover:border-gray-200",
+          )}
+        >
+          {formData.planType === "prepaid" && (
+            <div className="absolute -top-3 -right-3 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm z-10">
+              <Check className="w-5 h-5 text-white stroke-3" />
+            </div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-4">
+            <Banknote className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Prepaid Plan</h3>
+          <p className="text-gray-500 text-sm mb-6 grow">
+            Pay upfront, get full control. Lock your cashback budget before
+            launching campaigns.
+          </p>
+          <div className="space-y-3 pt-4 border-t border-gray-100/50">
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>Best for fixed budgets</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>No risk of overspending</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>Instant qr activation</span>
+            </div>
+          </div>
+        </button>
+
+        {/* Postpaid Plan */}
+        <button
+          type="button"
+          onClick={() => handleFieldChange("planType", "postpaid")}
+          className={cn(
+            "relative p-6 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-md flex flex-col h-full",
+            formData.planType === "postpaid"
+              ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
+              : "border-gray-100 bg-white hover:border-gray-200",
+          )}
+        >
+          {formData.planType === "postpaid" && (
+            <div className="absolute -top-3 -right-3 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-sm z-10">
+              <Check className="w-5 h-5 text-white stroke-3" />
+            </div>
+          )}
+          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
+            <CreditCard className="w-6 h-6" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Postpaid Plan
+          </h3>
+          <p className="text-gray-500 text-sm mb-6 grow">
+            Pay as you go. No upfront budget lock — pay only when QR codes are
+            redeemed.
+          </p>
+          <div className="space-y-3 pt-4 border-t border-gray-100/50">
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>Maximum flexibility</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>Pay only for results</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <span>Pay according to sheet</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+
   // Render Account Step
-  const renderStep0 = () => (
+  const renderAccountStep = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
         title={isLoggedIn ? "Verify Account" : "Create Account"}
@@ -823,7 +928,7 @@ const BrandRegistration = () => {
   // Let's grab the render functions from the file view I just did (Step 152).
   // I will copy them into my replacement content to ensure they are preserved.
 
-  const renderStep1 = () => (
+  const renderIdentityStep = () => (
     // Identity
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
@@ -881,7 +986,7 @@ const BrandRegistration = () => {
     </div>
   );
 
-  const renderStep2 = () => (
+  const renderIndustryStep = () => (
     // Industry
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
@@ -904,7 +1009,7 @@ const BrandRegistration = () => {
     </div>
   );
 
-  const renderStep3 = () => (
+  const renderDetailsStep = () => (
     // Details
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
@@ -1078,7 +1183,7 @@ const BrandRegistration = () => {
     </div>
   );
 
-  const renderStep4 = () => (
+  const renderReviewStep = () => (
     // Review
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
@@ -1216,7 +1321,7 @@ const BrandRegistration = () => {
           <div className="flex items-center gap-2">
             {/* Only show steps relevant to the user context? Or show all? Show all for completeness or conditionally */}
             {STEPS.map((step) => {
-              if (token && step.id === 0) return null; // Skip Account step if logged in
+              if (token && step.id === 1) return null; // Skip Account step if logged in
               return (
                 <div
                   key={step.id}
@@ -1245,11 +1350,12 @@ const BrandRegistration = () => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {currentStep === 0 && renderStep0()}
-              {currentStep === 1 && renderStep1()}
-              {currentStep === 2 && renderStep2()}
-              {currentStep === 3 && renderStep3()}
-              {currentStep === 4 && renderStep4()}
+              {currentStep === 0 && renderPlanStep()}
+              {currentStep === 1 && renderAccountStep()}
+              {currentStep === 2 && renderIdentityStep()}
+              {currentStep === 3 && renderIndustryStep()}
+              {currentStep === 4 && renderDetailsStep()}
+              {currentStep === 5 && renderReviewStep()}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -1271,10 +1377,10 @@ const BrandRegistration = () => {
       <div className="fixed bottom-0 left-0 right-0 p-6 md:p-8 bg-white/90 backdrop-blur-sm z-40 border-t border-gray-100">
         <div className="max-w-md mx-auto">
           <ActionButton
-            onClick={currentStep === 4 ? handleSubmit : handleNext}
+            onClick={currentStep === 5 ? handleSubmit : handleNext}
             loading={isSubmitting}
           >
-            {currentStep === 4 ? (
+            {currentStep === 5 ? (
               <span className="flex items-center gap-2 justify-center">
                 Launch Brand <Zap className="w-5 h-5 fill-current" />
               </span>
