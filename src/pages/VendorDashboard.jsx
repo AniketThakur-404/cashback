@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { format } from "date-fns";
@@ -333,6 +333,7 @@ const buildAllocationGroups = (allocations) => {
   return Array.from(grouped.values()).sort((a, b) => a.price - b.price);
 };
 
+const CAMPAIGN_FEE_GST_RATE = 0.18;
 const VOUCHER_COST_MAP = { digital_voucher: 0.2, printed_qr: 0.5, none: 0 };
 
 const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
@@ -347,16 +348,22 @@ const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
     campaign?.subtotal,
     parseNumericValue(campaign?.totalBudget, 0),
   );
-  const printCost = totalQty * parseNumericValue(qrPricePerUnit, 0);
+  const feeTaxMultiplier = 1 + CAMPAIGN_FEE_GST_RATE;
+  const printFeePerQrInclTax =
+    parseNumericValue(qrPricePerUnit, 0) * feeTaxMultiplier;
+  const printCost = totalQty * printFeePerQrInclTax;
   const voucherFeePerQr = VOUCHER_COST_MAP[campaign?.voucherType] || 0;
-  const voucherCost = totalQty * voucherFeePerQr;
+  const voucherFeePerQrInclTax = voucherFeePerQr * feeTaxMultiplier;
+  const voucherCost = totalQty * voucherFeePerQrInclTax;
   const totalCost = baseBudget + printCost + voucherCost;
   return {
     totalQty,
     baseBudget,
+    printFeePerQrInclTax,
     printCost,
     voucherCost,
     voucherFeePerQr,
+    voucherFeePerQrInclTax,
     totalCost,
   };
 };
@@ -644,7 +651,6 @@ const VendorDashboard = () => {
   const [sheetCashbackForm, setSheetCashbackForm] = useState({});
   const [assigningSheet, setAssigningSheet] = useState(null);
   const [sheetPaymentData, setSheetPaymentData] = useState(null);
-  const [qrActionStatus, setQrActionStatus] = useState("");
   const [campaignStatus, setCampaignStatus] = useState("");
   const [campaignError, setCampaignError] = useState("");
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
@@ -656,6 +662,7 @@ const VendorDashboard = () => {
   const [selectedActiveCampaign, setSelectedActiveCampaign] = useState(null);
   const [isPayingCampaign, setIsPayingCampaign] = useState(false);
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
+  const [campaignToDelete, setCampaignToDelete] = useState(null);
 
   const handleAddCampaignRow = () => {
     setCampaignRows((prev) => [
@@ -2282,31 +2289,52 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleDeleteCampaign = async (campaign) => {
-    if (!campaign?.id || !token) return;
-    if (
-      !window.confirm("Delete this campaign? This action cannot be undone.")
-    ) {
-      return;
-    }
+  const handleDeleteCampaign = (campaign) => {
+    if (!campaign?.id || !token || deletingCampaignId) return;
+    setCampaignToDelete(campaign);
+    setCampaignError("");
+    setCampaignStatus("");
+  };
 
-    setDeletingCampaignId(campaign.id);
+  const confirmDeleteCampaign = async () => {
+    if (!campaignToDelete?.id || !token || deletingCampaignId) return;
+    const deletingCampaign = campaignToDelete;
+    setDeletingCampaignId(deletingCampaign.id);
     setCampaignError("");
     setCampaignStatus("");
 
     try {
-      await deleteVendorCampaign(token, campaign.id);
+      const result = await deleteVendorCampaign(token, deletingCampaign.id);
+      const refundedAmount = parseNumericValue(result?.refundedAmount, 0);
       setCampaignStatusWithTimeout("Campaign deleted.");
-      setCampaigns((prev) => prev.filter((item) => item.id !== campaign.id));
-      if (selectedPendingCampaign?.id === campaign.id) {
+      setCampaigns((prev) =>
+        prev.filter((item) => item.id !== deletingCampaign.id),
+      );
+      if (selectedPendingCampaign?.id === deletingCampaign.id) {
         setSelectedPendingCampaign(null);
       }
-      if (selectedActiveCampaign?.id === campaign.id) {
+      if (selectedActiveCampaign?.id === deletingCampaign.id) {
         setSelectedActiveCampaign(null);
       }
-      await loadCampaigns(token);
+      setCampaignToDelete(null);
+      await Promise.all([
+        loadCampaigns(),
+        loadCampaignStats(),
+        loadWallet(),
+        loadTransactions(),
+        loadQrs(token, { page: 1, append: false }),
+      ]);
+      openSuccessModal(
+        "Campaign deleted",
+        refundedAmount > 0
+          ? `Campaign deleted. INR ${refundedAmount.toFixed(2)} moved from locked balance to your available wallet.`
+          : "Campaign deleted.",
+      );
     } catch (err) {
-      if (handleVendorAccessError(err)) return;
+      if (handleVendorAccessError(err)) {
+        setCampaignToDelete(null);
+        return;
+      }
       setCampaignError(err.message || "Unable to delete campaign.");
     } finally {
       setDeletingCampaignId(null);
@@ -2950,13 +2978,9 @@ const VendorDashboard = () => {
       setCampaignTab("active");
       openSuccessModal(
         "Campaign created",
-<<<<<<< HEAD
-        "Your campaign is ready. Select a series and fund QRs from Campaigns & QR.",
-=======
         isPostpaid
           ? "Your postpaid campaign has been created and sent for approval."
           : "Your campaign has been created. Proceed to payment to activate it.",
->>>>>>> 3a53a0bec9ac6b9d16010b9535c5b971fc4b0b36
       );
     } catch (err) {
       if (handleVendorAccessError(err)) return;
@@ -3075,7 +3099,6 @@ const VendorDashboard = () => {
     }
   };
 
-<<<<<<< HEAD
   const qrStats = useMemo(() => {
     const statusCounts = qrStatusCounts || {};
     const toNumber = (value) => {
@@ -3132,8 +3155,6 @@ const VendorDashboard = () => {
     const active = Math.max(0, total - redeemed - inactive - inventory);
     return { total, redeemed, active, inventory, fundedActive };
   }, [qrStatusCounts, qrTotal, qrs]);
-=======
->>>>>>> 3a53a0bec9ac6b9d16010b9535c5b971fc4b0b36
   const notificationUnreadCount = notifications.filter(
     (item) => !item.isRead,
   ).length;
@@ -3148,7 +3169,6 @@ const VendorDashboard = () => {
     () => campaigns.filter((campaign) => campaign.status === "active"),
     [campaigns],
   );
-<<<<<<< HEAD
   const fundableCampaigns = useMemo(
     () =>
       campaigns.filter(
@@ -3157,29 +3177,6 @@ const VendorDashboard = () => {
       ),
     [campaigns],
   );
-=======
-  const qrStats = useMemo(() => {
-    let active = 0;
-    let redeemed = 0;
-    let total = 0;
-
-    activeCampaigns.forEach((campaign) => {
-      const stats =
-        campaignStatsMap[campaign.id] ||
-        campaignStatsMap[`title:${campaign.title}`] ||
-        {};
-
-      const cTotal = Number(stats.totalQRsOrdered || 0);
-      const cRedeemed = Number(stats.totalUsersJoined || 0);
-
-      total += cTotal;
-      redeemed += cRedeemed;
-      active += Math.max(0, cTotal - cRedeemed);
-    });
-
-    return { total, redeemed, active };
-  }, [activeCampaigns, campaignStatsMap]);
->>>>>>> 3a53a0bec9ac6b9d16010b9535c5b971fc4b0b36
   const showQrGenerator = false;
   const showQrOrdersSection = false;
   const showOrderTracking = true;
@@ -4219,7 +4216,7 @@ const VendorDashboard = () => {
                           >
                             <div className="flex flex-col items-center justify-center w-full">
                               <div className="text-[10px] text-gray-500 mb-0.5">
-                                Available
+                                Wallet Amount
                               </div>
                               <div
                                 className="text-sm font-bold text-primary truncate max-w-full"
@@ -4239,10 +4236,10 @@ const VendorDashboard = () => {
                           >
                             <div className="flex flex-col items-center justify-center w-full">
                               <div className="text-[10px] text-gray-500 mb-0.5">
-                                Inventory QRs
+                                Active QRs
                               </div>
                               <div className="text-sm font-bold text-primary">
-                                {qrStats.inventory}
+                                {qrStats.active}
                               </div>
                             </div>
                           </StarBorder>
@@ -4472,7 +4469,7 @@ const VendorDashboard = () => {
                                 <span>
                                   Selected: {overviewSelectedCampaignCount}
                                 </span>
-                                <span className="text-gray-400">�</span>
+                                <span className="text-gray-400">|</span>
                                 <span>All: {campaigns.length}</span>
                               </div>
                             </div>
@@ -4535,7 +4532,7 @@ const VendorDashboard = () => {
                                 <span>
                                   Selected: {overviewSelectedQrRedeemed}
                                 </span>
-                                <span className="text-gray-400">�</span>
+                                <span className="text-gray-400">|</span>
                                 <span>All: {qrStats.redeemed}</span>
                               </div>
                             </div>
@@ -5470,10 +5467,11 @@ const VendorDashboard = () => {
                                       {VOUCHER_COST_MAP[opt.value] > 0 && (
                                         <span className="block text-[10px] font-normal mt-0.5 opacity-80">
                                           {"\u20B9"}
-                                          {VOUCHER_COST_MAP[opt.value].toFixed(
-                                            2,
-                                          )}
-                                          /QR
+                                          {(
+                                            VOUCHER_COST_MAP[opt.value] *
+                                            (1 + CAMPAIGN_FEE_GST_RATE)
+                                          ).toFixed(2)}
+                                          /QR incl. GST
                                         </span>
                                       )}
                                     </button>
@@ -6288,37 +6286,8 @@ Quantity: ${invoiceData.quantity} QRs
                                                                 form.amount,
                                                               ) * qty;
 
-                                                            const techFeeRate =
-                                                              parseFloat(
-                                                                campaign.Brand
-                                                                  ?.qrPricePerUnit ||
-                                                                  1,
-                                                              );
-                                                            const techFee =
-                                                              qty *
-                                                              techFeeRate *
-                                                              1.18;
-
-                                                            const vType =
-                                                              campaign.voucherType ||
-                                                              "none";
-                                                            const vRate =
-                                                              vType ===
-                                                              "printed_qr"
-                                                                ? 0.5
-                                                                : vType ===
-                                                                    "digital_voucher"
-                                                                  ? 0.2
-                                                                  : 0;
-                                                            const voucherFee =
-                                                              qty *
-                                                              vRate *
-                                                              1.18;
-
                                                             const totalEst =
-                                                              cashbackTotal +
-                                                              techFee +
-                                                              voucherFee;
+                                                              cashbackTotal;
 
                                                             setSheetPaymentData(
                                                               {
@@ -6343,9 +6312,8 @@ Quantity: ${invoiceData.quantity} QRs
                                                                 breakdown: {
                                                                   cashback:
                                                                     cashbackTotal,
-                                                                  tech: techFee,
-                                                                  voucher:
-                                                                    voucherFee,
+                                                                  tech: 0,
+                                                                  voucher: 0,
                                                                 },
                                                               },
                                                             );
@@ -6438,7 +6406,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                                         QRs)
                                                                         {s.amount >
                                                                         0
-                                                                          ? ` — ₹${s.amount}`
+                                                                          ? ` - INR ${s.amount}`
                                                                           : ""}
                                                                       </option>
                                                                     ),
@@ -6451,7 +6419,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                             </div>
                                                             <div className="sm:col-span-3">
                                                               <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
-                                                                Cashback (₹)
+                                                                Cashback (INR)
                                                               </label>
                                                               <div className="relative">
                                                                 <input
@@ -6821,8 +6789,11 @@ Quantity: ${invoiceData.quantity} QRs
                                           {/* QR Generation Cost Row */}
                                           <tr>
                                             <td className="px-4 py-3 text-gray-500 font-normal">
-                                              QR Generation Cost (INR{" "}
-                                              {formatAmount(qrPricePerUnit)}/QR)
+                                              QR Generation Cost (incl. GST, INR{" "}
+                                              {formatAmount(
+                                                pendingCampaignPayment.printFeePerQrInclTax,
+                                              )}
+                                              /QR)
                                             </td>
                                             <td className="px-4 py-3 text-center text-gray-500 font-normal">
                                               -
@@ -6835,27 +6806,24 @@ Quantity: ${invoiceData.quantity} QRs
                                             </td>
                                           </tr>
                                           {/* Voucher Cost Row */}
-                                          {pendingCampaignPayment.voucherCost >
-                                            0 && (
-                                            <tr>
-                                              <td className="px-4 py-3 text-gray-500 font-normal">
-                                                Voucher Cost (INR{" "}
-                                                {pendingCampaignPayment.voucherFeePerQr.toFixed(
-                                                  2,
-                                                )}
-                                                /QR)
-                                              </td>
-                                              <td className="px-4 py-3 text-center text-gray-500 font-normal">
-                                                -
-                                              </td>
-                                              <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
-                                                + INR{" "}
-                                                {pendingCampaignPayment.voucherCost.toFixed(
-                                                  2,
-                                                )}
-                                              </td>
-                                            </tr>
-                                          )}
+                                          <tr>
+                                            <td className="px-4 py-3 text-gray-500 font-normal">
+                                              Voucher Cost (incl. GST, INR{" "}
+                                              {pendingCampaignPayment.voucherFeePerQrInclTax.toFixed(
+                                                2,
+                                              )}
+                                              /QR)
+                                            </td>
+                                            <td className="px-4 py-3 text-center text-gray-500 font-normal">
+                                              -
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
+                                              + INR{" "}
+                                              {pendingCampaignPayment.voucherCost.toFixed(
+                                                2,
+                                              )}
+                                            </td>
+                                          </tr>
                                         </tfoot>
                                       </table>
                                     </div>
@@ -8610,9 +8578,7 @@ Quantity: ${invoiceData.quantity} QRs
                         } (${sheetPaymentData.count} QRs).
 
 Breakdown:
-• Cashback Deposit: Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
-• Tech Fee (incl. GST): Rs. ${sheetPaymentData.breakdown?.tech.toFixed(2)}
-• Voucher Fee (incl. GST): Rs. ${sheetPaymentData.breakdown?.voucher.toFixed(2)}
+Cashback Deposit (No GST): Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
 
 Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                       : ""
@@ -8621,6 +8587,29 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                     2,
                   )}`}
                   type="info"
+                  showCancel={true}
+                />
+
+                <ConfirmModal
+                  isOpen={!!campaignToDelete}
+                  onClose={() => {
+                    if (deletingCampaignId) return;
+                    setCampaignToDelete(null);
+                  }}
+                  onConfirm={confirmDeleteCampaign}
+                  title="Delete campaign?"
+                  message={
+                    campaignToDelete
+                      ? `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
+                      : ""
+                  }
+                  confirmText="Delete Campaign"
+                  cancelText="Keep Campaign"
+                  type="danger"
+                  loading={
+                    !!campaignToDelete &&
+                    deletingCampaignId === campaignToDelete.id
+                  }
                   showCancel={true}
                 />
 
@@ -8656,3 +8645,5 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 };
 
 export default VendorDashboard;
+
+
