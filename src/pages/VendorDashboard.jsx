@@ -3099,76 +3099,139 @@ const VendorDashboard = () => {
     }
   };
 
-  const qrStats = useMemo(() => {
-    const statusCounts = qrStatusCounts || {};
-    const toNumber = (value) => {
-      const numeric = Number(value);
-      return Number.isFinite(numeric) ? numeric : 0;
-    };
-    const fundedStatuses = new Set(["funded", "generated", "assigned", "active"]);
+  const pendingCampaigns = useMemo(
+    () => campaigns.filter((campaign) => campaign.status === "pending"),
+    [campaigns],
+  );
 
-    if (Object.keys(statusCounts).length > 0) {
-      let redeemed = 0;
-      let inactive = 0;
-      let inventory = 0;
-      let fundedActive = 0;
-      let countedTotal = 0;
+  const activeCampaigns = useMemo(
+    () => campaigns.filter((campaign) => campaign.status === "active"),
+    [campaigns],
+  );
 
-      Object.entries(statusCounts).forEach(([status, value]) => {
-        if (normalizeQrStatus(status) === "total") return;
-        const amount = toNumber(value);
-        if (!amount) return;
-        countedTotal += amount;
-        const normalized = normalizeQrStatus(status);
-        if (normalized === "inventory") {
-          inventory += amount;
-        } else if (isRedeemedQrStatus(status)) {
-          redeemed += amount;
-        } else if (isInactiveQrStatus(normalized)) {
-          inactive += amount;
-        } else if (fundedStatuses.has(normalized)) {
-          fundedActive += amount;
-        }
+  const isOverviewAll = overviewCampaignId === "all";
+  const isOverviewUnassigned = overviewCampaignId === "unassigned";
+
+  const overviewCampaignOptions = useMemo(() => {
+    const options = [{ id: "all", label: "All campaigns" }];
+    const sortedCampaigns = [...campaigns].sort((a, b) =>
+      String(a.title || "").localeCompare(String(b.title || "")),
+    );
+    sortedCampaigns.forEach((campaign) => {
+      options.push({
+        id: campaign.id,
+        label: campaign.title || "Untitled campaign",
       });
+    });
+    // Filter out "Unassigned QRs" from dropdown as per user request to avoid confusion
+    return options;
+  }, [campaigns]);
 
-      const totalFromCounts = toNumber(statusCounts.total);
-      const totalFromApi =
-        Number.isFinite(qrTotal) && qrTotal > 0 ? qrTotal : 0;
-      const total =
-        totalFromCounts || countedTotal || totalFromApi || qrs.length;
-      const active = Math.max(0, total - redeemed - inactive - inventory);
-      return { total, redeemed, active, inventory, fundedActive };
+  const overviewCampaignLabel = useMemo(() => {
+    const match = overviewCampaignOptions.find(
+      (option) => option.id === overviewCampaignId,
+    );
+    return match?.label || "Campaign";
+  }, [overviewCampaignId, overviewCampaignOptions]);
+
+  const overviewFilteredQrs = useMemo(() => {
+    if (overviewCampaignId === "all") return qrs;
+    if (overviewCampaignId === "unassigned") {
+      return qrs.filter((qr) => !(qr.Campaign?.id || qr.campaignId));
+    }
+    return qrs.filter(
+      (qr) => (qr.Campaign?.id || qr.campaignId) === overviewCampaignId,
+    );
+  }, [overviewCampaignId, qrs]);
+
+  const qrStats = useMemo(() => {
+    const toNumber = (v) => Number(v) || 0;
+
+    // 1. Calculate base stats from campaignStatsMap
+    const statsValues = Object.values(campaignStatsMap).filter(
+      (s) => s && s.id && !String(s.id).startsWith("title:"),
+    );
+
+    // Build a Set of active campaign IDs from the authoritative campaigns list
+    const activeCampaignIds = new Set(
+      campaigns.filter((c) => c.status === "active").map((c) => String(c.id)),
+    );
+
+    let campaignTotalSent = 0;
+    let campaignTotalRedeemed = 0;
+    let selectedActive = 0;
+    let selectedRedeemed = 0;
+    let selectedTotal = 0;
+
+    // Deduplicate stats by campaign name to avoid double-counting
+    const seenNames = {};
+    statsValues.forEach((s) => {
+      const sent = toNumber(s.totalQRsOrdered);
+      const redeemed = toNumber(s.totalUsersJoined);
+
+      // Accumulate for "All campaigns" view — only truly active campaigns
+      if (activeCampaignIds.has(String(s.id))) {
+        const name = s.campaign || "Untitled";
+        if (!seenNames[name]) {
+          seenNames[name] = true;
+          campaignTotalSent += sent;
+          campaignTotalRedeemed += redeemed;
+        }
+      }
+
+      if (!isOverviewAll && s.id === selectedQrCampaign) {
+        selectedTotal = sent;
+        selectedRedeemed = redeemed;
+        selectedActive = Math.max(0, sent - redeemed);
+      }
+    });
+
+    const pendingTotal = pendingCampaigns.reduce(
+      (sum, c) => sum + toNumber(c.quantity),
+      0,
+    );
+
+    if (!isOverviewAll) {
+      // Selected Campaign View
+      return {
+        total: selectedTotal,
+        redeemed: selectedRedeemed,
+        active: selectedActive,
+        inventory: 0,
+        campaignManagedTotal: selectedTotal,
+        pendingTotal: 0, // Pending doesn't apply to a specific active campaign selection
+      };
     }
 
-    const total = qrs.length;
-    let redeemed = 0;
-    let inactive = 0;
-    let inventory = 0;
-    let fundedActive = 0;
-    qrs.forEach((qr) => {
-      const status = normalizeQrStatus(qr.status);
-      if (status === "inventory") inventory += 1;
-      else if (isRedeemedQrStatus(status)) redeemed += 1;
-      else if (isInactiveQrStatus(status)) inactive += 1;
-      else if (fundedStatuses.has(status)) fundedActive += 1;
-    });
-    const active = Math.max(0, total - redeemed - inactive - inventory);
-    return { total, redeemed, active, inventory, fundedActive };
-  }, [qrStatusCounts, qrTotal, qrs]);
+    // "All campaigns" View
+    // In this view, "total" card usually shows the absolute DB total (including inventory)
+    // but the "Active QRs" card should show campaign-managed QRs.
+    const dbTotal = Number.isFinite(qrTotal) ? qrTotal : qrs.length;
+    const campaignManagedTotal = campaignTotalSent + pendingTotal;
+
+    return {
+      total: dbTotal,
+      redeemed: campaignTotalRedeemed,
+      active: campaignTotalSent - campaignTotalRedeemed,
+      inventory: Math.max(0, dbTotal - campaignTotalSent),
+      campaignManagedTotal,
+      pendingTotal,
+    };
+  }, [
+    campaignStatsMap,
+    campaigns,
+    isOverviewAll,
+    selectedQrCampaign,
+    qrTotal,
+    qrs.length,
+    pendingCampaigns,
+  ]);
   const notificationUnreadCount = notifications.filter(
     (item) => !item.isRead,
   ).length;
   const qrTotalLabel = qrTotal || qrs.length;
   const qrCoverageLabel =
     qrTotal > qrs.length ? `Showing latest ${qrs.length} of ${qrTotal}` : "";
-  const pendingCampaigns = useMemo(
-    () => campaigns.filter((campaign) => campaign.status === "pending"),
-    [campaigns],
-  );
-  const activeCampaigns = useMemo(
-    () => campaigns.filter((campaign) => campaign.status === "active"),
-    [campaigns],
-  );
   const fundableCampaigns = useMemo(
     () =>
       campaigns.filter(
@@ -3226,31 +3289,6 @@ const VendorDashboard = () => {
     }
   }, [fundableCampaigns, products, selectedQrCampaign, selectedQrProduct]);
 
-  const overviewCampaignOptions = useMemo(() => {
-    const options = [{ id: "all", label: "All campaigns" }];
-    const sortedCampaigns = [...campaigns].sort((a, b) =>
-      String(a.title || "").localeCompare(String(b.title || "")),
-    );
-    sortedCampaigns.forEach((campaign) => {
-      options.push({
-        id: campaign.id,
-        label: campaign.title || "Untitled campaign",
-      });
-    });
-    const hasUnassigned = qrs.some((qr) => !(qr.Campaign?.id || qr.campaignId));
-    if (hasUnassigned) {
-      options.push({ id: "unassigned", label: "Unassigned QRs" });
-    }
-    return options;
-  }, [campaigns, qrs]);
-
-  const overviewCampaignLabel = useMemo(() => {
-    const match = overviewCampaignOptions.find(
-      (option) => option.id === overviewCampaignId,
-    );
-    return match?.label || "Campaign";
-  }, [overviewCampaignId, overviewCampaignOptions]);
-
   useEffect(() => {
     const isValidSelection = overviewCampaignOptions.some(
       (option) => option.id === overviewCampaignId,
@@ -3259,16 +3297,6 @@ const VendorDashboard = () => {
       setOverviewCampaignId("all");
     }
   }, [overviewCampaignId, overviewCampaignOptions]);
-
-  const overviewFilteredQrs = useMemo(() => {
-    if (overviewCampaignId === "all") return qrs;
-    if (overviewCampaignId === "unassigned") {
-      return qrs.filter((qr) => !(qr.Campaign?.id || qr.campaignId));
-    }
-    return qrs.filter(
-      (qr) => (qr.Campaign?.id || qr.campaignId) === overviewCampaignId,
-    );
-  }, [overviewCampaignId, qrs]);
 
   const overviewQrStatusCounts = useMemo(() => {
     const counts = {
@@ -3298,8 +3326,6 @@ const VendorDashboard = () => {
 
     return counts;
   }, [overviewFilteredQrs]);
-  const isOverviewAll = overviewCampaignId === "all";
-  const isOverviewUnassigned = overviewCampaignId === "unassigned";
   const overviewSelectedCampaignCount = isOverviewAll
     ? campaigns.length
     : isOverviewUnassigned
@@ -3375,10 +3401,54 @@ const VendorDashboard = () => {
   }, [overviewFilteredQrs]);
 
   const campaignPerformanceSeries = useMemo(() => {
-    if (!overviewFilteredQrs.length) return [];
-    const redeemedStatuses = new Set(["redeemed", "claimed"]);
+    const statsValues = Object.values(campaignStatsMap).filter(
+      (s) => s && s.id && !String(s.id).startsWith("title:"),
+    );
 
-    if (!isOverviewAll) {
+    if (isOverviewAll) {
+      // Build a Set of active campaign IDs from the authoritative campaigns list
+      const activeCampaignIds = new Set(
+        campaigns.filter((c) => c.status === "active").map((c) => String(c.id)),
+      );
+
+      // Only include stats whose ID matches an active campaign
+      const activeStats = statsValues.filter((s) =>
+        activeCampaignIds.has(String(s.id)),
+      );
+
+      // Deduplicate by campaign name — keep only the first entry per name
+      const nameMap = {};
+      activeStats.forEach((s) => {
+        const name = s.campaign || "Untitled";
+        if (!nameMap[name]) {
+          nameMap[name] = {
+            name,
+            sent: Number(s.totalQRsOrdered) || 0,
+            redeemed: Number(s.totalUsersJoined) || 0,
+          };
+        }
+      });
+
+      return Object.values(nameMap)
+        .sort((a, b) => b.sent - a.sent)
+        .slice(0, 8);
+    }
+
+    // Single campaign selection
+    const selectedStats = campaignStatsMap[selectedQrCampaign];
+    if (selectedStats) {
+      return [
+        {
+          name: selectedStats.campaign || overviewCampaignLabel,
+          sent: Number(selectedStats.totalQRsOrdered) || 0,
+          redeemed: Number(selectedStats.totalUsersJoined) || 0,
+        },
+      ];
+    }
+
+    // Fallback to overviewFilteredQrs if stats aren't loaded yet
+    if (overviewFilteredQrs.length > 0) {
+      const redeemedStatuses = new Set(["redeemed", "claimed"]);
       const redeemedCount = overviewFilteredQrs.filter((qr) =>
         redeemedStatuses.has(String(qr.status || "").toLowerCase()),
       ).length;
@@ -3391,36 +3461,16 @@ const VendorDashboard = () => {
       ];
     }
 
-    const nameMap = new Map(
-      campaigns.map((campaign) => [
-        campaign.id,
-        campaign.title || "Untitled campaign",
-      ]),
-    );
-    const summaryMap = new Map();
+    return [];
+  }, [
+    campaignStatsMap,
+    campaigns,
+    isOverviewAll,
+    selectedQrCampaign,
 
-    overviewFilteredQrs.forEach((qr) => {
-      const campaignId = qr.Campaign?.id || qr.campaignId || "unassigned";
-      const campaignTitle =
-        qr.Campaign?.title || nameMap.get(campaignId) || "Unassigned";
-      if (!summaryMap.has(campaignId)) {
-        summaryMap.set(campaignId, {
-          name: campaignTitle,
-          sent: 0,
-          redeemed: 0,
-        });
-      }
-      const summary = summaryMap.get(campaignId);
-      summary.sent += 1;
-      if (redeemedStatuses.has(String(qr.status || "").toLowerCase())) {
-        summary.redeemed += 1;
-      }
-    });
-
-    return Array.from(summaryMap.values())
-      .sort((a, b) => b.sent - a.sent)
-      .slice(0, 6);
-  }, [overviewFilteredQrs, isOverviewAll, overviewCampaignLabel, campaigns]);
+    overviewCampaignLabel,
+    overviewFilteredQrs,
+  ]);
 
   const recentQrs = useMemo(() => {
     return [...qrs]
@@ -4504,11 +4554,11 @@ const VendorDashboard = () => {
                                           overviewSelectedQrRedeemed,
                                       )}
                                 </span>
-                                <span className="text-gray-400"></span>
+                                <span className="text-gray-400">|</span>
                                 <span>
-                                  Total:{" "}
+                                  Managed:{" "}
                                   {isOverviewAll
-                                    ? qrStats.total
+                                    ? qrStats.campaignManagedTotal
                                     : overviewSelectedQrTotal}
                                 </span>
                               </div>
@@ -5676,7 +5726,9 @@ const VendorDashboard = () => {
                                       </div>
                                       <button
                                         type="button"
-                                        onClick={() => setCampaignTab("pending")}
+                                        onClick={() =>
+                                          setCampaignTab("pending")
+                                        }
                                         className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-400/60 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/20"
                                       >
                                         Open Pending Campaigns
@@ -5954,12 +6006,10 @@ Quantity: ${invoiceData.quantity} QRs
                               <div className="space-y-2">
                                 {activeCampaigns.length === 0 ? (
                                   <div className="text-xs text-center text-gray-500 py-4 space-y-2">
+                                    <div>No active campaign found.</div>
                                     <div>
-                                      No active campaign found.
-                                    </div>
-                                    <div>
-                                      Create or activate a campaign from
-                                      Pending Campaigns to see details here.
+                                      Create or activate a campaign from Pending
+                                      Campaigns to see details here.
                                     </div>
                                   </div>
                                 ) : (
@@ -7869,26 +7919,24 @@ Quantity: ${invoiceData.quantity} QRs
                                     />
                                     {locationsData
                                       .filter(
-                                        (point) =>
-                                          Number.isFinite(Number(point?.lat)) &&
-                                          Number.isFinite(Number(point?.lng)),
+                                        (pt) =>
+                                          Number.isFinite(Number(pt?.lat)) &&
+                                          Number.isFinite(Number(pt?.lng)),
                                       )
-                                      .map((point, index) => (
+                                      .map((pt, i) => (
                                         <Marker
-                                          key={`${point.lat}-${point.lng}-${index}`}
+                                          key={`loc-${pt.lat}-${pt.lng}-${i}`}
                                           position={[
-                                            Number(point.lat),
-                                            Number(point.lng),
+                                            Number(pt.lat),
+                                            Number(pt.lng),
                                           ]}
                                         >
                                           <Popup>
                                             <div className="text-xs">
                                               <div className="font-semibold">
-                                                {point.city || "Unknown city"}
+                                                {pt.city || "Unknown"}
                                               </div>
-                                              <div>
-                                                {point.count || 0} scans
-                                              </div>
+                                              <div>{pt.count || 0} scans</div>
                                             </div>
                                           </Popup>
                                         </Marker>
@@ -7906,16 +7954,16 @@ Quantity: ${invoiceData.quantity} QRs
                                       No locations found.
                                     </div>
                                   ) : (
-                                    locationsData.map((point, index) => (
+                                    locationsData.map((pt, i) => (
                                       <div
-                                        key={`${point.lat}-${point.lng}-${index}-list`}
+                                        key={`cluster-${pt.lat}-${pt.lng}-${i}`}
                                         className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
                                       >
                                         <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                          {point.city || "Unknown"}
+                                          {pt.city || "Unknown"}
                                         </div>
                                         <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                          {point.count || 0} scans
+                                          {pt.count || 0} scans
                                         </div>
                                       </div>
                                     ))
@@ -8645,5 +8693,3 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 };
 
 export default VendorDashboard;
-
-
