@@ -1101,16 +1101,34 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleDownloadCampaignPdf = async (campaignId) => {
+  const handleDownloadCampaignPdf = async (campaign) => {
+    const campaignId = campaign?.id;
     if (!token || !campaignId) return;
     setIsDownloadingPdf(campaignId);
 
+    const isPostpaid = campaign?.planType === "postpaid";
+    const rawSheetIndex = Number.parseInt(
+      sheetCashbackForm?.[campaignId]?.sheetIndex,
+      10,
+    );
+    const selectedSheetIndex =
+      Number.isFinite(rawSheetIndex) && rawSheetIndex >= 0 ? rawSheetIndex : 0;
+    const hasSheetSelection = isPostpaid;
+    const sheetLabel = hasSheetSelection
+      ? selectedSheetIndex < 26
+        ? String.fromCharCode(65 + selectedSheetIndex)
+        : `${selectedSheetIndex + 1}`
+      : null;
+    const downloadParams = undefined;
+
     try {
       await runDownloadWithProgress(
-        () => downloadCampaignQrPdf(token, campaignId),
-        "Preparing campaign PDF...",
+        () => downloadCampaignQrPdf(token, campaignId, downloadParams),
+        "Preparing full campaign PDF...",
       );
-      setStatusWithTimeout("Campaign QR PDF downloaded successfully.");
+      setStatusWithTimeout(
+        "Full campaign QR PDF downloaded successfully.",
+      );
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       const errorMsg = err.message || "Failed to download PDF.";
@@ -6169,7 +6187,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                         type="button"
                                                         onClick={() =>
                                                           handleDownloadCampaignPdf(
-                                                            campaign.id,
+                                                            campaign,
                                                           )
                                                         }
                                                         disabled={
@@ -6579,7 +6597,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                       type="button"
                                                       onClick={() =>
                                                         handleDownloadCampaignPdf(
-                                                          campaign.id,
+                                                          campaign,
                                                         )
                                                       }
                                                       disabled={

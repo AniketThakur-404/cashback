@@ -795,8 +795,10 @@ export const downloadVendorOrderPdf = async (token, orderId) => {
   }, 2000);
 };
 
-export const downloadCampaignQrPdf = async (token, campaignId) => {
-  const url = buildApiUrl(`/api/vendor/campaigns/${campaignId}/download`);
+export const downloadCampaignQrPdf = async (token, campaignId, params) => {
+  const url = buildApiUrl(
+    `/api/vendor/campaigns/${campaignId}/download${buildQueryString(params)}`,
+  );
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
