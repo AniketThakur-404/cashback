@@ -1,8 +1,44 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { LiquidButton } from '../components/ui/LiquidGlassButton';
+
+const extractQrHash = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+
+    const fromPath = (pathLike = '') => {
+        const normalized = decodeURIComponent(String(pathLike || '').trim())
+            .replace(/\/+$/, '');
+        if (!normalized) return null;
+
+        // Supports both /scan/:hash and /redeem/:hash URLs
+        const match = normalized.match(/\/(?:scan|redeem)\/([^/?#]+)/i);
+        if (match?.[1]) return match[1].trim();
+        return null;
+    };
+
+    try {
+        const url = new URL(raw);
+        const pathHash = fromPath(url.pathname);
+        if (pathHash) return pathHash;
+
+        const queryHash =
+            url.searchParams.get('hash') ||
+            url.searchParams.get('qr') ||
+            url.searchParams.get('code');
+        if (queryHash) return String(queryHash).trim();
+    } catch (_) {
+        // Not a URL, try path-like or raw hash forms below.
+    }
+
+    const pathLikeHash = fromPath(raw);
+    if (pathLikeHash) return pathLikeHash;
+
+    // Raw hash directly inside the QR
+    return raw.replace(/^#/, '').trim() || null;
+};
 
 const CameraScan = () => {
     const navigate = useNavigate();
@@ -28,18 +64,42 @@ const CameraScan = () => {
                     aspectRatio: 1.0
                 };
 
-                await html5QrCode.start(
-                    { facingMode: "environment" },
-                    config,
-                    (decodedText, decodedResult) => {
-                        // Success callback
-                        handleScan(decodedText);
-                    },
-                    (errorMessage) => {
-                        // Error callback - ignore frame errors as they happen when no QR is detected
-                        // console.log(errorMessage); 
+                const onDecode = (decodedText) => {
+                    const hash = extractQrHash(decodedText);
+                    if (!hash) return;
+                    handleScan(hash);
+                };
+
+                const onDecodeError = () => {
+                    // Ignore frame-level decode misses while scanning.
+                };
+
+                try {
+                    await html5QrCode.start(
+                        { facingMode: { exact: "environment" } },
+                        config,
+                        onDecode,
+                        onDecodeError
+                    );
+                } catch (cameraModeError) {
+                    // Fallback for browsers/devices that reject facingMode constraints.
+                    const cameras = await Html5Qrcode.getCameras();
+                    const preferredCamera =
+                        cameras.find((camera) =>
+                            /(back|rear|environment)/i.test(camera.label || "")
+                        ) || cameras[0];
+
+                    if (!preferredCamera?.id) {
+                        throw cameraModeError;
                     }
-                );
+
+                    await html5QrCode.start(
+                        preferredCamera.id,
+                        config,
+                        onDecode,
+                        onDecodeError
+                    );
+                }
             } catch (err) {
                 console.error("Scanner error:", err);
                 setScanError("Could not access camera. Please ensure you have granted camera permissions.");
@@ -60,7 +120,7 @@ const CameraScan = () => {
         };
     }, [isScanning]);
 
-    const handleScan = (decodedText) => {
+    const handleScan = (hash) => {
         if (!readerRef.current) return;
 
         // Stop scanning
@@ -68,27 +128,8 @@ const CameraScan = () => {
             readerRef.current = null;
             setIsScanning(false);
 
-            // Process the scanned text
-            console.log("Scanned:", decodedText);
-
-            // Check if it's a URL for our app
-            // Expected format: https://domain.com/scan/HASH or just HASH
-            let hash = decodedText;
-
-            try {
-                const url = new URL(decodedText);
-                if (url.pathname.includes('/scan/')) {
-                    const parts = url.pathname.split('/scan/');
-                    if (parts.length > 1) {
-                        hash = parts[1];
-                    }
-                }
-            } catch (e) {
-                // Not a URL, use as raw hash
-            }
-
             // Navigate to the scan processing page
-            navigate(`/scan/${hash}`);
+            navigate(`/scan/${encodeURIComponent(hash)}`);
         }).catch(err => {
             console.error("Failed to stop scanner after success", err);
         });

@@ -9,14 +9,31 @@ const QRScanPage = () => {
     const { hash } = useParams();
     const navigate = useNavigate();
     const [status, setStatus] = useState('checking'); // checking, validating, error
+    const normalizedHash = (() => {
+        try {
+            return decodeURIComponent(String(hash || '')).trim();
+        } catch (_) {
+            return String(hash || '').trim();
+        }
+    })();
 
     useEffect(() => {
         const handleQRScan = async () => {
+            if (!normalizedHash) {
+                navigate('/scan/result', {
+                    state: {
+                        success: false,
+                        error: 'Invalid QR code format'
+                    }
+                });
+                return;
+            }
+
             // Check if user is logged in
             const token = localStorage.getItem(AUTH_TOKEN_KEY);
             if (!token) {
                 // Redirect to wallet login with return URL
-                const returnUrl = `/scan/${hash}`;
+                const returnUrl = `/scan/${encodeURIComponent(normalizedHash)}`;
                 storePostLoginRedirect(returnUrl);
                 navigate(`/wallet`);
                 return;
@@ -27,7 +44,7 @@ const QRScanPage = () => {
             try {
                 // Call backend to scan and redeem
                 const locationPayload = await captureClientLocation();
-                const response = await scanQR(hash, token, locationPayload);
+                const response = await scanQR(normalizedHash, token, locationPayload);
 
                 // Navigate to result page with success data
                 navigate('/scan/result', {
@@ -43,7 +60,7 @@ const QRScanPage = () => {
 
             } catch (error) {
                 if (error?.status === 401) {
-                    const returnUrl = `/scan/${hash}`;
+                    const returnUrl = `/scan/${encodeURIComponent(normalizedHash)}`;
                     storePostLoginRedirect(returnUrl);
                     navigate(`/wallet`);
                     return;
@@ -59,7 +76,7 @@ const QRScanPage = () => {
         };
 
         handleQRScan();
-    }, [hash, navigate]);
+    }, [normalizedHash, navigate]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
