@@ -4,6 +4,7 @@ import { jsPDF } from "jspdf";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   Activity,
+  AlertCircle,
   ArrowLeftRight,
   BarChart2,
   BarChart3,
@@ -11,6 +12,7 @@ import {
   Banknote,
   Bell,
   Building2,
+  CheckCircle2,
   ChevronRight,
   ChevronDown,
   CircleDollarSign,
@@ -761,6 +763,8 @@ const AdminDashboard = () => {
   const [vendorStatusUpdates, setVendorStatusUpdates] = useState({});
   const [vendorTechFeeDrafts, setVendorTechFeeDrafts] = useState({});
   const [vendorTechFeeSaving, setVendorTechFeeSaving] = useState({});
+  const [vendorPlanTypeDrafts, setVendorPlanTypeDrafts] = useState({});
+  const [vendorPlanTypeSaving, setVendorPlanTypeSaving] = useState({});
   const [vendorActionStatus, setVendorActionStatus] = useState("");
   const [vendorActionError, setVendorActionError] = useState("");
   const [brandForm, setBrandForm] = useState(() => getDefaultBrandFormState());
@@ -953,6 +957,8 @@ const AdminDashboard = () => {
     setVendorStatusUpdates({});
     setVendorTechFeeDrafts({});
     setVendorTechFeeSaving({});
+    setVendorPlanTypeDrafts({});
+    setVendorPlanTypeSaving({});
     setVendorActionStatus("");
     setVendorActionError("");
     setBrandForm(getDefaultBrandFormState());
@@ -1055,7 +1061,7 @@ const AdminDashboard = () => {
   const activeSubSection = subSection || "";
   const activeNav =
     (activeSection === "vendors" || activeSection === "users") &&
-    activeSubSection
+      activeSubSection
       ? `${activeSection}-${activeSubSection}`
       : activeSection;
 
@@ -1083,8 +1089,6 @@ const AdminDashboard = () => {
   const showVendorSummaries = isVendorsRoute && vendorView === "all";
   const showVendorTable = isVendorsRoute; // Always show table if vendors route
   const shouldRenderVendorsSection = isVendorsRoute;
-  const isActiveVendorListRoute =
-    isVendorsRoute && activeSubSection === "active";
 
   const withdrawalPreview = useMemo(() => {
     if (!withdrawals?.length) return [];
@@ -1455,7 +1459,7 @@ const AdminDashboard = () => {
       }
       const rawRedeemStore =
         normalizedMetadata.redeemStore &&
-        typeof normalizedMetadata.redeemStore === "object"
+          typeof normalizedMetadata.redeemStore === "object"
           ? normalizedMetadata.redeemStore
           : {};
       const normalizedRedeemProducts = normalizeRedeemProducts(
@@ -1663,6 +1667,35 @@ const AdminDashboard = () => {
   }, [vendors]);
 
   useEffect(() => {
+    setVendorPlanTypeDrafts((prev) => {
+      const next = { ...prev };
+      const vendorIds = new Set();
+      let changed = false;
+
+      (vendors || []).forEach((vendor) => {
+        if (!vendor?.id) return;
+        vendorIds.add(vendor.id);
+        const currentPlan = String(
+          vendor?.Brand?.defaultPlanType || "prepaid",
+        ).toLowerCase();
+        if (next[vendor.id] === undefined) {
+          next[vendor.id] = currentPlan;
+          changed = true;
+        }
+      });
+
+      Object.keys(next).forEach((vendorId) => {
+        if (!vendorIds.has(vendorId)) {
+          delete next[vendorId];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [vendors]);
+
+  useEffect(() => {
     if (!token || !campaignAnalyticsId) return;
     loadCampaignAnalytics(token, campaignAnalyticsId);
   }, [token, campaignAnalyticsId]);
@@ -1812,14 +1845,21 @@ const AdminDashboard = () => {
 
   const handlePlanTypeUpdate = async (vendor, newType) => {
     if (!vendor?.Brand?.id || !newType) return;
+    const normalizedType = String(newType).toLowerCase();
+    if (!["prepaid", "postpaid"].includes(normalizedType)) return;
     setVendorActionStatus("");
     setVendorActionError("");
+    setVendorPlanTypeSaving((prev) => ({ ...prev, [vendor.id]: true }));
 
     try {
       await updateAdminBrandDetails(token, vendor.Brand.id, {
-        defaultPlanType: newType,
+        defaultPlanType: normalizedType,
       });
       setVendorActionStatus("Plan type updated.");
+      setVendorPlanTypeDrafts((prev) => ({
+        ...prev,
+        [vendor.id]: normalizedType,
+      }));
       await loadVendors(token);
     } catch (err) {
       handleRequestError(
@@ -1827,6 +1867,8 @@ const AdminDashboard = () => {
         setVendorActionError,
         "Unable to update plan type.",
       );
+    } finally {
+      setVendorPlanTypeSaving((prev) => ({ ...prev, [vendor.id]: false }));
     }
   };
 
@@ -2160,9 +2202,9 @@ const AdminDashboard = () => {
         ? value === ""
           ? ""
           : (() => {
-              const numeric = Number(value);
-              return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
-            })()
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+          })()
         : value;
     setRedeemProductDraft((prev) => ({
       ...(prev || {}),
@@ -2216,7 +2258,7 @@ const AdminDashboard = () => {
     try {
       const currentRedeemStore =
         settings?.metadata?.redeemStore &&
-        typeof settings.metadata.redeemStore === "object"
+          typeof settings.metadata.redeemStore === "object"
           ? settings.metadata.redeemStore
           : {};
 
@@ -2302,7 +2344,7 @@ const AdminDashboard = () => {
         (p, idx) =>
           idx !== editingRedeemProductIndex &&
           String(p?.id || "").toLowerCase() ===
-            String(normalizedData.id).toLowerCase(),
+          String(normalizedData.id).toLowerCase(),
       );
       if (exists) {
         setRedeemProductDraftError(
@@ -2368,9 +2410,9 @@ const AdminDashboard = () => {
           ? value === ""
             ? ""
             : (() => {
-                const numeric = Number(value);
-                return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
-              })()
+              const numeric = Number(value);
+              return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+            })()
           : value;
       return {
         ...(product || {}),
@@ -2422,7 +2464,7 @@ const AdminDashboard = () => {
     try {
       const currentRedeemStore =
         settings?.metadata?.redeemStore &&
-        typeof settings.metadata.redeemStore === "object"
+          typeof settings.metadata.redeemStore === "object"
           ? settings.metadata.redeemStore
           : {};
       const normalizedRedeemProducts = normalizeRedeemProducts(
@@ -4364,13 +4406,13 @@ const AdminDashboard = () => {
                       orderAttentionCount +
                       pendingQrOrderCount >
                       0 && (
-                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">
-                        {pendingWithdrawalCount +
-                          orderAttentionCount +
-                          pendingQrOrderCount}{" "}
-                        pending
-                      </span>
-                    )}
+                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+                          {pendingWithdrawalCount +
+                            orderAttentionCount +
+                            pendingQrOrderCount}{" "}
+                          pending
+                        </span>
+                      )}
                   </div>
                   <div className="space-y-3">
                     {[
@@ -4529,11 +4571,10 @@ const AdminDashboard = () => {
                     <button
                       key={option.value}
                       onClick={() => setAnalyticsRange(option.value)}
-                      className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
-                        analyticsRange === option.value
-                          ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                          : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60"
-                      }`}
+                      className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${analyticsRange === option.value
+                        ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                        : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60"
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -4787,12 +4828,11 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div
-                        className={`text-xs font-semibold px-2 py-1 rounded-md ${
-                          transactionTotals.credit - transactionTotals.debit >=
+                        className={`text-xs font-semibold px-2 py-1 rounded-md ${transactionTotals.credit - transactionTotals.debit >=
                           0
-                            ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
-                            : "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10"
-                        }`}
+                          ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
+                          : "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10"
+                          }`}
                       >
                         {transactionTotals.credit - transactionTotals.debit >= 0
                           ? "Positive"
@@ -4936,15 +4976,15 @@ const AdminDashboard = () => {
                           </td>
                         </tr>
                       ) : orders.filter((order) => {
-                          const matchesVendor =
-                            filterVendorId === "all" ||
-                            order.vendorId === filterVendorId ||
-                            order.vendor?.id === filterVendorId;
-                          const matchesCampaign =
-                            filterCampaignId === "all" ||
-                            order.campaignId === filterCampaignId;
-                          return matchesVendor && matchesCampaign;
-                        }).length === 0 ? (
+                        const matchesVendor =
+                          filterVendorId === "all" ||
+                          order.vendorId === filterVendorId ||
+                          order.vendor?.id === filterVendorId;
+                        const matchesCampaign =
+                          filterCampaignId === "all" ||
+                          order.campaignId === filterCampaignId;
+                        return matchesVendor && matchesCampaign;
+                      }).length === 0 ? (
                         <tr>
                           <td
                             colSpan="6"
@@ -5007,13 +5047,12 @@ const AdminDashboard = () => {
                                 </td>
                                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
                                   <span
-                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                                      order.status === "paid"
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                        : order.status === "shipped"
-                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                                          : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-                                    }`}
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${order.status === "paid"
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                      : order.status === "shipped"
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                                        : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                      }`}
                                   >
                                     {order.status || "pending"}
                                   </span>
@@ -5027,8 +5066,8 @@ const AdminDashboard = () => {
                                     className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#059669] text-white hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
                                   >
                                     {isPreparingBatchPdf &&
-                                    batchQrs.length > 0 &&
-                                    batchQrs[0].orderId === order.id ? (
+                                      batchQrs.length > 0 &&
+                                      batchQrs[0].orderId === order.id ? (
                                       <>
                                         <RefreshCw
                                           size={12}
@@ -5293,7 +5332,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionPerQr ||
-                              0,
+                            0,
                           )}
                         </div>
                       </div>
@@ -5303,7 +5342,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionTotal ||
-                              0,
+                            0,
                           )}
                         </div>
                       </div>
@@ -5351,7 +5390,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-900 dark:text-white">
                           Total:{" "}
                           {campaignAnalytics.budget?.total !== null &&
-                          campaignAnalytics.budget?.total !== undefined
+                            campaignAnalytics.budget?.total !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.total)}`
                             : "Not set"}
                         </div>
@@ -5362,7 +5401,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-500">
                           Remaining:{" "}
                           {campaignAnalytics.budget?.remaining !== null &&
-                          campaignAnalytics.budget?.remaining !== undefined
+                            campaignAnalytics.budget?.remaining !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.remaining)}`
                             : "-"}
                         </div>
@@ -6772,33 +6811,30 @@ const AdminDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setSupportView("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    supportView === "all"
-                      ? "bg-[#059669] text-white"
-                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "all"
+                    ? "bg-[#059669] text-white"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                    }`}
                 >
                   All ({supportCounts.total})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSupportView("product")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    supportView === "product"
-                      ? "bg-amber-500 text-white"
-                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "product"
+                    ? "bg-amber-500 text-white"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                    }`}
                 >
                   Product Reports ({supportCounts.product})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSupportView("other")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    supportView === "other"
-                      ? "bg-slate-700 text-white dark:bg-slate-600"
-                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "other"
+                    ? "bg-slate-700 text-white dark:bg-slate-600"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                    }`}
                 >
                   Other Tickets ({supportCounts.other})
                 </button>
@@ -6979,18 +7015,20 @@ const AdminDashboard = () => {
           {/* Vendors Management Section */}
           {shouldRenderVendorsSection && (
             <section id="vendors" className="space-y-6 mt-12">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     Vendors Management
                   </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Monitor and manage all vendor accounts.</p>
                 </div>
                 {showVendorSummaries && (
-                  <div className="flex gap-2">
-                    <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-sm text-emerald-400">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-sm font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                       Active: {effectiveVendorStatusCounts.active || 0}
                     </span>
-                    <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-sm text-slate-900 dark:text-white/60">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-sm font-semibold text-slate-600 dark:text-white/60 border border-slate-200/60 dark:border-white/10">
                       Total: {vendors.length}
                     </span>
                     {showAllVendors ? (
@@ -7004,7 +7042,7 @@ const AdminDashboard = () => {
                       filteredVendors.length > 6 && (
                         <button
                           onClick={() => setShowAllVendors(true)}
-                          className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
+                          className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm font-semibold text-white transition-colors shadow-sm"
                         >
                           View All ({filteredVendors.length})
                         </button>
@@ -7018,46 +7056,64 @@ const AdminDashboard = () => {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div
                     id="vendors-active"
-                    className={`${adminPanelClass} space-y-3 border-l-4 border-emerald-400/60`}
+                    className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-emerald-400 p-5"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Active Vendors
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Vendors currently in active status.
-                        </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center">
+                          <CheckCircle2 size={20} className="text-emerald-500" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                            Active Vendors
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Vendors currently in active status.
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-xs font-semibold text-emerald-500">
-                        {effectiveVendorStatusCounts.active || 0} total
-                      </span>
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-2xl font-bold text-emerald-500 leading-none">
+                          {effectiveVendorStatusCounts.active || 0}
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">accounts</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">
-                      Monitoring currently active accounts.
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Monitoring currently active accounts.</span>
                     </div>
                   </div>
                   <div
                     id="vendors-paused"
-                    className={`${adminPanelClass} space-y-3 border-l-4 border-amber-400/60`}
+                    className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-amber-400 p-5"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Paused / Rejected
-                        </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Vendors needing admin attention.
-                        </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 flex items-center justify-center">
+                          <AlertCircle size={20} className="text-amber-500" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                            Paused / Rejected
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Vendors needing admin attention.
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-xs font-semibold text-amber-500">
-                        {(effectiveVendorStatusCounts.paused || 0) +
-                          (effectiveVendorStatusCounts.rejected || 0) +
-                          (effectiveVendorStatusCounts.expired || 0)}
-                      </span>
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-2xl font-bold text-amber-500 leading-none">
+                          {(effectiveVendorStatusCounts.paused || 0) +
+                            (effectiveVendorStatusCounts.rejected || 0) +
+                            (effectiveVendorStatusCounts.expired || 0)}
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">accounts</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">
-                      Includes paused, rejected, and expired vendors.
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Includes paused, rejected, and expired vendors.</span>
                     </div>
                   </div>
                 </div>
@@ -7075,7 +7131,7 @@ const AdminDashboard = () => {
               {showVendorTable && limitedVendors.length > 0 && (
                 <div className={`${adminPanelClass} overflow-hidden`}>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-sm table-auto">
+                    <table className="w-full min-w-[1050px] text-sm table-auto">
                       <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200/70 dark:border-white/5">
                         <tr>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
@@ -7085,11 +7141,13 @@ const AdminDashboard = () => {
                             Contact Info
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
-
                             Tech Fee
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
                             Status
+                          </th>
+                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+                            Plan Type
                           </th>
                           <th className="text-right py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
                             Actions
@@ -7113,7 +7171,7 @@ const AdminDashboard = () => {
                           const techFeeDraft =
                             vendorTechFeeDrafts[vendor.id] ??
                             (currentTechFeeValue !== null &&
-                            currentTechFeeValue > 0
+                              currentTechFeeValue > 0
                               ? currentTechFeeValue.toFixed(2)
                               : "");
                           const parsedTechFeeDraft = Number(techFeeDraft);
@@ -7132,10 +7190,31 @@ const AdminDashboard = () => {
                             vendorTechFeeSaving[vendor.id],
                           );
                           const canSaveTechFee =
-                            isActiveVendorListRoute &&
                             isTechFeeValid &&
                             hasTechFeeChanged &&
                             !isSavingTechFee;
+                          const currentPlanType = String(
+                            vendor?.Brand?.defaultPlanType || "prepaid",
+                          ).toLowerCase();
+                          const planTypeDraft = String(
+                            vendorPlanTypeDrafts[vendor.id] || currentPlanType,
+                          ).toLowerCase();
+                          const isSavingPlanType = Boolean(
+                            vendorPlanTypeSaving[vendor.id],
+                          );
+                          const canSavePlanType =
+                            Boolean(vendor?.Brand?.id) &&
+                            ["prepaid", "postpaid"].includes(planTypeDraft) &&
+                            planTypeDraft !== currentPlanType &&
+                            !isSavingPlanType;
+                          const currentStatus = String(
+                            vendor.status || "",
+                          ).toLowerCase();
+                          const statusDraft = String(
+                            vendorStatusUpdates[vendor.id] || vendor.status,
+                          ).toLowerCase();
+                          const canSaveStatus =
+                            Boolean(statusDraft) && statusDraft !== currentStatus;
                           const techFeeLabel =
                             currentTechFeeValue !== null &&
                             currentTechFeeValue > 0
@@ -7211,74 +7290,116 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
-
-                                {isActiveVendorListRoute ? (
-                                  <div className="flex items-center gap-2">
-                                    <div className="relative">
-                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                                        INR
-                                      </span>
-                                      <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
-                                        max={MAX_QR_PRICE}
-                                        value={techFeeDraft}
-                                        onChange={(event) =>
-                                          handleVendorTechFeeChange(
-                                            vendor.id,
-                                            event.target.value,
-                                          )
-                                        }
-                                        className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${
-                                          techFeeDraft !== "" && !isTechFeeValid
-                                            ? "border-rose-300 dark:border-rose-500/50"
-                                            : "border-slate-200 dark:border-white/10"
-                                        }`}
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleVendorTechFeeSave(vendor)
+                                <div className="flex items-center gap-2">
+                                  <div className="relative">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                      INR
+                                    </span>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0.01"
+                                      max={MAX_QR_PRICE}
+                                      value={techFeeDraft}
+                                      onChange={(event) =>
+                                        handleVendorTechFeeChange(
+                                          vendor.id,
+                                          event.target.value,
+                                        )
                                       }
-                                      disabled={!canSaveTechFee}
-                                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {isSavingTechFee ? "Saving..." : "Save"}
-                                    </button>
+                                      className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${techFeeDraft !== "" && !isTechFeeValid
+                                          ? "border-rose-300 dark:border-rose-500/50"
+                                          : "border-slate-200 dark:border-white/10"
+                                        }`}
+                                    />
                                   </div>
-                                ) : (
-                                  <span className="font-semibold text-slate-900 dark:text-white text-sm">
-                                    {techFeeLabel}
-                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleVendorTechFeeSave(vendor)
+                                    }
+                                    disabled={!canSaveTechFee}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {isSavingTechFee ? "Saving..." : "Save"}
+                                  </button>
+                                </div>
+                                {!hasTechFeeChanged && (
+                                  <div className="text-[10px] text-slate-400 mt-1">
+                                    Current: {techFeeLabel}
+                                  </div>
                                 )}
                               </td>
 
                               <td className="py-4 px-6 align-top">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleAccountView({
-                                      vendorId: vendor.id,
-                                      brandId: vendor.Brand?.id,
-                                      initialTab: "profile",
-                                    })
-                                  }
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusClasses(vendor.status)} bg-opacity-10 hover:bg-opacity-20 transition-all cursor-pointer`}
-                                  title="Click to update status"
-                                >
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full ${
-                                      vendor.status === "active"
-                                        ? "bg-emerald-500"
-                                        : vendor.status === "paused"
-                                          ? "bg-amber-500"
-                                          : "bg-slate-400"
-                                    }`}
-                                  />
-                                  {vendor.status}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={statusDraft}
+                                    onChange={(event) =>
+                                      setVendorStatusUpdates((prev) => ({
+                                        ...prev,
+                                        [vendor.id]: event.target.value,
+                                      }))
+                                    }
+                                    className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669]"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="expired">Expired</option>
+                                  </select>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleVendorStatusSave(
+                                        vendor.id,
+                                        vendor.status,
+                                      )
+                                    }
+                                    disabled={!canSaveStatus}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Save
+                                  </button>
+                                </div>
+                              </td>
+
+                              <td className="py-4 px-6 align-top">
+                                {vendor?.Brand?.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <select
+                                      value={planTypeDraft}
+                                      onChange={(event) =>
+                                        setVendorPlanTypeDrafts((prev) => ({
+                                          ...prev,
+                                          [vendor.id]: event.target.value,
+                                        }))
+                                      }
+                                      className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669]"
+                                    >
+                                      <option value="prepaid">Prepaid</option>
+                                      <option value="postpaid">Postpaid</option>
+                                    </select>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handlePlanTypeUpdate(
+                                          vendor,
+                                          planTypeDraft,
+                                        )
+                                      }
+                                      disabled={!canSavePlanType}
+                                      className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                      {isSavingPlanType ? "Saving..." : "Save"}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    No brand
+                                  </span>
+                                )}
                               </td>
 
                               <td className="py-4 px-6 align-top text-right">
@@ -7462,11 +7583,10 @@ const AdminDashboard = () => {
                       <button
                         key={filter.id}
                         onClick={() => setLogsFilter(filter.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                          logsFilter === filter.id
-                            ? "bg-[#059669] text-white"
-                            : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
-                        }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${logsFilter === filter.id
+                          ? "bg-[#059669] text-white"
+                          : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                          }`}
                       >
                         {filter.label}
                       </button>
@@ -7747,15 +7867,14 @@ const AdminDashboard = () => {
                               </td>
                               <td className="px-5 py-3">
                                 <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    String(product?.status).toLowerCase() ===
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${String(product?.status).toLowerCase() ===
                                     "inactive"
-                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
-                                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
-                                  }`}
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                    }`}
                                 >
                                   {String(product?.status).toLowerCase() ===
-                                  "inactive"
+                                    "inactive"
                                     ? "Inactive"
                                     : "Active"}
                                 </span>
