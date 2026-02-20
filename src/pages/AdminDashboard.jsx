@@ -7085,15 +7085,7 @@ const AdminDashboard = () => {
                             Contact Info
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
-<<<<<<< HEAD
-                            Plan Type
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
-                            Subscription
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
-=======
->>>>>>> 3947112805d132a55aca02d7785224cfcd585e13
+
                             Tech Fee
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
@@ -7219,59 +7211,7 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
-<<<<<<< HEAD
-                                <div className="relative group w-fit">
-                                  <select
-                                    value={
-                                      vendor.Brand?.defaultPlanType || "prepaid"
-                                    }
-                                    onChange={(e) =>
-                                      handlePlanTypeUpdate(
-                                        vendor,
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={`appearance-none cursor-pointer text-xs font-semibold pl-3 pr-8 py-1.5 rounded-full transition-all duration-200 border shadow-sm outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-white dark:focus:ring-offset-slate-900 ${
-                                      vendor.Brand?.defaultPlanType ===
-                                      "postpaid"
-                                        ? "bg-purple-50 text-purple-700 border-purple-200 hover:border-purple-300 hover:bg-purple-100 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20 dark:hover:border-purple-500/30 dark:hover:bg-purple-500/20 focus:ring-purple-500"
-                                        : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/20 focus:ring-emerald-500"
-                                    }`}
-                                  >
-                                    <option value="prepaid">Prepaid</option>
-                                    <option value="postpaid">Postpaid</option>
-                                  </select>
-                                  <ChevronDown
-                                    size={14}
-                                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 group-hover:translate-y-[-40%] ${
-                                      vendor.Brand?.defaultPlanType ===
-                                      "postpaid"
-                                        ? "text-purple-700 dark:text-purple-300"
-                                        : "text-emerald-700 dark:text-emerald-300"
-                                    }`}
-                                  />
-                                </div>
-                              </td>
 
-                              <td className="py-4 px-6 align-top">
-                                <div className="flex flex-col items-start gap-1">
-                                  <span
-                                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border ${getStatusClasses(subscriptionStatus)} bg-opacity-10 border-opacity-20`}
-                                  >
-                                    {subscriptionStatus || "None"}
-                                  </span>
-                                  {subscriptionEnds && (
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                      <Clock size={10} />
-                                      {formatDate(subscriptionEnds)}
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-
-                              <td className="py-4 px-6 align-top">
-=======
->>>>>>> 3947112805d132a55aca02d7785224cfcd585e13
                                 {isActiveVendorListRoute ? (
                                   <div className="flex items-center gap-2">
                                     <div className="relative">

@@ -3005,27 +3005,13 @@ const VendorDashboard = () => {
     const cashbackValue = maxCashbackValue || firstCashbackValue || 0;
     const budgetValue =
       calculatedTotalBudget > 0 ? calculatedTotalBudget : null;
-<<<<<<< HEAD
 
-    if (!campaignForm.startDate || !campaignForm.endDate) {
-      setCampaignError("Please select both start and end dates.");
-      return;
-    }
-    if (new Date(campaignForm.endDate) <= new Date(campaignForm.startDate)) {
-      setCampaignError("End date must be after start date.");
-      return;
-    }
-
-    const startDateValue = campaignForm.startDate;
-    const endDateValue = campaignForm.endDate;
-=======
     const now = new Date();
     const startDate = new Date(now);
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + 3);
     const startDateValue = startDate.toISOString().slice(0, 10);
     const endDateValue = endDate.toISOString().slice(0, 10);
->>>>>>> 3947112805d132a55aca02d7785224cfcd585e13
     setCampaignError("");
     setCampaignStatus("");
     setIsSavingCampaign(true);
@@ -3853,2173 +3839,2136 @@ const VendorDashboard = () => {
 
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-300 p-6 text-gray-900 dark:text-gray-100">
         <>
-            {!isAuthenticated && (
-              <div className="flex min-h-[80vh] items-center justify-center p-4">
-                <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-strong"></div>
+          {!isAuthenticated && (
+            <div className="flex min-h-[80vh] items-center justify-center p-4">
+              <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-strong"></div>
 
-                  <div className="p-8 space-y-8">
-                    <div className="text-center space-y-2">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary-strong/20 text-primary dark:text-primary mb-4 ring-1 ring-primary/10 dark:ring-primary-strong/40">
-                        <Store size={24} />
+                <div className="p-8 space-y-8">
+                  <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary-strong/20 text-primary dark:text-primary mb-4 ring-1 ring-primary/10 dark:ring-primary-strong/40">
+                      <Store size={24} />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                      Vendor Portal
+                    </h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Sign in to manage your store & campaigns
+                    </p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                        Email or Username
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
+                          <User size={18} />
+                        </div>
+                        <input
+                          type="text"
+                          value={email}
+                          onChange={(event) => setEmail(event.target.value)}
+                          placeholder="Enter your credentials"
+                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
+                        />
                       </div>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                        Vendor Portal
-                      </h1>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Sign in to manage your store & campaigns
-                      </p>
                     </div>
 
-                    <div className="space-y-5">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                          Email or Username
-                        </label>
-                        <div className="relative group">
-                          <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
-                            <User size={18} />
-                          </div>
-                          <input
-                            type="text"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            placeholder="Enter your credentials"
-                            className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-                          />
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                        Password
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
+                          <ShieldCheck size={18} />
                         </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                          Password
-                        </label>
-                        <div className="relative group">
-                          <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
-                            <ShieldCheck size={18} />
-                          </div>
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            onChange={(event) =>
-                              setPassword(event.target.value)
-                            }
-                            placeholder="Enter password"
-                            className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                          >
-                            {showPassword ? (
-                              <EyeOff size={18} />
-                            ) : (
-                              <Eye size={18} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="pt-2">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          placeholder="Enter password"
+                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
+                        />
                         <button
                           type="button"
-                          onClick={handleSignIn}
-                          disabled={isSigningIn}
-                          className="w-full rounded-xl bg-gradient-to-r from-primary to-primary-strong hover:from-primary hover:to-primary-strong text-white text-sm font-bold py-3 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                         >
-                          {isSigningIn ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              <span>Signing in...</span>
-                            </>
+                          {showPassword ? (
+                            <EyeOff size={18} />
                           ) : (
-                            <>
-                              <span>Sign In</span>
-                              <ArrowRight size={18} className="opacity-80" />
-                            </>
+                            <Eye size={18} />
                           )}
                         </button>
                       </div>
-
-                      {authStatus && (
-                        <div className="p-3 bg-primary/5 dark:bg-primary-strong/20 border border-primary/10 dark:border-primary-strong/30 rounded-lg flex items-center gap-2 text-xs font-medium text-primary dark:text-primary">
-                          <Check size={14} />
-                          {authStatus}
-                        </div>
-                      )}
-
-                      {authError && (
-                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400">
-                          <BadgeCheck size={14} className="rotate-180" />
-                          {authError}
-                        </div>
-                      )}
                     </div>
 
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-100 dark:border-zinc-800"></div>
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white dark:bg-zinc-900 px-2 text-gray-400 font-medium tracking-wider">
-                          New to Platform?
-                        </span>
-                      </div>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSignIn}
+                        disabled={isSigningIn}
+                        className="w-full rounded-xl bg-gradient-to-r from-primary to-primary-strong hover:from-primary hover:to-primary-strong text-white text-sm font-bold py-3 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {isSigningIn ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span>Signing in...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Sign In</span>
+                            <ArrowRight size={18} className="opacity-80" />
+                          </>
+                        )}
+                      </button>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => navigate("/brand-registration")}
-                      className="w-full rounded-xl border border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/30 text-gray-600 dark:text-gray-400 font-semibold py-3 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-primary hover:text-primary text-sm transition-all flex items-center justify-center gap-2 group"
-                    >
-                      <Store
-                        size={16}
-                        className="group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary"
-                      />
-                      Apply for Partnership
-                    </button>
+                    {authStatus && (
+                      <div className="p-3 bg-primary/5 dark:bg-primary-strong/20 border border-primary/10 dark:border-primary-strong/30 rounded-lg flex items-center gap-2 text-xs font-medium text-primary dark:text-primary">
+                        <Check size={14} />
+                        {authStatus}
+                      </div>
+                    )}
+
+                    {authError && (
+                      <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400">
+                        <BadgeCheck size={14} className="rotate-180" />
+                        {authError}
+                      </div>
+                    )}
                   </div>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-100 dark:border-zinc-800"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white dark:bg-zinc-900 px-2 text-gray-400 font-medium tracking-wider">
+                        New to Platform?
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate("/brand-registration")}
+                    className="w-full rounded-xl border border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/30 text-gray-600 dark:text-gray-400 font-semibold py-3 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-primary hover:text-primary text-sm transition-all flex items-center justify-center gap-2 group"
+                  >
+                    <Store
+                      size={16}
+                      className="group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary"
+                    />
+                    Apply for Partnership
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Onboarding / Registration Modal */}
-            {showOnboarding && !isAuthenticated && (
-              <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
-                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-                  <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <BadgeCheck className="text-primary" size={24} />
-                      Partner Application
-                    </h2>
-                    <button
-                      onClick={() => {
-                        setShowOnboarding(false);
-                        setRegistrationSubmitted(false);
-                        setRegistrationForm((prev) => ({
-                          ...prev,
-                          logo: null,
-                          logoPreview: null,
-                        }));
-                      }}
-                      className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-                    >
-                      <X size={20} className="text-gray-500" />
-                    </button>
-                  </div>
+          {/* Onboarding / Registration Modal */}
+          {showOnboarding && !isAuthenticated && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
+              <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 sticky top-0 z-10">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <BadgeCheck className="text-primary" size={24} />
+                    Partner Application
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowOnboarding(false);
+                      setRegistrationSubmitted(false);
+                      setRegistrationForm((prev) => ({
+                        ...prev,
+                        logo: null,
+                        logoPreview: null,
+                      }));
+                    }}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                  >
+                    <X size={20} className="text-gray-500" />
+                  </button>
+                </div>
 
-                  <div className="overflow-y-auto">
-                    {registrationSubmitted ? (
-                      <div className="p-8 text-center space-y-4">
-                        <div className="w-16 h-16 bg-primary/10 dark:bg-primary-strong/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Check size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                          Application Received!
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mx-auto">
-                          Thank you for registering{" "}
-                          <strong>{registrationForm.businessName}</strong>.
-                        </p>
-                        {generatedCredentials && (
-                          <div className="w-full max-w-sm bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-2xl p-5 space-y-4 text-left mx-auto my-4">
-                            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">
-                              Your Login Credentials
-                            </div>
-
-                            <div className="space-y-3">
-                              <div
-                                className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex justify-between items-center group relative cursor-pointer"
-                                title="Copy ID"
-                              >
-                                <div>
-                                  <div className="text-[10px] text-gray-400 font-medium">
-                                    Vendor ID
-                                  </div>
-                                  <div className="font-mono font-bold text-gray-800 dark:text-gray-200 tracking-wide text-lg">
-                                    {generatedCredentials.vendorId}
-                                  </div>
-                                </div>
-                                <ClipboardCheck
-                                  size={16}
-                                  className="text-gray-400 group-hover:text-primary transition-colors"
-                                />
-                              </div>
-
-                              <div
-                                className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex justify-between items-center group cursor-pointer"
-                                title="Copy Password"
-                              >
-                                <div>
-                                  <div className="text-[10px] text-gray-400 font-medium">
-                                    Temporary Password
-                                  </div>
-                                  <div className="font-mono font-bold text-gray-800 dark:text-gray-200 tracking-wide text-lg">
-                                    {generatedCredentials.password}
-                                  </div>
-                                </div>
-                                <ClipboardCheck
-                                  size={16}
-                                  className="text-gray-400 group-hover:text-primary transition-colors"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex items-start gap-2 text-[10px] text-orange-600 bg-orange-50 dark:bg-orange-900/10 p-2 rounded-lg">
-                              <div className="mt-0.5">??</div>
-                              Please save these credentials safely.
-                            </div>
-                          </div>
-                        )}
-                        <button
-                          onClick={() => {
-                            setShowOnboarding(false);
-                            setRegistrationSubmitted(false);
-                            setGeneratedCredentials(null);
-                            setRegistrationForm({
-                              businessName: "",
-                              contactName: "",
-                              email: "",
-                              phone: "",
-                              website: "",
-                              category: "",
-                              description: "",
-                              logo: null,
-                              logoPreview: null,
-                            });
-                          }}
-                          className="w-full max-w-sm bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-gray-500/20 active:scale-[0.98] transition-all"
-                        >
-                          Got it, Return to Login
-                        </button>
+                <div className="overflow-y-auto">
+                  {registrationSubmitted ? (
+                    <div className="p-8 text-center space-y-4">
+                      <div className="w-16 h-16 bg-primary/10 dark:bg-primary-strong/30 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Check size={32} />
                       </div>
-                    ) : (
-                      <form
-                        onSubmit={handleRegistrationSubmit}
-                        className="p-6 space-y-6"
-                      >
-                        {/* Logo Upload Section */}
-                        <div className="flex justify-center mb-2">
-                          <div className="relative group">
-                            <input
-                              type="file"
-                              id="logo-upload"
-                              className="hidden"
-                              accept="image/*"
-                              onChange={handleLogoChange}
-                            />
-                            <label
-                              htmlFor="logo-upload"
-                              className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
-                                registrationForm.logoPreview
-                                  ? "border-primary bg-white"
-                                  : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                              }`}
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                        Application Received!
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mx-auto">
+                        Thank you for registering{" "}
+                        <strong>{registrationForm.businessName}</strong>.
+                      </p>
+                      {generatedCredentials && (
+                        <div className="w-full max-w-sm bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-2xl p-5 space-y-4 text-left mx-auto my-4">
+                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center">
+                            Your Login Credentials
+                          </div>
+
+                          <div className="space-y-3">
+                            <div
+                              className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex justify-between items-center group relative cursor-pointer"
+                              title="Copy ID"
                             >
-                              {registrationForm.logoPreview ? (
-                                <img
-                                  src={registrationForm.logoPreview}
-                                  alt="Logo"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <>
-                                  <Upload
-                                    size={24}
-                                    className="text-gray-400 mb-2 group-hover:text-primary transition-colors"
-                                  />
-                                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-                                    Upload Logo
-                                  </span>
-                                </>
-                              )}
-                            </label>
-                            {registrationForm.logoPreview && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setRegistrationForm((prev) => ({
-                                    ...prev,
-                                    logo: null,
-                                    logoPreview: null,
-                                  }));
-                                }}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors"
-                              >
-                                <X size={12} />
-                              </button>
-                            )}
+                              <div>
+                                <div className="text-[10px] text-gray-400 font-medium">
+                                  Vendor ID
+                                </div>
+                                <div className="font-mono font-bold text-gray-800 dark:text-gray-200 tracking-wide text-lg">
+                                  {generatedCredentials.vendorId}
+                                </div>
+                              </div>
+                              <ClipboardCheck
+                                size={16}
+                                className="text-gray-400 group-hover:text-primary transition-colors"
+                              />
+                            </div>
+
+                            <div
+                              className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-gray-100 dark:border-zinc-800 flex justify-between items-center group cursor-pointer"
+                              title="Copy Password"
+                            >
+                              <div>
+                                <div className="text-[10px] text-gray-400 font-medium">
+                                  Temporary Password
+                                </div>
+                                <div className="font-mono font-bold text-gray-800 dark:text-gray-200 tracking-wide text-lg">
+                                  {generatedCredentials.password}
+                                </div>
+                              </div>
+                              <ClipboardCheck
+                                size={16}
+                                className="text-gray-400 group-hover:text-primary transition-colors"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2 text-[10px] text-orange-600 bg-orange-50 dark:bg-orange-900/10 p-2 rounded-lg">
+                            <div className="mt-0.5">??</div>
+                            Please save these credentials safely.
                           </div>
                         </div>
-
-                        <div className="space-y-4">
-                          {/* Business Info */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                                Business Name
-                              </label>
-                              <div className="relative">
-                                <div className="absolute left-3 top-2.5 text-gray-400">
-                                  <Store size={16} />
-                                </div>
-                                <input
-                                  required
-                                  type="text"
-                                  value={registrationForm.businessName}
-                                  onChange={handleRegistrationChange(
-                                    "businessName",
-                                  )}
-                                  placeholder="Brand / Company"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
+                      )}
+                      <button
+                        onClick={() => {
+                          setShowOnboarding(false);
+                          setRegistrationSubmitted(false);
+                          setGeneratedCredentials(null);
+                          setRegistrationForm({
+                            businessName: "",
+                            contactName: "",
+                            email: "",
+                            phone: "",
+                            website: "",
+                            category: "",
+                            description: "",
+                            logo: null,
+                            logoPreview: null,
+                          });
+                        }}
+                        className="w-full max-w-sm bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-gray-500/20 active:scale-[0.98] transition-all"
+                      >
+                        Got it, Return to Login
+                      </button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handleRegistrationSubmit}
+                      className="p-6 space-y-6"
+                    >
+                      {/* Logo Upload Section */}
+                      <div className="flex justify-center mb-2">
+                        <div className="relative group">
+                          <input
+                            type="file"
+                            id="logo-upload"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleLogoChange}
+                          />
+                          <label
+                            htmlFor="logo-upload"
+                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
+                              registrationForm.logoPreview
+                                ? "border-primary bg-white"
+                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                            }`}
+                          >
+                            {registrationForm.logoPreview ? (
+                              <img
+                                src={registrationForm.logoPreview}
+                                alt="Logo"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <>
+                                <Upload
+                                  size={24}
+                                  className="text-gray-400 mb-2 group-hover:text-primary transition-colors"
                                 />
-                              </div>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                                Website
-                              </label>
-                              <div className="relative">
-                                <div className="absolute left-3 top-2.5 text-gray-400">
-                                  <Globe size={16} />
-                                </div>
-                                <input
-                                  type="url"
-                                  value={registrationForm.website}
-                                  onChange={handleRegistrationChange("website")}
-                                  placeholder="https://brand.com"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
-                                />
-                              </div>
-                            </div>
-                          </div>
+                                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+                                  Upload Logo
+                                </span>
+                              </>
+                            )}
+                          </label>
+                          {registrationForm.logoPreview && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setRegistrationForm((prev) => ({
+                                  ...prev,
+                                  logo: null,
+                                  logoPreview: null,
+                                }));
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
 
-                          {/* Contact Info */}
+                      <div className="space-y-4">
+                        {/* Business Info */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                              Contact Person
+                              Business Name
                             </label>
                             <div className="relative">
                               <div className="absolute left-3 top-2.5 text-gray-400">
-                                <User size={16} />
+                                <Store size={16} />
                               </div>
                               <input
                                 required
                                 type="text"
-                                value={registrationForm.contactName}
+                                value={registrationForm.businessName}
                                 onChange={handleRegistrationChange(
-                                  "contactName",
+                                  "businessName",
                                 )}
-                                placeholder="Full Name of representative"
+                                placeholder="Brand / Company"
                                 className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
                               />
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                                Work Email
-                              </label>
-                              <div className="relative">
-                                <div className="absolute left-3 top-2.5 text-gray-400">
-                                  <Mail size={16} />
-                                </div>
-                                <input
-                                  required
-                                  type="email"
-                                  value={registrationForm.email}
-                                  onChange={handleRegistrationChange("email")}
-                                  placeholder="name@work.com"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                                Mobile
-                              </label>
-                              <div className="relative">
-                                <div className="absolute left-3 top-2.5 text-gray-400">
-                                  <Phone size={16} />
-                                </div>
-                                <input
-                                  required
-                                  type="tel"
-                                  value={registrationForm.phone}
-                                  onChange={handleRegistrationChange("phone")}
-                                  placeholder="+91..."
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                              Category
+                              Website
                             </label>
                             <div className="relative">
                               <div className="absolute left-3 top-2.5 text-gray-400">
-                                <Package size={16} />
+                                <Globe size={16} />
                               </div>
-                              <select
-                                required
-                                value={registrationForm.category}
-                                onChange={handleRegistrationChange("category")}
-                                className="w-full appearance-none rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-8 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
-                              >
-                                <option value="">
-                                  Select industry category
-                                </option>
-                                <option value="fmcg">
-                                  FMCG / Packaged Goods
-                                </option>
-                                <option value="electronics">
-                                  Electronics & Appliances
-                                </option>
-                                <option value="fashion">
-                                  Fashion & Apparel
-                                </option>
-                                <option value="home">Home & Kitchen</option>
-                                <option value="construction">
-                                  Construction Materials
-                                </option>
-                                <option value="automotive">Automotive</option>
-                                <option value="other">Other</option>
-                              </select>
-                              <div className="absolute right-3 top-3 text-gray-400 pointer-events-none">
-                                <ChevronRight size={14} className="rotate-90" />
-                              </div>
+                              <input
+                                type="url"
+                                value={registrationForm.website}
+                                onChange={handleRegistrationChange("website")}
+                                placeholder="https://brand.com"
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
+                              />
                             </div>
                           </div>
+                        </div>
 
+                        {/* Contact Info */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
+                            Contact Person
+                          </label>
+                          <div className="relative">
+                            <div className="absolute left-3 top-2.5 text-gray-400">
+                              <User size={16} />
+                            </div>
+                            <input
+                              required
+                              type="text"
+                              value={registrationForm.contactName}
+                              onChange={handleRegistrationChange("contactName")}
+                              placeholder="Full Name of representative"
+                              className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
-                              Description (Optional)
+                              Work Email
                             </label>
-                            <textarea
-                              rows="2"
-                              value={registrationForm.description}
-                              onChange={handleRegistrationChange("description")}
-                              placeholder="Briefly describe your products..."
-                              className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none placeholder:font-normal"
-                            />
+                            <div className="relative">
+                              <div className="absolute left-3 top-2.5 text-gray-400">
+                                <Mail size={16} />
+                              </div>
+                              <input
+                                required
+                                type="email"
+                                value={registrationForm.email}
+                                onChange={handleRegistrationChange("email")}
+                                placeholder="name@work.com"
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
+                              Mobile
+                            </label>
+                            <div className="relative">
+                              <div className="absolute left-3 top-2.5 text-gray-400">
+                                <Phone size={16} />
+                              </div>
+                              <input
+                                required
+                                type="tel"
+                                value={registrationForm.phone}
+                                onChange={handleRegistrationChange("phone")}
+                                placeholder="+91..."
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-3 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:font-normal"
+                              />
+                            </div>
                           </div>
                         </div>
 
-                        <div className="pt-4 pb-2">
-                          <button
-                            type="submit"
-                            className="w-full rounded-xl bg-gradient-to-r from-primary to-primary-strong hover:from-primary hover:to-primary-strong text-white font-bold py-3 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                          >
-                            Submit Application
-                            <ArrowRight size={18} />
-                          </button>
-                          <p className="text-[10px] text-center text-gray-400 mt-4 max-w-xs mx-auto leading-relaxed">
-                            By clicking submit, you verify that you are an
-                            authorized representative of the brand and agree to
-                            our{" "}
-                            <a href="#" className="underline">
-                              Terms of Service
-                            </a>
-                            .
-                          </p>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
+                            Category
+                          </label>
+                          <div className="relative">
+                            <div className="absolute left-3 top-2.5 text-gray-400">
+                              <Package size={16} />
+                            </div>
+                            <select
+                              required
+                              value={registrationForm.category}
+                              onChange={handleRegistrationChange("category")}
+                              className="w-full appearance-none rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 pl-9 pr-8 py-2.5 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all cursor-pointer"
+                            >
+                              <option value="">Select industry category</option>
+                              <option value="fmcg">
+                                FMCG / Packaged Goods
+                              </option>
+                              <option value="electronics">
+                                Electronics & Appliances
+                              </option>
+                              <option value="fashion">Fashion & Apparel</option>
+                              <option value="home">Home & Kitchen</option>
+                              <option value="construction">
+                                Construction Materials
+                              </option>
+                              <option value="automotive">Automotive</option>
+                              <option value="other">Other</option>
+                            </select>
+                            <div className="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                              <ChevronRight size={14} className="rotate-90" />
+                            </div>
+                          </div>
                         </div>
-                      </form>
-                    )}
-                  </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 ml-1">
+                            Description (Optional)
+                          </label>
+                          <textarea
+                            rows="2"
+                            value={registrationForm.description}
+                            onChange={handleRegistrationChange("description")}
+                            placeholder="Briefly describe your products..."
+                            className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none placeholder:font-normal"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-4 pb-2">
+                        <button
+                          type="submit"
+                          className="w-full rounded-xl bg-gradient-to-r from-primary to-primary-strong hover:from-primary hover:to-primary-strong text-white font-bold py-3 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                          Submit Application
+                          <ArrowRight size={18} />
+                        </button>
+                        <p className="text-[10px] text-center text-gray-400 mt-4 max-w-xs mx-auto leading-relaxed">
+                          By clicking submit, you verify that you are an
+                          authorized representative of the brand and agree to
+                          our{" "}
+                          <a href="#" className="underline">
+                            Terms of Service
+                          </a>
+                          .
+                        </p>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {isAuthenticated && (
-              <>
-                {/* Main Dashboard Layout */}
-                <div className="mx-auto w-full max-w-[1920px] px-4 py-6">
-                  <div className="flex flex-col lg:flex-row gap-6 items-start">
-                    {/* Sidebar Navigation */}
-                    <aside className="lg:w-64 flex-shrink-0 bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-xl h-fit sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
-                      <div className="space-y-6">
-                        {/* Profile Section */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
-                            <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                              {(vendorInfo?.name || "V")[0].toUpperCase()}
+          {isAuthenticated && (
+            <>
+              {/* Main Dashboard Layout */}
+              <div className="mx-auto w-full max-w-[1920px] px-4 py-6">
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                  {/* Sidebar Navigation */}
+                  <aside className="lg:w-64 flex-shrink-0 bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-xl h-fit sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
+                    <div className="space-y-6">
+                      {/* Profile Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                          <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                            {(vendorInfo?.name || "V")[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                              {vendorInfo?.name || "Vendor"}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                {vendorInfo?.name || "Vendor"}
-                              </div>
-                              <div className="text-xs text-gray-400 truncate">
-                                {vendorInfo?.email || ""}
-                              </div>
+                            <div className="text-xs text-gray-400 truncate">
+                              {vendorInfo?.email || ""}
                             </div>
                           </div>
                         </div>
-
-                        {/* Stats Quick View */}
-                        {/* Stats Quick View */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <StarBorder
-                            as="div"
-                            className="w-full"
-                            color="var(--primary)"
-                            speed="5s"
-                            innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
-                          >
-                            <div className="flex flex-col items-center justify-center w-full">
-                              <div className="text-[10px] text-gray-500 mb-0.5">
-                                Wallet Amount
-                              </div>
-                              <div
-                                className="text-sm font-bold text-primary truncate max-w-full"
-                                title={`\u20B9${formatAmount(walletBalance)}`}
-                              >
-                                {"\u20B9"}
-                                {formatAmount(walletBalance)}
-                              </div>
-                            </div>
-                          </StarBorder>
-                          <StarBorder
-                            as="div"
-                            className="w-full"
-                            color="var(--primary)"
-                            speed="5s"
-                            innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
-                          >
-                            <div className="flex flex-col items-center justify-center w-full">
-                              <div className="text-[10px] text-gray-500 mb-0.5">
-                                Active QRs
-                              </div>
-                              <div className="text-sm font-bold text-primary">
-                                {qrStats.active}
-                              </div>
-                            </div>
-                          </StarBorder>
-                        </div>
-
-                        {/* Navigation */}
-                        {/* Navigation */}
-                        <nav className="space-y-2">
-                          {[
-                            { id: "overview", label: "Overview", icon: Store },
-                            {
-                              id: "products",
-                              label: "Products",
-                              icon: Package,
-                            },
-                            {
-                              id: "campaigns",
-                              label: "Campaigns & QR",
-                              icon: BadgeCheck,
-                            },
-                            {
-                              id: "redemptions",
-                              label: "Redemptions",
-                              icon: Users,
-                            },
-                            {
-                              id: "locations",
-                              label: "Locations",
-                              icon: Globe,
-                            },
-                            {
-                              id: "customers",
-                              label: "Customers",
-                              icon: Users,
-                            },
-                            { id: "wallet", label: "Wallet", icon: Wallet },
-                            {
-                              id: "billing",
-                              label: "Billing",
-                              icon: FileText,
-                            },
-                            {
-                              id: "brand",
-                              label: "Settings",
-                              icon: ShieldCheck,
-                            },
-                            {
-                              id: "reports",
-                              label: "Product Reports",
-                              icon: TicketCheck,
-                            },
-                            {
-                              id: "support",
-                              label: "Support",
-                              icon: HelpCircle,
-                            },
-                          ].map((item) => {
-                            const isActive = activeTab === item.id;
-                            if (isActive) {
-                              return (
-                                <StarBorder
-                                  key={item.id}
-                                  as="button"
-                                  onClick={() => navigate(`/vendor/${item.id}`)}
-                                  color="var(--primary)"
-                                  speed="4s"
-                                  className="w-full cursor-pointer"
-                                  innerClassName="bg-white dark:bg-[#000] pointer-events-none text-gray-900 dark:text-white"
-                                >
-                                  <item.icon
-                                    size={18}
-                                    className="text-primary"
-                                  />
-                                  <span className="font-semibold text-gray-900 dark:text-white">
-                                    {item.label}
-                                  </span>
-                                </StarBorder>
-                              );
-                            }
-                            return (
-                              <button
-                                key={item.id}
-                                onClick={() => navigate(`/vendor/${item.id}`)}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-[#252525] dark:hover:text-gray-200 transition-all font-medium"
-                              >
-                                <item.icon size={18} />
-                                <span>{item.label}</span>
-                              </button>
-                            );
-                          })}
-                        </nav>
-
-                        {/* Sign Out */}
-                        <button
-                          onClick={handleSignOut}
-                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-red-900/20 text-red-400 text-sm font-medium border border-red-900/30"
-                        >
-                          <LogOut size={18} />
-                          <span>Sign Out</span>
-                        </button>
                       </div>
-                    </aside>
 
-                    {/* Main Content */}
-                    <main className="flex-1 min-w-0 space-y-4 overflow-x-hidden">
-                      {/* Top Greeting Header */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Good morning, {vendorInfo?.name || "Vendor"}!
-                          </h1>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Here's what's happening with your store today
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <input
-                              type="search"
-                              placeholder="Search..."
-                              className="w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-4 py-2 pl-10 text-sm text-gray-900 dark:text-white placeholder-gray-500"
-                            />
-                            <svg
-                              className="absolute left-3 top-2.5 h-4 w-4 text-gray-500"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                      {/* Stats Quick View */}
+                      {/* Stats Quick View */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <StarBorder
+                          as="div"
+                          className="w-full"
+                          color="var(--primary)"
+                          speed="5s"
+                          innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                        >
+                          <div className="flex flex-col items-center justify-center w-full">
+                            <div className="text-[10px] text-gray-500 mb-0.5">
+                              Wallet Amount
+                            </div>
+                            <div
+                              className="text-sm font-bold text-primary truncate max-w-full"
+                              title={`\u20B9${formatAmount(walletBalance)}`}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                              />
-                            </svg>
+                              {"\u20B9"}
+                              {formatAmount(walletBalance)}
+                            </div>
                           </div>
-                          <div className="relative mr-2">
-                            <button
-                              ref={notificationsTriggerRef}
-                              type="button"
-                              onClick={() =>
-                                setIsNotificationsOpen((prev) => !prev)
-                              }
-                              className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
-                                isNotificationsOpen
-                                  ? "ring-2 ring-primary/30 border-primary/40"
-                                  : ""
-                              }`}
-                              aria-label="Notifications"
-                            >
-                              <Bell size={18} />
-                              {notificationUnreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center px-1">
-                                  {notificationUnreadCount > 9
-                                    ? "9+"
-                                    : notificationUnreadCount}
+                        </StarBorder>
+                        <StarBorder
+                          as="div"
+                          className="w-full"
+                          color="var(--primary)"
+                          speed="5s"
+                          innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                        >
+                          <div className="flex flex-col items-center justify-center w-full">
+                            <div className="text-[10px] text-gray-500 mb-0.5">
+                              Active QRs
+                            </div>
+                            <div className="text-sm font-bold text-primary">
+                              {qrStats.active}
+                            </div>
+                          </div>
+                        </StarBorder>
+                      </div>
+
+                      {/* Navigation */}
+                      {/* Navigation */}
+                      <nav className="space-y-2">
+                        {[
+                          { id: "overview", label: "Overview", icon: Store },
+                          {
+                            id: "products",
+                            label: "Products",
+                            icon: Package,
+                          },
+                          {
+                            id: "campaigns",
+                            label: "Campaigns & QR",
+                            icon: BadgeCheck,
+                          },
+                          {
+                            id: "redemptions",
+                            label: "Redemptions",
+                            icon: Users,
+                          },
+                          {
+                            id: "locations",
+                            label: "Locations",
+                            icon: Globe,
+                          },
+                          {
+                            id: "customers",
+                            label: "Customers",
+                            icon: Users,
+                          },
+                          { id: "wallet", label: "Wallet", icon: Wallet },
+                          {
+                            id: "billing",
+                            label: "Billing",
+                            icon: FileText,
+                          },
+                          {
+                            id: "brand",
+                            label: "Settings",
+                            icon: ShieldCheck,
+                          },
+                          {
+                            id: "reports",
+                            label: "Product Reports",
+                            icon: TicketCheck,
+                          },
+                          {
+                            id: "support",
+                            label: "Support",
+                            icon: HelpCircle,
+                          },
+                        ].map((item) => {
+                          const isActive = activeTab === item.id;
+                          if (isActive) {
+                            return (
+                              <StarBorder
+                                key={item.id}
+                                as="button"
+                                onClick={() => navigate(`/vendor/${item.id}`)}
+                                color="var(--primary)"
+                                speed="4s"
+                                className="w-full cursor-pointer"
+                                innerClassName="bg-white dark:bg-[#000] pointer-events-none text-gray-900 dark:text-white"
+                              >
+                                <item.icon size={18} className="text-primary" />
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  {item.label}
                                 </span>
+                              </StarBorder>
+                            );
+                          }
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => navigate(`/vendor/${item.id}`)}
+                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-[#252525] dark:hover:text-gray-200 transition-all font-medium"
+                            >
+                              <item.icon size={18} />
+                              <span>{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </nav>
+
+                      {/* Sign Out */}
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-red-900/20 text-red-400 text-sm font-medium border border-red-900/30"
+                      >
+                        <LogOut size={18} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </aside>
+
+                  {/* Main Content */}
+                  <main className="flex-1 min-w-0 space-y-4 overflow-x-hidden">
+                    {/* Top Greeting Header */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                          Good morning, {vendorInfo?.name || "Vendor"}!
+                        </h1>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Here's what's happening with your store today
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <input
+                            type="search"
+                            placeholder="Search..."
+                            className="w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-4 py-2 pl-10 text-sm text-gray-900 dark:text-white placeholder-gray-500"
+                          />
+                          <svg
+                            className="absolute left-3 top-2.5 h-4 w-4 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="relative mr-2">
+                          <button
+                            ref={notificationsTriggerRef}
+                            type="button"
+                            onClick={() =>
+                              setIsNotificationsOpen((prev) => !prev)
+                            }
+                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
+                              isNotificationsOpen
+                                ? "ring-2 ring-primary/30 border-primary/40"
+                                : ""
+                            }`}
+                            aria-label="Notifications"
+                          >
+                            <Bell size={18} />
+                            {notificationUnreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center px-1">
+                                {notificationUnreadCount > 9
+                                  ? "9+"
+                                  : notificationUnreadCount}
+                              </span>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats Row */}
+                    {activeTab === "overview" && (
+                      <div className="space-y-6">
+                        <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-gray-400 pr-6">
+                          <span className="text-gray-500">Campaign</span>
+                          <select
+                            value={overviewCampaignId}
+                            onChange={(event) =>
+                              setOverviewCampaignId(event.target.value)
+                            }
+                            className="mr-2 min-w-[180px] max-w-[240px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-3 py-1.5 text-xs text-gray-900 dark:text-white"
+                          >
+                            {overviewCampaignOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                          {/* Wallet Balance Card */}
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="overflow-hidden">
+                                <div
+                                  className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate"
+                                  title={`\u20B9${formatAmount(walletBalance)}`}
+                                >
+                                  {"\u20B9"}
+                                  {formatAmount(walletBalance)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Wallet Balance
+                                </div>
+                              </div>
+                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-cyan-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <Wallet className="h-5 w-5 xl:h-6 xl:w-6 text-cyan-400" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-primary">+5.9%</span>
+                              <span className="text-gray-500">
+                                vs last month
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="overflow-hidden">
+                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                  {overviewSelectedCampaignCount}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Total Campaigns
+                                </div>
+                              </div>
+                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-purple-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <BadgeCheck className="h-5 w-5 xl:h-6 xl:w-6 text-purple-400" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <span>
+                                Selected: {overviewSelectedCampaignCount}
+                              </span>
+                              <span className="text-gray-400">|</span>
+                              <span>All: {campaigns.length}</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="overflow-hidden">
+                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                  {isOverviewAll
+                                    ? qrStats.active
+                                    : overviewSelectedQrTotal -
+                                      (isOverviewUnassigned
+                                        ? 0
+                                        : overviewSelectedQrRedeemed)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Active QRs
+                                </div>
+                              </div>
+                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <QrCode className="h-5 w-5 xl:h-6 xl:w-6 text-primary" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <span>
+                                Selected:{" "}
+                                {isOverviewAll
+                                  ? qrStats.active
+                                  : Math.max(
+                                      0,
+                                      overviewSelectedQrTotal -
+                                        overviewSelectedQrRedeemed,
+                                    )}
+                              </span>
+                              <span className="text-gray-400">|</span>
+                              <span>
+                                Managed:{" "}
+                                {isOverviewAll
+                                  ? qrStats.campaignManagedTotal
+                                  : overviewSelectedQrTotal}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="overflow-hidden">
+                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                  {overviewSelectedQrRedeemed}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  QRs Redeemed
+                                </div>
+                              </div>
+                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-pink-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <Store className="h-5 w-5 xl:h-6 xl:w-6 text-pink-400" />
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <span>
+                                Selected: {overviewSelectedQrRedeemed}
+                              </span>
+                              <span className="text-gray-400">|</span>
+                              <span>All: {qrStats.redeemed}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <VendorAnalytics
+                          redemptionSeries={overviewRedemptionSeries}
+                          campaignSeries={campaignPerformanceSeries}
+                          selectionLabel={overviewCampaignLabel}
+                        />
+
+                        <div
+                          id="overview"
+                          className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-blue-600/20 flex items-center justify-center">
+                                <Store size={16} className="text-blue-400" />
+                              </div>
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                                Recent Redemptions
+                              </h3>
+                            </div>
+                            <button
+                              onClick={() => navigate("/vendor/scan")}
+                              className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                            >
+                              Scan New
+                            </button>
+                          </div>
+
+                          {qrs.filter(
+                            (q) =>
+                              q.status === "redeemed" || q.status === "claimed",
+                          ).length === 0 ? (
+                            <div className="text-center py-8 text-gray-500 text-sm">
+                              No redemptions yet. Share your QR codes to get
+                              started!
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-sm text-gray-400">
+                                <thead className="text-xs uppercase bg-gray-100 dark:bg-[#252525] text-gray-500 dark:text-gray-300">
+                                  <tr>
+                                    <th className="px-4 py-3 rounded-l-lg">
+                                      Time
+                                    </th>
+                                    <th className="px-4 py-3">Campaign</th>
+                                    <th className="px-4 py-3">Amount</th>
+                                    <th className="px-4 py-3 rounded-r-lg text-right">
+                                      Hash
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-800">
+                                  {qrs
+                                    .filter(
+                                      (q) =>
+                                        q.status === "redeemed" ||
+                                        q.status === "claimed",
+                                    )
+                                    .sort(
+                                      (a, b) =>
+                                        new Date(b.updatedAt || b.createdAt) -
+                                        new Date(a.updatedAt || a.createdAt),
+                                    )
+                                    .slice(0, 10)
+                                    .map((qr) => (
+                                      <tr
+                                        key={qr.id}
+                                        className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                      >
+                                        <td className="px-4 py-3">
+                                          <div className="font-medium text-gray-900 dark:text-white">
+                                            Today
+                                          </div>
+                                          <div className="text-[10px] text-gray-500">
+                                            {format(new Date(), "h:mm a")}
+                                            {/* Using current time as placeholder since API might not return update time yet */}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <div className="truncate max-w-[150px] text-gray-900 dark:text-white">
+                                            {qr.Campaign?.title ||
+                                              "Unknown Campaign"}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3 font-bold text-primary">
+                                          {"\u20B9"}
+                                          {formatAmount(getGeneratedPrice(qr))}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
+                                          {qr.uniqueHash.substring(0, 8)}...
+                                        </td>
+                                      </tr>
+                                    ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "brand" && (
+                      <div className="space-y-6 pb-20">
+                        <div
+                          className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
+                          id="brand"
+                        >
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+                              <Store size={22} className="text-primary" />
+                              Profile & Brand Settings
+                            </div>
+                          </div>
+
+                          <div className="text-sm text-gray-500 mb-8 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10 flex items-start gap-3">
+                            <Info
+                              size={18}
+                              className="text-primary mt-0.5 shrink-0"
+                            />
+                            <div>
+                              <span className="font-semibold text-gray-900 dark:text-gray-100 block mb-1">
+                                Profile Management
+                              </span>
+                              Your company details, brand information, and
+                              contact preferences can be updated here. These
+                              details will be visible on your public profile.
+                            </div>
+                          </div>
+
+                          <div className="space-y-6">
+                            {/* Business Identity */}
+                            <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
+                              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Building2 size={16} />
+                                Business Identity
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Company name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={companyProfile.businessName}
+                                    onChange={handleCompanyChange(
+                                      "businessName",
+                                    )}
+                                    placeholder="Legal company name"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Brand name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={brandProfile.name}
+                                    onChange={(event) =>
+                                      setBrandProfile((prev) => ({
+                                        ...prev,
+                                        name: event.target.value,
+                                      }))
+                                    }
+                                    placeholder="Brand display name"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Designation
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={companyProfile.designation}
+                                    onChange={handleCompanyChange(
+                                      "designation",
+                                    )}
+                                    placeholder="e.g. CEO, Manager"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    GSTIN
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={companyProfile.gstin}
+                                    onChange={handleCompanyChange("gstin")}
+                                    placeholder="GST Number"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Contact Information */}
+                            <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
+                              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Phone size={16} />
+                                Contact Details
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Contact phone
+                                  </label>
+                                  <div className="relative">
+                                    <Phone
+                                      size={18}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                    />
+                                    <input
+                                      type="tel"
+                                      value={companyProfile.contactPhone}
+                                      onChange={handleCompanyChange(
+                                        "contactPhone",
+                                      )}
+                                      placeholder="Primary contact"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Alternate Mobile
+                                  </label>
+                                  <div className="relative">
+                                    <Phone
+                                      size={18}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                    />
+                                    <input
+                                      type="tel"
+                                      value={companyProfile.alternatePhone}
+                                      onChange={handleCompanyChange(
+                                        "alternatePhone",
+                                      )}
+                                      placeholder="Alternate contact"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Contact email
+                                  </label>
+                                  <div className="relative">
+                                    <Mail
+                                      size={18}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                    />
+                                    <input
+                                      type="email"
+                                      value={companyProfile.contactEmail}
+                                      onChange={handleCompanyChange(
+                                        "contactEmail",
+                                      )}
+                                      placeholder="contact@brand.com"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Website
+                                  </label>
+                                  <div className="relative">
+                                    <Globe
+                                      size={18}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={brandProfile.website}
+                                      onChange={(event) =>
+                                        setBrandProfile((prev) => ({
+                                          ...prev,
+                                          website: event.target.value,
+                                        }))
+                                      }
+                                      placeholder="https://brand.com"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Brand Assets */}
+                            <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-6">
+                              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <ImageIcon size={16} />
+                                Brand Assets
+                              </h4>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Brand Logo
+                                </label>
+                                <div className="flex items-center gap-6 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
+                                  <div className="relative group shrink-0">
+                                    <input
+                                      type="file"
+                                      id="brand-logo-upload"
+                                      className="hidden"
+                                      accept="image/*"
+                                      onChange={handleBrandLogoUpload}
+                                      disabled={isUploadingBrandLogo}
+                                    />
+                                    <label
+                                      htmlFor="brand-logo-upload"
+                                      className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                      {brandLogoPreviewSrc &&
+                                      !imageLoadError ? (
+                                        <img
+                                          src={brandLogoPreviewSrc}
+                                          alt="Brand logo"
+                                          className="h-full w-full object-contain p-1"
+                                          onError={() =>
+                                            setImageLoadError(true)
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 gap-2">
+                                          <ImageIcon size={32} />
+                                        </div>
+                                      )}
+                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Upload
+                                          size={24}
+                                          className="text-white"
+                                        />
+                                      </div>
+                                    </label>
+                                    {isUploadingBrandLogo && (
+                                      <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded-2xl">
+                                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 space-y-3">
+                                    <div>
+                                      <label
+                                        htmlFor="brand-logo-upload"
+                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors shadow-sm"
+                                      >
+                                        <Upload
+                                          size={18}
+                                          className="text-primary"
+                                        />
+                                        {brandProfile.logoUrl
+                                          ? "Change Logo"
+                                          : "Upload Logo"}
+                                      </label>
+                                    </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      Recommended: Square image (e.g.,
+                                      512x512px). Supports JPG, PNG.
+                                    </p>
+                                    {brandLogoError && (
+                                      <p className="text-sm text-red-500 font-medium">
+                                        {brandLogoError}
+                                      </p>
+                                    )}
+                                    {brandLogoStatus && (
+                                      <p className="text-sm text-primary font-medium">
+                                        {brandLogoStatus}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Registered Address */}
+                            <div className="pt-2">
+                              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <MapPin size={16} />
+                                Registered Address
+                              </h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2 md:col-span-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    Street Address
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={companyProfile.address}
+                                    onChange={handleCompanyChange("address")}
+                                    placeholder="Block, Street, Area"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                    City
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={companyProfile.city}
+                                    onChange={handleCompanyChange("city")}
+                                    placeholder="City"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                        State
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={companyProfile.state}
+                                        onChange={handleCompanyChange("state")}
+                                        placeholder="State"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                        Pincode
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={companyProfile.pincode}
+                                        onChange={handleCompanyChange(
+                                          "pincode",
+                                        )}
+                                        placeholder="Pincode"
+                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-6 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-zinc-800 mt-8">
+                            {(registrationStatus || registrationError) && (
+                              <div
+                                className={`text-sm font-medium ${registrationError ? "text-red-500" : "text-primary"}`}
+                              >
+                                {registrationStatus || registrationError}
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={handleRegistrationSave}
+                              disabled={isSavingRegistration}
+                              className="bg-primary hover:bg-primary-strong text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-70 transition-all active:scale-[0.98] flex items-center gap-2"
+                            >
+                              {isSavingRegistration ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save size={18} />
+                                  Save Company Profile
+                                </>
                               )}
                             </button>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Stats Row */}
-                      {activeTab === "overview" && (
-                        <div className="space-y-6">
-                          <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-gray-400 pr-6">
-                            <span className="text-gray-500">Campaign</span>
-                            <select
-                              value={overviewCampaignId}
-                              onChange={(event) =>
-                                setOverviewCampaignId(event.target.value)
-                              }
-                              className="mr-2 min-w-[180px] max-w-[240px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-3 py-1.5 text-xs text-gray-900 dark:text-white"
-                            >
-                              {overviewCampaignOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                            {/* Wallet Balance Card */}
-                            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="overflow-hidden">
-                                  <div
-                                    className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate"
-                                    title={`\u20B9${formatAmount(walletBalance)}`}
-                                  >
-                                    {"\u20B9"}
-                                    {formatAmount(walletBalance)}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    Wallet Balance
-                                  </div>
-                                </div>
-                                <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-cyan-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                  <Wallet className="h-5 w-5 xl:h-6 xl:w-6 text-cyan-400" />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs">
-                                <span className="text-primary">+5.9%</span>
-                                <span className="text-gray-500">
-                                  vs last month
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="overflow-hidden">
-                                  <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
-                                    {overviewSelectedCampaignCount}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    Total Campaigns
-                                  </div>
-                                </div>
-                                <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-purple-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                  <BadgeCheck className="h-5 w-5 xl:h-6 xl:w-6 text-purple-400" />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <span>
-                                  Selected: {overviewSelectedCampaignCount}
-                                </span>
-                                <span className="text-gray-400">|</span>
-                                <span>All: {campaigns.length}</span>
-                              </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="overflow-hidden">
-                                  <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
-                                    {isOverviewAll
-                                      ? qrStats.active
-                                      : overviewSelectedQrTotal -
-                                        (isOverviewUnassigned
-                                          ? 0
-                                          : overviewSelectedQrRedeemed)}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    Active QRs
-                                  </div>
-                                </div>
-                                <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                  <QrCode className="h-5 w-5 xl:h-6 xl:w-6 text-primary" />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <span>
-                                  Selected:{" "}
-                                  {isOverviewAll
-                                    ? qrStats.active
-                                    : Math.max(
-                                        0,
-                                        overviewSelectedQrTotal -
-                                          overviewSelectedQrRedeemed,
-                                      )}
-                                </span>
-                                <span className="text-gray-400">|</span>
-                                <span>
-                                  Managed:{" "}
-                                  {isOverviewAll
-                                    ? qrStats.campaignManagedTotal
-                                    : overviewSelectedQrTotal}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="overflow-hidden">
-                                  <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
-                                    {overviewSelectedQrRedeemed}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    QRs Redeemed
-                                  </div>
-                                </div>
-                                <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-pink-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                  <Store className="h-5 w-5 xl:h-6 xl:w-6 text-pink-400" />
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <span>
-                                  Selected: {overviewSelectedQrRedeemed}
-                                </span>
-                                <span className="text-gray-400">|</span>
-                                <span>All: {qrStats.redeemed}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <VendorAnalytics
-                            redemptionSeries={overviewRedemptionSeries}
-                            campaignSeries={campaignPerformanceSeries}
-                            selectionLabel={overviewCampaignLabel}
-                          />
-
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div
-                            id="overview"
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
+                            id="login-profile"
+                            className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-5 shadow-sm space-y-6"
                           >
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-blue-600/20 flex items-center justify-center">
-                                  <Store size={16} className="text-blue-400" />
-                                </div>
-                                <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                                  Recent Redemptions
-                                </h3>
-                              </div>
-                              <button
-                                onClick={() => navigate("/vendor/scan")}
-                                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
-                              >
-                                Scan New
-                              </button>
+                            <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+                              <User size={20} className="text-primary" />
+                              Login Profile
                             </div>
-
-                            {qrs.filter(
-                              (q) =>
-                                q.status === "redeemed" ||
-                                q.status === "claimed",
-                            ).length === 0 ? (
-                              <div className="text-center py-8 text-gray-500 text-sm">
-                                No redemptions yet. Share your QR codes to get
-                                started!
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Name
+                                </label>
+                                <input
+                                  type="text"
+                                  value={accountProfile.name}
+                                  onChange={handleAccountChange("name")}
+                                  placeholder="Your name"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
                               </div>
-                            ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm text-gray-400">
-                                  <thead className="text-xs uppercase bg-gray-100 dark:bg-[#252525] text-gray-500 dark:text-gray-300">
-                                    <tr>
-                                      <th className="px-4 py-3 rounded-l-lg">
-                                        Time
-                                      </th>
-                                      <th className="px-4 py-3">Campaign</th>
-                                      <th className="px-4 py-3">Amount</th>
-                                      <th className="px-4 py-3 rounded-r-lg text-right">
-                                        Hash
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-800">
-                                    {qrs
-                                      .filter(
-                                        (q) =>
-                                          q.status === "redeemed" ||
-                                          q.status === "claimed",
-                                      )
-                                      .sort(
-                                        (a, b) =>
-                                          new Date(b.updatedAt || b.createdAt) -
-                                          new Date(a.updatedAt || a.createdAt),
-                                      )
-                                      .slice(0, 10)
-                                      .map((qr) => (
-                                        <tr
-                                          key={qr.id}
-                                          className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                                        >
-                                          <td className="px-4 py-3">
-                                            <div className="font-medium text-gray-900 dark:text-white">
-                                              Today
-                                            </div>
-                                            <div className="text-[10px] text-gray-500">
-                                              {format(new Date(), "h:mm a")}
-                                              {/* Using current time as placeholder since API might not return update time yet */}
-                                            </div>
-                                          </td>
-                                          <td className="px-4 py-3">
-                                            <div className="truncate max-w-[150px] text-gray-900 dark:text-white">
-                                              {qr.Campaign?.title ||
-                                                "Unknown Campaign"}
-                                            </div>
-                                          </td>
-                                          <td className="px-4 py-3 font-bold text-primary">
-                                            {"\u20B9"}
-                                            {formatAmount(
-                                              getGeneratedPrice(qr),
-                                            )}
-                                          </td>
-                                          <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
-                                            {qr.uniqueHash.substring(0, 8)}...
-                                          </td>
-                                        </tr>
-                                      ))}
-                                  </tbody>
-                                </table>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Login email
+                                </label>
+                                <input
+                                  type="email"
+                                  value={accountProfile.email}
+                                  onChange={handleAccountChange("email")}
+                                  placeholder="you@company.com"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {activeTab === "brand" && (
-                        <div className="space-y-6 pb-20">
-                          <div
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
-                            id="brand"
-                          >
-                            <div className="flex items-center justify-between mb-6">
-                              <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-                                <Store size={22} className="text-primary" />
-                                Profile & Brand Settings
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Username
+                                </label>
+                                <input
+                                  type="text"
+                                  value={accountProfile.username}
+                                  onChange={handleAccountChange("username")}
+                                  placeholder="Unique username"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Phone
+                                </label>
+                                <input
+                                  type="tel"
+                                  value={accountProfile.phoneNumber}
+                                  onChange={handleAccountChange("phoneNumber")}
+                                  placeholder="Contact number"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
                               </div>
                             </div>
-
-                            <div className="text-sm text-gray-500 mb-8 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-white/10 flex items-start gap-3">
-                              <Info
-                                size={18}
-                                className="text-primary mt-0.5 shrink-0"
-                              />
-                              <div>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100 block mb-1">
-                                  Profile Management
-                                </span>
-                                Your company details, brand information, and
-                                contact preferences can be updated here. These
-                                details will be visible on your public profile.
-                              </div>
-                            </div>
-
-                            <div className="space-y-6">
-                              {/* Business Identity */}
-                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
-                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                  <Building2 size={16} />
-                                  Business Identity
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Company name
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={companyProfile.businessName}
-                                      onChange={handleCompanyChange(
-                                        "businessName",
-                                      )}
-                                      placeholder="Legal company name"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Brand name
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={brandProfile.name}
-                                      onChange={(event) =>
-                                        setBrandProfile((prev) => ({
-                                          ...prev,
-                                          name: event.target.value,
-                                        }))
-                                      }
-                                      placeholder="Brand display name"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Designation
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={companyProfile.designation}
-                                      onChange={handleCompanyChange(
-                                        "designation",
-                                      )}
-                                      placeholder="e.g. CEO, Manager"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      GSTIN
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={companyProfile.gstin}
-                                      onChange={handleCompanyChange("gstin")}
-                                      placeholder="GST Number"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Contact Information */}
-                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-2">
-                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                  <Phone size={16} />
-                                  Contact Details
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Contact phone
-                                    </label>
-                                    <div className="relative">
-                                      <Phone
-                                        size={18}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                      />
-                                      <input
-                                        type="tel"
-                                        value={companyProfile.contactPhone}
-                                        onChange={handleCompanyChange(
-                                          "contactPhone",
-                                        )}
-                                        placeholder="Primary contact"
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Alternate Mobile
-                                    </label>
-                                    <div className="relative">
-                                      <Phone
-                                        size={18}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                      />
-                                      <input
-                                        type="tel"
-                                        value={companyProfile.alternatePhone}
-                                        onChange={handleCompanyChange(
-                                          "alternatePhone",
-                                        )}
-                                        placeholder="Alternate contact"
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Contact email
-                                    </label>
-                                    <div className="relative">
-                                      <Mail
-                                        size={18}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                      />
-                                      <input
-                                        type="email"
-                                        value={companyProfile.contactEmail}
-                                        onChange={handleCompanyChange(
-                                          "contactEmail",
-                                        )}
-                                        placeholder="contact@brand.com"
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Website
-                                    </label>
-                                    <div className="relative">
-                                      <Globe
-                                        size={18}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={brandProfile.website}
-                                        onChange={(event) =>
-                                          setBrandProfile((prev) => ({
-                                            ...prev,
-                                            website: event.target.value,
-                                          }))
-                                        }
-                                        placeholder="https://brand.com"
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Brand Assets */}
-                              <div className="pt-2 border-b border-gray-100 dark:border-white/5 pb-6">
-                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                  <ImageIcon size={16} />
-                                  Brand Assets
-                                </h4>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Brand Logo
-                                  </label>
-                                  <div className="flex items-center gap-6 p-4 rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
-                                    <div className="relative group shrink-0">
-                                      <input
-                                        type="file"
-                                        id="brand-logo-upload"
-                                        className="hidden"
-                                        accept="image/*"
-                                        onChange={handleBrandLogoUpload}
-                                        disabled={isUploadingBrandLogo}
-                                      />
-                                      <label
-                                        htmlFor="brand-logo-upload"
-                                        className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
-                                      >
-                                        {brandLogoPreviewSrc &&
-                                        !imageLoadError ? (
-                                          <img
-                                            src={brandLogoPreviewSrc}
-                                            alt="Brand logo"
-                                            className="h-full w-full object-contain p-1"
-                                            onError={() =>
-                                              setImageLoadError(true)
-                                            }
-                                          />
-                                        ) : (
-                                          <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                                            <ImageIcon size={32} />
-                                          </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <Upload
-                                            size={24}
-                                            className="text-white"
-                                          />
-                                        </div>
-                                      </label>
-                                      {isUploadingBrandLogo && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 rounded-2xl">
-                                          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="flex-1 space-y-3">
-                                      <div>
-                                        <label
-                                          htmlFor="brand-logo-upload"
-                                          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-zinc-800 border border-gray-200 dark:border-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors shadow-sm"
-                                        >
-                                          <Upload
-                                            size={18}
-                                            className="text-primary"
-                                          />
-                                          {brandProfile.logoUrl
-                                            ? "Change Logo"
-                                            : "Upload Logo"}
-                                        </label>
-                                      </div>
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Recommended: Square image (e.g.,
-                                        512x512px). Supports JPG, PNG.
-                                      </p>
-                                      {brandLogoError && (
-                                        <p className="text-sm text-red-500 font-medium">
-                                          {brandLogoError}
-                                        </p>
-                                      )}
-                                      {brandLogoStatus && (
-                                        <p className="text-sm text-primary font-medium">
-                                          {brandLogoStatus}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Registered Address */}
-                              <div className="pt-2">
-                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                  <MapPin size={16} />
-                                  Registered Address
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="space-y-2 md:col-span-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      Street Address
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={companyProfile.address}
-                                      onChange={handleCompanyChange("address")}
-                                      placeholder="Block, Street, Area"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                      City
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={companyProfile.city}
-                                      onChange={handleCompanyChange("city")}
-                                      placeholder="City"
-                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                    />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                          State
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={companyProfile.state}
-                                          onChange={handleCompanyChange(
-                                            "state",
-                                          )}
-                                          placeholder="State"
-                                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                        />
-                                      </div>
-                                      <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                          Pincode
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={companyProfile.pincode}
-                                          onChange={handleCompanyChange(
-                                            "pincode",
-                                          )}
-                                          placeholder="Pincode"
-                                          className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2.5 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="pt-6 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-zinc-800 mt-8">
-                              {(registrationStatus || registrationError) && (
-                                <div
-                                  className={`text-sm font-medium ${registrationError ? "text-red-500" : "text-primary"}`}
-                                >
-                                  {registrationStatus || registrationError}
-                                </div>
-                              )}
+                            <div className="pt-2">
                               <button
                                 type="button"
-                                onClick={handleRegistrationSave}
-                                disabled={isSavingRegistration}
-                                className="bg-primary hover:bg-primary-strong text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-70 transition-all active:scale-[0.98] flex items-center gap-2"
+                                onClick={handleAccountSave}
+                                disabled={isSavingAccount}
+                                className="w-full rounded-xl bg-primary hover:bg-primary text-white text-sm font-bold py-3 transition-all shadow-lg shadow-primary/20 disabled:opacity-60 flex items-center justify-center gap-2"
                               >
-                                {isSavingRegistration ? (
+                                {isSavingAccount ? (
                                   <>
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                     Saving...
                                   </>
                                 ) : (
-                                  <>
-                                    <Save size={18} />
-                                    Save Company Profile
-                                  </>
+                                  "Save Login Details"
                                 )}
                               </button>
+                              {(accountStatus || accountError) && (
+                                <div
+                                  className={`text-sm text-center mt-3 font-medium ${accountError ? "text-red-500" : "text-primary"}`}
+                                >
+                                  {accountStatus || accountError}
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div
-                              id="login-profile"
-                              className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-5 shadow-sm space-y-6"
-                            >
-                              <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-                                <User size={20} className="text-primary" />
-                                Login Profile
-                              </div>
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Name
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={accountProfile.name}
-                                    onChange={handleAccountChange("name")}
-                                    placeholder="Your name"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Login email
-                                  </label>
-                                  <input
-                                    type="email"
-                                    value={accountProfile.email}
-                                    onChange={handleAccountChange("email")}
-                                    placeholder="you@company.com"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Username
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={accountProfile.username}
-                                    onChange={handleAccountChange("username")}
-                                    placeholder="Unique username"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Phone
-                                  </label>
-                                  <input
-                                    type="tel"
-                                    value={accountProfile.phoneNumber}
-                                    onChange={handleAccountChange(
-                                      "phoneNumber",
-                                    )}
-                                    placeholder="Contact number"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                              </div>
-                              <div className="pt-2">
-                                <button
-                                  type="button"
-                                  onClick={handleAccountSave}
-                                  disabled={isSavingAccount}
-                                  className="w-full rounded-xl bg-primary hover:bg-primary text-white text-sm font-bold py-3 transition-all shadow-lg shadow-primary/20 disabled:opacity-60 flex items-center justify-center gap-2"
-                                >
-                                  {isSavingAccount ? (
-                                    <>
-                                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                      Saving...
-                                    </>
-                                  ) : (
-                                    "Save Login Details"
+                          <div
+                            id="login-security"
+                            className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-5 shadow-sm space-y-6"
+                          >
+                            <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+                              <ShieldCheck size={20} className="text-primary" />
+                              Password & Recovery
+                            </div>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Old password
+                                </label>
+                                <input
+                                  type="password"
+                                  value={passwordForm.oldPassword}
+                                  onChange={handlePasswordFieldChange(
+                                    "oldPassword",
                                   )}
-                                </button>
-                                {(accountStatus || accountError) && (
-                                  <div
-                                    className={`text-sm text-center mt-3 font-medium ${accountError ? "text-red-500" : "text-primary"}`}
-                                  >
-                                    {accountStatus || accountError}
-                                  </div>
-                                )}
+                                  placeholder="Enter old password"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  New password
+                                </label>
+                                <input
+                                  type="password"
+                                  value={passwordForm.newPassword}
+                                  onChange={handlePasswordFieldChange(
+                                    "newPassword",
+                                  )}
+                                  placeholder="Create new password"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                  Confirm new password
+                                </label>
+                                <input
+                                  type="password"
+                                  value={passwordForm.confirmPassword}
+                                  onChange={handlePasswordFieldChange(
+                                    "confirmPassword",
+                                  )}
+                                  placeholder="Re-enter new password"
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                />
                               </div>
                             </div>
-
-                            <div
-                              id="login-security"
-                              className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-5 shadow-sm space-y-6"
-                            >
-                              <div className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-                                <ShieldCheck
-                                  size={20}
-                                  className="text-primary"
-                                />
-                                Password & Recovery
-                              </div>
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Old password
-                                  </label>
-                                  <input
-                                    type="password"
-                                    value={passwordForm.oldPassword}
-                                    onChange={handlePasswordFieldChange(
-                                      "oldPassword",
-                                    )}
-                                    placeholder="Enter old password"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    New password
-                                  </label>
-                                  <input
-                                    type="password"
-                                    value={passwordForm.newPassword}
-                                    onChange={handlePasswordFieldChange(
-                                      "newPassword",
-                                    )}
-                                    placeholder="Create new password"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                                    Confirm new password
-                                  </label>
-                                  <input
-                                    type="password"
-                                    value={passwordForm.confirmPassword}
-                                    onChange={handlePasswordFieldChange(
-                                      "confirmPassword",
-                                    )}
-                                    placeholder="Re-enter new password"
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
-                                  />
-                                </div>
-                              </div>
-                              <div className="pt-2">
-                                <button
-                                  type="button"
-                                  onClick={handlePasswordSubmit}
-                                  disabled={isChangingPassword}
-                                  className="w-full rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 dark:text-black text-white text-sm font-bold py-3 transition-all shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                            <div className="pt-2">
+                              <button
+                                type="button"
+                                onClick={handlePasswordSubmit}
+                                disabled={isChangingPassword}
+                                className="w-full rounded-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-200 dark:text-black text-white text-sm font-bold py-3 transition-all shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                              >
+                                {isChangingPassword ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    Updating...
+                                  </>
+                                ) : (
+                                  "Update Password"
+                                )}
+                              </button>
+                              {(passwordStatus || passwordError) && (
+                                <div
+                                  className={`text-sm text-center mt-3 font-medium ${passwordError ? "text-red-500" : "text-primary"}`}
                                 >
-                                  {isChangingPassword ? (
-                                    <>
-                                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                      Updating...
-                                    </>
-                                  ) : (
-                                    "Update Password"
+                                  {passwordStatus || passwordError}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="border-t border-gray-100 dark:border-zinc-800 pt-4">
+                              <button
+                                type="button"
+                                onClick={() => setShowOtpReset((prev) => !prev)}
+                                className="text-sm font-semibold text-primary hover:text-primary-strong dark:text-primary dark:hover:text-primary-strong transition-colors flex items-center gap-1"
+                              >
+                                Forgot old password? Use OTP
+                              </button>
+
+                              {showOtpReset && (
+                                <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                  <div className="space-y-3">
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        Email
+                                      </label>
+                                      <input
+                                        type="email"
+                                        value={otpReset.email}
+                                        onChange={handleOtpFieldChange("email")}
+                                        placeholder="you@company.com"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        OTP
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={otpReset.otp}
+                                        onChange={handleOtpFieldChange("otp")}
+                                        placeholder="Enter OTP"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        New password
+                                      </label>
+                                      <input
+                                        type="password"
+                                        value={otpReset.newPassword}
+                                        onChange={handleOtpFieldChange(
+                                          "newPassword",
+                                        )}
+                                        placeholder="New pass"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        Confirm
+                                      </label>
+                                      <input
+                                        type="password"
+                                        value={otpReset.confirmPassword}
+                                        onChange={handleOtpFieldChange(
+                                          "confirmPassword",
+                                        )}
+                                        placeholder="Confirm pass"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={handleSendOtp}
+                                      disabled={isSendingOtp}
+                                      className="w-full rounded-lg border border-primary/40 bg-white dark:bg-transparent text-primary dark:text-primary text-sm font-semibold py-2 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors disabled:opacity-60"
+                                    >
+                                      {isSendingOtp ? "Sending..." : "Send OTP"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleOtpResetPassword}
+                                      disabled={isResettingOtp}
+                                      className="w-full rounded-lg bg-primary hover:bg-primary text-white text-sm font-semibold py-2 transition-colors disabled:opacity-60"
+                                    >
+                                      {isResettingOtp
+                                        ? "Resetting..."
+                                        : "Reset"}
+                                    </button>
+                                  </div>
+                                  {(otpStatus || otpError) && (
+                                    <div
+                                      className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"}`}
+                                    >
+                                      {otpStatus || otpError}
+                                    </div>
                                   )}
-                                </button>
-                                {(passwordStatus || passwordError) && (
-                                  <div
-                                    className={`text-sm text-center mt-3 font-medium ${passwordError ? "text-red-500" : "text-primary"}`}
-                                  >
-                                    {passwordStatus || passwordError}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="border-t border-gray-100 dark:border-zinc-800 pt-4">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setShowOtpReset((prev) => !prev)
-                                  }
-                                  className="text-sm font-semibold text-primary hover:text-primary-strong dark:text-primary dark:hover:text-primary-strong transition-colors flex items-center gap-1"
-                                >
-                                  Forgot old password? Use OTP
-                                </button>
-
-                                {showOtpReset && (
-                                  <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-4 animate-in fade-in slide-in-from-top-2">
-                                    <div className="space-y-3">
-                                      <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          Email
-                                        </label>
-                                        <input
-                                          type="email"
-                                          value={otpReset.email}
-                                          onChange={handleOtpFieldChange(
-                                            "email",
-                                          )}
-                                          placeholder="you@company.com"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          OTP
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={otpReset.otp}
-                                          onChange={handleOtpFieldChange("otp")}
-                                          placeholder="Enter OTP"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          New password
-                                        </label>
-                                        <input
-                                          type="password"
-                                          value={otpReset.newPassword}
-                                          onChange={handleOtpFieldChange(
-                                            "newPassword",
-                                          )}
-                                          placeholder="New pass"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          Confirm
-                                        </label>
-                                        <input
-                                          type="password"
-                                          value={otpReset.confirmPassword}
-                                          onChange={handleOtpFieldChange(
-                                            "confirmPassword",
-                                          )}
-                                          placeholder="Confirm pass"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 pt-1">
-                                      <button
-                                        type="button"
-                                        onClick={handleSendOtp}
-                                        disabled={isSendingOtp}
-                                        className="w-full rounded-lg border border-primary/40 bg-white dark:bg-transparent text-primary dark:text-primary text-sm font-semibold py-2 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors disabled:opacity-60"
-                                      >
-                                        {isSendingOtp
-                                          ? "Sending..."
-                                          : "Send OTP"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={handleOtpResetPassword}
-                                        disabled={isResettingOtp}
-                                        className="w-full rounded-lg bg-primary hover:bg-primary text-white text-sm font-semibold py-2 transition-colors disabled:opacity-60"
-                                      >
-                                        {isResettingOtp
-                                          ? "Resetting..."
-                                          : "Reset"}
-                                      </button>
-                                    </div>
-                                    {(otpStatus || otpError) && (
-                                      <div
-                                        className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"}`}
-                                      >
-                                        {otpStatus || otpError}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {activeTab === "campaigns" && (
-                        <div
-                          className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-4"
-                          id="campaigns"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              <BadgeCheck
-                                size={16}
-                                className="text-primary-strong"
+                    {activeTab === "campaigns" && (
+                      <div
+                        className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-4"
+                        id="campaigns"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                            <BadgeCheck
+                              size={16}
+                              className="text-primary-strong"
+                            />
+                            Campaigns
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => loadCampaigns()}
+                            className={ICON_BUTTON}
+                          >
+                            <RefreshCw size={16} />
+                          </button>
+                        </div>
+
+                        {/* Campaign Sub-tabs */}
+                        <div className="flex border-b border-gray-200 dark:border-zinc-800">
+                          <button
+                            onClick={() => setCampaignTab("create")}
+                            className={getTabButtonClass(
+                              campaignTab === "create",
+                            )}
+                          >
+                            Create Campaign
+                          </button>
+                          <button
+                            onClick={() => setCampaignTab("pending")}
+                            className={getTabButtonClass(
+                              campaignTab === "pending",
+                            )}
+                          >
+                            Pending Campaigns ({pendingCampaigns.length})
+                          </button>
+                          <button
+                            onClick={() => setCampaignTab("active")}
+                            className={getTabButtonClass(
+                              campaignTab === "active",
+                            )}
+                          >
+                            Active Campaigns ({activeCampaigns.length})
+                          </button>
+                        </div>
+                        {/* Create Campaign Tab */}
+                        {campaignTab === "create" && (
+                          <div className="space-y-3">
+                            <div className="space-y-2">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                Campaign title
+                              </label>
+                              <input
+                                type="text"
+                                value={campaignForm.title}
+                                onChange={handleCampaignChange("title")}
+                                placeholder="e.g. Diwali Cashback"
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                               />
-                              Campaigns
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => loadCampaigns()}
-                              className={ICON_BUTTON}
-                            >
-                              <RefreshCw size={16} />
-                            </button>
-                          </div>
-
-                          {/* Campaign Sub-tabs */}
-                          <div className="flex border-b border-gray-200 dark:border-zinc-800">
-                            <button
-                              onClick={() => setCampaignTab("create")}
-                              className={getTabButtonClass(
-                                campaignTab === "create",
-                              )}
-                            >
-                              Create Campaign
-                            </button>
-                            <button
-                              onClick={() => setCampaignTab("pending")}
-                              className={getTabButtonClass(
-                                campaignTab === "pending",
-                              )}
-                            >
-                              Pending Campaigns ({pendingCampaigns.length})
-                            </button>
-                            <button
-                              onClick={() => setCampaignTab("active")}
-                              className={getTabButtonClass(
-                                campaignTab === "active",
-                              )}
-                            >
-                              Active Campaigns ({activeCampaigns.length})
-                            </button>
-                          </div>
-                          {/* Create Campaign Tab */}
-                          {campaignTab === "create" && (
-                            <div className="space-y-3">
-                              <div className="space-y-2">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
                                 <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                  Campaign title
+                                  Product
                                 </label>
-                                <input
-                                  type="text"
-                                  value={campaignForm.title}
-                                  onChange={handleCampaignChange("title")}
-                                  placeholder="e.g. Diwali Cashback"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                />
                               </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                    Product
-                                  </label>
-                                </div>
-                                <select
-                                  value={campaignForm.productId}
-                                  onChange={handleCampaignChange("productId")}
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                              <select
+                                value={campaignForm.productId}
+                                onChange={handleCampaignChange("productId")}
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                              >
+                                <option value="">Select Product...</option>
+                                <option
+                                  value="ADD_NEW_PRODUCT"
+                                  className="text-primary font-bold"
                                 >
-                                  <option value="">Select Product...</option>
-                                  <option
-                                    value="ADD_NEW_PRODUCT"
-                                    className="text-primary font-bold"
-                                  >
-                                    + Add New Product
+                                  + Add New Product
+                                </option>
+                                {products.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name}
                                   </option>
-                                  {products.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                      {p.name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-2">
-                                <textarea
-                                  rows="2"
-                                  value={campaignForm.description}
-                                  onChange={handleCampaignChange("description")}
-                                  placeholder="Short campaign summary"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                />
-                              </div>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="space-y-2">
+                              <textarea
+                                rows="2"
+                                value={campaignForm.description}
+                                onChange={handleCampaignChange("description")}
+                                placeholder="Short campaign summary"
+                                className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                              />
+                            </div>
 
-                              <div className="space-y-3">
-                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                  Allocations
-                                </label>
-                                {campaignRows.map((row, index) => (
-                                  <div
-                                    key={row.id}
-                                    className="grid grid-cols-12 gap-2 items-end"
-                                  >
-                                    {campaignForm.planType !== "postpaid" && (
-                                      <div className="col-span-3 space-y-1">
-                                        <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                          Cashback
-                                        </label>
-                                        <input
-                                          type="number"
-                                          min="1"
-                                          step="1"
-                                          value={row.cashbackAmount}
-                                          onChange={(e) =>
-                                            handleCampaignRowChange(
-                                              row.id,
-                                              "cashbackAmount",
-                                              e.target.value,
-                                            )
-                                          }
-                                          placeholder="Amt"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                    )}
-                                    <div
-                                      className={`${campaignForm.planType === "postpaid" ? "col-span-10" : "col-span-4"} space-y-1`}
-                                    >
+                            <div className="space-y-3">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                Allocations
+                              </label>
+                              {campaignRows.map((row, index) => (
+                                <div
+                                  key={row.id}
+                                  className="grid grid-cols-12 gap-2 items-end"
+                                >
+                                  {campaignForm.planType !== "postpaid" && (
+                                    <div className="col-span-3 space-y-1">
                                       <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                        Number of QRs Required
+                                        Cashback
                                       </label>
                                       <input
                                         type="number"
                                         min="1"
                                         step="1"
-                                        value={row.quantity}
+                                        value={row.cashbackAmount}
                                         onChange={(e) =>
                                           handleCampaignRowChange(
                                             row.id,
-                                            "quantity",
+                                            "cashbackAmount",
                                             e.target.value,
                                           )
                                         }
-                                        placeholder="Qty"
+                                        placeholder="Amt"
                                         className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
                                       />
                                     </div>
-                                    {campaignForm.planType !== "postpaid" && (
-                                      <div className="col-span-4 space-y-1">
-                                        <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                          Total ({"\u20B9"})
-                                        </label>
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          value={formatAllocationTotal(row)}
-                                          readOnly
-                                          placeholder="Total"
-                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
-                                        />
-                                      </div>
-                                    )}
-                                    <div className="col-span-1 pb-1.5 flex justify-end">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleRemoveCampaignRow(row.id)
-                                        }
-                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                        aria-label="Remove row"
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
+                                  )}
+                                  <div
+                                    className={`${campaignForm.planType === "postpaid" ? "col-span-10" : "col-span-4"} space-y-1`}
+                                  >
+                                    <label className="text-[10px] uppercase tracking-wide text-gray-400">
+                                      Number of QRs Required
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      value={row.quantity}
+                                      onChange={(e) =>
+                                        handleCampaignRowChange(
+                                          row.id,
+                                          "quantity",
+                                          e.target.value,
+                                        )
+                                      }
+                                      placeholder="Qty"
+                                      className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+                                    />
                                   </div>
-                                ))}
-                                <button
-                                  type="button"
-                                  onClick={handleAddCampaignRow}
-                                  className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary text-xs font-semibold hover:bg-primary/20 hover:border-primary/60 transition-colors"
-                                >
-                                  <Plus size={16} />
-                                  Add another allocation
-                                </button>
-                              </div>
+                                  {campaignForm.planType !== "postpaid" && (
+                                    <div className="col-span-4 space-y-1">
+                                      <label className="text-[10px] uppercase tracking-wide text-gray-400">
+                                        Total ({"\u20B9"})
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formatAllocationTotal(row)}
+                                        readOnly
+                                        placeholder="Total"
+                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="col-span-1 pb-1.5 flex justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleRemoveCampaignRow(row.id)
+                                      }
+                                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                      aria-label="Remove row"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={handleAddCampaignRow}
+                                className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary text-xs font-semibold hover:bg-primary/20 hover:border-primary/60 transition-colors"
+                              >
+                                <Plus size={16} />
+                                Add another allocation
+                              </button>
+                            </div>
 
-                              <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  {campaignForm.planType === "postpaid"
-                                    ? `${campaignAllocationSummary.quantity} QRs`
-                                    : `Subtotal (${campaignAllocationSummary.quantity} QRs)`}
+                            <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
+                              <span className="text-gray-500 dark:text-gray-400">
+                                {campaignForm.planType === "postpaid"
+                                  ? `${campaignAllocationSummary.quantity} QRs`
+                                  : `Subtotal (${campaignAllocationSummary.quantity} QRs)`}
+                              </span>
+                              {campaignForm.planType !== "postpaid" && (
+                                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                  {"\u20B9"}
+                                  {formatAmount(
+                                    campaignAllocationSummary.subtotal,
+                                  )}
                                 </span>
-                                {campaignForm.planType !== "postpaid" && (
-                                  <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                    {"\u20B9"}
-                                    {formatAmount(
-                                      campaignAllocationSummary.subtotal,
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                    Start Date
-                                  </label>
-                                  <input
-                                    type="date"
-                                    required
-                                    value={campaignForm.startDate}
-                                    onChange={(e) =>
-                                      setCampaignForm((prev) => ({
-                                        ...prev,
-                                        startDate: e.target.value,
-                                      }))
-                                    }
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                                  />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                    End Date
-                                  </label>
-                                  <input
-                                    type="date"
-                                    required
-                                    value={campaignForm.endDate}
-                                    min={campaignForm.startDate}
-                                    onChange={(e) =>
-                                      setCampaignForm((prev) => ({
-                                        ...prev,
-                                        endDate: e.target.value,
-                                      }))
-                                    }
-                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-end">
-                                <button
-                                  type="button"
-                                  onClick={handleCreateCampaign}
-                                  disabled={isSavingCampaign}
-                                  className={`w-full sm:w-auto sm:px-10 ${PRIMARY_BUTTON}`}
-                                >
-                                  {isSavingCampaign
-                                    ? "Creating..."
-                                    : "Create Campaign"}
-                                </button>
-                              </div>
-                              {campaignStatus && (
-                                <div className="text-xs text-primary font-semibold">
-                                  {campaignStatus}
-                                </div>
-                              )}
-                              {campaignError && (
-                                <div className="text-xs text-red-600 font-semibold">
-                                  {campaignError}
-                                </div>
                               )}
                             </div>
-                          )}
 
-                          {/* Active Campaigns Tab */}
-                          {campaignTab === "active" && (
-                            <div className="space-y-4">
-                              {showQrGenerator && (
-                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 p-4 space-y-4">
-                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                      <QrCode
-                                        size={16}
-                                        className="text-primary-strong"
-                                      />
-                                      Campaign QR Funding
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                  Start Date
+                                </label>
+                                <input
+                                  type="date"
+                                  required
+                                  value={campaignForm.startDate}
+                                  onChange={(e) =>
+                                    setCampaignForm((prev) => ({
+                                      ...prev,
+                                      startDate: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                  End Date
+                                </label>
+                                <input
+                                  type="date"
+                                  required
+                                  value={campaignForm.endDate}
+                                  min={campaignForm.startDate}
+                                  onChange={(e) =>
+                                    setCampaignForm((prev) => ({
+                                      ...prev,
+                                      endDate: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end">
+                              <button
+                                type="button"
+                                onClick={handleCreateCampaign}
+                                disabled={isSavingCampaign}
+                                className={`w-full sm:w-auto sm:px-10 ${PRIMARY_BUTTON}`}
+                              >
+                                {isSavingCampaign
+                                  ? "Creating..."
+                                  : "Create Campaign"}
+                              </button>
+                            </div>
+                            {campaignStatus && (
+                              <div className="text-xs text-primary font-semibold">
+                                {campaignStatus}
+                              </div>
+                            )}
+                            {campaignError && (
+                              <div className="text-xs text-red-600 font-semibold">
+                                {campaignError}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Active Campaigns Tab */}
+                        {campaignTab === "active" && (
+                          <div className="space-y-4">
+                            {showQrGenerator && (
+                              <div className="rounded-xl border border-gray-100 dark:border-zinc-800 p-4 space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                    <QrCode
+                                      size={16}
+                                      className="text-primary-strong"
+                                    />
+                                    Campaign QR Funding
+                                  </div>
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                    Prebuilt QRs {"->"} Download sheet {"->"}
+                                    Fund/recharge selected quantity
+                                  </div>
+                                </div>
+
+                                <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
+                                  <div className="text-xs font-semibold text-primary">
+                                    How to use this section
+                                  </div>
+                                  <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4 text-[11px]">
+                                    <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Step 1:
+                                      </span>{" "}
+                                      Create campaign
                                     </div>
-                                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                      Prebuilt QRs {"->"} Download sheet {"->"}
-                                      Fund/recharge selected quantity
+                                    <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Step 2:
+                                      </span>{" "}
+                                      Pay and activate campaign
+                                    </div>
+                                    <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Step 3:
+                                      </span>{" "}
+                                      Download prebuilt QR sheet
+                                    </div>
+                                    <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        Step 4:
+                                      </span>{" "}
+                                      Generate QRs to lock cashback and make
+                                      them redeemable
                                     </div>
                                   </div>
+                                </div>
 
-                                  <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-3">
-                                    <div className="text-xs font-semibold text-primary">
-                                      How to use this section
+                                {fundableCampaigns.length === 0 && (
+                                  <div className="rounded-xl border border-amber-300/50 bg-amber-50/70 dark:bg-amber-900/10 px-3 py-3 flex flex-wrap items-center justify-between gap-2">
+                                    <div className="text-xs text-amber-800 dark:text-amber-200">
+                                      No campaign yet. Create campaign first,
+                                      then fund from your selected series.
                                     </div>
-                                    <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-4 text-[11px]">
-                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
-                                        <span className="font-semibold text-gray-900 dark:text-white">
-                                          Step 1:
-                                        </span>{" "}
-                                        Create campaign
-                                      </div>
-                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
-                                        <span className="font-semibold text-gray-900 dark:text-white">
-                                          Step 2:
-                                        </span>{" "}
-                                        Pay and activate campaign
-                                      </div>
-                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
-                                        <span className="font-semibold text-gray-900 dark:text-white">
-                                          Step 3:
-                                        </span>{" "}
-                                        Download prebuilt QR sheet
-                                      </div>
-                                      <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
-                                        <span className="font-semibold text-gray-900 dark:text-white">
-                                          Step 4:
-                                        </span>{" "}
-                                        Generate QRs to lock cashback and make
-                                        them redeemable
-                                      </div>
-                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setCampaignTab("pending")}
+                                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-400/60 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+                                    >
+                                      Open Pending Campaigns
+                                    </button>
                                   </div>
+                                )}
 
-                                  {fundableCampaigns.length === 0 && (
-                                    <div className="rounded-xl border border-amber-300/50 bg-amber-50/70 dark:bg-amber-900/10 px-3 py-3 flex flex-wrap items-center justify-between gap-2">
-                                      <div className="text-xs text-amber-800 dark:text-amber-200">
-                                        No campaign yet. Create campaign first,
-                                        then fund from your selected series.
-                                      </div>
+                                <div className="grid gap-3 md:grid-cols-3">
+                                  <div className="space-y-2">
+                                    <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                      Campaign
+                                    </label>
+                                    <select
+                                      value={selectedQrCampaign}
+                                      onChange={(event) =>
+                                        setSelectedQrCampaign(
+                                          event.target.value,
+                                        )
+                                      }
+                                      disabled={!fundableCampaigns.length}
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                    >
+                                      <option value="">Select campaign</option>
+                                      {fundableCampaigns.map((campaign) => (
+                                        <option
+                                          key={campaign.id}
+                                          value={campaign.id}
+                                        >
+                                          {campaign.title} (
+                                          {String(
+                                            campaign.status || "",
+                                          ).toLowerCase() === "pending"
+                                            ? "Pending"
+                                            : "Active"}
+                                          )
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        Product
+                                      </label>
+                                    </div>
+                                    <select
+                                      value={selectedQrProduct}
+                                      onChange={(event) => {
+                                        const value = event.target.value;
+                                        if (value === "ADD_NEW_PRODUCT") {
+                                          setProductModalContext("qr");
+                                          setEditingProduct(null);
+                                          setShowProductModal(true);
+                                        } else {
+                                          setSelectedQrProduct(value);
+                                        }
+                                      }}
+                                      disabled={!fundableCampaigns.length}
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                    >
+                                      <option value="">Select product</option>
+                                      <option
+                                        value="ADD_NEW_PRODUCT"
+                                        className="text-primary font-bold"
+                                      >
+                                        + Add New Product
+                                      </option>
+                                      {products.map((product) => (
+                                        <option
+                                          key={product.id}
+                                          value={product.id}
+                                        >
+                                          {product.name}
+                                          {product.variant
+                                            ? ` - ${product.variant}`
+                                            : ""}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                        QR Series
+                                      </label>
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          setCampaignTab("pending")
-                                        }
-                                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-400/60 text-amber-700 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/20"
+                                        onClick={() => loadQrInventorySeries()}
+                                        className="text-[10px] text-primary hover:underline"
                                       >
-                                        Open Pending Campaigns
+                                        Refresh
                                       </button>
                                     </div>
-                                  )}
-
-                                  <div className="grid gap-3 md:grid-cols-3">
-                                    <div className="space-y-2">
-                                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                        Campaign
-                                      </label>
-                                      <select
-                                        value={selectedQrCampaign}
-                                        onChange={(event) =>
-                                          setSelectedQrCampaign(
-                                            event.target.value,
-                                          )
-                                        }
-                                        disabled={!fundableCampaigns.length}
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                      >
-                                        <option value="">
-                                          Select campaign
-                                        </option>
-                                        {fundableCampaigns.map((campaign) => (
-                                          <option
-                                            key={campaign.id}
-                                            value={campaign.id}
-                                          >
-                                            {campaign.title} (
-                                            {String(
-                                              campaign.status || "",
-                                            ).toLowerCase() === "pending"
-                                              ? "Pending"
-                                              : "Active"}
-                                            )
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <div className="flex items-center justify-between">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          Product
-                                        </label>
-                                      </div>
-                                      <select
-                                        value={selectedQrProduct}
-                                        onChange={(event) => {
-                                          const value = event.target.value;
-                                          if (value === "ADD_NEW_PRODUCT") {
-                                            setProductModalContext("qr");
-                                            setEditingProduct(null);
-                                            setShowProductModal(true);
-                                          } else {
-                                            setSelectedQrProduct(value);
-                                          }
-                                        }}
-                                        disabled={!fundableCampaigns.length}
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                      >
-                                        <option value="">Select product</option>
+                                    <select
+                                      value={selectedQrSeries}
+                                      onChange={(event) =>
+                                        setSelectedQrSeries(event.target.value)
+                                      }
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                    >
+                                      <option value="">
+                                        Any available series
+                                      </option>
+                                      {qrInventorySeries.map((series) => (
                                         <option
-                                          value="ADD_NEW_PRODUCT"
-                                          className="text-primary font-bold"
+                                          key={`${series.seriesCode}-${series.sourceBatch || "na"}`}
+                                          value={series.seriesCode}
                                         >
-                                          + Add New Product
+                                          {series.seriesCode} (
+                                          {series.availableCount})
                                         </option>
-                                        {products.map((product) => (
-                                          <option
-                                            key={product.id}
-                                            value={product.id}
-                                          >
-                                            {product.name}
-                                            {product.variant
-                                              ? ` - ${product.variant}`
-                                              : ""}
-                                          </option>
-                                        ))}
-                                      </select>
+                                      ))}
+                                    </select>
+                                    <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                                      {qrInventorySeries.length
+                                        ? "Series values come from your pre-provisioned inventory."
+                                        : "No explicit series found. Recharge will use any available inventory."}
                                     </div>
-                                    <div className="space-y-2">
-                                      <div className="flex items-center justify-between">
-                                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                          QR Series
-                                        </label>
+                                  </div>
+                                </div>
+
+                                <div className="grid gap-2 md:grid-cols-2 text-[11px]">
+                                  <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
+                                    <span className="font-semibold text-gray-900 dark:text-white">
+                                      Download prebuilt:
+                                    </span>{" "}
+                                    gets printable inventory QRs. No wallet
+                                    deduction.
+                                  </div>
+                                  <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
+                                    <span className="font-semibold text-gray-900 dark:text-white">
+                                      Generate QRs:
+                                    </span>{" "}
+                                    allocates inventory to campaign and locks
+                                    cashback in wallet.
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={handleDownloadInventoryPdf}
+                                    disabled={
+                                      isDownloadingPdf ===
+                                      `inventory:${selectedQrSeries || "all"}`
+                                    }
+                                    className={SECONDARY_BUTTON}
+                                  >
+                                    {isDownloadingPdf ===
+                                    `inventory:${selectedQrSeries || "all"}`
+                                      ? "Downloading..."
+                                      : selectedQrSeries
+                                        ? `Download Prebuilt (${selectedQrSeries})`
+                                        : "Download Prebuilt QRs"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleOrderQrs}
+                                    disabled={
+                                      !fundableCampaigns.length ||
+                                      !selectedQrCampaign ||
+                                      (selectedCampaignRequiresProduct &&
+                                        !selectedQrProduct) ||
+                                      isOrdering
+                                    }
+                                    className={SUCCESS_BUTTON}
+                                  >
+                                    {isOrdering
+                                      ? selectedCampaignIsPending
+                                        ? "Activating..."
+                                        : "Generating..."
+                                      : selectedCampaignIsPending
+                                        ? "Activate & Fund"
+                                        : "Generate QRs"}
+                                  </button>
+                                </div>
+                                {qrOrderStatus && (
+                                  <div className="text-xs text-primary font-semibold">
+                                    {qrOrderStatus}
+                                  </div>
+                                )}
+                                {qrOrderError && (
+                                  <div className="text-xs text-red-600 font-semibold">
+                                    {qrOrderError}
+                                  </div>
+                                )}
+                                {lastBatchSummary && (
+                                  <div className="rounded-xl border border-primary/30 bg-primary/5 dark:bg-primary-strong/20 p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-sm font-bold text-primary">
+                                        Order Invoice
+                                      </div>
+                                      <div className="text-xs text-gray-400">
+                                        {format(
+                                          new Date(lastBatchSummary.timestamp),
+                                          "PPP p",
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      <div>
+                                        <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                          Campaign
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                          {lastBatchSummary.campaignTitle}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                          Quantity
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                          {lastBatchSummary.totalQrs || 0} QRs
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="border-t border-primary/30 pt-3 flex items-center justify-between gap-3">
+                                      <div className="text-xs text-gray-400">
+                                        Payment recorded. Admin will ship the QR
+                                        codes after processing.
+                                      </div>
+                                      <div className="flex items-center gap-2">
                                         <button
                                           type="button"
-                                          onClick={() =>
-                                            loadQrInventorySeries()
-                                          }
-                                          className="text-[10px] text-primary hover:underline"
-                                        >
-                                          Refresh
-                                        </button>
-                                      </div>
-                                      <select
-                                        value={selectedQrSeries}
-                                        onChange={(event) =>
-                                          setSelectedQrSeries(
-                                            event.target.value,
-                                          )
-                                        }
-                                        className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                      >
-                                        <option value="">
-                                          Any available series
-                                        </option>
-                                        {qrInventorySeries.map((series) => (
-                                          <option
-                                            key={`${series.seriesCode}-${series.sourceBatch || "na"}`}
-                                            value={series.seriesCode}
-                                          >
-                                            {series.seriesCode} (
-                                            {series.availableCount})
-                                          </option>
-                                        ))}
-                                      </select>
-                                      <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                        {qrInventorySeries.length
-                                          ? "Series values come from your pre-provisioned inventory."
-                                          : "No explicit series found. Recharge will use any available inventory."}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="grid gap-2 md:grid-cols-2 text-[11px]">
-                                    <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
-                                      <span className="font-semibold text-gray-900 dark:text-white">
-                                        Download prebuilt:
-                                      </span>{" "}
-                                      gets printable inventory QRs. No wallet
-                                      deduction.
-                                    </div>
-                                    <div className="rounded-lg border border-gray-200/80 dark:border-zinc-800 px-2.5 py-2 text-gray-600 dark:text-gray-300">
-                                      <span className="font-semibold text-gray-900 dark:text-white">
-                                        Generate QRs:
-                                      </span>{" "}
-                                      allocates inventory to campaign and locks
-                                      cashback in wallet.
-                                    </div>
-                                  </div>
-
-                                  <div className="flex flex-wrap items-center justify-end gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={handleDownloadInventoryPdf}
-                                      disabled={
-                                        isDownloadingPdf ===
-                                        `inventory:${selectedQrSeries || "all"}`
-                                      }
-                                      className={SECONDARY_BUTTON}
-                                    >
-                                      {isDownloadingPdf ===
-                                      `inventory:${selectedQrSeries || "all"}`
-                                        ? "Downloading..."
-                                        : selectedQrSeries
-                                          ? `Download Prebuilt (${selectedQrSeries})`
-                                          : "Download Prebuilt QRs"}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={handleOrderQrs}
-                                      disabled={
-                                        !fundableCampaigns.length ||
-                                        !selectedQrCampaign ||
-                                        (selectedCampaignRequiresProduct &&
-                                          !selectedQrProduct) ||
-                                        isOrdering
-                                      }
-                                      className={SUCCESS_BUTTON}
-                                    >
-                                      {isOrdering
-                                        ? selectedCampaignIsPending
-                                          ? "Activating..."
-                                          : "Generating..."
-                                        : selectedCampaignIsPending
-                                          ? "Activate & Fund"
-                                          : "Generate QRs"}
-                                    </button>
-                                  </div>
-                                  {qrOrderStatus && (
-                                    <div className="text-xs text-primary font-semibold">
-                                      {qrOrderStatus}
-                                    </div>
-                                  )}
-                                  {qrOrderError && (
-                                    <div className="text-xs text-red-600 font-semibold">
-                                      {qrOrderError}
-                                    </div>
-                                  )}
-                                  {lastBatchSummary && (
-                                    <div className="rounded-xl border border-primary/30 bg-primary/5 dark:bg-primary-strong/20 p-4 space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <div className="text-sm font-bold text-primary">
-                                          Order Invoice
-                                        </div>
-                                        <div className="text-xs text-gray-400">
-                                          {format(
-                                            new Date(
-                                              lastBatchSummary.timestamp,
-                                            ),
-                                            "PPP p",
-                                          )}
-                                        </div>
-                                      </div>
-                                      <div className="grid gap-3 sm:grid-cols-2">
-                                        <div>
-                                          <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                            Campaign
-                                          </div>
-                                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                            {lastBatchSummary.campaignTitle}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                            Quantity
-                                          </div>
-                                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                            {lastBatchSummary.totalQrs || 0} QRs
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="border-t border-primary/30 pt-3 flex items-center justify-between gap-3">
-                                        <div className="text-xs text-gray-400">
-                                          Payment recorded. Admin will ship the
-                                          QR codes after processing.
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const invoiceData = {
-                                                id: lastBatchSummary.id,
-                                                date: lastBatchSummary.timestamp,
-                                                campaign:
-                                                  lastBatchSummary.campaignTitle,
-                                                quantity:
-                                                  lastBatchSummary.totalQrs,
-                                              };
-                                              const invoiceText = `
+                                          onClick={() => {
+                                            const invoiceData = {
+                                              id: lastBatchSummary.id,
+                                              date: lastBatchSummary.timestamp,
+                                              campaign:
+                                                lastBatchSummary.campaignTitle,
+                                              quantity:
+                                                lastBatchSummary.totalQrs,
+                                            };
+                                            const invoiceText = `
 INVOICE #${invoiceData.id}
 Date: ${format(new Date(invoiceData.date), "PPP p")}
 ----------------------------------------
@@ -6027,741 +5976,142 @@ Campaign: ${invoiceData.campaign}
 Quantity: ${invoiceData.quantity} QRs
 ----------------------------------------
                                       `.trim();
-                                              const blob = new Blob(
-                                                [invoiceText],
-                                                { type: "text/plain" },
-                                              );
-                                              const url =
-                                                URL.createObjectURL(blob);
-                                              const a =
-                                                document.createElement("a");
-                                              a.href = url;
-                                              a.download = `invoice-${invoiceData.id}.txt`;
-                                              a.click();
-                                              URL.revokeObjectURL(url);
-                                            }}
-                                            className="text-xs font-semibold text-primary hover:text-primary-strong px-3 py-1.5 rounded-lg border border-primary/30 hover:bg-primary/10"
-                                          >
-                                            Download Invoice
-                                          </button>
-                                        </div>
+                                            const blob = new Blob(
+                                              [invoiceText],
+                                              { type: "text/plain" },
+                                            );
+                                            const url =
+                                              URL.createObjectURL(blob);
+                                            const a =
+                                              document.createElement("a");
+                                            a.href = url;
+                                            a.download = `invoice-${invoiceData.id}.txt`;
+                                            a.click();
+                                            URL.revokeObjectURL(url);
+                                          }}
+                                          className="text-xs font-semibold text-primary hover:text-primary-strong px-3 py-1.5 rounded-lg border border-primary/30 hover:bg-primary/10"
+                                        >
+                                          Download Invoice
+                                        </button>
                                       </div>
                                     </div>
-                                  )}
-                                </div>
-                              )}
-
-                              <div className="space-y-2">
-                                {activeCampaigns.length === 0 ? (
-                                  <div className="text-xs text-center text-gray-500 py-4 space-y-2">
-                                    <div>No active campaign found.</div>
-                                    <div>
-                                      Create or activate a campaign from Pending
-                                      Campaigns to see details here.
-                                    </div>
                                   </div>
-                                ) : (
-                                  (() => {
-                                    const grouped = activeCampaigns.reduce(
-                                      (acc, c) => {
-                                        const p =
-                                          c.Product?.name || "Other Campaigns";
-                                        if (!acc[p]) acc[p] = [];
-                                        acc[p].push(c);
-                                        return acc;
-                                      },
-                                      {},
-                                    );
-                                    return Object.entries(grouped).map(
-                                      ([productName, campaigns]) => (
-                                        <div
-                                          key={productName}
-                                          className="mb-8 last:mb-0"
-                                        >
-                                          <div className="flex items-center gap-3 mb-4 pl-1">
-                                            <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
-                                            </div>
-                                            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                                              {productName}
-                                            </h3>
-                                            <span className="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                                              {campaigns.length}
-                                            </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="space-y-2">
+                              {activeCampaigns.length === 0 ? (
+                                <div className="text-xs text-center text-gray-500 py-4 space-y-2">
+                                  <div>No active campaign found.</div>
+                                  <div>
+                                    Create or activate a campaign from Pending
+                                    Campaigns to see details here.
+                                  </div>
+                                </div>
+                              ) : (
+                                (() => {
+                                  const grouped = activeCampaigns.reduce(
+                                    (acc, c) => {
+                                      const p =
+                                        c.Product?.name || "Other Campaigns";
+                                      if (!acc[p]) acc[p] = [];
+                                      acc[p].push(c);
+                                      return acc;
+                                    },
+                                    {},
+                                  );
+                                  return Object.entries(grouped).map(
+                                    ([productName, campaigns]) => (
+                                      <div
+                                        key={productName}
+                                        className="mb-8 last:mb-0"
+                                      >
+                                        <div className="flex items-center gap-3 mb-4 pl-1">
+                                          <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
                                           </div>
-                                          <div className="space-y-4">
-                                            {campaigns.map((campaign) => {
-                                              const allocationGroups =
-                                                buildAllocationGroups(
-                                                  campaign.allocations,
-                                                );
-                                              const totalQty =
-                                                allocationGroups.reduce(
-                                                  (sum, group) =>
-                                                    sum + group.quantity,
-                                                  0,
-                                                );
-                                              const fallbackBudget =
-                                                allocationGroups.reduce(
-                                                  (sum, group) =>
-                                                    sum + group.totalBudget,
-                                                  0,
-                                                );
-                                              const totalBudget =
-                                                parseNumericValue(
-                                                  campaign.subtotal,
-                                                  parseNumericValue(
-                                                    campaign.totalBudget,
-                                                    fallbackBudget,
-                                                  ),
-                                                );
-                                              const campaignStats =
-                                                campaignStatsMap[campaign.id] ||
-                                                campaignStatsMap[
-                                                  `title:${campaign.title}`
-                                                ] ||
-                                                {};
-                                              const statsTotal = Number(
-                                                campaignStats.totalQRsOrdered,
+                                          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                            {productName}
+                                          </h3>
+                                          <span className="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                                            {campaigns.length}
+                                          </span>
+                                        </div>
+                                        <div className="space-y-4">
+                                          {campaigns.map((campaign) => {
+                                            const allocationGroups =
+                                              buildAllocationGroups(
+                                                campaign.allocations,
                                               );
-                                              const statsRedeemed = Number(
-                                                campaignStats.totalUsersJoined,
-                                              );
-                                              const totalCount =
-                                                Number.isFinite(statsTotal)
-                                                  ? Math.max(
-                                                      statsTotal,
-                                                      totalQty,
-                                                    )
-                                                  : totalQty;
-                                              const redeemedCount =
-                                                Number.isFinite(statsRedeemed)
-                                                  ? statsRedeemed
-                                                  : 0;
-                                              const activeCount = Math.max(
+                                            const totalQty =
+                                              allocationGroups.reduce(
+                                                (sum, group) =>
+                                                  sum + group.quantity,
                                                 0,
-                                                totalCount - redeemedCount,
                                               );
+                                            const fallbackBudget =
+                                              allocationGroups.reduce(
+                                                (sum, group) =>
+                                                  sum + group.totalBudget,
+                                                0,
+                                              );
+                                            const totalBudget =
+                                              parseNumericValue(
+                                                campaign.subtotal,
+                                                parseNumericValue(
+                                                  campaign.totalBudget,
+                                                  fallbackBudget,
+                                                ),
+                                              );
+                                            const campaignStats =
+                                              campaignStatsMap[campaign.id] ||
+                                              campaignStatsMap[
+                                                `title:${campaign.title}`
+                                              ] ||
+                                              {};
+                                            const statsTotal = Number(
+                                              campaignStats.totalQRsOrdered,
+                                            );
+                                            const statsRedeemed = Number(
+                                              campaignStats.totalUsersJoined,
+                                            );
+                                            const totalCount = Number.isFinite(
+                                              statsTotal,
+                                            )
+                                              ? Math.max(statsTotal, totalQty)
+                                              : totalQty;
+                                            const redeemedCount =
+                                              Number.isFinite(statsRedeemed)
+                                                ? statsRedeemed
+                                                : 0;
+                                            const activeCount = Math.max(
+                                              0,
+                                              totalCount - redeemedCount,
+                                            );
 
-                                              return (
-                                                <div
-                                                  key={campaign.id}
-                                                  className="rounded-2xl border border-gray-200/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-colors transition-shadow hover:border-primary/40 hover:shadow-md"
-                                                >
-                                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                    <div className="space-y-1">
-                                                      <div className="flex items-center gap-2">
-                                                        <div className="text-base font-semibold text-gray-900 dark:text-white">
-                                                          {campaign.title}
-                                                        </div>
-                                                        <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wide">
-                                                          Active
-                                                        </span>
+                                            return (
+                                              <div
+                                                key={campaign.id}
+                                                className="rounded-2xl border border-gray-200/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-colors transition-shadow hover:border-primary/40 hover:shadow-md"
+                                              >
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                  <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                      <div className="text-base font-semibold text-gray-900 dark:text-white">
+                                                        {campaign.title}
                                                       </div>
-                                                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                                        ID:{" "}
-                                                        {campaign.id.slice(
-                                                          0,
-                                                          10,
-                                                        )}
-                                                        ...
-                                                      </div>
-                                                    </div>
-                                                    <div className="hidden sm:flex flex-wrap items-center gap-2 justify-end">
-                                                      <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                          handleDownloadCampaignPdf(
-                                                            campaign,
-                                                          )
-                                                        }
-                                                        disabled={
-                                                          isDownloadingPdf ===
-                                                          campaign.id
-                                                        }
-                                                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
-                                                        title="Download QR Code"
-                                                        aria-label="Download QR Code"
-                                                      >
-                                                        <Download size={14} />
-                                                        Download QR Code
-                                                      </button>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                          setSelectedActiveCampaign(
-                                                            campaign,
-                                                          )
-                                                        }
-                                                        className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
-                                                        title="View Details"
-                                                        aria-label="View Details"
-                                                      >
-                                                        <Eye size={14} />
-                                                      </button>
-                                                      <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                          handleDeleteCampaign(
-                                                            campaign,
-                                                          )
-                                                        }
-                                                        disabled={
-                                                          deletingCampaignId ===
-                                                          campaign.id
-                                                        }
-                                                        className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
-                                                        title="Delete"
-                                                        aria-label="Delete"
-                                                      >
-                                                        <Trash2 size={14} />
-                                                      </button>
-                                                    </div>
-                                                  </div>
-                                                  <div className="grid gap-2 sm:grid-cols-4">
-                                                    <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Budget
-                                                      </div>
-                                                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                        INR{" "}
-                                                        {formatAmount(
-                                                          totalBudget > 0
-                                                            ? totalBudget
-                                                            : campaign.planType ===
-                                                                  "postpaid" &&
-                                                                Array.isArray(
-                                                                  campaign.sheets,
-                                                                )
-                                                              ? campaign.sheets.reduce(
-                                                                  (sum, s) =>
-                                                                    sum +
-                                                                    parseNumericValue(
-                                                                      s.amount,
-                                                                      0,
-                                                                    ) *
-                                                                      parseNumericValue(
-                                                                        s.count,
-                                                                        0,
-                                                                      ),
-                                                                  0,
-                                                                )
-                                                              : totalBudget,
-                                                        )}
-                                                      </div>
-                                                    </div>
-                                                    <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Total QRs
-                                                      </div>
-                                                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                        {totalCount || 0}
-                                                      </div>
-                                                    </div>
-                                                    <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                      <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wide">
                                                         Active
-                                                      </div>
-                                                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                        {activeCount}
-                                                      </div>
+                                                      </span>
                                                     </div>
-                                                    <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                        Redeemed
-                                                      </div>
-                                                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                        {redeemedCount}
-                                                      </div>
+                                                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                                      ID:{" "}
+                                                      {campaign.id.slice(0, 10)}
+                                                      ...
                                                     </div>
                                                   </div>
-
-                                                  {/* Campaign Start & End Date - Editable */}
-                                                  {(() => {
-                                                    const campId = campaign.id;
-                                                    const isEditingDates =
-                                                      editingCampaignDates ===
-                                                      campId;
-                                                    return (
-                                                      <div className="flex flex-wrap items-center gap-3 mt-2 px-1">
-                                                        {!isEditingDates ? (
-                                                          <>
-                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                              <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                                Start:
-                                                              </span>
-                                                              <span>
-                                                                {campaign.startDate
-                                                                  ? formatShortDate(
-                                                                      campaign.startDate,
-                                                                    )
-                                                                  : "—"}
-                                                              </span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                              <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                                End:
-                                                              </span>
-                                                              <span>
-                                                                {campaign.endDate
-                                                                  ? formatShortDate(
-                                                                      campaign.endDate,
-                                                                    )
-                                                                  : "—"}
-                                                              </span>
-                                                            </div>
-                                                            <button
-                                                              type="button"
-                                                              onClick={() => {
-                                                                setEditingCampaignDates(
-                                                                  campId,
-                                                                );
-                                                                setCampaignDateForm(
-                                                                  {
-                                                                    startDate:
-                                                                      campaign.startDate
-                                                                        ? new Date(
-                                                                            campaign.startDate,
-                                                                          )
-                                                                            .toISOString()
-                                                                            .slice(
-                                                                              0,
-                                                                              10,
-                                                                            )
-                                                                        : "",
-                                                                    endDate:
-                                                                      campaign.endDate
-                                                                        ? new Date(
-                                                                            campaign.endDate,
-                                                                          )
-                                                                            .toISOString()
-                                                                            .slice(
-                                                                              0,
-                                                                              10,
-                                                                            )
-                                                                        : "",
-                                                                  },
-                                                                );
-                                                              }}
-                                                              className="inline-flex items-center justify-center h-6 w-6 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                                                              title="Edit dates"
-                                                            >
-                                                              <Edit2
-                                                                size={12}
-                                                              />
-                                                            </button>
-                                                          </>
-                                                        ) : (
-                                                          <>
-                                                            <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-                                                              <span className="uppercase tracking-wide font-medium">
-                                                                Start Date
-                                                              </span>
-                                                              <input
-                                                                type="date"
-                                                                value={
-                                                                  campaignDateForm.startDate
-                                                                }
-                                                                onChange={(e) =>
-                                                                  setCampaignDateForm(
-                                                                    (prev) => ({
-                                                                      ...prev,
-                                                                      startDate:
-                                                                        e.target
-                                                                          .value,
-                                                                    }),
-                                                                  )
-                                                                }
-                                                                className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                                                              />
-                                                            </label>
-                                                            <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-                                                              <span className="uppercase tracking-wide font-medium">
-                                                                End Date
-                                                              </span>
-                                                              <input
-                                                                type="date"
-                                                                value={
-                                                                  campaignDateForm.endDate
-                                                                }
-                                                                min={
-                                                                  campaignDateForm.startDate
-                                                                }
-                                                                onChange={(e) =>
-                                                                  setCampaignDateForm(
-                                                                    (prev) => ({
-                                                                      ...prev,
-                                                                      endDate:
-                                                                        e.target
-                                                                          .value,
-                                                                    }),
-                                                                  )
-                                                                }
-                                                                className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                                                              />
-                                                            </label>
-                                                            <button
-                                                              type="button"
-                                                              disabled={
-                                                                savingCampaignDates
-                                                              }
-                                                              onClick={async () => {
-                                                                try {
-                                                                  setSavingCampaignDates(
-                                                                    true,
-                                                                  );
-                                                                  await updateVendorCampaign(
-                                                                    token,
-                                                                    campId,
-                                                                    {
-                                                                      startDate:
-                                                                        campaignDateForm.startDate,
-                                                                      endDate:
-                                                                        campaignDateForm.endDate,
-                                                                    },
-                                                                  );
-                                                                  toast.success(
-                                                                    "Campaign dates updated",
-                                                                  );
-                                                                  setEditingCampaignDates(
-                                                                    null,
-                                                                  );
-                                                                  fetchCampaigns();
-                                                                } catch (err) {
-                                                                  toast.error(
-                                                                    err?.message ||
-                                                                      "Failed to update dates",
-                                                                  );
-                                                                } finally {
-                                                                  setSavingCampaignDates(
-                                                                    false,
-                                                                  );
-                                                                }
-                                                              }}
-                                                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
-                                                            >
-                                                              {savingCampaignDates
-                                                                ? "Saving..."
-                                                                : "Save"}
-                                                            </button>
-                                                            <button
-                                                              type="button"
-                                                              onClick={() =>
-                                                                setEditingCampaignDates(
-                                                                  null,
-                                                                )
-                                                              }
-                                                              className="inline-flex items-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 text-gray-500 text-xs hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                                                            >
-                                                              Cancel
-                                                            </button>
-                                                          </>
-                                                        )}
-                                                      </div>
-                                                    );
-                                                  })()}
-
-                                                  {/* Sheet Cashback Assignment for Postpaid */}
-                                                  {campaign.planType ===
-                                                    "postpaid" &&
-                                                    (() => {
-                                                      const totalQrs =
-                                                        totalCount || 0;
-
-                                                      // Use backend sheet data if available, else calculate
-                                                      let sheets = [];
-                                                      if (
-                                                        campaign.sheets &&
-                                                        campaign.sheets.length >
-                                                          0
-                                                      ) {
-                                                        sheets =
-                                                          campaign.sheets.map(
-                                                            (s) => ({
-                                                              ...s,
-                                                              qrCount: s.count,
-                                                              amount: s.amount,
-                                                            }),
-                                                          );
-                                                      } else {
-                                                        const sheetCount =
-                                                          Math.ceil(
-                                                            totalQrs / 25,
-                                                          );
-
-                                                        sheets = Array.from(
-                                                          {
-                                                            length: sheetCount,
-                                                          },
-                                                          (_, i) => ({
-                                                            index: i,
-                                                            label: toRoman(
-                                                              i + 1,
-                                                            ),
-                                                            qrCount: Math.min(
-                                                              25,
-                                                              totalQrs - i * 25,
-                                                            ),
-                                                            amount: 0,
-                                                          }),
-                                                        );
-                                                      }
-                                                      const formKey =
-                                                        campaign.id;
-                                                      const form =
-                                                        sheetCashbackForm[
-                                                          formKey
-                                                        ] || {
-                                                          sheetIndex: 0,
-                                                          amount: "",
-                                                        };
-                                                      const isAssigning =
-                                                        assigningSheet ===
-                                                        campaign.id;
-                                                      const handleAssign =
-                                                        async () => {
-                                                          if (
-                                                            !form.amount ||
-                                                            isAssigning
-                                                          )
-                                                            return;
-                                                          setAssigningSheet(
-                                                            campaign.id,
-                                                          );
-                                                          try {
-                                                            const result =
-                                                              await assignSheetCashback(
-                                                                token,
-                                                                campaign.id,
-                                                                {
-                                                                  sheetIndex:
-                                                                    form.sheetIndex,
-                                                                  cashbackAmount:
-                                                                    parseFloat(
-                                                                      form.amount,
-                                                                    ),
-                                                                },
-                                                              );
-                                                            setStatusWithTimeout(
-                                                              result.message ||
-                                                                "Sheet updated! Proceeding to payment...",
-                                                            );
-                                                            // Clear form
-                                                            setSheetCashbackForm(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [formKey]: {
-                                                                  ...form,
-                                                                  amount: "",
-                                                                },
-                                                              }),
-                                                            );
-                                                            // Trigger Payment Modal
-                                                            const qty =
-                                                              sheets.find(
-                                                                (s) =>
-                                                                  s.index ===
-                                                                  form.sheetIndex,
-                                                              )?.qrCount || 0;
-                                                            const cashbackTotal =
-                                                              parseFloat(
-                                                                form.amount,
-                                                              ) * qty;
-
-                                                            const totalEst =
-                                                              cashbackTotal;
-
-                                                            setSheetPaymentData(
-                                                              {
-                                                                campaignId:
-                                                                  campaign.id,
-                                                                sheetIndex:
-                                                                  form.sheetIndex,
-                                                                sheetLabel:
-                                                                  sheets.find(
-                                                                    (s) =>
-                                                                      s.index ===
-                                                                      form.sheetIndex,
-                                                                  )?.label ||
-                                                                  "?",
-                                                                amount:
-                                                                  parseFloat(
-                                                                    form.amount,
-                                                                  ),
-                                                                count: qty,
-                                                                totalCost:
-                                                                  totalEst,
-                                                                breakdown: {
-                                                                  cashback:
-                                                                    cashbackTotal,
-                                                                  tech: 0,
-                                                                  voucher: 0,
-                                                                },
-                                                              },
-                                                            );
-                                                            loadCampaigns(
-                                                              token,
-                                                            );
-                                                          } catch (err) {
-                                                            setStatusWithTimeout(
-                                                              err.message ||
-                                                                "Failed to update sheet.",
-                                                            );
-                                                          } finally {
-                                                            setAssigningSheet(
-                                                              null,
-                                                            );
-                                                          }
-                                                        };
-                                                      return sheets.length >
-                                                        0 ? (
-                                                        <div className="mt-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                                                          <div className="px-5 py-3 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/30">
-                                                            <div className="flex items-center gap-2">
-                                                              <div className="p-1.5 rounded-lg bg-emerald-100/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                                                <QrCode className="w-3.5 h-3.5" />
-                                                              </div>
-                                                              <span className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                                                Assign Cashback
-                                                                by Sheet
-                                                              </span>
-                                                            </div>
-                                                            <div className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-zinc-700">
-                                                              {sheets.length}{" "}
-                                                              Sheets
-                                                            </div>
-                                                          </div>
-                                                          <div className="p-5 grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
-                                                            <div className="sm:col-span-6">
-                                                              <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
-                                                                Select Target
-                                                                Sheet
-                                                              </label>
-                                                              <div className="relative">
-                                                                <select
-                                                                  value={
-                                                                    form.sheetIndex
-                                                                  }
-                                                                  onChange={(
-                                                                    e,
-                                                                  ) =>
-                                                                    setSheetCashbackForm(
-                                                                      (
-                                                                        prev,
-                                                                      ) => ({
-                                                                        ...prev,
-                                                                        [formKey]:
-                                                                          {
-                                                                            ...form,
-                                                                            sheetIndex:
-                                                                              parseInt(
-                                                                                e
-                                                                                  .target
-                                                                                  .value,
-                                                                                10,
-                                                                              ),
-                                                                          },
-                                                                      }),
-                                                                    )
-                                                                  }
-                                                                  className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-3 pl-4 pr-8 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all appearance-none cursor-pointer hover:bg-white dark:hover:bg-zinc-800"
-                                                                >
-                                                                  {sheets.map(
-                                                                    (s) => (
-                                                                      <option
-                                                                        key={
-                                                                          s.index
-                                                                        }
-                                                                        value={
-                                                                          s.index
-                                                                        }
-                                                                        className="text-gray-900 dark:text-gray-100 py-1"
-                                                                      >
-                                                                        Sheet{" "}
-                                                                        {
-                                                                          s.label
-                                                                        }{" "}
-                                                                        (
-                                                                        {
-                                                                          s.qrCount
-                                                                        }{" "}
-                                                                        QRs)
-                                                                        {s.amount >
-                                                                        0
-                                                                          ? ` - INR ${s.amount}`
-                                                                          : ""}
-                                                                      </option>
-                                                                    ),
-                                                                  )}
-                                                                </select>
-                                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                                                  <ChevronRight className="w-4 h-4 rotate-90" />
-                                                                </div>
-                                                              </div>
-                                                            </div>
-                                                            <div className="sm:col-span-3">
-                                                              <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
-                                                                Cashback (INR)
-                                                              </label>
-                                                              <div className="relative">
-                                                                <input
-                                                                  type="number"
-                                                                  min="0"
-                                                                  step="0.01"
-                                                                  placeholder="0.00"
-                                                                  value={
-                                                                    form.amount
-                                                                  }
-                                                                  onChange={(
-                                                                    e,
-                                                                  ) =>
-                                                                    setSheetCashbackForm(
-                                                                      (
-                                                                        prev,
-                                                                      ) => ({
-                                                                        ...prev,
-                                                                        [formKey]:
-                                                                          {
-                                                                            ...form,
-                                                                            amount:
-                                                                              e
-                                                                                .target
-                                                                                .value,
-                                                                          },
-                                                                      }),
-                                                                    )
-                                                                  }
-                                                                  className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-4 text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all placeholder:font-normal placeholder:text-gray-400 hover:bg-white dark:hover:bg-zinc-800"
-                                                                />
-                                                              </div>
-                                                            </div>
-                                                            <div className="sm:col-span-3">
-                                                              <button
-                                                                type="button"
-                                                                onClick={
-                                                                  handleAssign
-                                                                }
-                                                                disabled={
-                                                                  isAssigning ||
-                                                                  !form.amount
-                                                                }
-                                                                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
-                                                              >
-                                                                {isAssigning ? (
-                                                                  <RefreshCw className="w-4 h-4 animate-spin" />
-                                                                ) : (
-                                                                  <>
-                                                                    Save Changes
-                                                                    <CheckCircle2 className="w-4 h-4 transition-transform group-hover:scale-110" />
-                                                                  </>
-                                                                )}
-                                                              </button>
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                      ) : null;
-                                                    })()}
-                                                  <div className="flex flex-wrap items-center justify-end gap-2 pt-2 sm:hidden">
+                                                  <div className="hidden sm:flex flex-wrap items-center gap-2 justify-end">
                                                     <button
                                                       type="button"
                                                       onClick={() =>
@@ -6773,11 +6123,12 @@ Quantity: ${invoiceData.quantity} QRs
                                                         isDownloadingPdf ===
                                                         campaign.id
                                                       }
-                                                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
-                                                      title="Download PDF"
-                                                      aria-label="Download PDF"
+                                                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
+                                                      title="Download QR Code"
+                                                      aria-label="Download QR Code"
                                                     >
                                                       <Download size={14} />
+                                                      Download QR Code
                                                     </button>
                                                     <button
                                                       type="button"
@@ -6811,1008 +6162,1760 @@ Quantity: ${invoiceData.quantity} QRs
                                                     </button>
                                                   </div>
                                                 </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      ),
-                                    );
-                                  })()
-                                )}
-                              </div>
-                            </div>
-                          )}
+                                                <div className="grid gap-2 sm:grid-cols-4">
+                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
+                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                      Budget
+                                                    </div>
+                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                      INR{" "}
+                                                      {formatAmount(
+                                                        totalBudget > 0
+                                                          ? totalBudget
+                                                          : campaign.planType ===
+                                                                "postpaid" &&
+                                                              Array.isArray(
+                                                                campaign.sheets,
+                                                              )
+                                                            ? campaign.sheets.reduce(
+                                                                (sum, s) =>
+                                                                  sum +
+                                                                  parseNumericValue(
+                                                                    s.amount,
+                                                                    0,
+                                                                  ) *
+                                                                    parseNumericValue(
+                                                                      s.count,
+                                                                      0,
+                                                                    ),
+                                                                0,
+                                                              )
+                                                            : totalBudget,
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
+                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                      Total QRs
+                                                    </div>
+                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                      {totalCount || 0}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
+                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                      Active
+                                                    </div>
+                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                      {activeCount}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
+                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                                      Redeemed
+                                                    </div>
+                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                      {redeemedCount}
+                                                    </div>
+                                                  </div>
+                                                </div>
 
-                          {/* Pending Campaigns Tab */}
-                          {campaignTab === "pending" && (
-                            <div className="space-y-4">
-                              {pendingCampaigns.length === 0 ? (
-                                <div className="text-xs text-center text-gray-500 py-4">
-                                  No pending campaigns found.
-                                </div>
-                              ) : (
-                                pendingCampaigns.map((campaign) => {
-                                  const allocationGroups =
-                                    buildAllocationGroups(campaign.allocations);
-                                  const totalQty = allocationGroups.reduce(
-                                    (sum, group) => sum + group.quantity,
-                                    0,
-                                  );
-                                  const fallbackBudget =
-                                    allocationGroups.reduce(
-                                      (sum, group) => sum + group.totalBudget,
-                                      0,
-                                    );
-                                  const totalBudget = parseNumericValue(
-                                    campaign.subtotal,
-                                    parseNumericValue(
-                                      campaign.totalBudget,
-                                      fallbackBudget,
-                                    ),
-                                  );
-                                  return (
-                                    <div
-                                      key={campaign.id}
-                                      className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-                                    >
-                                      <div className="bg-gradient-to-r from-amber-600/20 to-amber-600/10 px-4 py-3">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3">
-                                            <Megaphone
-                                              size={18}
-                                              className="text-amber-400"
-                                            />
-                                            <div>
-                                              <span className="text-base font-bold text-gray-900 dark:text-white">
-                                                {campaign.title}
-                                              </span>
-                                            </div>
-                                          </div>
-                                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20 text-[10px] uppercase font-bold tracking-wide">
-                                            Pending
-                                          </span>
+                                                {/* Campaign Start & End Date - Editable */}
+                                                {(() => {
+                                                  const campId = campaign.id;
+                                                  const isEditingDates =
+                                                    editingCampaignDates ===
+                                                    campId;
+                                                  return (
+                                                    <div className="flex flex-wrap items-center gap-3 mt-2 px-1">
+                                                      {!isEditingDates ? (
+                                                        <>
+                                                          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                              Start:
+                                                            </span>
+                                                            <span>
+                                                              {campaign.startDate
+                                                                ? formatShortDate(
+                                                                    campaign.startDate,
+                                                                  )
+                                                                : "—"}
+                                                            </span>
+                                                          </div>
+                                                          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                              End:
+                                                            </span>
+                                                            <span>
+                                                              {campaign.endDate
+                                                                ? formatShortDate(
+                                                                    campaign.endDate,
+                                                                  )
+                                                                : "—"}
+                                                            </span>
+                                                          </div>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                              setEditingCampaignDates(
+                                                                campId,
+                                                              );
+                                                              setCampaignDateForm(
+                                                                {
+                                                                  startDate:
+                                                                    campaign.startDate
+                                                                      ? new Date(
+                                                                          campaign.startDate,
+                                                                        )
+                                                                          .toISOString()
+                                                                          .slice(
+                                                                            0,
+                                                                            10,
+                                                                          )
+                                                                      : "",
+                                                                  endDate:
+                                                                    campaign.endDate
+                                                                      ? new Date(
+                                                                          campaign.endDate,
+                                                                        )
+                                                                          .toISOString()
+                                                                          .slice(
+                                                                            0,
+                                                                            10,
+                                                                          )
+                                                                      : "",
+                                                                },
+                                                              );
+                                                            }}
+                                                            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                                                            title="Edit dates"
+                                                          >
+                                                            <Edit2 size={12} />
+                                                          </button>
+                                                        </>
+                                                      ) : (
+                                                        <>
+                                                          <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                                            <span className="uppercase tracking-wide font-medium">
+                                                              Start Date
+                                                            </span>
+                                                            <input
+                                                              type="date"
+                                                              value={
+                                                                campaignDateForm.startDate
+                                                              }
+                                                              onChange={(e) =>
+                                                                setCampaignDateForm(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    startDate:
+                                                                      e.target
+                                                                        .value,
+                                                                  }),
+                                                                )
+                                                              }
+                                                              className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                                                            />
+                                                          </label>
+                                                          <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                                            <span className="uppercase tracking-wide font-medium">
+                                                              End Date
+                                                            </span>
+                                                            <input
+                                                              type="date"
+                                                              value={
+                                                                campaignDateForm.endDate
+                                                              }
+                                                              min={
+                                                                campaignDateForm.startDate
+                                                              }
+                                                              onChange={(e) =>
+                                                                setCampaignDateForm(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    endDate:
+                                                                      e.target
+                                                                        .value,
+                                                                  }),
+                                                                )
+                                                              }
+                                                              className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                                                            />
+                                                          </label>
+                                                          <button
+                                                            type="button"
+                                                            disabled={
+                                                              savingCampaignDates
+                                                            }
+                                                            onClick={async () => {
+                                                              try {
+                                                                setSavingCampaignDates(
+                                                                  true,
+                                                                );
+                                                                await updateVendorCampaign(
+                                                                  token,
+                                                                  campId,
+                                                                  {
+                                                                    startDate:
+                                                                      campaignDateForm.startDate,
+                                                                    endDate:
+                                                                      campaignDateForm.endDate,
+                                                                  },
+                                                                );
+                                                                toast.success(
+                                                                  "Campaign dates updated",
+                                                                );
+                                                                setEditingCampaignDates(
+                                                                  null,
+                                                                );
+                                                                fetchCampaigns();
+                                                              } catch (err) {
+                                                                toast.error(
+                                                                  err?.message ||
+                                                                    "Failed to update dates",
+                                                                );
+                                                              } finally {
+                                                                setSavingCampaignDates(
+                                                                  false,
+                                                                );
+                                                              }
+                                                            }}
+                                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
+                                                          >
+                                                            {savingCampaignDates
+                                                              ? "Saving..."
+                                                              : "Save"}
+                                                          </button>
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              setEditingCampaignDates(
+                                                                null,
+                                                              )
+                                                            }
+                                                            className="inline-flex items-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 text-gray-500 text-xs hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                                          >
+                                                            Cancel
+                                                          </button>
+                                                        </>
+                                                      )}
+                                                    </div>
+                                                  );
+                                                })()}
+
+                                                {/* Sheet Cashback Assignment for Postpaid */}
+                                                {campaign.planType ===
+                                                  "postpaid" &&
+                                                  (() => {
+                                                    const totalQrs =
+                                                      totalCount || 0;
+
+                                                    // Use backend sheet data if available, else calculate
+                                                    let sheets = [];
+                                                    if (
+                                                      campaign.sheets &&
+                                                      campaign.sheets.length > 0
+                                                    ) {
+                                                      sheets =
+                                                        campaign.sheets.map(
+                                                          (s) => ({
+                                                            ...s,
+                                                            qrCount: s.count,
+                                                            amount: s.amount,
+                                                          }),
+                                                        );
+                                                    } else {
+                                                      const sheetCount =
+                                                        Math.ceil(
+                                                          totalQrs / 25,
+                                                        );
+
+                                                      sheets = Array.from(
+                                                        {
+                                                          length: sheetCount,
+                                                        },
+                                                        (_, i) => ({
+                                                          index: i,
+                                                          label: toRoman(i + 1),
+                                                          qrCount: Math.min(
+                                                            25,
+                                                            totalQrs - i * 25,
+                                                          ),
+                                                          amount: 0,
+                                                        }),
+                                                      );
+                                                    }
+                                                    const formKey = campaign.id;
+                                                    const form =
+                                                      sheetCashbackForm[
+                                                        formKey
+                                                      ] || {
+                                                        sheetIndex: 0,
+                                                        amount: "",
+                                                      };
+                                                    const isAssigning =
+                                                      assigningSheet ===
+                                                      campaign.id;
+                                                    const handleAssign =
+                                                      async () => {
+                                                        if (
+                                                          !form.amount ||
+                                                          isAssigning
+                                                        )
+                                                          return;
+                                                        setAssigningSheet(
+                                                          campaign.id,
+                                                        );
+                                                        try {
+                                                          const result =
+                                                            await assignSheetCashback(
+                                                              token,
+                                                              campaign.id,
+                                                              {
+                                                                sheetIndex:
+                                                                  form.sheetIndex,
+                                                                cashbackAmount:
+                                                                  parseFloat(
+                                                                    form.amount,
+                                                                  ),
+                                                              },
+                                                            );
+                                                          setStatusWithTimeout(
+                                                            result.message ||
+                                                              "Sheet updated! Proceeding to payment...",
+                                                          );
+                                                          // Clear form
+                                                          setSheetCashbackForm(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [formKey]: {
+                                                                ...form,
+                                                                amount: "",
+                                                              },
+                                                            }),
+                                                          );
+                                                          // Trigger Payment Modal
+                                                          const qty =
+                                                            sheets.find(
+                                                              (s) =>
+                                                                s.index ===
+                                                                form.sheetIndex,
+                                                            )?.qrCount || 0;
+                                                          const cashbackTotal =
+                                                            parseFloat(
+                                                              form.amount,
+                                                            ) * qty;
+
+                                                          const totalEst =
+                                                            cashbackTotal;
+
+                                                          setSheetPaymentData({
+                                                            campaignId:
+                                                              campaign.id,
+                                                            sheetIndex:
+                                                              form.sheetIndex,
+                                                            sheetLabel:
+                                                              sheets.find(
+                                                                (s) =>
+                                                                  s.index ===
+                                                                  form.sheetIndex,
+                                                              )?.label || "?",
+                                                            amount: parseFloat(
+                                                              form.amount,
+                                                            ),
+                                                            count: qty,
+                                                            totalCost: totalEst,
+                                                            breakdown: {
+                                                              cashback:
+                                                                cashbackTotal,
+                                                              tech: 0,
+                                                              voucher: 0,
+                                                            },
+                                                          });
+                                                          loadCampaigns(token);
+                                                        } catch (err) {
+                                                          setStatusWithTimeout(
+                                                            err.message ||
+                                                              "Failed to update sheet.",
+                                                          );
+                                                        } finally {
+                                                          setAssigningSheet(
+                                                            null,
+                                                          );
+                                                        }
+                                                      };
+                                                    return sheets.length > 0 ? (
+                                                      <div className="mt-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                                        <div className="px-5 py-3 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/30">
+                                                          <div className="flex items-center gap-2">
+                                                            <div className="p-1.5 rounded-lg bg-emerald-100/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                                              <QrCode className="w-3.5 h-3.5" />
+                                                            </div>
+                                                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+                                                              Assign Cashback by
+                                                              Sheet
+                                                            </span>
+                                                          </div>
+                                                          <div className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-zinc-700">
+                                                            {sheets.length}{" "}
+                                                            Sheets
+                                                          </div>
+                                                        </div>
+                                                        <div className="p-5 grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+                                                          <div className="sm:col-span-6">
+                                                            <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
+                                                              Select Target
+                                                              Sheet
+                                                            </label>
+                                                            <div className="relative">
+                                                              <select
+                                                                value={
+                                                                  form.sheetIndex
+                                                                }
+                                                                onChange={(e) =>
+                                                                  setSheetCashbackForm(
+                                                                    (prev) => ({
+                                                                      ...prev,
+                                                                      [formKey]:
+                                                                        {
+                                                                          ...form,
+                                                                          sheetIndex:
+                                                                            parseInt(
+                                                                              e
+                                                                                .target
+                                                                                .value,
+                                                                              10,
+                                                                            ),
+                                                                        },
+                                                                    }),
+                                                                  )
+                                                                }
+                                                                className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-3 pl-4 pr-8 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all appearance-none cursor-pointer hover:bg-white dark:hover:bg-zinc-800"
+                                                              >
+                                                                {sheets.map(
+                                                                  (s) => (
+                                                                    <option
+                                                                      key={
+                                                                        s.index
+                                                                      }
+                                                                      value={
+                                                                        s.index
+                                                                      }
+                                                                      className="text-gray-900 dark:text-gray-100 py-1"
+                                                                    >
+                                                                      Sheet{" "}
+                                                                      {s.label}{" "}
+                                                                      (
+                                                                      {
+                                                                        s.qrCount
+                                                                      }{" "}
+                                                                      QRs)
+                                                                      {s.amount >
+                                                                      0
+                                                                        ? ` - INR ${s.amount}`
+                                                                        : ""}
+                                                                    </option>
+                                                                  ),
+                                                                )}
+                                                              </select>
+                                                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                                <ChevronRight className="w-4 h-4 rotate-90" />
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                          <div className="sm:col-span-3">
+                                                            <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
+                                                              Cashback (INR)
+                                                            </label>
+                                                            <div className="relative">
+                                                              <input
+                                                                type="number"
+                                                                min="0"
+                                                                step="0.01"
+                                                                placeholder="0.00"
+                                                                value={
+                                                                  form.amount
+                                                                }
+                                                                onChange={(e) =>
+                                                                  setSheetCashbackForm(
+                                                                    (prev) => ({
+                                                                      ...prev,
+                                                                      [formKey]:
+                                                                        {
+                                                                          ...form,
+                                                                          amount:
+                                                                            e
+                                                                              .target
+                                                                              .value,
+                                                                        },
+                                                                    }),
+                                                                  )
+                                                                }
+                                                                className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-4 text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all placeholder:font-normal placeholder:text-gray-400 hover:bg-white dark:hover:bg-zinc-800"
+                                                              />
+                                                            </div>
+                                                          </div>
+                                                          <div className="sm:col-span-3">
+                                                            <button
+                                                              type="button"
+                                                              onClick={
+                                                                handleAssign
+                                                              }
+                                                              disabled={
+                                                                isAssigning ||
+                                                                !form.amount
+                                                              }
+                                                              className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
+                                                            >
+                                                              {isAssigning ? (
+                                                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                                              ) : (
+                                                                <>
+                                                                  Save Changes
+                                                                  <CheckCircle2 className="w-4 h-4 transition-transform group-hover:scale-110" />
+                                                                </>
+                                                              )}
+                                                            </button>
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    ) : null;
+                                                  })()}
+                                                <div className="flex flex-wrap items-center justify-end gap-2 pt-2 sm:hidden">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleDownloadCampaignPdf(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      isDownloadingPdf ===
+                                                      campaign.id
+                                                    }
+                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
+                                                    title="Download PDF"
+                                                    aria-label="Download PDF"
+                                                  >
+                                                    <Download size={14} />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      setSelectedActiveCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
+                                                    title="View Details"
+                                                    aria-label="View Details"
+                                                  >
+                                                    <Eye size={14} />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleDeleteCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      deletingCampaignId ===
+                                                      campaign.id
+                                                    }
+                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
+                                                    title="Delete"
+                                                    aria-label="Delete"
+                                                  >
+                                                    <Trash2 size={14} />
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       </div>
+                                    ),
+                                  );
+                                })()
+                              )}
+                            </div>
+                          </div>
+                        )}
 
-                                      <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
-                                        {allocationGroups.length === 0 ? (
-                                          <div className="p-4 text-xs text-gray-500">
-                                            No allocations configured yet.
+                        {/* Pending Campaigns Tab */}
+                        {campaignTab === "pending" && (
+                          <div className="space-y-4">
+                            {pendingCampaigns.length === 0 ? (
+                              <div className="text-xs text-center text-gray-500 py-4">
+                                No pending campaigns found.
+                              </div>
+                            ) : (
+                              pendingCampaigns.map((campaign) => {
+                                const allocationGroups = buildAllocationGroups(
+                                  campaign.allocations,
+                                );
+                                const totalQty = allocationGroups.reduce(
+                                  (sum, group) => sum + group.quantity,
+                                  0,
+                                );
+                                const fallbackBudget = allocationGroups.reduce(
+                                  (sum, group) => sum + group.totalBudget,
+                                  0,
+                                );
+                                const totalBudget = parseNumericValue(
+                                  campaign.subtotal,
+                                  parseNumericValue(
+                                    campaign.totalBudget,
+                                    fallbackBudget,
+                                  ),
+                                );
+                                return (
+                                  <div
+                                    key={campaign.id}
+                                    className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                  >
+                                    <div className="bg-gradient-to-r from-amber-600/20 to-amber-600/10 px-4 py-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <Megaphone
+                                            size={18}
+                                            className="text-amber-400"
+                                          />
+                                          <div>
+                                            <span className="text-base font-bold text-gray-900 dark:text-white">
+                                              {campaign.title}
+                                            </span>
                                           </div>
-                                        ) : (
-                                          allocationGroups.map((group) => {
-                                            const groupKey = `${campaign.id}-${group.price.toFixed(2)}`;
-                                            return (
-                                              <div
-                                                key={groupKey}
-                                                className="p-4"
-                                              >
-                                                <div className="flex items-center">
-                                                  <div className="flex items-center gap-4">
-                                                    <div>
-                                                      <div className="text-xs text-gray-500">
-                                                        Cashback Amount
-                                                      </div>
-                                                      <div className="text-lg font-bold text-primary">
-                                                        {"\u20B9"}
-                                                        {formatAmount(
-                                                          group.price,
-                                                        )}
-                                                      </div>
+                                        </div>
+                                        <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20 text-[10px] uppercase font-bold tracking-wide">
+                                          Pending
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
+                                      {allocationGroups.length === 0 ? (
+                                        <div className="p-4 text-xs text-gray-500">
+                                          No allocations configured yet.
+                                        </div>
+                                      ) : (
+                                        allocationGroups.map((group) => {
+                                          const groupKey = `${campaign.id}-${group.price.toFixed(2)}`;
+                                          return (
+                                            <div key={groupKey} className="p-4">
+                                              <div className="flex items-center">
+                                                <div className="flex items-center gap-4">
+                                                  <div>
+                                                    <div className="text-xs text-gray-500">
+                                                      Cashback Amount
                                                     </div>
-                                                    <div>
-                                                      <div className="text-xs text-gray-500">
-                                                        Quantity
-                                                      </div>
-                                                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                        {group.quantity} QRs
-                                                      </div>
+                                                    <div className="text-lg font-bold text-primary">
+                                                      {"\u20B9"}
+                                                      {formatAmount(
+                                                        group.price,
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div>
+                                                    <div className="text-xs text-gray-500">
+                                                      Quantity
+                                                    </div>
+                                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                                      {group.quantity} QRs
                                                     </div>
                                                   </div>
                                                 </div>
                                               </div>
-                                            );
-                                          })
-                                        )}
-                                      </div>
+                                            </div>
+                                          );
+                                        })
+                                      )}
+                                    </div>
 
-                                      <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
-                                        <span>
-                                          Total: {totalQty} QR
-                                          {totalQty !== 1 ? "s" : ""} - Budget{" "}
-                                          {"\u20B9"}
-                                          {formatAmount(totalBudget)}
-                                        </span>
-                                        <div className="flex flex-wrap items-center gap-3 text-xs">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handleDeleteCampaign(campaign)
-                                            }
-                                            disabled={
-                                              deletingCampaignId === campaign.id
-                                            }
-                                            className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 font-medium hover:bg-rose-500/20 hover:border-rose-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                                          >
-                                            <Trash2 size={14} />
-                                            {deletingCampaignId === campaign.id
-                                              ? "Deleting..."
-                                              : "Delete"}
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handlePayCampaign(campaign)
-                                            }
-                                            className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
-                                          >
-                                            Proceed to Pay
-                                            <ArrowRight size={14} />
-                                          </button>
-                                        </div>
+                                    <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
+                                      <span>
+                                        Total: {totalQty} QR
+                                        {totalQty !== 1 ? "s" : ""} - Budget{" "}
+                                        {"\u20B9"}
+                                        {formatAmount(totalBudget)}
+                                      </span>
+                                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteCampaign(campaign)
+                                          }
+                                          disabled={
+                                            deletingCampaignId === campaign.id
+                                          }
+                                          className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 font-medium hover:bg-rose-500/20 hover:border-rose-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                          <Trash2 size={14} />
+                                          {deletingCampaignId === campaign.id
+                                            ? "Deleting..."
+                                            : "Delete"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handlePayCampaign(campaign)
+                                          }
+                                          className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                                        >
+                                          Proceed to Pay
+                                          <ArrowRight size={14} />
+                                        </button>
                                       </div>
                                     </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          )}
-
-                          {/* Pending Campaign Details Modal */}
-                          {selectedPendingCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
-                                <div className="p-6 space-y-6">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                                        {selectedPendingCampaign.title}
-                                      </h3>
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {format(
-                                          new Date(
-                                            selectedPendingCampaign.startDate,
-                                          ),
-                                          "MMM dd",
-                                        )}{" "}
-                                        -{" "}
-                                        {format(
-                                          new Date(
-                                            selectedPendingCampaign.endDate,
-                                          ),
-                                          "MMM dd, yyyy",
-                                        )}
-                                      </p>
-                                    </div>
-                                    <button
-                                      onClick={() =>
-                                        setSelectedPendingCampaign(null)
-                                      }
-                                      className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-                                    >
-                                      <X size={20} className="text-gray-500" />
-                                    </button>
                                   </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
 
-                                  {selectedPendingCampaign.description && (
-                                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
-                                      {selectedPendingCampaign.description}
-                                    </div>
-                                  )}
-
+                        {/* Pending Campaign Details Modal */}
+                        {selectedPendingCampaign && (
+                          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
+                              <div className="p-6 space-y-6">
+                                <div className="flex items-center justify-between">
                                   <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                                      <Package
-                                        size={16}
-                                        className="text-primary"
-                                      />
-                                      Allocations Breakdown
-                                    </h4>
-                                    <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
-                                      <table className="w-full text-left text-sm">
-                                        <thead className="bg-gray-50 dark:bg-zinc-800/50 text-xs uppercase text-gray-500 font-medium">
-                                          <tr>
-                                            <th className="px-4 py-3">
-                                              Cashback
-                                            </th>
-                                            <th className="px-4 py-3 text-center">
-                                              Qty
-                                            </th>
-                                            <th className="px-4 py-3 text-right">
-                                              Budget
-                                            </th>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                      {selectedPendingCampaign.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      {format(
+                                        new Date(
+                                          selectedPendingCampaign.startDate,
+                                        ),
+                                        "MMM dd",
+                                      )}{" "}
+                                      -{" "}
+                                      {format(
+                                        new Date(
+                                          selectedPendingCampaign.endDate,
+                                        ),
+                                        "MMM dd, yyyy",
+                                      )}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      setSelectedPendingCampaign(null)
+                                    }
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                                  >
+                                    <X size={20} className="text-gray-500" />
+                                  </button>
+                                </div>
+
+                                {selectedPendingCampaign.description && (
+                                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
+                                    {selectedPendingCampaign.description}
+                                  </div>
+                                )}
+
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                                    <Package
+                                      size={16}
+                                      className="text-primary"
+                                    />
+                                    Allocations Breakdown
+                                  </h4>
+                                  <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
+                                    <table className="w-full text-left text-sm">
+                                      <thead className="bg-gray-50 dark:bg-zinc-800/50 text-xs uppercase text-gray-500 font-medium">
+                                        <tr>
+                                          <th className="px-4 py-3">
+                                            Cashback
+                                          </th>
+                                          <th className="px-4 py-3 text-center">
+                                            Qty
+                                          </th>
+                                          <th className="px-4 py-3 text-right">
+                                            Budget
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                        {(
+                                          selectedPendingCampaign.allocations ||
+                                          []
+                                        ).map((alloc, idx) => (
+                                          <tr
+                                            key={idx}
+                                            className="bg-white dark:bg-zinc-900"
+                                          >
+                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                              INR{" "}
+                                              {formatAmount(
+                                                alloc.cashbackAmount,
+                                              )}
+                                            </td>
+                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
+                                              {alloc.quantity}
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                              INR{" "}
+                                              {formatAmount(alloc.totalBudget)}
+                                            </td>
                                           </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                          {(
-                                            selectedPendingCampaign.allocations ||
-                                            []
-                                          ).map((alloc, idx) => (
+                                        ))}
+                                      </tbody>
+                                      <tfoot className="bg-gray-50 dark:bg-zinc-800/30 font-semibold text-gray-900 dark:text-white">
+                                        <tr>
+                                          <td className="px-4 py-3">
+                                            Subtotal
+                                          </td>
+                                          <td className="px-4 py-3 text-center">
+                                            {pendingCampaignPayment.totalQty}{" "}
+                                            QRs
+                                          </td>
+                                          <td className="px-4 py-3 text-right">
+                                            INR{" "}
+                                            {pendingCampaignPayment.baseBudget.toFixed(
+                                              2,
+                                            )}
+                                          </td>
+                                        </tr>
+                                        {/* QR Generation Cost Row */}
+                                        <tr>
+                                          <td className="px-4 py-3 text-gray-500 font-normal">
+                                            QR Generation Cost (incl. GST, INR{" "}
+                                            {formatAmount(
+                                              pendingCampaignPayment.printFeePerQrInclTax,
+                                            )}
+                                            /QR)
+                                          </td>
+                                          <td className="px-4 py-3 text-center text-gray-500 font-normal">
+                                            -
+                                          </td>
+                                          <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
+                                            + INR{" "}
+                                            {pendingCampaignPayment.printCost.toFixed(
+                                              2,
+                                            )}
+                                          </td>
+                                        </tr>
+                                        {/* Voucher Cost Row */}
+                                        <tr>
+                                          <td className="px-4 py-3 text-gray-500 font-normal">
+                                            Voucher Cost (incl. GST, INR{" "}
+                                            {pendingCampaignPayment.voucherFeePerQrInclTax.toFixed(
+                                              2,
+                                            )}
+                                            /QR)
+                                          </td>
+                                          <td className="px-4 py-3 text-center text-gray-500 font-normal">
+                                            -
+                                          </td>
+                                          <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
+                                            + INR{" "}
+                                            {pendingCampaignPayment.voucherCost.toFixed(
+                                              2,
+                                            )}
+                                          </td>
+                                        </tr>
+                                      </tfoot>
+                                    </table>
+                                  </div>
+                                </div>
+
+                                <div className="bg-primary/5 dark:bg-primary-strong/10 border border-primary/10 dark:border-primary-strong/30 rounded-xl p-4 space-y-3">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                      Wallet Balance
+                                    </span>
+                                    <span className="font-semibold text-gray-900 dark:text-white">
+                                      INR {formatAmount(pendingWalletBalance)}
+                                    </span>
+                                  </div>
+                                  <div className="h-px bg-primary/20 dark:bg-primary-strong/30"></div>
+                                  <div className="flex items-center justify-between text-base font-bold text-primary-strong dark:text-primary">
+                                    <span>Total Payable</span>
+                                    <span>
+                                      INR{" "}
+                                      {pendingCampaignPayment.totalCost.toFixed(
+                                        2,
+                                      )}
+                                    </span>
+                                  </div>
+                                  {pendingCampaignShortfall > 0 && (
+                                    <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
+                                      Add INR{" "}
+                                      {pendingCampaignShortfall.toFixed(2)} to
+                                      wallet to enable payment.
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-3 pt-2">
+                                  <button
+                                    onClick={() =>
+                                      setSelectedPendingCampaign(null)
+                                    }
+                                    className={SECONDARY_BUTTON}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handlePayCampaign(selectedPendingCampaign)
+                                    }
+                                    disabled={
+                                      isPayingCampaign ||
+                                      !canPaySelectedPendingCampaign
+                                    }
+                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
+                                      !canPaySelectedPendingCampaign &&
+                                      !isPayingCampaign
+                                        ? "opacity-60 cursor-not-allowed"
+                                        : ""
+                                    }`}
+                                  >
+                                    {isPayingCampaign ? (
+                                      <>Processing...</>
+                                    ) : !canPaySelectedPendingCampaign ? (
+                                      <>Insufficient Balance</>
+                                    ) : (
+                                      <>
+                                        <Wallet size={18} />
+                                        Pay & Activate
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Active Campaign Details Modal */}
+                        {activeCampaignDetails && activeCampaign && (
+                          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
+                              <div className="p-6 space-y-6">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                      {activeCampaign.title}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      {formatShortDate(
+                                        activeCampaign.startDate,
+                                      )}{" "}
+                                      -{" "}
+                                      {formatShortDate(activeCampaign.endDate)}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      setSelectedActiveCampaign(null)
+                                    }
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                                  >
+                                    <X size={20} className="text-gray-500" />
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+                                  <span className="px-3 py-1 rounded-full bg-primary/15 text-primary font-semibold">
+                                    Active
+                                  </span>
+                                  <span>ID: {activeCampaign.id}</span>
+                                  {activeCampaignDetails.product && (
+                                    <span>
+                                      Product:{" "}
+                                      {activeCampaignDetails.product.name}
+                                      {activeCampaignDetails.product.variant
+                                        ? ` - ${activeCampaignDetails.product.variant}`
+                                        : ""}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {activeCampaign.description && (
+                                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
+                                    {activeCampaign.description}
+                                  </div>
+                                )}
+
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
+                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      Budget
+                                    </div>
+                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                      {"\u20B9"}
+                                      {formatAmount(
+                                        activeCampaignDetails.totalBudget,
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
+                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      Total QRs
+                                    </div>
+                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                      {activeCampaignDetails.stats?.stats
+                                        .total ||
+                                        activeCampaignDetails.totalQty ||
+                                        0}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
+                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      Redeemed
+                                    </div>
+                                    <div className="text-lg font-bold text-primary">
+                                      {activeCampaignDetails.stats?.stats
+                                        .redeemed || 0}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  Active QRs:{" "}
+                                  {activeCampaignDetails.stats?.stats.active ||
+                                    0}{" "}
+                                  - Redeemed:{" "}
+                                  {activeCampaignDetails.stats?.stats
+                                    .redeemed || 0}
+                                </div>
+
+                                <div>
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                                    <Package
+                                      size={16}
+                                      className="text-primary"
+                                    />
+                                    {activeCampaignDetails.stats?.stats.total
+                                      ? "QR Breakdown"
+                                      : "Allocation Breakdown"}
+                                  </h4>
+                                  <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
+                                    <table className="w-full text-left text-sm">
+                                      <thead className="bg-gray-50 dark:bg-zinc-800/50 text-xs uppercase text-gray-500 font-medium">
+                                        <tr>
+                                          <th className="px-4 py-3">
+                                            Cashback
+                                          </th>
+                                          <th className="px-4 py-3 text-center">
+                                            Qty
+                                          </th>
+                                          <th className="px-4 py-3 text-center">
+                                            Active
+                                          </th>
+                                          <th className="px-4 py-3 text-center">
+                                            Redeemed
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                        {activeCampaignDetails.breakdownRows.map(
+                                          (row, idx) => (
                                             <tr
-                                              key={idx}
+                                              key={`${activeCampaign.id}-${idx}`}
                                               className="bg-white dark:bg-zinc-900"
                                             >
                                               <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                                INR{" "}
-                                                {formatAmount(
-                                                  alloc.cashbackAmount,
-                                                )}
+                                                INR {formatAmount(row.cashback)}
                                               </td>
                                               <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
-                                                {alloc.quantity}
+                                                {row.quantity}
                                               </td>
-                                              <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                                INR{" "}
-                                                {formatAmount(
-                                                  alloc.totalBudget,
-                                                )}
+                                              <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
+                                                {row.active || 0}
+                                              </td>
+                                              <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
+                                                {row.redeemed || 0}
                                               </td>
                                             </tr>
-                                          ))}
-                                        </tbody>
-                                        <tfoot className="bg-gray-50 dark:bg-zinc-800/30 font-semibold text-gray-900 dark:text-white">
-                                          <tr>
-                                            <td className="px-4 py-3">
-                                              Subtotal
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                              {pendingCampaignPayment.totalQty}{" "}
-                                              QRs
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                              INR{" "}
-                                              {pendingCampaignPayment.baseBudget.toFixed(
-                                                2,
-                                              )}
-                                            </td>
-                                          </tr>
-                                          {/* QR Generation Cost Row */}
-                                          <tr>
-                                            <td className="px-4 py-3 text-gray-500 font-normal">
-                                              QR Generation Cost (incl. GST, INR{" "}
-                                              {formatAmount(
-                                                pendingCampaignPayment.printFeePerQrInclTax,
-                                              )}
-                                              /QR)
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-gray-500 font-normal">
-                                              -
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
-                                              + INR{" "}
-                                              {pendingCampaignPayment.printCost.toFixed(
-                                                2,
-                                              )}
-                                            </td>
-                                          </tr>
-                                          {/* Voucher Cost Row */}
-                                          <tr>
-                                            <td className="px-4 py-3 text-gray-500 font-normal">
-                                              Voucher Cost (incl. GST, INR{" "}
-                                              {pendingCampaignPayment.voucherFeePerQrInclTax.toFixed(
-                                                2,
-                                              )}
-                                              /QR)
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-gray-500 font-normal">
-                                              -
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
-                                              + INR{" "}
-                                              {pendingCampaignPayment.voucherCost.toFixed(
-                                                2,
-                                              )}
-                                            </td>
-                                          </tr>
-                                        </tfoot>
-                                      </table>
-                                    </div>
-                                  </div>
-
-                                  <div className="bg-primary/5 dark:bg-primary-strong/10 border border-primary/10 dark:border-primary-strong/30 rounded-xl p-4 space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                      <span className="text-gray-600 dark:text-gray-400">
-                                        Wallet Balance
-                                      </span>
-                                      <span className="font-semibold text-gray-900 dark:text-white">
-                                        INR {formatAmount(pendingWalletBalance)}
-                                      </span>
-                                    </div>
-                                    <div className="h-px bg-primary/20 dark:bg-primary-strong/30"></div>
-                                    <div className="flex items-center justify-between text-base font-bold text-primary-strong dark:text-primary">
-                                      <span>Total Payable</span>
-                                      <span>
-                                        INR{" "}
-                                        {pendingCampaignPayment.totalCost.toFixed(
-                                          2,
+                                          ),
                                         )}
-                                      </span>
-                                    </div>
-                                    {pendingCampaignShortfall > 0 && (
-                                      <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
-                                        Add INR{" "}
-                                        {pendingCampaignShortfall.toFixed(2)} to
-                                        wallet to enable payment.
-                                      </p>
-                                    )}
+                                      </tbody>
+                                    </table>
                                   </div>
+                                </div>
 
-                                  <div className="flex items-center gap-3 pt-2">
-                                    <button
-                                      onClick={() =>
-                                        setSelectedPendingCampaign(null)
-                                      }
-                                      className={SECONDARY_BUTTON}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handlePayCampaign(
-                                          selectedPendingCampaign,
-                                        )
-                                      }
-                                      disabled={
-                                        isPayingCampaign ||
-                                        !canPaySelectedPendingCampaign
-                                      }
-                                      className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
-                                        !canPaySelectedPendingCampaign &&
-                                        !isPayingCampaign
-                                          ? "opacity-60 cursor-not-allowed"
-                                          : ""
-                                      }`}
-                                    >
-                                      {isPayingCampaign ? (
-                                        <>Processing...</>
-                                      ) : !canPaySelectedPendingCampaign ? (
-                                        <>Insufficient Balance</>
-                                      ) : (
-                                        <>
-                                          <Wallet size={18} />
-                                          Pay & Activate
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
+                                <div className="flex items-center gap-3 pt-2">
+                                  <button
+                                    onClick={() =>
+                                      setSelectedActiveCampaign(null)
+                                    }
+                                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                  >
+                                    Close
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteCampaign(activeCampaign)
+                                    }
+                                    disabled={
+                                      deletingCampaignId === activeCampaign?.id
+                                    }
+                                    className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 font-semibold hover:bg-rose-500/20 transition-colors disabled:opacity-60 cursor-pointer"
+                                  >
+                                    {deletingCampaignId === activeCampaign?.id
+                                      ? "Deleting..."
+                                      : "Delete Campaign"}
+                                  </button>
                                 </div>
                               </div>
                             </div>
-                          )}
+                          </div>
+                        )}
 
-                          {/* Active Campaign Details Modal */}
-                          {activeCampaignDetails && activeCampaign && (
-                            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
-                              <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
-                                <div className="p-6 space-y-6">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                                        {activeCampaign.title}
-                                      </h3>
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {formatShortDate(
-                                          activeCampaign.startDate,
-                                        )}{" "}
-                                        -{" "}
-                                        {formatShortDate(
-                                          activeCampaign.endDate,
-                                        )}
-                                      </p>
-                                    </div>
-                                    <button
-                                      onClick={() =>
-                                        setSelectedActiveCampaign(null)
-                                      }
-                                      className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
-                                    >
-                                      <X size={20} className="text-gray-500" />
-                                    </button>
-                                  </div>
-
-                                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
-                                    <span className="px-3 py-1 rounded-full bg-primary/15 text-primary font-semibold">
-                                      Active
-                                    </span>
-                                    <span>ID: {activeCampaign.id}</span>
-                                    {activeCampaignDetails.product && (
-                                      <span>
-                                        Product:{" "}
-                                        {activeCampaignDetails.product.name}
-                                        {activeCampaignDetails.product.variant
-                                          ? ` - ${activeCampaignDetails.product.variant}`
-                                          : ""}
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {activeCampaign.description && (
-                                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
-                                      {activeCampaign.description}
-                                    </div>
-                                  )}
-
-                                  <div className="grid gap-3 sm:grid-cols-3">
-                                    <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
-                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                        Budget
-                                      </div>
-                                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                        {"\u20B9"}
-                                        {formatAmount(
-                                          activeCampaignDetails.totalBudget,
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
-                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                        Total QRs
-                                      </div>
-                                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                        {activeCampaignDetails.stats?.stats
-                                          .total ||
-                                          activeCampaignDetails.totalQty ||
-                                          0}
-                                      </div>
-                                    </div>
-                                    <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
-                                      <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                        Redeemed
-                                      </div>
-                                      <div className="text-lg font-bold text-primary">
-                                        {activeCampaignDetails.stats?.stats
-                                          .redeemed || 0}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    Active QRs:{" "}
-                                    {activeCampaignDetails.stats?.stats
-                                      .active || 0}{" "}
-                                    - Redeemed:{" "}
-                                    {activeCampaignDetails.stats?.stats
-                                      .redeemed || 0}
-                                  </div>
-
-                                  <div>
-                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                                      <Package
-                                        size={16}
-                                        className="text-primary"
-                                      />
-                                      {activeCampaignDetails.stats?.stats.total
-                                        ? "QR Breakdown"
-                                        : "Allocation Breakdown"}
-                                    </h4>
-                                    <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
-                                      <table className="w-full text-left text-sm">
-                                        <thead className="bg-gray-50 dark:bg-zinc-800/50 text-xs uppercase text-gray-500 font-medium">
-                                          <tr>
-                                            <th className="px-4 py-3">
-                                              Cashback
-                                            </th>
-                                            <th className="px-4 py-3 text-center">
-                                              Qty
-                                            </th>
-                                            <th className="px-4 py-3 text-center">
-                                              Active
-                                            </th>
-                                            <th className="px-4 py-3 text-center">
-                                              Redeemed
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                          {activeCampaignDetails.breakdownRows.map(
-                                            (row, idx) => (
-                                              <tr
-                                                key={`${activeCampaign.id}-${idx}`}
-                                                className="bg-white dark:bg-zinc-900"
-                                              >
-                                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                                  INR{" "}
-                                                  {formatAmount(row.cashback)}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
-                                                  {row.quantity}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
-                                                  {row.active || 0}
-                                                </td>
-                                                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
-                                                  {row.redeemed || 0}
-                                                </td>
-                                              </tr>
-                                            ),
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-3 pt-2">
-                                    <button
-                                      onClick={() =>
-                                        setSelectedActiveCampaign(null)
-                                      }
-                                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                                    >
-                                      Close
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteCampaign(activeCampaign)
-                                      }
-                                      disabled={
-                                        deletingCampaignId ===
-                                        activeCampaign?.id
-                                      }
-                                      className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 font-semibold hover:bg-rose-500/20 transition-colors disabled:opacity-60 cursor-pointer"
-                                    >
-                                      {deletingCampaignId === activeCampaign?.id
-                                        ? "Deleting..."
-                                        : "Delete Campaign"}
-                                    </button>
-                                  </div>
-                                </div>
+                        {showQrOrdersSection && (
+                          <div
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
+                            id="qr-inventory"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
+                                <ClipboardCheck
+                                  size={18}
+                                  className="text-primary"
+                                />
+                                QR Orders
                               </div>
-                            </div>
-                          )}
-
-                          {showQrOrdersSection && (
-                            <div
-                              className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
-                              id="qr-inventory"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
-                                  <ClipboardCheck
-                                    size={18}
-                                    className="text-primary"
-                                  />
-                                  QR Orders
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {qrHasMore && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        loadQrs(token, {
-                                          page: qrPage + 1,
-                                          append: true,
-                                        })
-                                      }
-                                      disabled={isLoadingQrs}
-                                      className="flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-white cursor-pointer"
-                                    >
-                                      <Download size={12} />
-                                      Load more
-                                    </button>
-                                  )}
+                              <div className="flex items-center gap-2">
+                                {qrHasMore && (
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      loadQrs(token, { page: 1, append: false })
+                                      loadQrs(token, {
+                                        page: qrPage + 1,
+                                        append: true,
+                                      })
                                     }
                                     disabled={isLoadingQrs}
                                     className="flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-white cursor-pointer"
                                   >
-                                    <RefreshCw size={12} />
-                                    Refresh
+                                    <Download size={12} />
+                                    Load more
                                   </button>
-                                </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    loadQrs(token, { page: 1, append: false })
+                                  }
+                                  disabled={isLoadingQrs}
+                                  className="flex items-center gap-1 text-xs font-semibold text-gray-400 hover:text-white cursor-pointer"
+                                >
+                                  <RefreshCw size={12} />
+                                  Refresh
+                                </button>
                               </div>
-                              {isLoadingQrs && (
-                                <div className="text-xs text-gray-400">
-                                  Loading orders...
-                                </div>
-                              )}
-                              {qrError && (
-                                <div className="text-xs text-red-500 font-semibold">
-                                  {qrError}
-                                </div>
-                              )}
-                              {!isLoadingQrs && qrs.length === 0 && (
-                                <div className="text-xs text-gray-500">
-                                  No QR orders yet. Generate QRs above.
-                                </div>
-                              )}
-                              {showOrderTracking && (
-                                <>
-                                  {isLoadingOrders && (
-                                    <div className="text-xs text-gray-400">
-                                      Loading order status...
+                            </div>
+                            {isLoadingQrs && (
+                              <div className="text-xs text-gray-400">
+                                Loading orders...
+                              </div>
+                            )}
+                            {qrError && (
+                              <div className="text-xs text-red-500 font-semibold">
+                                {qrError}
+                              </div>
+                            )}
+                            {!isLoadingQrs && qrs.length === 0 && (
+                              <div className="text-xs text-gray-500">
+                                No QR orders yet. Generate QRs above.
+                              </div>
+                            )}
+                            {showOrderTracking && (
+                              <>
+                                {isLoadingOrders && (
+                                  <div className="text-xs text-gray-400">
+                                    Loading order status...
+                                  </div>
+                                )}
+                                {ordersError && (
+                                  <div className="text-xs text-red-500 font-semibold">
+                                    {ordersError}
+                                  </div>
+                                )}
+                                {!isLoadingOrders &&
+                                  ordersTotal === 0 &&
+                                  orders.length === 0 && (
+                                    <div className="text-xs text-gray-500">
+                                      No print orders logged yet.
                                     </div>
                                   )}
-                                  {ordersError && (
-                                    <div className="text-xs text-red-500 font-semibold">
-                                      {ordersError}
-                                    </div>
-                                  )}
-                                  {!isLoadingOrders &&
-                                    ordersTotal === 0 &&
-                                    orders.length === 0 && (
-                                      <div className="text-xs text-gray-500">
-                                        No print orders logged yet.
-                                      </div>
-                                    )}
-                                  {orders.length > 0 && (
-                                    <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                                      <table className="w-full text-xs">
-                                        <thead className="bg-gray-100 dark:bg-zinc-800/60 text-gray-500 uppercase text-[10px]">
-                                          <tr>
-                                            <th className="px-3 py-2 text-left">
-                                              Order
-                                            </th>
-                                            <th className="px-3 py-2 text-left">
-                                              Campaign
-                                            </th>
-                                            <th className="px-3 py-2 text-right">
-                                              Qty
-                                            </th>
-                                            <th className="px-3 py-2 text-left">
-                                              Status
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                          {orders.map((order) => (
-                                            <tr key={order.id}>
-                                              <td className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium">
-                                                {order.id.slice(0, 8)}...
-                                              </td>
-                                              <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                                                {order.campaignTitle ||
-                                                  "Campaign"}
-                                              </td>
-                                              <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-200">
-                                                {order.quantity}
-                                              </td>
-                                              <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                                                <span
-                                                  className={getStatusClasses(
-                                                    order.status,
-                                                  )}
-                                                >
-                                                  {order.status}
-                                                </span>
-                                              </td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
-                                  {ordersHasMore && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        loadOrders(token, {
-                                          page: ordersPage + 1,
-                                          append: true,
-                                        })
-                                      }
-                                      disabled={isLoadingOrders}
-                                      className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-semibold text-gray-500 hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 cursor-pointer"
-                                    >
-                                      Load more orders
-                                    </button>
-                                  )}
-                                </>
-                              )}
-
-                              {/* Order Summary by Campaign */}
-                              {qrsGroupedByCampaign.length > 0 && (
-                                <div className="space-y-3">
-                                  {qrsGroupedByCampaign.map((campaign) => (
-                                    <div
-                                      key={campaign.id}
-                                      className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-                                    >
-                                      {/* Campaign Header */}
-                                      <div className="bg-gradient-to-r from-primary/30 to-primary/10 px-4 py-3">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3">
-                                            <Megaphone
-                                              size={18}
-                                              className="text-primary"
-                                            />
-                                            <div>
-                                              <span className="text-base font-bold text-gray-900 dark:text-white">
-                                                {campaign.title}
+                                {orders.length > 0 && (
+                                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <table className="w-full text-xs">
+                                      <thead className="bg-gray-100 dark:bg-zinc-800/60 text-gray-500 uppercase text-[10px]">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left">
+                                            Order
+                                          </th>
+                                          <th className="px-3 py-2 text-left">
+                                            Campaign
+                                          </th>
+                                          <th className="px-3 py-2 text-right">
+                                            Qty
+                                          </th>
+                                          <th className="px-3 py-2 text-left">
+                                            Status
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                                        {orders.map((order) => (
+                                          <tr key={order.id}>
+                                            <td className="px-3 py-2 text-gray-700 dark:text-gray-200 font-medium">
+                                              {order.id.slice(0, 8)}...
+                                            </td>
+                                            <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                                              {order.campaignTitle ||
+                                                "Campaign"}
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-200">
+                                              {order.quantity}
+                                            </td>
+                                            <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                                              <span
+                                                className={getStatusClasses(
+                                                  order.status,
+                                                )}
+                                              >
+                                                {order.status}
                                               </span>
-                                              {campaign.endDate && (
-                                                <span className="ml-2 text-xs text-gray-400">
-                                                  Expires:{" "}
-                                                  {format(
-                                                    new Date(campaign.endDate),
-                                                    "MMM dd, yyyy",
-                                                  )}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center gap-3 text-xs">
-                                            <span className="px-2 py-1 rounded-full bg-primary/20 text-primary font-semibold">
-                                              {campaign.stats.active} Active
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                                {ordersHasMore && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      loadOrders(token, {
+                                        page: ordersPage + 1,
+                                        append: true,
+                                      })
+                                    }
+                                    disabled={isLoadingOrders}
+                                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-semibold text-gray-500 hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 cursor-pointer"
+                                  >
+                                    Load more orders
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {/* Order Summary by Campaign */}
+                            {qrsGroupedByCampaign.length > 0 && (
+                              <div className="space-y-3">
+                                {qrsGroupedByCampaign.map((campaign) => (
+                                  <div
+                                    key={campaign.id}
+                                    className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                  >
+                                    {/* Campaign Header */}
+                                    <div className="bg-gradient-to-r from-primary/30 to-primary/10 px-4 py-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <Megaphone
+                                            size={18}
+                                            className="text-primary"
+                                          />
+                                          <div>
+                                            <span className="text-base font-bold text-gray-900 dark:text-white">
+                                              {campaign.title}
                                             </span>
-                                            <span className="px-2 py-1 rounded-full bg-gray-600/20 text-gray-400 font-semibold">
-                                              {campaign.stats.redeemed} Redeemed
-                                            </span>
-                                            <span className="text-gray-500">
-                                              Total: {campaign.stats.total}
-                                            </span>
+                                            {campaign.endDate && (
+                                              <span className="ml-2 text-xs text-gray-400">
+                                                Expires:{" "}
+                                                {format(
+                                                  new Date(campaign.endDate),
+                                                  "MMM dd, yyyy",
+                                                )}
+                                              </span>
+                                            )}
                                           </div>
                                         </div>
+                                        <div className="flex items-center gap-3 text-xs">
+                                          <span className="px-2 py-1 rounded-full bg-primary/20 text-primary font-semibold">
+                                            {campaign.stats.active} Active
+                                          </span>
+                                          <span className="px-2 py-1 rounded-full bg-gray-600/20 text-gray-400 font-semibold">
+                                            {campaign.stats.redeemed} Redeemed
+                                          </span>
+                                          <span className="text-gray-500">
+                                            Total: {campaign.stats.total}
+                                          </span>
+                                        </div>
                                       </div>
+                                    </div>
 
-                                      {/* Order Summary (No QR Images) */}
-                                      <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
-                                        {campaign.priceGroups.map(
-                                          (priceGroup) => {
-                                            const groupKey = `${campaign.id}-${priceGroup.priceKey ?? priceGroup.price}`;
-                                            return (
-                                              <div
-                                                key={groupKey}
-                                                className="p-4"
-                                              >
-                                                <div className="flex items-center">
-                                                  <div className="flex items-center gap-4">
-                                                    <div>
-                                                      <div className="text-xs text-gray-500">
-                                                        Cashback Amount
-                                                      </div>
-                                                      <div className="text-lg font-bold text-primary">
-                                                        {"\u20B9"}
-                                                        {formatAmount(
-                                                          priceGroup.price,
-                                                        )}
-                                                      </div>
+                                    {/* Order Summary (No QR Images) */}
+                                    <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
+                                      {campaign.priceGroups.map(
+                                        (priceGroup) => {
+                                          const groupKey = `${campaign.id}-${priceGroup.priceKey ?? priceGroup.price}`;
+                                          return (
+                                            <div key={groupKey} className="p-4">
+                                              <div className="flex items-center">
+                                                <div className="flex items-center gap-4">
+                                                  <div>
+                                                    <div className="text-xs text-gray-500">
+                                                      Cashback Amount
                                                     </div>
-                                                    <div>
-                                                      <div className="text-xs text-gray-500">
-                                                        Quantity
-                                                      </div>
-                                                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                        {priceGroup.qrs.length}{" "}
-                                                        QRs
-                                                      </div>
+                                                    <div className="text-lg font-bold text-primary">
+                                                      {"\u20B9"}
+                                                      {formatAmount(
+                                                        priceGroup.price,
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div>
+                                                    <div className="text-xs text-gray-500">
+                                                      Quantity
+                                                    </div>
+                                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                                      {priceGroup.qrs.length}{" "}
+                                                      QRs
                                                     </div>
                                                   </div>
                                                 </div>
                                               </div>
-                                            );
-                                          },
-                                        )}
-                                      </div>
+                                            </div>
+                                          );
+                                        },
+                                      )}
                                     </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              <div className="text-[10px] text-gray-500 flex items-center justify-between">
-                                <span>
-                                  Total: {qrTotalLabel} QR
-                                  {qrTotalLabel !== 1 ? "s" : ""} across{" "}
-                                  {qrsGroupedByCampaign.length} campaign
-                                  {qrsGroupedByCampaign.length !== 1 ? "s" : ""}
-                                  {qrCoverageLabel
-                                    ? ` - ${qrCoverageLabel}`
-                                    : ""}
-                                </span>
-                                <span>
-                                  {qrStats.redeemed} redeemed -{" "}
-                                  {qrStats.fundedActive} funded
-                                </span>
+                                  </div>
+                                ))}
                               </div>
-                              {qrActionStatus && (
-                                <div className="text-xs text-primary font-semibold">
-                                  {qrActionStatus}
-                                </div>
-                              )}
+                            )}
+
+                            <div className="text-[10px] text-gray-500 flex items-center justify-between">
+                              <span>
+                                Total: {qrTotalLabel} QR
+                                {qrTotalLabel !== 1 ? "s" : ""} across{" "}
+                                {qrsGroupedByCampaign.length} campaign
+                                {qrsGroupedByCampaign.length !== 1 ? "s" : ""}
+                                {qrCoverageLabel ? ` - ${qrCoverageLabel}` : ""}
+                              </span>
+                              <span>
+                                {qrStats.redeemed} redeemed -{" "}
+                                {qrStats.fundedActive} funded
+                              </span>
+                            </div>
+                            {qrActionStatus && (
+                              <div className="text-xs text-primary font-semibold">
+                                {qrActionStatus}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Products Section */}
+                    {activeTab === "products" && (
+                      <div
+                        className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
+                        id="products"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
+                            <Package size={18} className="text-primary" />
+                            Products
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => loadProducts()}
+                              disabled={isLoadingProducts}
+                              className={ICON_BUTTON}
+                            >
+                              <RefreshCw size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingProduct(null);
+                                setShowProductModal(true);
+                              }}
+                              className={`${PRIMARY_BUTTON} inline-flex items-center gap-2`}
+                            >
+                              <Plus size={14} className="flex-shrink-0" />
+                              Add Product
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Products List */}
+                        {isLoadingProducts ? (
+                          <div className="text-center py-12">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-primary border-r-transparent"></div>
+                            <div className="text-sm text-gray-400 mt-3">
+                              Loading products...
+                            </div>
+                          </div>
+                        ) : products.length === 0 ? (
+                          <div className="text-center py-12">
+                            <Package
+                              size={48}
+                              className="mx-auto text-gray-400 mb-3"
+                            />
+                            <div className="text-sm text-gray-500">
+                              No products yet.
+                            </div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              Click "Add Product" to create your first product
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                            <table className="w-full text-sm table-fixed min-w-[900px]">
+                              <colgroup>
+                                <col className="w-24" />
+                                <col className="w-auto" />
+                                <col className="w-32" />
+                                <col className="w-32" />
+                                <col className="w-28" />
+                                <col className="w-28" />
+                                <col className="w-32" />
+                              </colgroup>
+                              <thead className="bg-gradient-to-r from-primary to-primary text-white">
+                                <tr>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    Image
+                                  </th>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    Product
+                                  </th>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    SKU
+                                  </th>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    Category
+                                  </th>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    MRP
+                                  </th>
+                                  <th className="px-4 py-3 text-left font-semibold">
+                                    Status
+                                  </th>
+                                  <th className="px-4 py-3 text-center font-semibold">
+                                    Actions
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                {products.map((product, idx) => {
+                                  const imageSrc = resolveAssetUrl(
+                                    product.imageUrl,
+                                  );
+                                  const hasImageError = failedProductImages.has(
+                                    product.id,
+                                  );
+                                  return (
+                                    <tr
+                                      key={product.id}
+                                      className={`${
+                                        idx % 2 === 0
+                                          ? "bg-gray-50 dark:bg-[#1a1a1a]"
+                                          : "bg-white dark:bg-[#0f0f0f]"
+                                      } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
+                                    >
+                                      <td className="px-4 py-4">
+                                        {imageSrc && !hasImageError ? (
+                                          <img
+                                            src={imageSrc}
+                                            alt={product.name}
+                                            className="h-14 w-14 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
+                                            onError={() => {
+                                              setFailedProductImages((prev) => {
+                                                const next = new Set(prev);
+                                                next.add(product.id);
+                                                return next;
+                                              });
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="h-14 w-14 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                            <Package
+                                              size={24}
+                                              className="text-gray-400"
+                                            />
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-4">
+                                        <div className="space-y-1">
+                                          <div className="font-semibold text-gray-900 dark:text-white leading-tight">
+                                            {product.name}
+                                          </div>
+                                          {product.variant && (
+                                            <div className="text-xs text-gray-500 leading-tight">
+                                              {product.variant}
+                                            </div>
+                                          )}
+                                          {product.description && (
+                                            <div className="text-xs text-gray-400 leading-tight line-clamp-2">
+                                              {product.description}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 py-4 text-gray-600 dark:text-gray-400 font-mono text-xs">
+                                        {product.sku || "-"}
+                                      </td>
+                                      <td className="px-4 py-4 text-gray-600 dark:text-gray-400">
+                                        <span className="line-clamp-2">
+                                          {product.category || "-"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-4 text-gray-900 dark:text-white font-semibold whitespace-nowrap">
+                                        {product.mrp
+                                          ? `INR ${Number(product.mrp).toFixed(2)}`
+                                          : "-"}
+                                      </td>
+                                      <td className="px-4 py-4">
+                                        <span
+                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                                            product.status === "active"
+                                              ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
+                                              : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                          }`}
+                                        >
+                                          {product.status || "active"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-4">
+                                        <div className="flex items-center justify-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingProduct(product);
+                                              setShowProductModal(true);
+                                            }}
+                                            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
+                                            title="Edit product"
+                                          >
+                                            <Edit2 size={16} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleDeleteProduct(product.id)
+                                            }
+                                            className="p-2 rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex-shrink-0 cursor-pointer"
+                                            title="Delete product"
+                                          >
+                                            <Trash2 size={16} />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>
+                            Total: {products.length} product
+                            {products.length !== 1 ? "s" : ""}
+                          </span>
+                          {productStatus && (
+                            <div className="text-primary font-semibold">
+                              {productStatus}
+                            </div>
+                          )}
+                          {productError && (
+                            <div className="text-rose-500 font-semibold">
+                              {productError}
                             </div>
                           )}
                         </div>
-                      )}
+                      </div>
+                    )}
+                    {/* Wallet Section */}
+                    {activeTab === "wallet" && (
+                      <div
+                        className="bg-white dark:bg-[#09090b] rounded-2xl p-6 space-y-8 min-h-[80vh]"
+                        id="wallet"
+                      >
+                        {/* Wallet Controls Header */}
+                        <div className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-200">
+                          <Wallet size={20} className="text-primary" />
+                          Wallet controls
+                        </div>
 
-                      {/* Products Section */}
-                      {activeTab === "products" && (
-                        <div
-                          className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
-                          id="products"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
-                              <Package size={18} className="text-primary" />
-                              Products
+                        {/* Balance Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Available Balance */}
+                          <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
+                            <div className="text-xs font-medium text-gray-500 mb-2">
+                              Available balance
                             </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => loadProducts()}
-                                disabled={isLoadingProducts}
-                                className={ICON_BUTTON}
-                              >
-                                <RefreshCw size={14} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingProduct(null);
-                                  setShowProductModal(true);
-                                }}
-                                className={`${PRIMARY_BUTTON} inline-flex items-center gap-2`}
-                              >
-                                <Plus size={14} className="flex-shrink-0" />
-                                Add Product
-                              </button>
+                            <div
+                              className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+                              title={`INR ${formatAmount(walletBalance)}`}
+                            >
+                              INR {formatAmount(walletBalance)}
                             </div>
                           </div>
 
-                          {/* Products List */}
-                          {isLoadingProducts ? (
-                            <div className="text-center py-12">
-                              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-primary border-r-transparent"></div>
-                              <div className="text-sm text-gray-400 mt-3">
-                                Loading products...
-                              </div>
+                          {/* Locked Balance */}
+                          <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
+                            <div className="text-xs font-medium text-gray-500 mb-2">
+                              Locked balance
                             </div>
-                          ) : products.length === 0 ? (
-                            <div className="text-center py-12">
-                              <Package
-                                size={48}
-                                className="mx-auto text-gray-400 mb-3"
-                              />
-                              <div className="text-sm text-gray-500">
-                                No products yet.
-                              </div>
-                              <div className="text-xs text-gray-400 mt-1">
-                                Click "Add Product" to create your first product
-                              </div>
+                            <div
+                              className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+                              title={`INR ${formatAmount(lockedBalance)}`}
+                            >
+                              INR {formatCompactAmount(lockedBalance)}
                             </div>
-                          ) : (
-                            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                              <table className="w-full text-sm table-fixed min-w-[900px]">
-                                <colgroup>
-                                  <col className="w-24" />
-                                  <col className="w-auto" />
-                                  <col className="w-32" />
-                                  <col className="w-32" />
-                                  <col className="w-28" />
-                                  <col className="w-28" />
-                                  <col className="w-32" />
-                                </colgroup>
-                                <thead className="bg-gradient-to-r from-primary to-primary text-white">
+                          </div>
+                        </div>
+
+                        {/* Recharge Section */}
+                        <div className="space-y-3">
+                          <label className="text-xs font-medium text-gray-500 block">
+                            Recharge amount
+                          </label>
+                          <div className="flex gap-3">
+                            <input
+                              type="number"
+                              min="1"
+                              value={rechargeAmount}
+                              onChange={(event) =>
+                                setRechargeAmount(event.target.value)
+                              }
+                              placeholder="Enter amount in INR"
+                              className="flex-1 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-[#111111] px-4 py-3 text-sm text-gray-900 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRecharge}
+                              disabled={isRecharging}
+                              className="rounded-xl bg-primary hover:bg-primary text-white text-sm font-semibold px-6 shadow-lg shadow-primary-strong/20 disabled:opacity-60 transition-all active:scale-[0.99] whitespace-nowrap"
+                            >
+                              {isRecharging
+                                ? "Recharging..."
+                                : "Recharge wallet"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Status Messages */}
+                        {(walletStatus || walletError) && (
+                          <div
+                            className={`text-xs font-semibold px-1 ${walletError ? "text-red-500" : "text-primary"}`}
+                          >
+                            {walletStatus || walletError}
+                          </div>
+                        )}
+
+                        {/* Transaction History Section */}
+                        <div className="space-y-4 pt-4">
+                          <div className="flex items-center justify-between">
+                            <div className="text-base font-semibold text-gray-900 dark:text-gray-200">
+                              Transaction history
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => loadTransactions()}
+                              disabled={isLoadingTransactions}
+                              className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                            >
+                              <RefreshCw size={12} />
+                              Refresh
+                            </button>
+                          </div>
+
+                          {isLoadingTransactions && (
+                            <div className="text-xs text-gray-500 animate-pulse">
+                              Loading transactions...
+                            </div>
+                          )}
+
+                          {!isLoadingTransactions &&
+                            transactions.length === 0 &&
+                            !transactionsError && (
+                              <div className="text-xs text-gray-500 py-8 text-center border border-gray-100 dark:border-zinc-900 rounded-xl bg-white dark:bg-[#111]">
+                                No transactions found.
+                              </div>
+                            )}
+
+                          {transactions.length > 0 && (
+                            <div className="rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden bg-white dark:bg-[#111]">
+                              <table className="w-full text-xs text-left">
+                                <thead className="bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 font-medium border-b border-gray-100 dark:border-zinc-800">
                                   <tr>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      Image
+                                    <th className="px-5 py-3.5 w-40">Date</th>
+                                    <th className="px-5 py-3.5">Category</th>
+                                    <th className="px-5 py-3.5 w-24">Type</th>
+                                    <th className="px-5 py-3.5 w-40 text-right">
+                                      Amount
                                     </th>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      Product
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      SKU
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      Category
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      MRP
-                                    </th>
-                                    <th className="px-4 py-3 text-left font-semibold">
-                                      Status
-                                    </th>
-                                    <th className="px-4 py-3 text-center font-semibold">
-                                      Actions
-                                    </th>
+                                    <th className="px-5 py-3.5 w-24">Status</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                  {products.map((product, idx) => {
-                                    const imageSrc = resolveAssetUrl(
-                                      product.imageUrl,
-                                    );
-                                    const hasImageError =
-                                      failedProductImages.has(product.id);
+                                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
+                                  {displayedTransactions.map((tx, idx) => {
+                                    const typeLabel = String(
+                                      tx.type || "",
+                                    ).toLowerCase();
+                                    const isCredit = typeLabel === "credit";
+
                                     return (
                                       <tr
-                                        key={product.id}
-                                        className={`${
-                                          idx % 2 === 0
-                                            ? "bg-gray-50 dark:bg-[#1a1a1a]"
-                                            : "bg-white dark:bg-[#0f0f0f]"
-                                        } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
+                                        key={tx.id || idx}
+                                        className="hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors"
                                       >
-                                        <td className="px-4 py-4">
-                                          {imageSrc && !hasImageError ? (
-                                            <img
-                                              src={imageSrc}
-                                              alt={product.name}
-                                              className="h-14 w-14 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
-                                              onError={() => {
-                                                setFailedProductImages(
-                                                  (prev) => {
-                                                    const next = new Set(prev);
-                                                    next.add(product.id);
-                                                    return next;
-                                                  },
-                                                );
-                                              }}
-                                            />
-                                          ) : (
-                                            <div className="h-14 w-14 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                              <Package
-                                                size={24}
-                                                className="text-gray-400"
-                                              />
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400 font-medium">
+                                          {formatTransactionDate(tx.createdAt)}
+                                        </td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
+                                          <div className="font-medium capitalize">
+                                            {String(
+                                              tx.category || "n/a",
+                                            ).replace(/_/g, " ")}
+                                          </div>
+                                          {tx.description && (
+                                            <div
+                                              className="text-xs text-gray-400 mt-1 line-clamp-1"
+                                              title={tx.description}
+                                            >
+                                              {tx.description}
                                             </div>
                                           )}
                                         </td>
-                                        <td className="px-4 py-4">
-                                          <div className="space-y-1">
-                                            <div className="font-semibold text-gray-900 dark:text-white leading-tight">
-                                              {product.name}
-                                            </div>
-                                            {product.variant && (
-                                              <div className="text-xs text-gray-500 leading-tight">
-                                                {product.variant}
-                                              </div>
-                                            )}
-                                            {product.description && (
-                                              <div className="text-xs text-gray-400 leading-tight line-clamp-2">
-                                                {product.description}
-                                              </div>
-                                            )}
-                                          </div>
+                                        <td className="px-5 py-4 capitalize text-gray-500 dark:text-gray-400">
+                                          {typeLabel}
                                         </td>
-                                        <td className="px-4 py-4 text-gray-600 dark:text-gray-400 font-mono text-xs">
-                                          {product.sku || "-"}
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-600 dark:text-gray-400">
-                                          <span className="line-clamp-2">
-                                            {product.category || "-"}
-                                          </span>
-                                        </td>
-                                        <td className="px-4 py-4 text-gray-900 dark:text-white font-semibold whitespace-nowrap">
-                                          {product.mrp
-                                            ? `INR ${Number(product.mrp).toFixed(2)}`
-                                            : "-"}
-                                        </td>
-                                        <td className="px-4 py-4">
+                                        <td className="px-5 py-4 text-right font-medium">
                                           <span
-                                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                                              product.status === "active"
-                                                ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
-                                                : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                            }`}
+                                            className={
+                                              isCredit
+                                                ? "text-primary"
+                                                : "text-rose-500"
+                                            }
                                           >
-                                            {product.status || "active"}
+                                            {isCredit ? "+" : "-"}INR{" "}
+                                            {formatAmount(tx.amount)}
                                           </span>
                                         </td>
-                                        <td className="px-4 py-4">
-                                          <div className="flex items-center justify-center gap-2">
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setEditingProduct(product);
-                                                setShowProductModal(true);
-                                              }}
-                                              className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
-                                              title="Edit product"
-                                            >
-                                              <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                handleDeleteProduct(product.id)
-                                              }
-                                              className="p-2 rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex-shrink-0 cursor-pointer"
-                                              title="Delete product"
-                                            >
-                                              <Trash2 size={16} />
-                                            </button>
-                                          </div>
+                                        <td className="px-5 py-4">
+                                          <span className="text-gray-400">
+                                            success
+                                          </span>
                                         </td>
                                       </tr>
                                     );
@@ -7822,1504 +7925,1283 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>
-                              Total: {products.length} product
-                              {products.length !== 1 ? "s" : ""}
-                            </span>
-                            {productStatus && (
-                              <div className="text-primary font-semibold">
-                                {productStatus}
-                              </div>
-                            )}
-                            {productError && (
-                              <div className="text-rose-500 font-semibold">
-                                {productError}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {/* Wallet Section */}
-                      {activeTab === "wallet" && (
-                        <div
-                          className="bg-white dark:bg-[#09090b] rounded-2xl p-6 space-y-8 min-h-[80vh]"
-                          id="wallet"
-                        >
-                          {/* Wallet Controls Header */}
-                          <div className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-gray-200">
-                            <Wallet size={20} className="text-primary" />
-                            Wallet controls
-                          </div>
-
-                          {/* Balance Cards */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Available Balance */}
-                            <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
-                              <div className="text-xs font-medium text-gray-500 mb-2">
-                                Available balance
-                              </div>
-                              <div
-                                className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-                                title={`INR ${formatAmount(walletBalance)}`}
-                              >
-                                INR {formatAmount(walletBalance)}
-                              </div>
-                            </div>
-
-                            {/* Locked Balance */}
-                            <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
-                              <div className="text-xs font-medium text-gray-500 mb-2">
-                                Locked balance
-                              </div>
-                              <div
-                                className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-                                title={`INR ${formatAmount(lockedBalance)}`}
-                              >
-                                INR {formatCompactAmount(lockedBalance)}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Recharge Section */}
-                          <div className="space-y-3">
-                            <label className="text-xs font-medium text-gray-500 block">
-                              Recharge amount
-                            </label>
-                            <div className="flex gap-3">
-                              <input
-                                type="number"
-                                min="1"
-                                value={rechargeAmount}
-                                onChange={(event) =>
-                                  setRechargeAmount(event.target.value)
-                                }
-                                placeholder="Enter amount in INR"
-                                className="flex-1 rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-[#111111] px-4 py-3 text-sm text-gray-900 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all"
-                              />
-                              <button
-                                type="button"
-                                onClick={handleRecharge}
-                                disabled={isRecharging}
-                                className="rounded-xl bg-primary hover:bg-primary text-white text-sm font-semibold px-6 shadow-lg shadow-primary-strong/20 disabled:opacity-60 transition-all active:scale-[0.99] whitespace-nowrap"
-                              >
-                                {isRecharging
-                                  ? "Recharging..."
-                                  : "Recharge wallet"}
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Status Messages */}
-                          {(walletStatus || walletError) && (
-                            <div
-                              className={`text-xs font-semibold px-1 ${walletError ? "text-red-500" : "text-primary"}`}
+                          {transactions.length > 5 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowAllTransactions((prev) => !prev)
+                              }
+                              className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                             >
-                              {walletStatus || walletError}
-                            </div>
+                              {showAllTransactions
+                                ? "View less"
+                                : `View all (${transactions.length})`}
+                            </button>
                           )}
-
-                          {/* Transaction History Section */}
-                          <div className="space-y-4 pt-4">
-                            <div className="flex items-center justify-between">
-                              <div className="text-base font-semibold text-gray-900 dark:text-gray-200">
-                                Transaction history
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => loadTransactions()}
-                                disabled={isLoadingTransactions}
-                                className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
-                              >
-                                <RefreshCw size={12} />
-                                Refresh
-                              </button>
-                            </div>
-
-                            {isLoadingTransactions && (
-                              <div className="text-xs text-gray-500 animate-pulse">
-                                Loading transactions...
-                              </div>
-                            )}
-
-                            {!isLoadingTransactions &&
-                              transactions.length === 0 &&
-                              !transactionsError && (
-                                <div className="text-xs text-gray-500 py-8 text-center border border-gray-100 dark:border-zinc-900 rounded-xl bg-white dark:bg-[#111]">
-                                  No transactions found.
-                                </div>
-                              )}
-
-                            {transactions.length > 0 && (
-                              <div className="rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden bg-white dark:bg-[#111]">
-                                <table className="w-full text-xs text-left">
-                                  <thead className="bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 font-medium border-b border-gray-100 dark:border-zinc-800">
-                                    <tr>
-                                      <th className="px-5 py-3.5 w-40">Date</th>
-                                      <th className="px-5 py-3.5">Category</th>
-                                      <th className="px-5 py-3.5 w-24">Type</th>
-                                      <th className="px-5 py-3.5 w-40 text-right">
-                                        Amount
-                                      </th>
-                                      <th className="px-5 py-3.5 w-24">
-                                        Status
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
-                                    {displayedTransactions.map((tx, idx) => {
-                                      const typeLabel = String(
-                                        tx.type || "",
-                                      ).toLowerCase();
-                                      const isCredit = typeLabel === "credit";
-
-                                      return (
-                                        <tr
-                                          key={tx.id || idx}
-                                          className="hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors"
-                                        >
-                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatTransactionDate(
-                                              tx.createdAt,
-                                            )}
-                                          </td>
-                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
-                                            <div className="font-medium capitalize">
-                                              {String(
-                                                tx.category || "n/a",
-                                              ).replace(/_/g, " ")}
-                                            </div>
-                                            {tx.description && (
-                                              <div
-                                                className="text-xs text-gray-400 mt-1 line-clamp-1"
-                                                title={tx.description}
-                                              >
-                                                {tx.description}
-                                              </div>
-                                            )}
-                                          </td>
-                                          <td className="px-5 py-4 capitalize text-gray-500 dark:text-gray-400">
-                                            {typeLabel}
-                                          </td>
-                                          <td className="px-5 py-4 text-right font-medium">
-                                            <span
-                                              className={
-                                                isCredit
-                                                  ? "text-primary"
-                                                  : "text-rose-500"
-                                              }
-                                            >
-                                              {isCredit ? "+" : "-"}INR{" "}
-                                              {formatAmount(tx.amount)}
-                                            </span>
-                                          </td>
-                                          <td className="px-5 py-4">
-                                            <span className="text-gray-400">
-                                              success
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-
-                            {transactions.length > 5 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setShowAllTransactions((prev) => !prev)
-                                }
-                                className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
-                              >
-                                {showAllTransactions
-                                  ? "View less"
-                                  : `View all (${transactions.length})`}
-                              </button>
-                            )}
-                          </div>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Redemptions Tab - Customer redemption history */}
-                      {activeTab === "redemptions" && (
-                        <VendorRedemptions token={token} />
-                      )}
+                    {/* Redemptions Tab - Customer redemption history */}
+                    {activeTab === "redemptions" && (
+                      <VendorRedemptions token={token} />
+                    )}
 
-                      {activeTab === "locations" && (
-                        <div className="space-y-4">
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateFrom}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateFrom: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateTo}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateTo: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <select
-                                value={dashboardFilters.campaignId}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    campaignId: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              >
-                                <option value="">All campaigns</option>
-                                {campaigns.map((campaign) => (
-                                  <option key={campaign.id} value={campaign.id}>
-                                    {campaign.title}
-                                  </option>
-                                ))}
-                              </select>
-                              <input
-                                type="text"
-                                placeholder="City"
-                                value={dashboardFilters.city}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    city: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Mobile"
-                                value={dashboardFilters.mobile}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    mobile: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={handleApplyExtraFilters}
-                                className={`${PRIMARY_BUTTON} rounded-lg`}
-                              >
-                                Apply
-                              </button>
-                            </div>
-                            {extraTabError && (
-                              <p className="mt-3 text-xs text-rose-500">
-                                {extraTabError}
-                              </p>
-                            )}
+                    {activeTab === "locations" && (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateFrom}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateFrom: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateTo}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateTo: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <select
+                              value={dashboardFilters.campaignId}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  campaignId: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            >
+                              <option value="">All campaigns</option>
+                              {campaigns.map((campaign) => (
+                                <option key={campaign.id} value={campaign.id}>
+                                  {campaign.title}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="City"
+                              value={dashboardFilters.city}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  city: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Mobile"
+                              value={dashboardFilters.mobile}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  mobile: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleApplyExtraFilters}
+                              className={`${PRIMARY_BUTTON} rounded-lg`}
+                            >
+                              Apply
+                            </button>
                           </div>
+                          {extraTabError && (
+                            <p className="mt-3 text-xs text-rose-500">
+                              {extraTabError}
+                            </p>
+                          )}
+                        </div>
 
-                          {isLoadingExtraTab ? (
-                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
-                              Loading locations...
-                            </div>
-                          ) : (
-                            <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-                              <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
-                                <div className="h-[480px]">
-                                  <MapContainer
-                                    center={locationMapCenter}
-                                    zoom={5}
-                                    className="h-full w-full"
-                                  >
-                                    <TileLayer
-                                      attribution="&copy; OpenStreetMap contributors"
-                                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                    />
-                                    {locationsData
-                                      .filter(
-                                        (pt) =>
-                                          Number.isFinite(Number(pt?.lat)) &&
-                                          Number.isFinite(Number(pt?.lng)),
-                                      )
-                                      .map((pt, i) => (
-                                        <Marker
-                                          key={`loc-${pt.lat}-${pt.lng}-${i}`}
-                                          position={[
-                                            Number(pt.lat),
-                                            Number(pt.lng),
-                                          ]}
-                                        >
-                                          <Popup>
-                                            <div className="text-xs">
-                                              <div className="font-semibold">
-                                                {pt.city || "Unknown"}
-                                              </div>
-                                              <div>{pt.count || 0} scans</div>
-                                            </div>
-                                          </Popup>
-                                        </Marker>
-                                      ))}
-                                  </MapContainer>
-                                </div>
-                              </div>
-                              <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
-                                <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                                  Clusters
-                                </div>
-                                <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                                  {locationsData.length === 0 ? (
-                                    <div className="text-xs text-gray-500">
-                                      No locations found.
-                                    </div>
-                                  ) : (
-                                    locationsData.map((pt, i) => (
-                                      <div
-                                        key={`cluster-${pt.lat}-${pt.lng}-${i}`}
-                                        className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
+                        {isLoadingExtraTab ? (
+                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
+                            Loading locations...
+                          </div>
+                        ) : (
+                          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
+                              <div className="h-[480px]">
+                                <MapContainer
+                                  center={locationMapCenter}
+                                  zoom={5}
+                                  className="h-full w-full"
+                                >
+                                  <TileLayer
+                                    attribution="&copy; OpenStreetMap contributors"
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  />
+                                  {locationsData
+                                    .filter(
+                                      (pt) =>
+                                        Number.isFinite(Number(pt?.lat)) &&
+                                        Number.isFinite(Number(pt?.lng)),
+                                    )
+                                    .map((pt, i) => (
+                                      <Marker
+                                        key={`loc-${pt.lat}-${pt.lng}-${i}`}
+                                        position={[
+                                          Number(pt.lat),
+                                          Number(pt.lng),
+                                        ]}
                                       >
-                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                          {pt.city || "Unknown"}
-                                        </div>
-                                        <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                          {pt.count || 0} scans
-                                        </div>
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
+                                        <Popup>
+                                          <div className="text-xs">
+                                            <div className="font-semibold">
+                                              {pt.city || "Unknown"}
+                                            </div>
+                                            <div>{pt.count || 0} scans</div>
+                                          </div>
+                                        </Popup>
+                                      </Marker>
+                                    ))}
+                                </MapContainer>
                               </div>
                             </div>
+                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                Clusters
+                              </div>
+                              <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+                                {locationsData.length === 0 ? (
+                                  <div className="text-xs text-gray-500">
+                                    No locations found.
+                                  </div>
+                                ) : (
+                                  locationsData.map((pt, i) => (
+                                    <div
+                                      key={`cluster-${pt.lat}-${pt.lng}-${i}`}
+                                      className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
+                                    >
+                                      <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                        {pt.city || "Unknown"}
+                                      </div>
+                                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                                        {pt.count || 0} scans
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "customers" && (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateFrom}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateFrom: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateTo}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateTo: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <select
+                              value={dashboardFilters.campaignId}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  campaignId: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            >
+                              <option value="">All campaigns</option>
+                              {campaigns.map((campaign) => (
+                                <option key={campaign.id} value={campaign.id}>
+                                  {campaign.title}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="City"
+                              value={dashboardFilters.city}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  city: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Mobile"
+                              value={dashboardFilters.mobile}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  mobile: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleApplyExtraFilters}
+                              className={`${PRIMARY_BUTTON} rounded-lg`}
+                            >
+                              Apply
+                            </button>
+                          </div>
+                          <div className="mt-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                exportVendorCustomers(
+                                  token,
+                                  buildExtraFilterParams(),
+                                )
+                              }
+                              className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
+                            >
+                              <Download size={14} />
+                              Export CSV
+                            </button>
+                          </div>
+                          {extraTabError && (
+                            <p className="mt-3 text-xs text-rose-500">
+                              {extraTabError}
+                            </p>
                           )}
                         </div>
-                      )}
 
-                      {activeTab === "customers" && (
-                        <div className="space-y-4">
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateFrom}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateFrom: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateTo}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateTo: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <select
-                                value={dashboardFilters.campaignId}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    campaignId: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              >
-                                <option value="">All campaigns</option>
-                                {campaigns.map((campaign) => (
-                                  <option key={campaign.id} value={campaign.id}>
-                                    {campaign.title}
-                                  </option>
-                                ))}
-                              </select>
-                              <input
-                                type="text"
-                                placeholder="City"
-                                value={dashboardFilters.city}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    city: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Mobile"
-                                value={dashboardFilters.mobile}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    mobile: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={handleApplyExtraFilters}
-                                className={`${PRIMARY_BUTTON} rounded-lg`}
-                              >
-                                Apply
-                              </button>
-                            </div>
-                            <div className="mt-3 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  exportVendorCustomers(
-                                    token,
-                                    buildExtraFilterParams(),
-                                  )
-                                }
-                                className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
-                              >
-                                <Download size={14} />
-                                Export CSV
-                              </button>
-                            </div>
-                            {extraTabError && (
-                              <p className="mt-3 text-xs text-rose-500">
-                                {extraTabError}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                            <table className="w-full text-xs text-left">
-                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                          <table className="w-full text-xs text-left">
+                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                              <tr>
+                                <th className="px-4 py-3">Customer</th>
+                                <th className="px-4 py-3">Mobile</th>
+                                <th className="px-4 py-3">Codes</th>
+                                <th className="px-4 py-3">Rewards Earned</th>
+                                <th className="px-4 py-3">
+                                  First Scan Location
+                                </th>
+                                <th className="px-4 py-3">Member Since</th>
+                                <th className="px-4 py-3">Last Scanned</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                              {isLoadingExtraTab ? (
                                 <tr>
-                                  <th className="px-4 py-3">Customer</th>
-                                  <th className="px-4 py-3">Mobile</th>
-                                  <th className="px-4 py-3">Codes</th>
-                                  <th className="px-4 py-3">Rewards Earned</th>
-                                  <th className="px-4 py-3">
-                                    First Scan Location
-                                  </th>
-                                  <th className="px-4 py-3">Member Since</th>
-                                  <th className="px-4 py-3">Last Scanned</th>
+                                  <td
+                                    colSpan={7}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    Loading customers...
+                                  </td>
                                 </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                {isLoadingExtraTab ? (
-                                  <tr>
-                                    <td
-                                      colSpan={7}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      Loading customers...
+                              ) : customersData.length === 0 ? (
+                                <tr>
+                                  <td
+                                    colSpan={7}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    No customers found.
+                                  </td>
+                                </tr>
+                              ) : (
+                                customersData.map((customer) => (
+                                  <tr key={customer.userId || customer.mobile}>
+                                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                                      {customer.name || "-"}
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                      {customer.mobile || "-"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {customer.codeCount || 0}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      INR {formatAmount(customer.rewardsEarned)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {customer.firstScanLocation || "-"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {formatDate(customer.memberSince)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {formatDate(customer.lastScanned)}
                                     </td>
                                   </tr>
-                                ) : customersData.length === 0 ? (
-                                  <tr>
-                                    <td
-                                      colSpan={7}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      No customers found.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  customersData.map((customer) => (
-                                    <tr
-                                      key={customer.userId || customer.mobile}
-                                    >
-                                      <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
-                                        {customer.name || "-"}
-                                      </td>
-                                      <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                        {customer.mobile || "-"}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {customer.codeCount || 0}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        INR{" "}
-                                        {formatAmount(customer.rewardsEarned)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {customer.firstScanLocation || "-"}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {formatDate(customer.memberSince)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {formatDate(customer.lastScanned)}
-                                      </td>
-                                    </tr>
-                                  ))
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {activeTab === "billing" && (
-                        <div className="space-y-4">
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateFrom}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateFrom: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="date"
-                                value={dashboardFilters.dateTo}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    dateTo: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <input
-                                type="text"
-                                placeholder="Invoice number"
-                                value={dashboardFilters.invoiceNo}
-                                onChange={(event) =>
-                                  setDashboardFilters((prev) => ({
-                                    ...prev,
-                                    invoiceNo: event.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={handleApplyExtraFilters}
-                                className={`${PRIMARY_BUTTON} rounded-lg`}
-                              >
-                                Apply
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => loadInvoicesData(token)}
-                                className={`${SECONDARY_BUTTON} rounded-lg`}
-                              >
-                                Refresh
-                              </button>
-                            </div>
-                            {invoiceShareStatus && (
-                              <p className="mt-3 text-xs text-primary">
-                                {invoiceShareStatus}
-                              </p>
-                            )}
-                            {extraTabError && (
-                              <p className="mt-3 text-xs text-rose-500">
-                                {extraTabError}
-                              </p>
-                            )}
+                    {activeTab === "billing" && (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateFrom}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateFrom: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="date"
+                              value={dashboardFilters.dateTo}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  dateTo: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Invoice number"
+                              value={dashboardFilters.invoiceNo}
+                              onChange={(event) =>
+                                setDashboardFilters((prev) => ({
+                                  ...prev,
+                                  invoiceNo: event.target.value,
+                                }))
+                              }
+                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleApplyExtraFilters}
+                              className={`${PRIMARY_BUTTON} rounded-lg`}
+                            >
+                              Apply
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => loadInvoicesData(token)}
+                              className={`${SECONDARY_BUTTON} rounded-lg`}
+                            >
+                              Refresh
+                            </button>
                           </div>
-
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                            <table className="w-full text-xs text-left">
-                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
-                                <tr>
-                                  <th className="px-4 py-3">Invoice No.</th>
-                                  <th className="px-4 py-3">Type</th>
-                                  <th className="px-4 py-3">Issued</th>
-                                  <th className="px-4 py-3">Subtotal</th>
-                                  <th className="px-4 py-3">Tax</th>
-                                  <th className="px-4 py-3">Total</th>
-                                  <th className="px-4 py-3">Actions</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                {isLoadingExtraTab ? (
-                                  <tr>
-                                    <td
-                                      colSpan={7}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      Loading invoices...
-                                    </td>
-                                  </tr>
-                                ) : invoicesData.length === 0 ? (
-                                  <tr>
-                                    <td
-                                      colSpan={7}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      No invoices found.
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  invoicesData.map((invoice) => (
-                                    <tr key={invoice.id}>
-                                      <td className="px-4 py-3 font-mono text-[11px]">
-                                        {invoice.number || invoice.id}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {invoice.type}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {formatDate(invoice.issuedAt)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        INR {formatAmount(invoice.subtotal)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        INR {formatAmount(invoice.tax)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        INR {formatAmount(invoice.total)}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              downloadVendorInvoicePdf(
-                                                token,
-                                                invoice.id,
-                                              )
-                                            }
-                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
-                                          >
-                                            Download
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={async () => {
-                                              try {
-                                                const response =
-                                                  await shareVendorInvoice(
-                                                    token,
-                                                    invoice.id,
-                                                  );
-                                                const shareUrl =
-                                                  response?.shareUrl ||
-                                                  response?.url ||
-                                                  "";
-                                                if (
-                                                  shareUrl &&
-                                                  navigator?.clipboard
-                                                    ?.writeText
-                                                ) {
-                                                  await navigator.clipboard.writeText(
-                                                    shareUrl,
-                                                  );
-                                                  setInvoiceShareStatus(
-                                                    "Share link copied to clipboard.",
-                                                  );
-                                                } else if (shareUrl) {
-                                                  setInvoiceShareStatus(
-                                                    shareUrl,
-                                                  );
-                                                } else {
-                                                  setInvoiceShareStatus(
-                                                    "Share link generated.",
-                                                  );
-                                                }
-                                              } catch (error) {
-                                                setInvoiceShareStatus(
-                                                  error.message ||
-                                                    "Unable to generate share link.",
-                                                );
-                                              }
-                                            }}
-                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
-                                          >
-                                            Share
-                                          </button>
-                                          {invoice.shareToken && (
-                                            <a
-                                              href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center`}
-                                            >
-                                              Open
-                                            </a>
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ))
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                          {invoiceShareStatus && (
+                            <p className="mt-3 text-xs text-primary">
+                              {invoiceShareStatus}
+                            </p>
+                          )}
+                          {extraTabError && (
+                            <p className="mt-3 text-xs text-rose-500">
+                              {extraTabError}
+                            </p>
+                          )}
                         </div>
-                      )}
 
-                      {activeTab === "reports" && (
-                        <div className="space-y-4">
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                            <div className="flex items-center justify-between gap-3 flex-wrap">
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                Product Reports
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => loadReportsData(token)}
-                                className={`${SECONDARY_BUTTON} rounded-lg inline-flex items-center gap-2`}
-                              >
-                                <RefreshCw size={14} />
-                                Refresh
-                              </button>
-                            </div>
-                            {extraTabError && (
-                              <p className="mt-3 text-xs text-rose-500">
-                                {extraTabError}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                            <table className="w-full text-xs text-left">
-                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                          <table className="w-full text-xs text-left">
+                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                              <tr>
+                                <th className="px-4 py-3">Invoice No.</th>
+                                <th className="px-4 py-3">Type</th>
+                                <th className="px-4 py-3">Issued</th>
+                                <th className="px-4 py-3">Subtotal</th>
+                                <th className="px-4 py-3">Tax</th>
+                                <th className="px-4 py-3">Total</th>
+                                <th className="px-4 py-3">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                              {isLoadingExtraTab ? (
                                 <tr>
-                                  <th className="px-4 py-3">Title</th>
-                                  <th className="px-4 py-3">Product</th>
-                                  <th className="px-4 py-3">Customer</th>
-                                  <th className="px-4 py-3">Created</th>
-                                  <th className="px-4 py-3">Action</th>
+                                  <td
+                                    colSpan={7}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    Loading invoices...
+                                  </td>
                                 </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                                {isLoadingExtraTab ? (
-                                  <tr>
-                                    <td
-                                      colSpan={5}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      Loading reports...
+                              ) : invoicesData.length === 0 ? (
+                                <tr>
+                                  <td
+                                    colSpan={7}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    No invoices found.
+                                  </td>
+                                </tr>
+                              ) : (
+                                invoicesData.map((invoice) => (
+                                  <tr key={invoice.id}>
+                                    <td className="px-4 py-3 font-mono text-[11px]">
+                                      {invoice.number || invoice.id}
                                     </td>
-                                  </tr>
-                                ) : reportsData.length === 0 ? (
-                                  <tr>
-                                    <td
-                                      colSpan={5}
-                                      className="px-4 py-6 text-center text-gray-500"
-                                    >
-                                      No reports found.
+                                    <td className="px-4 py-3">
+                                      {invoice.type}
                                     </td>
-                                  </tr>
-                                ) : (
-                                  reportsData.map((report) => (
-                                    <tr key={report.id}>
-                                      <td className="px-4 py-3">
-                                        {report.title || "-"}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {report.Product?.name || "-"}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {report.User?.name || "-"}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {formatDate(report.createdAt)}
-                                      </td>
-                                      <td className="px-4 py-3">
+                                    <td className="px-4 py-3">
+                                      {formatDate(invoice.issuedAt)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      INR {formatAmount(invoice.subtotal)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      INR {formatAmount(invoice.tax)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      INR {formatAmount(invoice.total)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <div className="flex items-center gap-2">
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            downloadVendorProductReport(
+                                            downloadVendorInvoicePdf(
                                               token,
-                                              report.id,
+                                              invoice.id,
                                             )
                                           }
-                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center gap-1`}
+                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
                                         >
-                                          <Download size={12} />
                                           Download
                                         </button>
-                                      </td>
-                                    </tr>
-                                  ))
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
+                                        <button
+                                          type="button"
+                                          onClick={async () => {
+                                            try {
+                                              const response =
+                                                await shareVendorInvoice(
+                                                  token,
+                                                  invoice.id,
+                                                );
+                                              const shareUrl =
+                                                response?.shareUrl ||
+                                                response?.url ||
+                                                "";
+                                              if (
+                                                shareUrl &&
+                                                navigator?.clipboard?.writeText
+                                              ) {
+                                                await navigator.clipboard.writeText(
+                                                  shareUrl,
+                                                );
+                                                setInvoiceShareStatus(
+                                                  "Share link copied to clipboard.",
+                                                );
+                                              } else if (shareUrl) {
+                                                setInvoiceShareStatus(shareUrl);
+                                              } else {
+                                                setInvoiceShareStatus(
+                                                  "Share link generated.",
+                                                );
+                                              }
+                                            } catch (error) {
+                                              setInvoiceShareStatus(
+                                                error.message ||
+                                                  "Unable to generate share link.",
+                                              );
+                                            }
+                                          }}
+                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
+                                        >
+                                          Share
+                                        </button>
+                                        {invoice.shareToken && (
+                                          <a
+                                            href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center`}
+                                          >
+                                            Open
+                                          </a>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Support Tab - Create and view support tickets */}
-                      {activeTab === "support" && (
-                        <VendorSupport token={token} />
-                      )}
-                    </main>
-                  </div>
-                </div>
-
-                {isNotificationsOpen && (
-                  <div className="fixed inset-0 z-50">
-                    <button
-                      type="button"
-                      aria-label="Close notifications"
-                      onClick={() => setIsNotificationsOpen(false)}
-                      className="absolute inset-0 z-40 bg-black/10 dark:bg-black/40 backdrop-blur-[1px]"
-                    />
-                    <div
-                      ref={notificationsDropdownRef}
-                      className="absolute z-50 right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-colors duration-200 flex flex-col"
-                    >
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
-                        <div className="flex items-center gap-2">
-                          <Bell size={16} className="text-primary" />
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                            Notifications
-                          </span>
-                          {notificationUnreadCount > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                              {notificationUnreadCount} new
-                            </span>
+                    {activeTab === "reports" && (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Product Reports
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => loadReportsData(token)}
+                              className={`${SECONDARY_BUTTON} rounded-lg inline-flex items-center gap-2`}
+                            >
+                              <RefreshCw size={14} />
+                              Refresh
+                            </button>
+                          </div>
+                          {extraTabError && (
+                            <p className="mt-3 text-xs text-rose-500">
+                              {extraTabError}
+                            </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => loadNotifications(token)}
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
-                            title="Refresh notifications"
-                          >
-                            <RefreshCw
-                              className={`w-3.5 h-3.5 ${isLoadingNotifications ? "animate-spin" : ""}`}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleMarkAllNotificationsRead}
-                            disabled={
-                              isMarkingNotificationsRead ||
-                              isLoadingNotifications ||
-                              notificationUnreadCount === 0
-                            }
-                            className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Check size={12} />
-                            {isMarkingNotificationsRead
-                              ? "Marking..."
-                              : "Mark all read"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsNotificationsOpen(false)}
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
-                            title="Close notifications"
-                          >
-                            <X size={14} />
-                          </button>
+
+                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                          <table className="w-full text-xs text-left">
+                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
+                              <tr>
+                                <th className="px-4 py-3">Title</th>
+                                <th className="px-4 py-3">Product</th>
+                                <th className="px-4 py-3">Customer</th>
+                                <th className="px-4 py-3">Created</th>
+                                <th className="px-4 py-3">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                              {isLoadingExtraTab ? (
+                                <tr>
+                                  <td
+                                    colSpan={5}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    Loading reports...
+                                  </td>
+                                </tr>
+                              ) : reportsData.length === 0 ? (
+                                <tr>
+                                  <td
+                                    colSpan={5}
+                                    className="px-4 py-6 text-center text-gray-500"
+                                  >
+                                    No reports found.
+                                  </td>
+                                </tr>
+                              ) : (
+                                reportsData.map((report) => (
+                                  <tr key={report.id}>
+                                    <td className="px-4 py-3">
+                                      {report.title || "-"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {report.Product?.name || "-"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {report.User?.name || "-"}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {formatDate(report.createdAt)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          downloadVendorProductReport(
+                                            token,
+                                            report.id,
+                                          )
+                                        }
+                                        className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center gap-1`}
+                                      >
+                                        <Download size={12} />
+                                        Download
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
-                      {notificationsError && (
-                        <div className="px-4 py-2.5 text-xs text-primary dark:text-primary bg-primary/5 dark:bg-primary/10 border-b border-primary/20 dark:border-primary/30">
-                          {notificationsError}
-                        </div>
-                      )}
-                      <div
-                        className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-3 pr-2 space-y-2 custom-scrollbar touch-pan-y"
-                        style={{ WebkitOverflowScrolling: "touch" }}
-                        onWheel={(event) => event.stopPropagation()}
-                        onTouchMove={(event) => event.stopPropagation()}
-                      >
-                        {isLoadingNotifications ? (
-                          <div className="text-xs text-gray-400 text-center py-6">
-                            Loading notifications...
-                          </div>
-                        ) : notifications.length === 0 ? (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
-                            No notifications yet.
-                          </div>
-                        ) : (
-                          notifications.map((item) => {
-                            const meta = getNotificationMeta(item);
-                            const Icon = meta.icon;
-                            return (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => handleNotificationClick(item)}
-                                className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
-                                  item.isRead
-                                    ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                                    : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-                                }`}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div
-                                    className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
-                                  >
-                                    <Icon size={18} />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-                                        {item.title || meta.label}
-                                      </div>
-                                      <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                        {formatDate(item.createdAt)}
-                                      </div>
-                                    </div>
-                                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                      {item.message || "No details available."}
-                                    </div>
-                                    <div className="mt-2 flex items-center gap-1.5">
-                                      {!item.isRead && (
-                                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                      )}
-                                      <span
-                                        className={`text-[10px] font-semibold ${
-                                          item.isRead
-                                            ? "text-gray-400 dark:text-gray-500"
-                                            : "text-primary"
-                                        }`}
-                                      >
-                                        {item.isRead ? "Read" : "New"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })
+                    )}
+
+                    {/* Support Tab - Create and view support tickets */}
+                    {activeTab === "support" && <VendorSupport token={token} />}
+                  </main>
+                </div>
+              </div>
+
+              {isNotificationsOpen && (
+                <div className="fixed inset-0 z-50">
+                  <button
+                    type="button"
+                    aria-label="Close notifications"
+                    onClick={() => setIsNotificationsOpen(false)}
+                    className="absolute inset-0 z-40 bg-black/10 dark:bg-black/40 backdrop-blur-[1px]"
+                  />
+                  <div
+                    ref={notificationsDropdownRef}
+                    className="absolute z-50 right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-colors duration-200 flex flex-col"
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <Bell size={16} className="text-primary" />
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Notifications
+                        </span>
+                        {notificationUnreadCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                            {notificationUnreadCount} new
+                          </span>
                         )}
                       </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => loadNotifications(token)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                          title="Refresh notifications"
+                        >
+                          <RefreshCw
+                            className={`w-3.5 h-3.5 ${isLoadingNotifications ? "animate-spin" : ""}`}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleMarkAllNotificationsRead}
+                          disabled={
+                            isMarkingNotificationsRead ||
+                            isLoadingNotifications ||
+                            notificationUnreadCount === 0
+                          }
+                          className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Check size={12} />
+                          {isMarkingNotificationsRead
+                            ? "Marking..."
+                            : "Mark all read"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsNotificationsOpen(false)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                          title="Close notifications"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    {notificationsError && (
+                      <div className="px-4 py-2.5 text-xs text-primary dark:text-primary bg-primary/5 dark:bg-primary/10 border-b border-primary/20 dark:border-primary/30">
+                        {notificationsError}
+                      </div>
+                    )}
+                    <div
+                      className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-3 pr-2 space-y-2 custom-scrollbar touch-pan-y"
+                      style={{ WebkitOverflowScrolling: "touch" }}
+                      onWheel={(event) => event.stopPropagation()}
+                      onTouchMove={(event) => event.stopPropagation()}
+                    >
+                      {isLoadingNotifications ? (
+                        <div className="text-xs text-gray-400 text-center py-6">
+                          Loading notifications...
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
+                          No notifications yet.
+                        </div>
+                      ) : (
+                        notifications.map((item) => {
+                          const meta = getNotificationMeta(item);
+                          const Icon = meta.icon;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleNotificationClick(item)}
+                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
+                                item.isRead
+                                  ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                                  : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div
+                                  className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
+                                >
+                                  <Icon size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                                      {item.title || meta.label}
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                      {formatDate(item.createdAt)}
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {item.message || "No details available."}
+                                  </div>
+                                  <div className="mt-2 flex items-center gap-1.5">
+                                    {!item.isRead && (
+                                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                    )}
+                                    <span
+                                      className={`text-[10px] font-semibold ${
+                                        item.isRead
+                                          ? "text-gray-400 dark:text-gray-500"
+                                          : "text-primary"
+                                      }`}
+                                    >
+                                      {item.isRead ? "Read" : "New"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* QR Preview Modal Start */}
-                <ConfirmModal
-                  isOpen={successModal.isOpen}
-                  onClose={closeSuccessModal}
-                  onConfirm={closeSuccessModal}
-                  title={successModal.title || "Success"}
-                  message={
-                    successModal.message || "Action completed successfully."
+              {/* QR Preview Modal Start */}
+              <ConfirmModal
+                isOpen={successModal.isOpen}
+                onClose={closeSuccessModal}
+                onConfirm={closeSuccessModal}
+                title={successModal.title || "Success"}
+                message={
+                  successModal.message || "Action completed successfully."
+                }
+                confirmText="OK"
+                type="success"
+                showCancel={false}
+              />
+
+              {/* Sheet Payment Confirmation Modal */}
+              <ConfirmModal
+                isOpen={!!sheetPaymentData}
+                onClose={() => setSheetPaymentData(null)}
+                onConfirm={async () => {
+                  if (!sheetPaymentData) return;
+                  try {
+                    await paySheetCashback(token, sheetPaymentData.campaignId, {
+                      sheetIndex: sheetPaymentData.sheetIndex,
+                      cashbackAmount: sheetPaymentData.amount,
+                    });
+                    openSuccessModal(
+                      "Payment Successful",
+                      `Successfully paid Rs. ${(
+                        sheetPaymentData.totalCost ||
+                        sheetPaymentData.amount * sheetPaymentData.count
+                      ).toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`,
+                    );
+                    setSheetPaymentData(null);
+                    loadWallet();
+                  } catch (err) {
+                    setStatusWithTimeout(err.message || "Payment failed");
                   }
-                  confirmText="OK"
-                  type="success"
-                  showCancel={false}
-                />
-
-                {/* Sheet Payment Confirmation Modal */}
-                <ConfirmModal
-                  isOpen={!!sheetPaymentData}
-                  onClose={() => setSheetPaymentData(null)}
-                  onConfirm={async () => {
-                    if (!sheetPaymentData) return;
-                    try {
-                      await paySheetCashback(
-                        token,
-                        sheetPaymentData.campaignId,
-                        {
-                          sheetIndex: sheetPaymentData.sheetIndex,
-                          cashbackAmount: sheetPaymentData.amount,
-                        },
-                      );
-                      openSuccessModal(
-                        "Payment Successful",
-                        `Successfully paid Rs. ${(
-                          sheetPaymentData.totalCost ||
-                          sheetPaymentData.amount * sheetPaymentData.count
-                        ).toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`,
-                      );
-                      setSheetPaymentData(null);
-                      loadWallet();
-                    } catch (err) {
-                      setStatusWithTimeout(err.message || "Payment failed");
-                    }
-                  }}
-                  title="Confirm Sheet Payment"
-                  message={
-                    sheetPaymentData
-                      ? `You are about to pay for Sheet ${
-                          sheetPaymentData.sheetLabel
-                        } (${sheetPaymentData.count} QRs).
+                }}
+                title="Confirm Sheet Payment"
+                message={
+                  sheetPaymentData
+                    ? `You are about to pay for Sheet ${
+                        sheetPaymentData.sheetLabel
+                      } (${sheetPaymentData.count} QRs).
 
 Breakdown:
 Cashback Deposit (No GST): Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
 
 Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
-                      : ""
-                  }
-                  confirmText={`Pay Rs. ${sheetPaymentData?.totalCost.toFixed(
-                    2,
-                  )}`}
-                  type="info"
-                  showCancel={true}
-                />
+                    : ""
+                }
+                confirmText={`Pay Rs. ${sheetPaymentData?.totalCost.toFixed(
+                  2,
+                )}`}
+                type="info"
+                showCancel={true}
+              />
 
-                <ConfirmModal
-                  isOpen={!!campaignToDelete}
-                  onClose={() => {
-                    if (deletingCampaignId) return;
-                    setCampaignToDelete(null);
-                  }}
-                  onConfirm={confirmDeleteCampaign}
-                  title="Delete campaign?"
-                  message={
-                    campaignToDelete
-                      ? `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
-                      : ""
-                  }
-                  confirmText="Delete Campaign"
-                  cancelText="Keep Campaign"
-                  type="danger"
-                  loading={
-                    !!campaignToDelete &&
-                    deletingCampaignId === campaignToDelete.id
-                  }
-                  showCancel={true}
-                />
+              <ConfirmModal
+                isOpen={!!campaignToDelete}
+                onClose={() => {
+                  if (deletingCampaignId) return;
+                  setCampaignToDelete(null);
+                }}
+                onConfirm={confirmDeleteCampaign}
+                title="Delete campaign?"
+                message={
+                  campaignToDelete
+                    ? `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
+                    : ""
+                }
+                confirmText="Delete Campaign"
+                cancelText="Keep Campaign"
+                type="danger"
+                loading={
+                  !!campaignToDelete &&
+                  deletingCampaignId === campaignToDelete.id
+                }
+                showCancel={true}
+              />
 
-                {/* Payment Modal */}
-                {showPaymentModal && paymentForm.campaign && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                            {paymentForm.campaign.title}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {formatDate(paymentForm.campaign.startDate)} -{" "}
-                            {paymentForm.campaign.endDate
-                              ? formatDate(paymentForm.campaign.endDate)
-                              : "Ongoing"}
-                          </p>
+              {/* Payment Modal */}
+              {showPaymentModal && paymentForm.campaign && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                  <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                          {paymentForm.campaign.title}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {formatDate(paymentForm.campaign.startDate)} -{" "}
+                          {paymentForm.campaign.endDate
+                            ? formatDate(paymentForm.campaign.endDate)
+                            : "Ongoing"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowPaymentModal(false)}
+                        className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                      {/* Campaign Description */}
+                      {paymentForm.campaign.description && (
+                        <div className="w-full rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-4 py-3 text-sm text-gray-500">
+                          {paymentForm.campaign.description}
                         </div>
-                        <button
-                          onClick={() => setShowPaymentModal(false)}
-                          className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        >
-                          <X size={20} />
-                        </button>
+                      )}
+
+                      {/* Allocations & Summary */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Package size={16} className="text-primary" />
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Allocations Breakdown
+                          </h4>
+                        </div>
+
+                        <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 overflow-hidden">
+                          <table className="w-full text-sm text-left">
+                            <thead className="bg-gray-50 dark:bg-zinc-800/50 text-[10px] uppercase text-gray-500 font-semibold tracking-wider">
+                              <tr>
+                                <th className="px-5 py-3">Cashback</th>
+                                <th className="px-5 py-3 text-center">Qty</th>
+                                <th className="px-5 py-3 text-right">Budget</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                              {paymentForm.rows.map((row) => (
+                                <tr key={row.id}>
+                                  <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">
+                                    INR{" "}
+                                    {formatAmount(
+                                      parseNumericValue(row.cashbackAmount),
+                                    )}
+                                  </td>
+                                  <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                    {row.quantity}
+                                  </td>
+                                  <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                    INR{" "}
+                                    {formatAmount(
+                                      parseNumericValue(row.cashbackAmount) *
+                                        parseNumericValue(row.quantity),
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+
+                              {/* Padding row for separation */}
+                              <tr>
+                                <td colSpan="3" className="py-2"></td>
+                              </tr>
+
+                              {/* Summary Rows Integrated */}
+                              {(() => {
+                                const voucherCostPerUnit =
+                                  VOUCHER_COST_MAP[paymentForm.voucherType] ||
+                                  0;
+                                const voucherCostWithGst =
+                                  voucherCostPerUnit *
+                                  (1 + CAMPAIGN_FEE_GST_RATE);
+
+                                let totalBudget = 0;
+                                let totalQuantity = 0;
+
+                                paymentForm.rows.forEach((r) => {
+                                  const cb = parseNumericValue(
+                                    r.cashbackAmount,
+                                  );
+                                  const qty = parseNumericValue(r.quantity);
+                                  if (qty > 0) {
+                                    totalBudget += cb * qty;
+                                    totalQuantity += qty;
+                                  }
+                                });
+
+                                const qrBaseRate = parseNumericValue(
+                                  brandProfile?.qrPricePerUnit,
+                                  1,
+                                );
+                                const voucherBaseRate =
+                                  VOUCHER_COST_MAP[paymentForm.voucherType] ||
+                                  0;
+
+                                const totalQrBaseCost =
+                                  totalQuantity * qrBaseRate;
+                                const totalVoucherBaseCost =
+                                  totalQuantity * voucherBaseRate;
+
+                                const totalFeesBase =
+                                  totalQrBaseCost + totalVoucherBaseCost;
+                                const totalGst =
+                                  totalFeesBase * CAMPAIGN_FEE_GST_RATE;
+
+                                return (
+                                  <>
+                                    {totalBudget > 0 && (
+                                      <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                          Subtotal
+                                        </td>
+                                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                          {totalQuantity} QRs
+                                        </td>
+                                        <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                          INR {formatAmount(totalBudget)}
+                                        </td>
+                                      </tr>
+                                    )}
+
+                                    {/* Fees Section */}
+                                    <tr className="text-xs text-gray-500">
+                                      <td
+                                        className="px-5 pt-3 pb-1"
+                                        colSpan="2"
+                                      >
+                                        QR Generation Fees (Excl. GST)
+                                        <div className="text-[10px] text-gray-400">
+                                          INR {formatAmount(qrBaseRate)}/QR
+                                        </div>
+                                      </td>
+                                      <td className="px-5 pt-3 pb-1 text-right">
+                                        + INR {formatAmount(totalQrBaseCost)}
+                                      </td>
+                                    </tr>
+                                    <tr className="text-xs text-gray-500">
+                                      <td className="px-5 py-1" colSpan="2">
+                                        Voucher Fees (Excl. GST)
+                                        <div className="text-[10px] text-gray-400">
+                                          INR {formatAmount(voucherBaseRate)}
+                                          /QR
+                                        </div>
+                                      </td>
+                                      <td className="px-5 py-1 text-right">
+                                        + INR{" "}
+                                        {formatAmount(totalVoucherBaseCost)}
+                                      </td>
+                                    </tr>
+                                    <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                      <td
+                                        className="px-5 pt-1 pb-3"
+                                        colSpan="2"
+                                      >
+                                        GST (18%)
+                                      </td>
+                                      <td className="px-5 pt-1 pb-3 text-right">
+                                        + INR {formatAmount(totalGst)}
+                                      </td>
+                                    </tr>
+                                  </>
+                                );
+                              })()}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
 
-                      <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
-                        {/* Campaign Description */}
-                        {paymentForm.campaign.description && (
-                          <div className="w-full rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-4 py-3 text-sm text-gray-500">
-                            {paymentForm.campaign.description}
-                          </div>
-                        )}
-
-                        {/* Allocations & Summary */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Package size={16} className="text-primary" />
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                              Allocations Breakdown
-                            </h4>
-                          </div>
-
-                          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                              <thead className="bg-gray-50 dark:bg-zinc-800/50 text-[10px] uppercase text-gray-500 font-semibold tracking-wider">
-                                <tr>
-                                  <th className="px-5 py-3">Cashback</th>
-                                  <th className="px-5 py-3 text-center">Qty</th>
-                                  <th className="px-5 py-3 text-right">
-                                    Budget
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                                {paymentForm.rows.map((row) => (
-                                  <tr key={row.id}>
-                                    <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">
-                                      INR{" "}
-                                      {formatAmount(
-                                        parseNumericValue(row.cashbackAmount),
-                                      )}
-                                    </td>
-                                    <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                      {row.quantity}
-                                    </td>
-                                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                      INR{" "}
-                                      {formatAmount(
-                                        parseNumericValue(row.cashbackAmount) *
-                                          parseNumericValue(row.quantity),
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
-
-                                {/* Padding row for separation */}
-                                <tr>
-                                  <td colSpan="3" className="py-2"></td>
-                                </tr>
-
-                                {/* Summary Rows Integrated */}
-                                {(() => {
-                                  const voucherCostPerUnit =
-                                    VOUCHER_COST_MAP[paymentForm.voucherType] ||
-                                    0;
-                                  const voucherCostWithGst =
-                                    voucherCostPerUnit *
-                                    (1 + CAMPAIGN_FEE_GST_RATE);
-
-                                  let totalBudget = 0;
-                                  let totalQuantity = 0;
-
-                                  paymentForm.rows.forEach((r) => {
-                                    const cb = parseNumericValue(
-                                      r.cashbackAmount,
-                                    );
-                                    const qty = parseNumericValue(r.quantity);
-                                    if (qty > 0) {
-                                      totalBudget += cb * qty;
-                                      totalQuantity += qty;
-                                    }
-                                  });
-
-                                  const qrBaseRate = parseNumericValue(
-                                    brandProfile?.qrPricePerUnit,
-                                    1,
-                                  );
-                                  const voucherBaseRate =
-                                    VOUCHER_COST_MAP[paymentForm.voucherType] ||
-                                    0;
-
-                                  const totalQrBaseCost =
-                                    totalQuantity * qrBaseRate;
-                                  const totalVoucherBaseCost =
-                                    totalQuantity * voucherBaseRate;
-
-                                  const totalFeesBase =
-                                    totalQrBaseCost + totalVoucherBaseCost;
-                                  const totalGst =
-                                    totalFeesBase * CAMPAIGN_FEE_GST_RATE;
-
-                                  return (
-                                    <>
-                                      {totalBudget > 0 && (
-                                        <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                          <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                            Subtotal
-                                          </td>
-                                          <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                            {totalQuantity} QRs
-                                          </td>
-                                          <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                            INR {formatAmount(totalBudget)}
-                                          </td>
-                                        </tr>
-                                      )}
-
-                                      {/* Fees Section */}
-                                      <tr className="text-xs text-gray-500">
-                                        <td
-                                          className="px-5 pt-3 pb-1"
-                                          colSpan="2"
-                                        >
-                                          QR Generation Fees (Excl. GST)
-                                          <div className="text-[10px] text-gray-400">
-                                            INR {formatAmount(qrBaseRate)}/QR
-                                          </div>
-                                        </td>
-                                        <td className="px-5 pt-3 pb-1 text-right">
-                                          + INR {formatAmount(totalQrBaseCost)}
-                                        </td>
-                                      </tr>
-                                      <tr className="text-xs text-gray-500">
-                                        <td className="px-5 py-1" colSpan="2">
-                                          Voucher Fees (Excl. GST)
-                                          <div className="text-[10px] text-gray-400">
-                                            INR {formatAmount(voucherBaseRate)}
-                                            /QR
-                                          </div>
-                                        </td>
-                                        <td className="px-5 py-1 text-right">
-                                          + INR{" "}
-                                          {formatAmount(totalVoucherBaseCost)}
-                                        </td>
-                                      </tr>
-                                      <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                        <td
-                                          className="px-5 pt-1 pb-3"
-                                          colSpan="2"
-                                        >
-                                          GST (18%)
-                                        </td>
-                                        <td className="px-5 pt-1 pb-3 text-right">
-                                          + INR {formatAmount(totalGst)}
-                                        </td>
-                                      </tr>
-                                    </>
-                                  );
-                                })()}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Voucher Type Selector (Cards) */}
-                        <div className="space-y-3 pt-2">
-                          <label className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            Select Voucher Type
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {/* Digital Voucher */}
-                            <button
-                              onClick={() =>
-                                setPaymentForm((prev) => ({
-                                  ...prev,
-                                  voucherType: "digital_voucher",
-                                }))
-                              }
-                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                                paymentForm.voucherType === "digital_voucher"
-                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                              }`}
-                            >
-                              <div
-                                className={`p-2 rounded-lg mb-3 ${
-                                  paymentForm.voucherType === "digital_voucher"
-                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
-                              >
-                                <Smartphone size={20} />
-                              </div>
-                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                                Digital Voucher
-                              </span>
-                              <span className="text-[10px] text-gray-500 leading-tight">
-                                INR{" "}
-                                {(
-                                  VOUCHER_COST_MAP.digital_voucher || 0
-                                ).toFixed(2)}{" "}
-                                / QR
-                              </span>
-                              {paymentForm.voucherType ===
-                                "digital_voucher" && (
-                                <div className="absolute top-3 right-3 text-emerald-500">
-                                  <Check size={16} strokeWidth={3} />
-                                </div>
-                              )}
-                            </button>
-
-                            {/* Printed QR */}
-                            <button
-                              onClick={() =>
-                                setPaymentForm((prev) => ({
-                                  ...prev,
-                                  voucherType: "printed_qr",
-                                }))
-                              }
-                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                                paymentForm.voucherType === "printed_qr"
-                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                              }`}
-                            >
-                              <div
-                                className={`p-2 rounded-lg mb-3 ${
-                                  paymentForm.voucherType === "printed_qr"
-                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
-                              >
-                                <Printer size={20} />
-                              </div>
-                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                                Printed QR
-                              </span>
-                              <span className="text-[10px] text-gray-500 leading-tight">
-                                INR{" "}
-                                {(VOUCHER_COST_MAP.printed_qr || 0).toFixed(2)}{" "}
-                                / QR
-                              </span>
-                              {paymentForm.voucherType === "printed_qr" && (
-                                <div className="absolute top-3 right-3 text-emerald-500">
-                                  <Check size={16} strokeWidth={3} />
-                                </div>
-                              )}
-                            </button>
-
-                            {/* No Voucher */}
-                            <button
-                              onClick={() =>
-                                setPaymentForm((prev) => ({
-                                  ...prev,
-                                  voucherType: "none",
-                                }))
-                              }
-                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                                paymentForm.voucherType === "none"
-                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                              }`}
-                            >
-                              <div
-                                className={`p-2 rounded-lg mb-3 ${
-                                  paymentForm.voucherType === "none"
-                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
-                              >
-                                <Ban size={20} />
-                              </div>
-                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                                No Voucher
-                              </span>
-                              <span className="text-[10px] text-gray-500 leading-tight">
-                                Just QRs
-                              </span>
-                              {paymentForm.voucherType === "none" && (
-                                <div className="absolute top-3 right-3 text-emerald-500">
-                                  <Check size={16} strokeWidth={3} />
-                                </div>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Verification & Final Total (Green Box) */}
-                        {(() => {
-                          const voucherCostPerUnit =
-                            VOUCHER_COST_MAP[paymentForm.voucherType] || 0;
-                          const voucherCostWithGst =
-                            voucherCostPerUnit * (1 + CAMPAIGN_FEE_GST_RATE);
-                          let totalBudget = 0;
-                          let totalQuantity = 0;
-                          paymentForm.rows.forEach((r) => {
-                            const cb = parseNumericValue(r.cashbackAmount);
-                            const qty = parseNumericValue(r.quantity);
-                            const isPostpaid =
-                              paymentForm.campaign.planType === "postpaid";
-                            if (qty > 0) {
-                              totalBudget += isPostpaid ? 0 : cb * qty;
-                              totalQuantity += qty;
+                      {/* Voucher Type Selector (Cards) */}
+                      <div className="space-y-3 pt-2">
+                        <label className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          Select Voucher Type
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {/* Digital Voucher */}
+                          <button
+                            onClick={() =>
+                              setPaymentForm((prev) => ({
+                                ...prev,
+                                voucherType: "digital_voucher",
+                              }))
                             }
-                          });
-                          const qrBaseRate = parseNumericValue(
-                            brandProfile?.qrPricePerUnit,
-                            1,
-                          );
-                          const qrGenCost =
-                            totalQuantity *
-                            qrBaseRate *
-                            (1 + CAMPAIGN_FEE_GST_RATE);
-                          const totalVoucherCost =
-                            totalQuantity * voucherCostWithGst;
-                          const totalPayable =
-                            totalBudget + totalVoucherCost + qrGenCost;
-
-                          return (
-                            <div className="rounded-xl bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-5 border border-emerald-100 dark:border-emerald-800/50 relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                              <div className="flex justify-between items-center mb-3 relative z-10">
-                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                  Wallet Balance
-                                </span>
-                                <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                  INR{" "}
-                                  {formatAmount(
-                                    parseNumericValue(
-                                      wallet?.availableBalance,
-                                      parseNumericValue(wallet?.balance, 0) -
-                                        parseNumericValue(
-                                          wallet?.lockedBalance,
-                                          0,
-                                        ),
-                                    ),
-                                  )}
-                                </span>
-                              </div>
-
-                              {/* Dashed Line separator */}
-                              <div className="h-px w-full border-t border-dashed border-emerald-200 dark:border-emerald-800/50 my-3"></div>
-
-                              <div className="flex justify-between items-end relative z-10">
-                                <span className="text-base font-bold text-emerald-800 dark:text-emerald-400">
-                                  Total Payable
-                                </span>
-                                <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 tracking-tight">
-                                  INR {formatAmount(totalPayable)}
-                                </span>
-                              </div>
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                              paymentForm.voucherType === "digital_voucher"
+                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                            }`}
+                          >
+                            <div
+                              className={`p-2 rounded-lg mb-3 ${
+                                paymentForm.voucherType === "digital_voucher"
+                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                              }`}
+                            >
+                              <Smartphone size={20} />
                             </div>
-                          );
-                        })()}
+                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                              Digital Voucher
+                            </span>
+                            <span className="text-[10px] text-gray-500 leading-tight">
+                              INR{" "}
+                              {(VOUCHER_COST_MAP.digital_voucher || 0).toFixed(
+                                2,
+                              )}{" "}
+                              / QR
+                            </span>
+                            {paymentForm.voucherType === "digital_voucher" && (
+                              <div className="absolute top-3 right-3 text-emerald-500">
+                                <Check size={16} strokeWidth={3} />
+                              </div>
+                            )}
+                          </button>
 
-                        {campaignError && (
-                          <div className="p-3 rounded-lg bg-rose-50 text-rose-600 text-xs border border-rose-100">
-                            {campaignError}
-                          </div>
-                        )}
+                          {/* Printed QR */}
+                          <button
+                            onClick={() =>
+                              setPaymentForm((prev) => ({
+                                ...prev,
+                                voucherType: "printed_qr",
+                              }))
+                            }
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                              paymentForm.voucherType === "printed_qr"
+                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                            }`}
+                          >
+                            <div
+                              className={`p-2 rounded-lg mb-3 ${
+                                paymentForm.voucherType === "printed_qr"
+                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                              }`}
+                            >
+                              <Printer size={20} />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                              Printed QR
+                            </span>
+                            <span className="text-[10px] text-gray-500 leading-tight">
+                              INR{" "}
+                              {(VOUCHER_COST_MAP.printed_qr || 0).toFixed(2)} /
+                              QR
+                            </span>
+                            {paymentForm.voucherType === "printed_qr" && (
+                              <div className="absolute top-3 right-3 text-emerald-500">
+                                <Check size={16} strokeWidth={3} />
+                              </div>
+                            )}
+                          </button>
+
+                          {/* No Voucher */}
+                          <button
+                            onClick={() =>
+                              setPaymentForm((prev) => ({
+                                ...prev,
+                                voucherType: "none",
+                              }))
+                            }
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                              paymentForm.voucherType === "none"
+                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                            }`}
+                          >
+                            <div
+                              className={`p-2 rounded-lg mb-3 ${
+                                paymentForm.voucherType === "none"
+                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                              }`}
+                            >
+                              <Ban size={20} />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                              No Voucher
+                            </span>
+                            <span className="text-[10px] text-gray-500 leading-tight">
+                              Just QRs
+                            </span>
+                            {paymentForm.voucherType === "none" && (
+                              <div className="absolute top-3 right-3 text-emerald-500">
+                                <Check size={16} strokeWidth={3} />
+                              </div>
+                            )}
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="p-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-zinc-900/30">
-                        <button
-                          onClick={() => setShowPaymentModal(false)}
-                          className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleConfirmPayment}
-                          disabled={
-                            isPayingCampaign || paymentForm.voucherType === null
+                      {/* Verification & Final Total (Green Box) */}
+                      {(() => {
+                        const voucherCostPerUnit =
+                          VOUCHER_COST_MAP[paymentForm.voucherType] || 0;
+                        const voucherCostWithGst =
+                          voucherCostPerUnit * (1 + CAMPAIGN_FEE_GST_RATE);
+                        let totalBudget = 0;
+                        let totalQuantity = 0;
+                        paymentForm.rows.forEach((r) => {
+                          const cb = parseNumericValue(r.cashbackAmount);
+                          const qty = parseNumericValue(r.quantity);
+                          const isPostpaid =
+                            paymentForm.campaign.planType === "postpaid";
+                          if (qty > 0) {
+                            totalBudget += isPostpaid ? 0 : cb * qty;
+                            totalQuantity += qty;
                           }
-                          className={`${PRIMARY_BUTTON} px-6 py-2 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2`}
-                        >
-                          <Wallet size={16} />
-                          {isPayingCampaign
-                            ? "Processing..."
-                            : "Pay & Activate"}
-                        </button>
-                      </div>
+                        });
+                        const qrBaseRate = parseNumericValue(
+                          brandProfile?.qrPricePerUnit,
+                          1,
+                        );
+                        const qrGenCost =
+                          totalQuantity *
+                          qrBaseRate *
+                          (1 + CAMPAIGN_FEE_GST_RATE);
+                        const totalVoucherCost =
+                          totalQuantity * voucherCostWithGst;
+                        const totalPayable =
+                          totalBudget + totalVoucherCost + qrGenCost;
+
+                        return (
+                          <div className="rounded-xl bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-5 border border-emerald-100 dark:border-emerald-800/50 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="flex justify-between items-center mb-3 relative z-10">
+                              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                Wallet Balance
+                              </span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                INR{" "}
+                                {formatAmount(
+                                  parseNumericValue(
+                                    wallet?.availableBalance,
+                                    parseNumericValue(wallet?.balance, 0) -
+                                      parseNumericValue(
+                                        wallet?.lockedBalance,
+                                        0,
+                                      ),
+                                  ),
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Dashed Line separator */}
+                            <div className="h-px w-full border-t border-dashed border-emerald-200 dark:border-emerald-800/50 my-3"></div>
+
+                            <div className="flex justify-between items-end relative z-10">
+                              <span className="text-base font-bold text-emerald-800 dark:text-emerald-400">
+                                Total Payable
+                              </span>
+                              <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 tracking-tight">
+                                INR {formatAmount(totalPayable)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {campaignError && (
+                        <div className="p-3 rounded-lg bg-rose-50 text-rose-600 text-xs border border-rose-100">
+                          {campaignError}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-zinc-900/30">
+                      <button
+                        onClick={() => setShowPaymentModal(false)}
+                        className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleConfirmPayment}
+                        disabled={
+                          isPayingCampaign || paymentForm.voucherType === null
+                        }
+                        className={`${PRIMARY_BUTTON} px-6 py-2 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2`}
+                      >
+                        <Wallet size={16} />
+                        {isPayingCampaign ? "Processing..." : "Pay & Activate"}
+                      </button>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Product Edit Modal */}
-                {showProductModal && (
-                  <ProductEditModal
-                    product={editingProduct}
-                    onClose={() => {
-                      setShowProductModal(false);
-                      setEditingProduct(null);
-                    }}
-                    onSave={handleSaveProduct}
-                    isLoading={isSavingProduct}
-                  />
-                )}
+              {/* Product Edit Modal */}
+              {showProductModal && (
+                <ProductEditModal
+                  product={editingProduct}
+                  onClose={() => {
+                    setShowProductModal(false);
+                    setEditingProduct(null);
+                  }}
+                  onSave={handleSaveProduct}
+                  isLoading={isSavingProduct}
+                />
+              )}
 
-                {/* Global Toast Notification */}
-                {qrActionStatus && (
-                  <div className="fixed bottom-4 right-4 z-[100] animate-bounce-in">
-                    <div className="rounded-lg bg-gray-900/90 text-white px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm border border-white/10 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      {qrActionStatus}
-                    </div>
+              {/* Global Toast Notification */}
+              {qrActionStatus && (
+                <div className="fixed bottom-4 right-4 z-[100] animate-bounce-in">
+                  <div className="rounded-lg bg-gray-900/90 text-white px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm border border-white/10 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    {qrActionStatus}
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              )}
+            </>
+          )}
         </>
       </div>
     </>
