@@ -12,6 +12,7 @@ import {
   Bell,
   Building2,
   ChevronRight,
+  ChevronDown,
   CircleDollarSign,
   ClipboardList,
   CreditCard,
@@ -1806,6 +1807,26 @@ const AdminDashboard = () => {
       );
     } finally {
       setVendorTechFeeSaving((prev) => ({ ...prev, [vendor.id]: false }));
+    }
+  };
+
+  const handlePlanTypeUpdate = async (vendor, newType) => {
+    if (!vendor?.Brand?.id || !newType) return;
+    setVendorActionStatus("");
+    setVendorActionError("");
+
+    try {
+      await updateAdminBrandDetails(token, vendor.Brand.id, {
+        defaultPlanType: newType,
+      });
+      setVendorActionStatus("Plan type updated.");
+      await loadVendors(token);
+    } catch (err) {
+      handleRequestError(
+        err,
+        setVendorActionError,
+        "Unable to update plan type.",
+      );
     }
   };
 
@@ -7064,6 +7085,7 @@ const AdminDashboard = () => {
                             Contact Info
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+
                             Tech Fee
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
@@ -7189,6 +7211,7 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
+
                                 {isActiveVendorListRoute ? (
                                   <div className="flex items-center gap-2">
                                     <div className="relative">
