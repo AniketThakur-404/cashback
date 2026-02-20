@@ -28,7 +28,7 @@ This document captures the currently implemented end-to-end product flow in this
 
 - `User` -> one-to-one optional `Vendor` and `Wallet`.
 - `Vendor` -> one `Brand` (current implementation enforces unique `vendorId` in Brand).
-- `Brand` -> many `Product`, many `Campaign`, one `Subscription`.
+- `Brand` -> many `Product`, many `Campaign`.
 - `Campaign` -> many `QRCode`, optional `Product`, has `allocations` JSON for tiered cashback quantities.
 - `Wallet` -> many `Transaction`, many `Withdrawal`.
 - `QROrder` -> purchased QR batches for campaigns.
@@ -49,7 +49,7 @@ This document captures the currently implemented end-to-end product flow in this
 5. Frontend computes:
   - `cashbackAmount` (max of row cashback values)
   - `totalBudget` and `subtotal` (sum of row totals)
-  - `startDate` (today) and `endDate` (subscription end or fallback +3 months)
+  - `startDate` (today) and `endDate` (fallback +3 months)
 6. Request sent to `POST /api/vendor/campaigns`.
 7. Backend creates campaign with `status = pending`.
 8. Vendor pays campaign using `POST /api/vendor/campaigns/:id/pay`.
@@ -232,15 +232,13 @@ Withdrawals:
 
 ## 9. Known Implementation Notes (Important for Research)
 
-- `subscriptionMiddleware` exists but is not currently mounted on routes, so subscription gating is not enforced centrally.
 - In frontend API utility, `requestWithdrawal` points to `/api/user/withdrawals` while the backend withdrawal request endpoints are `/api/user/payout` and `/api/payments/withdraw`. This can affect older wallet UI paths.
 - There are multiple wallet-related route families (`/api/user/*`, `/api/wallet/*`, `/api/payments/*`) because both legacy and newer flows coexist.
 
 ## 10. Recommended Research Angles
 
 1. Normalize one canonical withdrawal API and align frontend callers.
-2. Enforce subscription checks consistently by mounting `requireActiveSubscription`.
+2. Simplify vendor gating rules and keep status checks consistent across routes.
 3. Standardize QR status lifecycle (`generated` vs `active`) to remove ambiguity.
 4. Define a single onboarding path (self-signup vs brand-registration wizard) and unify status semantics.
 5. Split wallet transaction categories for store redemption vs payout withdrawal to improve reporting clarity.
-

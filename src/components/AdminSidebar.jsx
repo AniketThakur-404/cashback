@@ -76,7 +76,6 @@ const AdminSidebar = ({
                 { id: 'vendors', label: 'All Vendors', icon: Building2 },
                 { id: 'vendors-active', label: 'Active Vendors', icon: ShieldCheck },
                 { id: 'vendors-paused', label: 'Paused Vendors', icon: Shield },
-                { id: 'subscriptions', label: 'Subscriptions', icon: Wallet },
             ]
         },
         { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },

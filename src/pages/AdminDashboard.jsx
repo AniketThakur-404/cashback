@@ -44,7 +44,6 @@ import {
   Mail,
   Phone,
   Trash2,
-  Clock,
   ArrowRight,
   Settings,
   FileText,
@@ -97,8 +96,6 @@ import {
   getAdminWithdrawals,
   getAdminNotifications,
   processAdminWithdrawal,
-  getAdminSubscriptions,
-  updateAdminVendorSubscription,
   getAdminActivityLogs,
   getAdminSystemSettings,
   updateAdminSystemSettings,
@@ -280,19 +277,6 @@ const metricOptions = [
   { label: "QR volume", value: "qrs" },
 ];
 
-const subscriptionOptions = [
-  { label: "6 Months", value: "MONTHS_6" },
-  { label: "12 Months", value: "MONTHS_12" },
-  { label: "24 Months", value: "MONTHS_24" },
-];
-
-const subscriptionFilterOptions = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Paused", value: "paused" },
-  { label: "Expired", value: "expired" },
-];
-
 const QR_ORDER_ATTENTION_STATUSES = ["pending", "paid"];
 
 const formatAmount = (value) => {
@@ -335,7 +319,6 @@ const getDefaultBrandFormState = () => ({
   brandName: "",
   logoUrl: "",
   website: "",
-  subscriptionDuration: "MONTHS_12",
   vendorEmail: "",
   vendorPhone: "",
   qrPricePerUnit: "1.00",
@@ -350,13 +333,6 @@ const getDefaultCampaignEditFormState = () => ({
   endDate: "",
   totalBudget: "",
   subtotal: "",
-});
-
-const getDefaultSubscriptionFormState = () => ({
-  vendorId: "",
-  action: "renew",
-  subscriptionType: "MONTHS_12",
-  extendMonths: "",
 });
 
 const getDefaultWithdrawalActionState = () => ({
@@ -816,16 +792,6 @@ const AdminDashboard = () => {
   const [campaignEditError, setCampaignEditError] = useState("");
   const [isUpdatingCampaignDetails, setIsUpdatingCampaignDetails] =
     useState(false);
-  const [subscriptionForm, setSubscriptionForm] = useState(() =>
-    getDefaultSubscriptionFormState(),
-  );
-  const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
-  const [subscriptionMessage, setSubscriptionMessage] = useState("");
-  const [subscriptionError, setSubscriptionError] = useState("");
-  const [subscriptionFilter, setSubscriptionFilter] = useState("all");
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(false);
-  const [subscriptionsError, setSubscriptionsError] = useState("");
 
   const [transactions, setTransactions] = useState([]);
   const [transactionsError, setTransactionsError] = useState("");
@@ -1010,14 +976,6 @@ const AdminDashboard = () => {
     setCampaignEditStatus("");
     setCampaignEditError("");
     setIsUpdatingCampaignDetails(false);
-    setSubscriptionForm(getDefaultSubscriptionFormState());
-    setIsUpdatingSubscription(false);
-    setSubscriptionMessage("");
-    setSubscriptionError("");
-    setSubscriptionFilter("all");
-    setSubscriptions([]);
-    setIsLoadingSubscriptions(false);
-    setSubscriptionsError("");
     setTransactions([]);
     setTransactionsError("");
     setIsLoadingTransactions(false);
@@ -1114,7 +1072,6 @@ const AdminDashboard = () => {
   const isTransactionsRoute = activeSection === "transactions";
   const isQrsRoute = activeSection === "qrs";
   const isVendorsRoute = activeSection === "vendors";
-  const isSubscriptionsRoute = activeSection === "subscriptions";
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
   const isRedeemCatalogRoute = activeSection === "redeem-catalog";
@@ -1124,36 +1081,10 @@ const AdminDashboard = () => {
   const vendorView = isVendorsRoute ? activeSubSection || "all" : "all";
   const userView = isUsersRoute ? activeSubSection || "all" : "all";
   const showVendorSummaries = isVendorsRoute && vendorView === "all";
-  const showSubscriptionControls =
-    isSubscriptionsRoute || (isVendorsRoute && vendorView === "all");
   const showVendorTable = isVendorsRoute; // Always show table if vendors route
-  const shouldRenderVendorsSection = isVendorsRoute || isSubscriptionsRoute;
+  const shouldRenderVendorsSection = isVendorsRoute;
   const isActiveVendorListRoute =
     isVendorsRoute && activeSubSection === "active";
-
-  const subscriptionBuckets = useMemo(() => {
-    const buckets = { active: [], paused: [], expired: [] };
-    subscriptions.forEach((subscription) => {
-      const status = String(subscription?.status || "active").toLowerCase();
-      if (status === "paused") {
-        buckets.paused.push(subscription);
-      } else if (status === "expired") {
-        buckets.expired.push(subscription);
-      } else {
-        buckets.active.push(subscription);
-      }
-    });
-    return buckets;
-  }, [subscriptions]);
-
-  const subscriptionCounts = useMemo(
-    () => ({
-      active: subscriptionBuckets.active.length,
-      paused: subscriptionBuckets.paused.length,
-      expired: subscriptionBuckets.expired.length,
-    }),
-    [subscriptionBuckets],
-  );
 
   const withdrawalPreview = useMemo(() => {
     if (!withdrawals?.length) return [];
@@ -1187,7 +1118,6 @@ const AdminDashboard = () => {
     "vendors-create": "/admin/vendors/create",
     "vendors-active": "/admin/vendors/active",
     "vendors-paused": "/admin/vendors/paused",
-    subscriptions: "/admin/subscriptions",
     transactions: "/admin/transactions",
     qrs: "/admin/qrs",
     "redeem-catalog": "/admin/redeem-catalog",
@@ -1209,7 +1139,6 @@ const AdminDashboard = () => {
     support: "Disputes & Support",
     "product-reports": "Product Reports",
     vendors: "Vendors",
-    subscriptions: "Subscriptions",
     transactions: "Transactions",
     qrs: "QR Registry",
     "redeem-catalog": "Redeem Catalog",
@@ -1487,31 +1416,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const loadSubscriptions = async (
-    authToken = token,
-    statusFilter = subscriptionFilter,
-  ) => {
-    if (!authToken) return;
-    setIsLoadingSubscriptions(true);
-    setSubscriptionsError("");
-    const normalizedStatus =
-      statusFilter && statusFilter !== "all"
-        ? statusFilter.toUpperCase()
-        : undefined;
-    try {
-      const data = await getAdminSubscriptions(authToken, normalizedStatus);
-      setSubscriptions(data || []);
-    } catch (err) {
-      handleRequestError(
-        err,
-        setSubscriptionsError,
-        "Unable to load subscriptions.",
-      );
-    } finally {
-      setIsLoadingSubscriptions(false);
-    }
-  };
-
   const loadLogs = async (authToken = token, params = {}) => {
     if (!authToken) return;
     setLogsLoading(true);
@@ -1642,7 +1546,6 @@ const AdminDashboard = () => {
       loadQrs(authToken),
       loadWithdrawals(authToken),
       loadNotifications(authToken),
-      loadSubscriptions(authToken, subscriptionFilter),
       loadFinanceSummary(authToken),
       loadSupportTickets(authToken),
     ]);
@@ -1697,12 +1600,8 @@ const AdminDashboard = () => {
       tasks.push(loadUsers(authToken));
     } else if (isSupportRoute) {
       tasks.push(loadSupportTickets(authToken));
-    } else if (isVendorsRoute || isSubscriptionsRoute) {
-      tasks.push(
-        loadVendors(authToken),
-        loadBrands(authToken),
-        loadSubscriptions(authToken, subscriptionFilter),
-      );
+    } else if (isVendorsRoute) {
+      tasks.push(loadVendors(authToken), loadBrands(authToken));
     } else if (isTransactionsRoute) {
       tasks.push(loadTransactions(authToken));
     } else if (isQrsRoute) {
@@ -1735,12 +1634,6 @@ const AdminDashboard = () => {
     if (!isSupportRoute) return;
     setSupportView(isProductReportsRoute ? "product" : "all");
   }, [isSupportRoute, isProductReportsRoute]);
-
-  useEffect(() => {
-    if (!token) return;
-    if (!isSubscriptionsRoute && !isVendorsRoute) return;
-    loadSubscriptions(token, subscriptionFilter);
-  }, [token, subscriptionFilter, isSubscriptionsRoute, isVendorsRoute]);
 
   useEffect(() => {
     setVendorTechFeeDrafts((prev) => {
@@ -1980,10 +1873,6 @@ const AdminDashboard = () => {
       setBrandCreationError("Brand name is required.");
       return;
     }
-    if (!brandForm.subscriptionDuration) {
-      setBrandCreationError("Select a subscription duration.");
-      return;
-    }
     const priceValue =
       brandForm.qrPricePerUnit === "" ? null : Number(brandForm.qrPricePerUnit);
     if (
@@ -2009,7 +1898,6 @@ const AdminDashboard = () => {
         name: brandForm.brandName.trim(),
         logoUrl: brandForm.logoUrl.trim() || undefined,
         website: brandForm.website.trim() || undefined,
-        subscriptionType: brandForm.subscriptionDuration,
         vendorEmail: brandForm.vendorEmail.trim() || undefined,
         vendorPhone: brandForm.vendorPhone.trim() || undefined,
         qrPricePerUnit: priceValue ?? undefined,
@@ -2023,79 +1911,17 @@ const AdminDashboard = () => {
       setCreatedBrandDetails({
         brand: data?.brand,
         vendor: data?.vendor,
-        subscription: data?.subscription,
       });
       setBrandForm(getDefaultBrandFormState());
       setBrandLogoUploadStatus("");
       setBrandLogoUploadError("");
       await loadVendors(token);
-      await loadSubscriptions(token, subscriptionFilter);
     } catch (err) {
       const errorMessage =
         err?.data?.error || err?.message || "Unable to create brand.";
       setBrandCreationError(errorMessage);
     } finally {
       setIsCreatingBrand(false);
-    }
-  };
-
-  const handleSubscriptionFormChange = (field) => (event) => {
-    setSubscriptionForm((prev) => ({ ...prev, [field]: event.target.value }));
-    setSubscriptionMessage("");
-    setSubscriptionError("");
-  };
-
-  const handleSubscriptionAction = async () => {
-    if (!subscriptionForm.vendorId) {
-      setSubscriptionError("Select a vendor to update.");
-      return;
-    }
-
-    const payload = {};
-    switch (subscriptionForm.action) {
-      case "renew":
-        payload.subscriptionType = subscriptionForm.subscriptionType;
-        payload.status = "ACTIVE";
-        break;
-      case "extend": {
-        const months = Number(subscriptionForm.extendMonths);
-        if (!Number.isFinite(months) || months <= 0) {
-          setSubscriptionError("Enter a valid number of months to extend.");
-          return;
-        }
-        payload.extendMonths = months;
-        break;
-      }
-      case "activate":
-        payload.status = "ACTIVE";
-        break;
-      case "pause":
-        payload.status = "PAUSED";
-        break;
-      case "expire":
-        payload.status = "EXPIRED";
-        break;
-      default:
-        break;
-    }
-
-    setIsUpdatingSubscription(true);
-    setSubscriptionMessage("");
-    setSubscriptionError("");
-    try {
-      await updateAdminVendorSubscription(
-        token,
-        subscriptionForm.vendorId,
-        payload,
-      );
-      setSubscriptionMessage("Subscription updated successfully.");
-      setSubscriptionForm((prev) => ({ ...prev, extendMonths: "" }));
-      await loadVendors(token);
-      await loadSubscriptions(token, subscriptionFilter);
-    } catch (err) {
-      setSubscriptionError(err.message || "Unable to update subscription.");
-    } finally {
-      setIsUpdatingSubscription(false);
     }
   };
 
@@ -7156,15 +6982,8 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {isSubscriptionsRoute
-                      ? "Subscriptions"
-                      : "Vendors Management"}
+                    Vendors Management
                   </h2>
-                  {isSubscriptionsRoute && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Manage subscription health and vendor access.
-                    </p>
-                  )}
                 </div>
                 {showVendorSummaries && (
                   <div className="flex gap-2">
@@ -7204,38 +7023,19 @@ const AdminDashboard = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Active Subscriptions
+                          Active Vendors
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Vendors with a live subscription.
+                          Vendors currently in active status.
                         </p>
                       </div>
                       <span className="text-xs font-semibold text-emerald-500">
-                        {subscriptionBuckets.active.length} total
+                        {effectiveVendorStatusCounts.active || 0} total
                       </span>
                     </div>
-                    <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                      {subscriptionBuckets.active.slice(0, 3).map((sub) => (
-                        <li
-                          key={sub.id}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="text-slate-900 dark:text-white">
-                            {sub.Brand?.name || "Brand"}
-                          </div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {sub.Brand?.Vendor?.businessName ||
-                              sub.Brand?.Vendor?.User?.name ||
-                              "Vendor"}
-                          </span>
-                        </li>
-                      ))}
-                      {!subscriptionBuckets.active.length && (
-                        <li className="text-xs text-slate-500">
-                          No active subscriptions yet.
-                        </li>
-                      )}
-                    </ul>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">
+                      Monitoring currently active accounts.
+                    </div>
                   </div>
                   <div
                     id="vendors-paused"
@@ -7244,287 +7044,38 @@ const AdminDashboard = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                          Paused / Expired
+                          Paused / Rejected
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           Vendors needing admin attention.
                         </p>
                       </div>
                       <span className="text-xs font-semibold text-amber-500">
-                        {subscriptionBuckets.paused.length +
-                          subscriptionBuckets.expired.length}
+                        {(effectiveVendorStatusCounts.paused || 0) +
+                          (effectiveVendorStatusCounts.rejected || 0) +
+                          (effectiveVendorStatusCounts.expired || 0)}
                       </span>
                     </div>
-                    <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                      {[
-                        ...subscriptionBuckets.paused,
-                        ...subscriptionBuckets.expired,
-                      ]
-                        .slice(0, 4)
-                        .map((sub) => (
-                          <li
-                            key={sub.id}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="text-slate-900 dark:text-white">
-                              {sub.Brand?.name || "Brand"}
-                            </div>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">
-                              {sub.status}
-                            </span>
-                          </li>
-                        ))}
-                      {!subscriptionBuckets.paused.length &&
-                        !subscriptionBuckets.expired.length && (
-                          <li className="text-xs text-slate-500">
-                            All subscriptions are active.
-                          </li>
-                        )}
-                    </ul>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">
+                      Includes paused, rejected, and expired vendors.
+                    </div>
                   </div>
                 </div>
               )}
 
-              {showSubscriptionControls && (
-                <div
-                  id="subscriptions"
-                  className={`${adminPanelClass} space-y-4`}
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Subscription Controls
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Activate, pause, extend, or renew subscription cycles.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-xs font-semibold text-emerald-500">
-                        Active: {subscriptionCounts.active}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-amber-500/10 text-xs font-semibold text-amber-500">
-                        Paused: {subscriptionCounts.paused}
-                      </span>
-                      <span className="px-3 py-1 rounded-full bg-rose-500/10 text-xs font-semibold text-rose-500">
-                        Expired: {subscriptionCounts.expired}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        Vendor
-                      </label>
-                      <select
-                        value={subscriptionForm.vendorId}
-                        onChange={handleSubscriptionFormChange("vendorId")}
-                        className={adminInputClass}
-                      >
-                        <option value="">Select vendor</option>
-                        {vendors.map((vendor) => (
-                          <option key={vendor.id} value={vendor.id}>
-                            {vendor.businessName ||
-                              vendor.Brand?.name ||
-                              vendor.contactEmail ||
-                              vendor.User?.email}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        Action
-                      </label>
-                      <select
-                        value={subscriptionForm.action}
-                        onChange={handleSubscriptionFormChange("action")}
-                        className={adminInputClass}
-                      >
-                        <option value="renew">Renew / Change Duration</option>
-                        <option value="extend">Extend (months)</option>
-                        <option value="activate">Activate</option>
-                        <option value="pause">Pause</option>
-                        <option value="expire">Expire</option>
-                      </select>
-                    </div>
-                    {subscriptionForm.action === "renew" && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          Duration
-                        </label>
-                        <select
-                          value={subscriptionForm.subscriptionType}
-                          onChange={handleSubscriptionFormChange(
-                            "subscriptionType",
-                          )}
-                          className={adminInputClass}
-                        >
-                          {subscriptionOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                    {subscriptionForm.action === "extend" && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                          Extend by (months)
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={subscriptionForm.extendMonths}
-                          onChange={handleSubscriptionFormChange(
-                            "extendMonths",
-                          )}
-                          className={adminInputClass}
-                          placeholder="6"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        Filter view
-                      </label>
-                      <select
-                        value={subscriptionFilter}
-                        onChange={(event) =>
-                          setSubscriptionFilter(event.target.value)
-                        }
-                        className={adminInputClass}
-                      >
-                        {subscriptionFilterOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isUpdatingSubscription}
-                    onClick={handleSubscriptionAction}
-                    className={adminPrimaryButtonClass}
-                  >
-                    {isUpdatingSubscription
-                      ? "Updating subscription..."
-                      : "Apply subscription update"}
-                  </button>
-                  {subscriptionMessage && (
-                    <div className="text-xs text-emerald-600">
-                      {subscriptionMessage}
-                    </div>
-                  )}
-                  {subscriptionError && (
-                    <div className="text-xs text-rose-600">
-                      {subscriptionError}
-                    </div>
-                  )}
-                  {isLoadingSubscriptions && (
-                    <div className="text-sm text-slate-500">
-                      Loading subscriptions...
-                    </div>
-                  )}
-                  {subscriptionsError && (
-                    <div className="text-xs text-rose-500">
-                      {subscriptionsError}
-                    </div>
-                  )}
-                  {subscriptions.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-slate-50 dark:bg-white/5">
-                          <tr>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              Brand
-                            </th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              Tech Fee
-                            </th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              Vendor
-                            </th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              Status
-                            </th>
-                            <th className="text-left py-3 px-3 text-slate-900 dark:text-white/60 font-medium">
-                              Ends
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {subscriptions.map((subscription) => (
-                            <tr
-                              key={subscription.id}
-                              className="border-t border-slate-200/70 dark:border-white/5"
-                            >
-                              <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                {subscription.Brand?.name || "Brand"}
-                              </td>
-                              <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                {(() => {
-                                  const vendorFee = Number(
-                                    subscription.Brand?.Vendor?.techFeePerQr,
-                                  );
-                                  const legacyQrFee = Number(
-                                    subscription.Brand?.qrPricePerUnit,
-                                  );
-                                  const techFee =
-                                    Number.isFinite(vendorFee) && vendorFee > 0
-                                      ? vendorFee
-                                      : legacyQrFee;
-                                  return Number.isFinite(Number(techFee)) &&
-                                    Number(techFee) > 0
-                                    ? `INR ${formatAmount(techFee)}`
-                                    : "-";
-                                })()}
-                              </td>
-                              <td className="py-3 px-3 text-slate-900 dark:text-white">
-                                {subscription.Brand?.Vendor?.businessName ||
-                                  subscription.Brand?.Vendor?.contactEmail ||
-                                  subscription.Brand?.Vendor?.User?.email ||
-                                  "-"}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span
-                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(
-                                    subscription.status,
-                                  )}`}
-                                >
-                                  {subscription.status}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-slate-900 dark:text-white/60 text-xs">
-                                {formatDate(subscription.endDate)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+              {showVendorTable && isLoadingVendors && (
+                <div className="text-slate-900 dark:text-white/60">
+                  Loading vendors...
                 </div>
               )}
-
-              {(showVendorTable || showSubscriptionControls) &&
-                isLoadingVendors && (
-                  <div className="text-slate-900 dark:text-white/60">
-                    Loading vendors...
-                  </div>
-                )}
-              {(showVendorTable || showSubscriptionControls) &&
-                vendorsError && (
-                  <div className="text-rose-400">{vendorsError}</div>
-                )}
+              {showVendorTable && vendorsError && (
+                <div className="text-rose-400">{vendorsError}</div>
+              )}
 
               {showVendorTable && limitedVendors.length > 0 && (
                 <div className={`${adminPanelClass} overflow-hidden`}>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1000px] text-sm table-auto">
+                    <table className="w-full min-w-[900px] text-sm table-auto">
                       <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200/70 dark:border-white/5">
                         <tr>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
@@ -7534,12 +7085,15 @@ const AdminDashboard = () => {
                             Contact Info
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+<<<<<<< HEAD
                             Plan Type
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
                             Subscription
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
+=======
+>>>>>>> 3947112805d132a55aca02d7785224cfcd585e13
                             Tech Fee
                           </th>
                           <th className="text-left py-4 px-6 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-xs">
@@ -7558,10 +7112,6 @@ const AdminDashboard = () => {
                             vendor.User?.name ||
                             "Vendor";
                           const brandLogo = vendor.Brand?.logoUrl;
-                          const subscriptionStatus =
-                            vendor.Brand?.Subscription?.status;
-                          const subscriptionEnds =
-                            vendor.Brand?.Subscription?.endDate;
                           const currentTechFee = getVendorTechFee(vendor);
                           const currentTechFeeValue = Number.isFinite(
                             Number(currentTechFee),
@@ -7669,6 +7219,7 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
+<<<<<<< HEAD
                                 <div className="relative group w-fit">
                                   <select
                                     value={
@@ -7719,6 +7270,8 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top">
+=======
+>>>>>>> 3947112805d132a55aca02d7785224cfcd585e13
                                 {isActiveVendorListRoute ? (
                                   <div className="flex items-center gap-2">
                                     <div className="relative">
