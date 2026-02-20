@@ -371,6 +371,32 @@ const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
   };
 };
 
+const toRoman = (num) => {
+  const lookup = [
+    ["M", 1000],
+    ["CM", 900],
+    ["D", 500],
+    ["CD", 400],
+    ["C", 100],
+    ["XC", 90],
+    ["L", 50],
+    ["XL", 40],
+    ["X", 10],
+    ["IX", 9],
+    ["V", 5],
+    ["IV", 4],
+    ["I", 1],
+  ];
+  let roman = "";
+  for (const [k, v] of lookup) {
+    while (num >= v) {
+      roman += k;
+      num -= v;
+    }
+  }
+  return roman;
+};
+
 const VendorDashboard = () => {
   const { section } = useParams();
   const navigate = useNavigate();
@@ -651,6 +677,10 @@ const VendorDashboard = () => {
     productId: "",
     planType: "prepaid",
     voucherType: "none",
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
+      .toISOString()
+      .slice(0, 10),
   });
   const [sheetCashbackForm, setSheetCashbackForm] = useState({});
   const [assigningSheet, setAssigningSheet] = useState(null);
@@ -748,6 +778,12 @@ const VendorDashboard = () => {
   const [productImageUploadError, setProductImageUploadError] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [editingCampaignDates, setEditingCampaignDates] = useState(null);
+  const [campaignDateForm, setCampaignDateForm] = useState({
+    startDate: "",
+    endDate: "",
+  });
+  const [savingCampaignDates, setSavingCampaignDates] = useState(false);
   const [productModalContext, setProductModalContext] = useState(null); // 'campaign' or 'qr'
   const [failedProductImages, setFailedProductImages] = useState(
     () => new Set(),
@@ -1115,20 +1151,16 @@ const VendorDashboard = () => {
       Number.isFinite(rawSheetIndex) && rawSheetIndex >= 0 ? rawSheetIndex : 0;
     const hasSheetSelection = isPostpaid;
     const sheetLabel = hasSheetSelection
-      ? selectedSheetIndex < 26
-        ? String.fromCharCode(65 + selectedSheetIndex)
-        : `${selectedSheetIndex + 1}`
+      ? toRoman(selectedSheetIndex + 1)
       : null;
-    const downloadParams = undefined;
+    const downloadParams = sheetLabel ? { sheetLabel } : undefined;
 
     try {
       await runDownloadWithProgress(
         () => downloadCampaignQrPdf(token, campaignId, downloadParams),
         "Preparing full campaign PDF...",
       );
-      setStatusWithTimeout(
-        "Full campaign QR PDF downloaded successfully.",
-      );
+      setStatusWithTimeout("Full campaign QR PDF downloaded successfully.");
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       const errorMsg = err.message || "Failed to download PDF.";
@@ -2310,15 +2342,19 @@ const VendorDashboard = () => {
     if (!campaign || isPayingCampaign) return;
 
     // Validate rows
-    const validRows = rows.filter(
-      (r) =>
-        parseNumericValue(r.cashbackAmount) > 0 &&
-        parseNumericValue(r.quantity) > 0,
-    );
+    // Validate rows
+    const validRows = rows.filter((r) => {
+      const qty = parseNumericValue(r.quantity);
+      const cb = parseNumericValue(r.cashbackAmount);
+      if (qty <= 0) return false;
+      // Postpaid can have 0 cashback (paid later)
+      if (campaign.planType === "postpaid") return true;
+      return cb > 0;
+    });
 
     if (validRows.length === 0) {
       setCampaignError(
-        "Please add at least one valid allocation (Cashback & Quantity > 0).",
+        "Please add at least one valid allocation (Quantity > 0). For prepaid, Cashback must be > 0.",
       );
       return;
     }
@@ -2329,12 +2365,20 @@ const VendorDashboard = () => {
     try {
       // Calculate total cost client-side
       const voucherCost = VOUCHER_COST_MAP[voucherType] || 0;
+
+      // Get base rates
+      const qrBaseRate = parseNumericValue(brandProfile?.qrPricePerUnit, 1);
+
       const totalCost = validRows.reduce((sum, row) => {
         const cb = parseNumericValue(row.cashbackAmount);
         const qty = parseNumericValue(row.quantity);
-        const budget = cb * qty;
+        const isPostpaid = campaign.planType === "postpaid";
+        const budget = isPostpaid ? 0 : cb * qty;
+
+        // Fees calculation
         const vCost = voucherCost * qty * (1 + CAMPAIGN_FEE_GST_RATE);
-        const qrGenCost = qty * (1 + CAMPAIGN_FEE_GST_RATE);
+        const qrGenCost = qrBaseRate * qty * (1 + CAMPAIGN_FEE_GST_RATE);
+
         return sum + budget + vCost + qrGenCost;
       }, 0);
 
@@ -2988,21 +3032,18 @@ const VendorDashboard = () => {
     const cashbackValue = maxCashbackValue || firstCashbackValue || 0;
     const budgetValue =
       calculatedTotalBudget > 0 ? calculatedTotalBudget : null;
-    const now = new Date();
-    const startDate = new Date(now);
-    let endDate = null;
-    if (subscriptionInfo?.endDate) {
-      const parsedEnd = new Date(subscriptionInfo.endDate);
-      if (!Number.isNaN(parsedEnd.getTime())) {
-        endDate = parsedEnd;
-      }
+
+    if (!campaignForm.startDate || !campaignForm.endDate) {
+      setCampaignError("Please select both start and end dates.");
+      return;
     }
-    if (!endDate || endDate <= startDate) {
-      endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + 3);
+    if (new Date(campaignForm.endDate) <= new Date(campaignForm.startDate)) {
+      setCampaignError("End date must be after start date.");
+      return;
     }
-    const startDateValue = startDate.toISOString().slice(0, 10);
-    const endDateValue = endDate.toISOString().slice(0, 10);
+
+    const startDateValue = campaignForm.startDate;
+    const endDateValue = campaignForm.endDate;
     setCampaignError("");
     setCampaignStatus("");
     setIsSavingCampaign(true);
@@ -3068,6 +3109,10 @@ const VendorDashboard = () => {
         productId: "",
         planType: "prepaid",
         voucherType: "none",
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
+          .toISOString()
+          .slice(0, 10),
       });
       setCampaignRows([
         { id: Date.now(), cashbackAmount: "", quantity: "", totalBudget: "" },
@@ -5543,54 +5588,7 @@ const VendorDashboard = () => {
                                   className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                 />
                               </div>
-                              {/* Plan Type Toggle Removed - Uses Brand Default */}
-                              {/* Voucher Type Selector */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                  Voucher Type
-                                </label>
-                                <div className="flex gap-2">
-                                  {[
-                                    { value: "none", label: "None" },
-                                    {
-                                      value: "digital_voucher",
-                                      label: "Digital Voucher",
-                                    },
-                                    {
-                                      value: "printed_qr",
-                                      label: "Printed QR",
-                                    },
-                                  ].map((opt) => (
-                                    <button
-                                      key={opt.value}
-                                      type="button"
-                                      onClick={() =>
-                                        setCampaignForm((prev) => ({
-                                          ...prev,
-                                          voucherType: opt.value,
-                                        }))
-                                      }
-                                      className={`flex-1 rounded-xl px-3 py-2 text-xs font-semibold transition-colors border ${
-                                        campaignForm.voucherType === opt.value
-                                          ? "bg-primary text-white border-primary"
-                                          : "bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-zinc-800 hover:border-primary/40"
-                                      }`}
-                                    >
-                                      {opt.label}
-                                      {VOUCHER_COST_MAP[opt.value] > 0 && (
-                                        <span className="block text-[10px] font-normal mt-0.5 opacity-80">
-                                          {"\u20B9"}
-                                          {(
-                                            VOUCHER_COST_MAP[opt.value] *
-                                            (1 + CAMPAIGN_FEE_GST_RATE)
-                                          ).toFixed(2)}
-                                          /QR incl. GST
-                                        </span>
-                                      )}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
+
                               <div className="space-y-3">
                                 <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                                   Allocations
@@ -5626,7 +5624,7 @@ const VendorDashboard = () => {
                                       className={`${campaignForm.planType === "postpaid" ? "col-span-10" : "col-span-4"} space-y-1`}
                                     >
                                       <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                        Quantity
+                                        Number of QRs Required
                                       </label>
                                       <input
                                         type="number"
@@ -5700,8 +5698,42 @@ const VendorDashboard = () => {
                                 )}
                               </div>
 
-                              <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                Campaign dates are auto-set from today.
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                    Start Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    required
+                                    value={campaignForm.startDate}
+                                    onChange={(e) =>
+                                      setCampaignForm((prev) => ({
+                                        ...prev,
+                                        startDate: e.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                                  />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                                    End Date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    required
+                                    value={campaignForm.endDate}
+                                    min={campaignForm.startDate}
+                                    onChange={(e) =>
+                                      setCampaignForm((prev) => ({
+                                        ...prev,
+                                        endDate: e.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                                  />
+                                </div>
                               </div>
 
                               <div className="flex items-center justify-end">
@@ -6290,6 +6322,192 @@ Quantity: ${invoiceData.quantity} QRs
                                                       </div>
                                                     </div>
                                                   </div>
+
+                                                  {/* Campaign Start & End Date - Editable */}
+                                                  {(() => {
+                                                    const campId = campaign.id;
+                                                    const isEditingDates =
+                                                      editingCampaignDates ===
+                                                      campId;
+                                                    return (
+                                                      <div className="flex flex-wrap items-center gap-3 mt-2 px-1">
+                                                        {!isEditingDates ? (
+                                                          <>
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                              <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                                Start:
+                                                              </span>
+                                                              <span>
+                                                                {campaign.startDate
+                                                                  ? formatShortDate(
+                                                                      campaign.startDate,
+                                                                    )
+                                                                  : "—"}
+                                                              </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                              <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                                End:
+                                                              </span>
+                                                              <span>
+                                                                {campaign.endDate
+                                                                  ? formatShortDate(
+                                                                      campaign.endDate,
+                                                                    )
+                                                                  : "—"}
+                                                              </span>
+                                                            </div>
+                                                            <button
+                                                              type="button"
+                                                              onClick={() => {
+                                                                setEditingCampaignDates(
+                                                                  campId,
+                                                                );
+                                                                setCampaignDateForm(
+                                                                  {
+                                                                    startDate:
+                                                                      campaign.startDate
+                                                                        ? new Date(
+                                                                            campaign.startDate,
+                                                                          )
+                                                                            .toISOString()
+                                                                            .slice(
+                                                                              0,
+                                                                              10,
+                                                                            )
+                                                                        : "",
+                                                                    endDate:
+                                                                      campaign.endDate
+                                                                        ? new Date(
+                                                                            campaign.endDate,
+                                                                          )
+                                                                            .toISOString()
+                                                                            .slice(
+                                                                              0,
+                                                                              10,
+                                                                            )
+                                                                        : "",
+                                                                  },
+                                                                );
+                                                              }}
+                                                              className="inline-flex items-center justify-center h-6 w-6 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                                                              title="Edit dates"
+                                                            >
+                                                              <Edit2
+                                                                size={12}
+                                                              />
+                                                            </button>
+                                                          </>
+                                                        ) : (
+                                                          <>
+                                                            <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                                              <span className="uppercase tracking-wide font-medium">
+                                                                Start Date
+                                                              </span>
+                                                              <input
+                                                                type="date"
+                                                                value={
+                                                                  campaignDateForm.startDate
+                                                                }
+                                                                onChange={(e) =>
+                                                                  setCampaignDateForm(
+                                                                    (prev) => ({
+                                                                      ...prev,
+                                                                      startDate:
+                                                                        e.target
+                                                                          .value,
+                                                                    }),
+                                                                  )
+                                                                }
+                                                                className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                                                              />
+                                                            </label>
+                                                            <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                                              <span className="uppercase tracking-wide font-medium">
+                                                                End Date
+                                                              </span>
+                                                              <input
+                                                                type="date"
+                                                                value={
+                                                                  campaignDateForm.endDate
+                                                                }
+                                                                min={
+                                                                  campaignDateForm.startDate
+                                                                }
+                                                                onChange={(e) =>
+                                                                  setCampaignDateForm(
+                                                                    (prev) => ({
+                                                                      ...prev,
+                                                                      endDate:
+                                                                        e.target
+                                                                          .value,
+                                                                    }),
+                                                                  )
+                                                                }
+                                                                className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
+                                                              />
+                                                            </label>
+                                                            <button
+                                                              type="button"
+                                                              disabled={
+                                                                savingCampaignDates
+                                                              }
+                                                              onClick={async () => {
+                                                                try {
+                                                                  setSavingCampaignDates(
+                                                                    true,
+                                                                  );
+                                                                  await updateVendorCampaign(
+                                                                    token,
+                                                                    campId,
+                                                                    {
+                                                                      startDate:
+                                                                        campaignDateForm.startDate,
+                                                                      endDate:
+                                                                        campaignDateForm.endDate,
+                                                                    },
+                                                                  );
+                                                                  toast.success(
+                                                                    "Campaign dates updated",
+                                                                  );
+                                                                  setEditingCampaignDates(
+                                                                    null,
+                                                                  );
+                                                                  fetchCampaigns();
+                                                                } catch (err) {
+                                                                  toast.error(
+                                                                    err?.message ||
+                                                                      "Failed to update dates",
+                                                                  );
+                                                                } finally {
+                                                                  setSavingCampaignDates(
+                                                                    false,
+                                                                  );
+                                                                }
+                                                              }}
+                                                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
+                                                            >
+                                                              {savingCampaignDates
+                                                                ? "Saving..."
+                                                                : "Save"}
+                                                            </button>
+                                                            <button
+                                                              type="button"
+                                                              onClick={() =>
+                                                                setEditingCampaignDates(
+                                                                  null,
+                                                                )
+                                                              }
+                                                              className="inline-flex items-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 text-gray-500 text-xs hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                                                            >
+                                                              Cancel
+                                                            </button>
+                                                          </>
+                                                        )}
+                                                      </div>
+                                                    );
+                                                  })()}
+
                                                   {/* Sheet Cashback Assignment for Postpaid */}
                                                   {campaign.planType ===
                                                     "postpaid" &&
@@ -6317,18 +6535,16 @@ Quantity: ${invoiceData.quantity} QRs
                                                           Math.ceil(
                                                             totalQrs / 25,
                                                           );
-                                                        const LETTERS =
-                                                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
                                                         sheets = Array.from(
                                                           {
                                                             length: sheetCount,
                                                           },
                                                           (_, i) => ({
                                                             index: i,
-                                                            label:
-                                                              i < LETTERS.length
-                                                                ? LETTERS[i]
-                                                                : `${i + 1}`,
+                                                            label: toRoman(
+                                                              i + 1,
+                                                            ),
                                                             qrCount: Math.min(
                                                               25,
                                                               totalQrs - i * 25,
@@ -8818,13 +9034,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                       r.cashbackAmount,
                                     );
                                     const qty = parseNumericValue(r.quantity);
-                                    if (cb > 0 && qty > 0) {
+                                    if (qty > 0) {
                                       totalBudget += cb * qty;
                                       totalQuantity += qty;
                                     }
                                   });
 
-                                  const qrBaseRate = 1; // INR 1.00 per QR base
+                                  const qrBaseRate = parseNumericValue(
+                                    brandProfile?.qrPricePerUnit,
+                                    1,
+                                  );
                                   const voucherBaseRate =
                                     VOUCHER_COST_MAP[paymentForm.voucherType] ||
                                     0;
@@ -8841,21 +9060,26 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 
                                   return (
                                     <>
-                                      <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                          Subtotal
-                                        </td>
-                                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                          {totalQuantity} QRs
-                                        </td>
-                                        <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                          INR {formatAmount(totalBudget)}
-                                        </td>
-                                      </tr>
+                                      {totalBudget > 0 && (
+                                        <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                          <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                            Subtotal
+                                          </td>
+                                          <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                            {totalQuantity} QRs
+                                          </td>
+                                          <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                            INR {formatAmount(totalBudget)}
+                                          </td>
+                                        </tr>
+                                      )}
 
                                       {/* Fees Section */}
                                       <tr className="text-xs text-gray-500">
-                                        <td className="px-5 pt-3 pb-1" colSpan="2">
+                                        <td
+                                          className="px-5 pt-3 pb-1"
+                                          colSpan="2"
+                                        >
                                           QR Generation Fees (Excl. GST)
                                           <div className="text-[10px] text-gray-400">
                                             INR {formatAmount(qrBaseRate)}/QR
@@ -8879,7 +9103,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                         </td>
                                       </tr>
                                       <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                        <td className="px-5 pt-1 pb-3" colSpan="2">
+                                        <td
+                                          className="px-5 pt-1 pb-3"
+                                          colSpan="2"
+                                        >
                                           GST (18%)
                                         </td>
                                         <td className="px-5 pt-1 pb-3 text-right">
@@ -8933,7 +9160,8 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 ).toFixed(2)}{" "}
                                 / QR
                               </span>
-                              {paymentForm.voucherType === "digital_voucher" && (
+                              {paymentForm.voucherType ===
+                                "digital_voucher" && (
                                 <div className="absolute top-3 right-3 text-emerald-500">
                                   <Check size={16} strokeWidth={3} />
                                 </div>
@@ -9018,7 +9246,6 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 
                         {/* Verification & Final Total (Green Box) */}
                         {(() => {
-                          if (paymentForm.voucherType === null) return null;
                           const voucherCostPerUnit =
                             VOUCHER_COST_MAP[paymentForm.voucherType] || 0;
                           const voucherCostWithGst =
@@ -9028,13 +9255,21 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                           paymentForm.rows.forEach((r) => {
                             const cb = parseNumericValue(r.cashbackAmount);
                             const qty = parseNumericValue(r.quantity);
-                            if (cb > 0 && qty > 0) {
-                              totalBudget += cb * qty;
+                            const isPostpaid =
+                              paymentForm.campaign.planType === "postpaid";
+                            if (qty > 0) {
+                              totalBudget += isPostpaid ? 0 : cb * qty;
                               totalQuantity += qty;
                             }
                           });
+                          const qrBaseRate = parseNumericValue(
+                            brandProfile?.qrPricePerUnit,
+                            1,
+                          );
                           const qrGenCost =
-                            totalQuantity * (1 + CAMPAIGN_FEE_GST_RATE);
+                            totalQuantity *
+                            qrBaseRate *
+                            (1 + CAMPAIGN_FEE_GST_RATE);
                           const totalVoucherCost =
                             totalQuantity * voucherCostWithGst;
                           const totalPayable =
