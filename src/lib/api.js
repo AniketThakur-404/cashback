@@ -644,18 +644,6 @@ export const replyAdminSupportTicket = (token, ticketId, payload) =>
     body: payload,
   });
 
-export const getAdminSubscriptions = (token, status) =>
-  apiRequest(`/api/admin/subscriptions${status ? `?status=${status}` : ""}`, {
-    token,
-  });
-
-export const updateAdminVendorSubscription = (token, vendorId, payload) =>
-  apiRequest(`/api/admin/vendors/${vendorId}/subscription`, {
-    method: "PUT",
-    token,
-    body: payload,
-  });
-
 export const getAdminVendorOverview = (token, vendorId) =>
   apiRequest(`/api/admin/vendors/${vendorId}/overview`, {
     token,

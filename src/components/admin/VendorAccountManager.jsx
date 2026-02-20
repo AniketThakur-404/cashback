@@ -9,7 +9,6 @@ import {
   Megaphone,
   ShoppingBag,
   Activity,
-  Calendar,
   Download,
   Eye,
   RotateCw,
@@ -1024,26 +1023,26 @@ const VendorAccountManager = ({
                       </div>
                       <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
                         <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">
-                          Subsription
+                          Brand Status
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
                             <span
-                              className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.subscription?.status || brandData?.subscription?.status)}`}
+                              className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.brand?.status || brandData?.brand?.status)}`}
                             >
-                              {vendorData?.subscription?.status ||
-                                brandData?.subscription?.status ||
+                              {vendorData?.brand?.status ||
+                                brandData?.brand?.status ||
                                 "N/A"}
                             </span>
                             <span className="text-[10px] text-slate-400 mt-1">
-                              Exp:{" "}
+                              Updated:{" "}
                               {formatDate(
-                                vendorData?.subscription?.endDate ||
-                                brandData?.subscription?.endDate,
+                                vendorData?.brand?.updatedAt ||
+                                brandData?.brand?.updatedAt,
                               )}
                             </span>
                           </div>
-                          <Calendar
+                          <Building2
                             className="text-slate-300 dark:text-white/20"
                             size={24}
                           />

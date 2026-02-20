@@ -538,8 +538,6 @@ const VendorDashboard = () => {
     website: "",
     qrPricePerUnit: "",
   });
-  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [registrationForm, setRegistrationForm] = useState({
     businessName: "",
@@ -818,26 +816,6 @@ const VendorDashboard = () => {
       : selectedCampaignPriceHint;
 
   const isAuthenticated = Boolean(token);
-  const subscriptionStatus = String(
-    subscriptionInfo?.status || "INACTIVE",
-  ).toLowerCase();
-  const subscriptionStatusLabel = subscriptionStatus.toUpperCase();
-  const subscriptionBadgeClass =
-    {
-      active: "bg-primary/10 text-primary",
-      paused: "bg-amber-500/10 text-amber-400",
-      expired: "bg-rose-500/10 text-rose-400",
-      inactive: "bg-rose-500/10 text-rose-400",
-    }[subscriptionStatus] || "bg-slate-500/10 text-slate-300";
-  const subscriptionEndsAt = formatShortDate(subscriptionInfo?.endDate);
-  const subscriptionStartsAt = formatShortDate(subscriptionInfo?.startDate);
-  const subscriptionPlanLabel = "-";
-  const subscriptionHeading =
-    subscriptionStatus === "expired"
-      ? "Subscription expired"
-      : subscriptionStatus === "paused"
-        ? "Subscription paused"
-        : "Subscription inactive";
   const qrPricePerUnit = parseNumericValue(brandProfile?.qrPricePerUnit, 1);
   const brandLogoPreviewSrc = resolveAssetUrl(brandProfile.logoUrl);
 
@@ -1174,8 +1152,6 @@ const VendorDashboard = () => {
     setLastBatchSummary(null);
     setDeletingBatchKey(null);
     lastAutoFilledCashbackRef.current = null;
-    setSubscriptionBlocked("");
-    setSubscriptionInfo(null);
     setSelectedActiveCampaign(null);
     setQrs([]);
     setQrTotal(0);
@@ -1657,7 +1633,6 @@ const VendorDashboard = () => {
             ? Number(data.qrPricePerUnit)
             : "",
       });
-      setSubscriptionInfo(null);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err.status === 404) {
@@ -1668,7 +1643,6 @@ const VendorDashboard = () => {
           website: "",
           qrPricePerUnit: "",
         });
-        setSubscriptionInfo(null);
       } else {
         setRegistrationError(err.message || "Unable to load brand profile.");
       }
@@ -2051,7 +2025,6 @@ const VendorDashboard = () => {
     }
     setAuthError("");
     setAuthStatus("");
-    setSubscriptionBlocked("");
     setIsSigningIn(true);
     try {
       const normalizedEmail = identifier.toLowerCase();
@@ -2899,17 +2872,8 @@ const VendorDashboard = () => {
       calculatedTotalBudget > 0 ? calculatedTotalBudget : null;
     const now = new Date();
     const startDate = new Date(now);
-    let endDate = null;
-    if (subscriptionInfo?.endDate) {
-      const parsedEnd = new Date(subscriptionInfo.endDate);
-      if (!Number.isNaN(parsedEnd.getTime())) {
-        endDate = parsedEnd;
-      }
-    }
-    if (!endDate || endDate <= startDate) {
-      endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + 3);
-    }
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 3);
     const startDateValue = startDate.toISOString().slice(0, 10);
     const endDateValue = endDate.toISOString().slice(0, 10);
     setCampaignError("");
@@ -3735,36 +3699,7 @@ const VendorDashboard = () => {
       )}
 
       <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-300 p-6 text-gray-900 dark:text-gray-100">
-        {subscriptionBlocked ? (
-          <div className="mx-auto max-w-md bg-white dark:bg-[#121212] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-xl space-y-4 text-center">
-            <div className="flex items-center justify-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-              <ShieldCheck size={18} className="text-rose-400" />
-              {subscriptionHeading}
-            </div>
-            <div className="text-xs text-gray-400">{subscriptionBlocked}</div>
-            <div className="flex flex-wrap justify-center gap-2">
-              <span
-                className={`px-3 py-1 rounded-full text-[10px] font-semibold ${subscriptionBadgeClass}`}
-              >
-                {subscriptionStatusLabel}
-              </span>
-              <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-gray-400">
-                Plan: {subscriptionPlanLabel}
-              </span>
-              <span className="px-3 py-1 rounded-full bg-white/5 text-[10px] text-gray-400">
-                Ends: {subscriptionEndsAt}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="w-full rounded-xl bg-white/10 text-white text-sm font-semibold py-2 hover:bg-white/20 transition-colors"
-            >
-              Back to login
-            </button>
-          </div>
-        ) : (
-          <>
+        <>
             {!isAuthenticated && (
               <div className="flex min-h-[80vh] items-center justify-center p-4">
                 <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
@@ -8703,8 +8638,7 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                 )}
               </>
             )}
-          </>
-        )}
+        </>
       </div>
     </>
   );
