@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   LogOut,
   ChevronRight,
+  Smartphone,
+  Printer,
+  Ban,
   Plus,
   Info,
   ArrowRight,
@@ -537,6 +540,7 @@ const VendorDashboard = () => {
     logoUrl: "",
     website: "",
     qrPricePerUnit: "",
+    defaultPlanType: "prepaid",
   });
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [registrationForm, setRegistrationForm] = useState({
@@ -1632,6 +1636,7 @@ const VendorDashboard = () => {
           data.qrPricePerUnit !== undefined && data.qrPricePerUnit !== null
             ? Number(data.qrPricePerUnit)
             : "",
+        defaultPlanType: data.defaultPlanType || "prepaid",
       });
     } catch (err) {
       if (handleVendorAccessError(err)) return;
@@ -1642,6 +1647,7 @@ const VendorDashboard = () => {
           logoUrl: "",
           website: "",
           qrPricePerUnit: "",
+          defaultPlanType: "prepaid",
         });
       } else {
         setRegistrationError(err.message || "Unable to load brand profile.");
@@ -2012,6 +2018,16 @@ const VendorDashboard = () => {
     });
   }, [selectedCampaign, effectiveCampaignCashback]);
 
+  // Sync brand's default plan type into campaign creation form
+  useEffect(() => {
+    if (brandProfile.defaultPlanType) {
+      setCampaignForm((prev) => ({
+        ...prev,
+        planType: brandProfile.defaultPlanType,
+      }));
+    }
+  }, [brandProfile.defaultPlanType]);
+
   // Scroll to top on route/tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -2229,13 +2245,72 @@ const VendorDashboard = () => {
   // The initiateRazorpayPayment is async but the payment itself is user-driven.
   // So validation happens synchronously-ish.
 
-  const handlePayCampaign = async (campaign) => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    campaign: null,
+    voucherType: null,
+    rows: [],
+  });
+
+  const handlePayCampaign = (campaign) => {
+    if (!campaign) return;
+
+    const initialRows =
+      campaign.allocations && campaign.allocations.length > 0
+        ? campaign.allocations.map((a) => ({
+            ...a,
+            id: Date.now() + Math.random(),
+          }))
+        : [
+            {
+              id: Date.now(),
+              cashbackAmount: str(campaign.cashbackAmount),
+              quantity: "",
+            },
+          ];
+
+    setPaymentForm({
+      campaign,
+      voucherType: null,
+      rows: initialRows,
+    });
+    setCampaignError("");
+    setShowPaymentModal(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    const { campaign, voucherType, rows } = paymentForm;
     if (!campaign || isPayingCampaign) return;
+
+    // Validate rows
+    const validRows = rows.filter(
+      (r) =>
+        parseNumericValue(r.cashbackAmount) > 0 &&
+        parseNumericValue(r.quantity) > 0,
+    );
+
+    if (validRows.length === 0) {
+      setCampaignError(
+        "Please add at least one valid allocation (Cashback & Quantity > 0).",
+      );
+      return;
+    }
+
     setIsPayingCampaign(true);
     setCampaignError("");
 
     try {
-      const { totalCost } = getCampaignPaymentSummary(campaign, qrPricePerUnit);
+      // Calculate total cost client-side
+      const voucherCost = VOUCHER_COST_MAP[voucherType] || 0;
+      const totalCost = validRows.reduce((sum, row) => {
+        const cb = parseNumericValue(row.cashbackAmount);
+        const qty = parseNumericValue(row.quantity);
+        const budget = cb * qty;
+        const vCost = voucherCost * qty * (1 + CAMPAIGN_FEE_GST_RATE);
+        const qrGenCost = qty * (1 + CAMPAIGN_FEE_GST_RATE);
+        return sum + budget + vCost + qrGenCost;
+      }, 0);
+
       const currentBalance = parseNumericValue(
         wallet?.availableBalance,
         parseNumericValue(wallet?.balance, 0) -
@@ -2250,16 +2325,34 @@ const VendorDashboard = () => {
         return;
       }
 
+      // 1. Update Campaign with new Allocations & Voucher Type
+      await updateVendorCampaign(token, campaign.id, {
+        voucherType,
+        allocations: validRows.map((r) => ({
+          cashbackAmount: parseNumericValue(r.cashbackAmount),
+          quantity: parseNumericValue(r.quantity),
+          totalBudget:
+            parseNumericValue(r.cashbackAmount) * parseNumericValue(r.quantity),
+        })),
+      });
+
+      // 2. Pay
       await payVendorCampaign(token, campaign.id);
+
       setCampaignStatusWithTimeout("Campaign paid and activated!");
       setSelectedPendingCampaign(null);
-      await loadWallet();
-      await loadTransactions();
-      await loadCampaigns();
-      await loadCampaignStats();
-      await loadQrs(token, { page: 1, append: false });
+      setShowPaymentModal(false);
+
+      await Promise.all([
+        loadWallet(),
+        loadTransactions(),
+        loadCampaigns(),
+        loadCampaignStats(),
+        loadQrs(token, { page: 1, append: false }),
+      ]);
+
       openSuccessModal(
-        "Campaign activated",
+        "Campaign Activated",
         "Payment successful. Your campaign is now active.",
       );
     } catch (err) {
@@ -2273,7 +2366,6 @@ const VendorDashboard = () => {
         );
         return;
       }
-      console.error("Payment error:", err);
       setCampaignError(err.message || "Payment flow failed.");
     } finally {
       setIsPayingCampaign(false);
@@ -2479,7 +2571,6 @@ const VendorDashboard = () => {
           const errorMsg =
             err.message ||
             `Failed to generate QRs for cashback INR ${row.cashbackAmount}`;
-          console.error(errorMsg, err);
           // Show the actual error to user
           if (
             err.message?.includes("Insufficient") ||
@@ -2966,7 +3057,6 @@ const VendorDashboard = () => {
       );
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      console.error("Campaign creation error:", err);
       setCampaignError(err.error || err.message || "Campaign creation failed.");
     } finally {
       setIsSavingCampaign(false);
@@ -5388,52 +5478,7 @@ const VendorDashboard = () => {
                                   className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                                 />
                               </div>
-                              {/* Plan Type Toggle */}
-                              <div className="space-y-2">
-                                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                                  Plan Type
-                                </label>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setCampaignForm((prev) => ({
-                                        ...prev,
-                                        planType: "prepaid",
-                                      }))
-                                    }
-                                    className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-colors border ${
-                                      campaignForm.planType === "prepaid"
-                                        ? "bg-primary text-white border-primary"
-                                        : "bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-zinc-800 hover:border-primary/40"
-                                    }`}
-                                  >
-                                    Prepaid
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setCampaignForm((prev) => ({
-                                        ...prev,
-                                        planType: "postpaid",
-                                      }))
-                                    }
-                                    className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-colors border ${
-                                      campaignForm.planType === "postpaid"
-                                        ? "bg-primary text-white border-primary"
-                                        : "bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-zinc-800 hover:border-primary/40"
-                                    }`}
-                                  >
-                                    Postpaid
-                                  </button>
-                                </div>
-                                {campaignForm.planType === "postpaid" && (
-                                  <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                                    Postpaid campaigns only require QR quantity.
-                                    No cashback amount is needed upfront.
-                                  </p>
-                                )}
-                              </div>
+                              {/* Plan Type Toggle Removed - Uses Brand Default */}
                               {/* Voucher Type Selector */}
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -6663,9 +6708,7 @@ Quantity: ${invoiceData.quantity} QRs
                                           <button
                                             type="button"
                                             onClick={() =>
-                                              setSelectedPendingCampaign(
-                                                campaign,
-                                              )
+                                              handlePayCampaign(campaign)
                                             }
                                             className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
                                           >
@@ -8613,6 +8656,392 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                   }
                   showCancel={true}
                 />
+
+                {/* Payment Modal */}
+                {showPaymentModal && paymentForm.campaign && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                      <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                            {paymentForm.campaign.title}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(paymentForm.campaign.startDate)} -{" "}
+                            {paymentForm.campaign.endDate
+                              ? formatDate(paymentForm.campaign.endDate)
+                              : "Ongoing"}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setShowPaymentModal(false)}
+                          className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+
+                      <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+                        {/* Campaign Description */}
+                        {paymentForm.campaign.description && (
+                          <div className="w-full rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 px-4 py-3 text-sm text-gray-500">
+                            {paymentForm.campaign.description}
+                          </div>
+                        )}
+
+                        {/* Allocations & Summary */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Package size={16} className="text-primary" />
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Allocations Breakdown
+                            </h4>
+                          </div>
+
+                          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 overflow-hidden">
+                            <table className="w-full text-sm text-left">
+                              <thead className="bg-gray-50 dark:bg-zinc-800/50 text-[10px] uppercase text-gray-500 font-semibold tracking-wider">
+                                <tr>
+                                  <th className="px-5 py-3">Cashback</th>
+                                  <th className="px-5 py-3 text-center">Qty</th>
+                                  <th className="px-5 py-3 text-right">
+                                    Budget
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                                {paymentForm.rows.map((row) => (
+                                  <tr key={row.id}>
+                                    <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">
+                                      INR{" "}
+                                      {formatAmount(
+                                        parseNumericValue(row.cashbackAmount),
+                                      )}
+                                    </td>
+                                    <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                      {row.quantity}
+                                    </td>
+                                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                      INR{" "}
+                                      {formatAmount(
+                                        parseNumericValue(row.cashbackAmount) *
+                                          parseNumericValue(row.quantity),
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+
+                                {/* Padding row for separation */}
+                                <tr>
+                                  <td colSpan="3" className="py-2"></td>
+                                </tr>
+
+                                {/* Summary Rows Integrated */}
+                                {(() => {
+                                  const voucherCostPerUnit =
+                                    VOUCHER_COST_MAP[paymentForm.voucherType] ||
+                                    0;
+                                  const voucherCostWithGst =
+                                    voucherCostPerUnit *
+                                    (1 + CAMPAIGN_FEE_GST_RATE);
+
+                                  let totalBudget = 0;
+                                  let totalQuantity = 0;
+
+                                  paymentForm.rows.forEach((r) => {
+                                    const cb = parseNumericValue(
+                                      r.cashbackAmount,
+                                    );
+                                    const qty = parseNumericValue(r.quantity);
+                                    if (cb > 0 && qty > 0) {
+                                      totalBudget += cb * qty;
+                                      totalQuantity += qty;
+                                    }
+                                  });
+
+                                  const qrBaseRate = 1; // INR 1.00 per QR base
+                                  const voucherBaseRate =
+                                    VOUCHER_COST_MAP[paymentForm.voucherType] ||
+                                    0;
+
+                                  const totalQrBaseCost =
+                                    totalQuantity * qrBaseRate;
+                                  const totalVoucherBaseCost =
+                                    totalQuantity * voucherBaseRate;
+
+                                  const totalFeesBase =
+                                    totalQrBaseCost + totalVoucherBaseCost;
+                                  const totalGst =
+                                    totalFeesBase * CAMPAIGN_FEE_GST_RATE;
+
+                                  return (
+                                    <>
+                                      <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                          Subtotal
+                                        </td>
+                                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                          {totalQuantity} QRs
+                                        </td>
+                                        <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                          INR {formatAmount(totalBudget)}
+                                        </td>
+                                      </tr>
+
+                                      {/* Fees Section */}
+                                      <tr className="text-xs text-gray-500">
+                                        <td className="px-5 pt-3 pb-1" colSpan="2">
+                                          QR Generation Fees (Excl. GST)
+                                          <div className="text-[10px] text-gray-400">
+                                            INR {formatAmount(qrBaseRate)}/QR
+                                          </div>
+                                        </td>
+                                        <td className="px-5 pt-3 pb-1 text-right">
+                                          + INR {formatAmount(totalQrBaseCost)}
+                                        </td>
+                                      </tr>
+                                      <tr className="text-xs text-gray-500">
+                                        <td className="px-5 py-1" colSpan="2">
+                                          Voucher Fees (Excl. GST)
+                                          <div className="text-[10px] text-gray-400">
+                                            INR {formatAmount(voucherBaseRate)}
+                                            /QR
+                                          </div>
+                                        </td>
+                                        <td className="px-5 py-1 text-right">
+                                          + INR{" "}
+                                          {formatAmount(totalVoucherBaseCost)}
+                                        </td>
+                                      </tr>
+                                      <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                        <td className="px-5 pt-1 pb-3" colSpan="2">
+                                          GST (18%)
+                                        </td>
+                                        <td className="px-5 pt-1 pb-3 text-right">
+                                          + INR {formatAmount(totalGst)}
+                                        </td>
+                                      </tr>
+                                    </>
+                                  );
+                                })()}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Voucher Type Selector (Cards) */}
+                        <div className="space-y-3 pt-2">
+                          <label className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            Select Voucher Type
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {/* Digital Voucher */}
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "digital_voucher",
+                                }))
+                              }
+                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "digital_voucher"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
+                            >
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "digital_voucher"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Smartphone size={20} />
+                              </div>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                Digital Voucher
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                INR{" "}
+                                {(
+                                  VOUCHER_COST_MAP.digital_voucher || 0
+                                ).toFixed(2)}{" "}
+                                / QR
+                              </span>
+                              {paymentForm.voucherType === "digital_voucher" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+
+                            {/* Printed QR */}
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "printed_qr",
+                                }))
+                              }
+                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "printed_qr"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
+                            >
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "printed_qr"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Printer size={20} />
+                              </div>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                Printed QR
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                INR{" "}
+                                {(VOUCHER_COST_MAP.printed_qr || 0).toFixed(2)}{" "}
+                                / QR
+                              </span>
+                              {paymentForm.voucherType === "printed_qr" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+
+                            {/* No Voucher */}
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "none",
+                                }))
+                              }
+                              className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "none"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
+                            >
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "none"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Ban size={20} />
+                              </div>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                No Voucher
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                Just QRs
+                              </span>
+                              {paymentForm.voucherType === "none" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Verification & Final Total (Green Box) */}
+                        {(() => {
+                          if (paymentForm.voucherType === null) return null;
+                          const voucherCostPerUnit =
+                            VOUCHER_COST_MAP[paymentForm.voucherType] || 0;
+                          const voucherCostWithGst =
+                            voucherCostPerUnit * (1 + CAMPAIGN_FEE_GST_RATE);
+                          let totalBudget = 0;
+                          let totalQuantity = 0;
+                          paymentForm.rows.forEach((r) => {
+                            const cb = parseNumericValue(r.cashbackAmount);
+                            const qty = parseNumericValue(r.quantity);
+                            if (cb > 0 && qty > 0) {
+                              totalBudget += cb * qty;
+                              totalQuantity += qty;
+                            }
+                          });
+                          const qrGenCost =
+                            totalQuantity * (1 + CAMPAIGN_FEE_GST_RATE);
+                          const totalVoucherCost =
+                            totalQuantity * voucherCostWithGst;
+                          const totalPayable =
+                            totalBudget + totalVoucherCost + qrGenCost;
+
+                          return (
+                            <div className="rounded-xl bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-5 border border-emerald-100 dark:border-emerald-800/50 relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                              <div className="flex justify-between items-center mb-3 relative z-10">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                  Wallet Balance
+                                </span>
+                                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                  INR{" "}
+                                  {formatAmount(
+                                    parseNumericValue(
+                                      wallet?.availableBalance,
+                                      parseNumericValue(wallet?.balance, 0) -
+                                        parseNumericValue(
+                                          wallet?.lockedBalance,
+                                          0,
+                                        ),
+                                    ),
+                                  )}
+                                </span>
+                              </div>
+
+                              {/* Dashed Line separator */}
+                              <div className="h-px w-full border-t border-dashed border-emerald-200 dark:border-emerald-800/50 my-3"></div>
+
+                              <div className="flex justify-between items-end relative z-10">
+                                <span className="text-base font-bold text-emerald-800 dark:text-emerald-400">
+                                  Total Payable
+                                </span>
+                                <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 tracking-tight">
+                                  INR {formatAmount(totalPayable)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {campaignError && (
+                          <div className="p-3 rounded-lg bg-rose-50 text-rose-600 text-xs border border-rose-100">
+                            {campaignError}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3 bg-gray-50/50 dark:bg-zinc-900/30">
+                        <button
+                          onClick={() => setShowPaymentModal(false)}
+                          className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleConfirmPayment}
+                          disabled={
+                            isPayingCampaign || paymentForm.voucherType === null
+                          }
+                          className={`${PRIMARY_BUTTON} px-6 py-2 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2`}
+                        >
+                          <Wallet size={16} />
+                          {isPayingCampaign
+                            ? "Processing..."
+                            : "Pay & Activate"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Product Edit Modal */}
                 {showProductModal && (
