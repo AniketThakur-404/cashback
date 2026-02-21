@@ -4107,67 +4107,104 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-screen overflow-y-auto">
+      <div className="flex-1 min-h-screen overflow-y-auto bg-slate-100 dark:bg-transparent"
+        style={effectiveTheme === 'light' ? {
+          backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        } : {}}
+      >
         {/* Header */}
-        <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/90 border-b border-slate-200/80 dark:bg-[#0d0d0e]/80 dark:border-white/5">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/90 border-b border-slate-200/80 dark:bg-[#0d0d0e]/90 dark:border-white/5">
+          <div className="px-6 py-3 flex items-center justify-between gap-4">
+            {/* Left: toggles + page title */}
+            <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-gray-200 transition-colors"
+                className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors flex-shrink-0"
                 aria-label="Open menu"
               >
-                <Menu size={20} />
+                <Menu size={19} />
               </button>
               <button
                 onClick={() => setSidebarCollapsed((prev) => !prev)}
-                className="hidden lg:inline-flex p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-gray-200 transition-colors"
+                className="hidden lg:inline-flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors flex-shrink-0"
                 aria-label="Toggle sidebar collapse"
                 title="Toggle sidebar"
               >
                 {sidebarCollapsed ? (
-                  <PanelLeftOpen size={20} />
+                  <PanelLeftOpen size={19} />
                 ) : (
-                  <PanelLeftClose size={20} />
+                  <PanelLeftClose size={19} />
                 )}
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {headerTitle}
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-white/60">
-                  {getGreeting()}, {adminInfo?.name || email || "Admin"} 👋
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-white truncate leading-tight">
+                    {headerTitle}
+                  </h1>
+                </div>
+                <p className="text-[11px] text-slate-400 dark:text-white/40 truncate">
+                  {getGreeting()} — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Right: search + actions + avatar */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Search */}
+              <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 w-48">
+                <Search size={14} className="text-slate-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery || ''}
+                  onChange={(e) => setSearchQuery?.(e.target.value)}
+                  className="bg-transparent text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none w-full"
+                />
+              </div>
+
+              {/* Refresh */}
               <button
                 onClick={() => loadAll(token)}
                 disabled={isRefreshing}
-                className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-gray-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
                 aria-label="Refresh"
+                title="Refresh all data"
               >
-                <Search size={20} />
+                <RefreshCw size={17} className={isRefreshing ? 'animate-spin' : ''} />
               </button>
+
+              {/* Notifications */}
               <button
-                className="relative p-2 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-gray-200 transition-colors"
+                className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
                 aria-label="Notifications"
               >
-                <Bell size={20} />
+                <Bell size={17} />
                 {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#059669] text-[10px] font-semibold text-slate-900 flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#059669] text-[9px] font-bold text-white flex items-center justify-center">
                     {notificationCount}
                   </span>
                 )}
               </button>
+
               <ModeToggle />
+
+              {/* Admin avatar pill */}
+              <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-white/10 ml-1">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center text-white text-[10px] font-bold shadow-sm flex-shrink-0">
+                  {adminInfo?.name ? adminInfo.name.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() : 'A'}
+                </div>
+                <div className="hidden lg:block">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-tight">{adminInfo?.name || 'Admin'}</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Administrator</p>
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="p-6 space-y-6 max-w-[1800px] mx-auto">
+        <main className="p-6 space-y-6 max-w-[1800px] mx-auto" style={{ background: 'transparent' }}>
           {/* Overview Section - Admin Stats */}
           {isOverviewRoute && (
             <section
@@ -6601,37 +6638,22 @@ const AdminDashboard = () => {
 
           {/* Users Management Section */}
           {isUsersRoute && (
-            <section id="users" className="space-y-6 mt-12">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Users Management
-                </h2>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 rounded-lg bg-emerald-500/20 text-sm text-emerald-400">
-                    Active: {effectiveUserStatusCounts.active || 0}
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-amber-500/20 text-sm text-amber-400">
-                    Inactive: {effectiveUserStatusCounts.inactive || 0}
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-rose-500/20 text-sm text-rose-400">
-                    Blocked: {effectiveUserStatusCounts.blocked || 0}
-                  </span>
-                  <span className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-sm text-slate-900 dark:text-white/60">
-                    Total: {users.length}
-                  </span>
+            <section id="users" className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+              {/* Section Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Users Management</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage and monitor all customer accounts</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {showAllUsers ? (
-                    <button
-                      onClick={() => setShowAllUsers(false)}
-                      className={adminGhostButtonClass}
-                    >
+                    <button onClick={() => setShowAllUsers(false)} className={adminGhostButtonClass}>
                       Show Less
                     </button>
                   ) : (
                     filteredUsers.length > 6 && (
-                      <button
-                        onClick={() => setShowAllUsers(true)}
-                        className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm text-slate-900 dark:text-white transition-colors"
-                      >
+                      <button onClick={() => setShowAllUsers(true)} className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm font-semibold text-white transition-colors shadow-sm">
                         View All ({filteredUsers.length})
                       </button>
                     )
@@ -6639,140 +6661,142 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Stat Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Active', value: effectiveUserStatusCounts.active || 0, color: 'emerald', dot: 'bg-emerald-400 animate-pulse' },
+                  { label: 'Inactive', value: effectiveUserStatusCounts.inactive || 0, color: 'amber', dot: 'bg-amber-400' },
+                  { label: 'Blocked', value: effectiveUserStatusCounts.blocked || 0, color: 'rose', dot: 'bg-rose-400' },
+                  { label: 'Total', value: users.length, color: 'slate', dot: 'bg-slate-400' },
+                ].map(card => (
+                  <div key={card.label} className={`bg-white dark:bg-[#111113] border rounded-xl px-4 py-3 flex items-center gap-3
+                    ${card.color === 'emerald' ? 'border-emerald-200/60 dark:border-emerald-500/20' :
+                      card.color === 'amber' ? 'border-amber-200/60 dark:border-amber-500/20' :
+                        card.color === 'rose' ? 'border-rose-200/60 dark:border-rose-500/20' :
+                          'border-slate-200/60 dark:border-white/10'}`}>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${card.dot}`} />
+                    <div>
+                      <p className={`text-xl font-bold leading-tight
+                        ${card.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
+                          card.color === 'amber' ? 'text-amber-600 dark:text-amber-400' :
+                            card.color === 'rose' ? 'text-rose-600 dark:text-rose-400' :
+                              'text-slate-900 dark:text-white'}`}>{card.value}</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">{card.label}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {isLoadingUsers && (
-                <div className="text-slate-900 dark:text-white/60">
-                  Loading users...
-                </div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm">Loading users...</div>
               )}
-              {usersError && <div className="text-rose-400">{usersError}</div>}
+              {usersError && <div className="text-rose-400 text-sm">{usersError}</div>}
 
               {limitedUsers.length > 0 && (
-                <div className={`${adminPanelClass} overflow-hidden`}>
+                <div className="bg-white dark:bg-[#111113] border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 dark:bg-white/5">
-                        <tr>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Name
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Email
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Phone
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Status
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Wallet
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Joined
-                          </th>
-                          <th className="text-left py-4 px-6 text-slate-900 dark:text-white/60 font-medium">
-                            Actions
-                          </th>
+                    <table className="w-full text-sm min-w-[750px]">
+                      <thead>
+                        <tr className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]">
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">User</th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Contact</th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Wallet</th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Joined</th>
+                          <th className="text-right py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {limitedUsers.map((user) => (
-                          <tr
-                            key={user.id}
-                            className="border-t border-slate-200/70 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <td className="py-4 px-6 text-slate-900 dark:text-white font-medium">
-                              {user.name || "-"}
-                            </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
-                              {user.email}
-                            </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60">
-                              {user.phoneNumber || "-"}
-                            </td>
-                            <td className="py-4 px-6">
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(user.status)}`}
-                              >
-                                {user.status}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/70 text-sm">
-                              {user?.Wallet
-                                ? `INR ${formatAmount(user.Wallet.balance)}`
-                                : "-"}
-                            </td>
-                            <td className="py-4 px-6 text-slate-900 dark:text-white/60 text-xs">
-                              {formatDate(user.createdAt)}
-                            </td>
-                            <td className="py-4 px-6">
-                              <select
-                                value={
-                                  userStatusUpdates[user.id] || user.status
-                                }
-                                onChange={(e) =>
-                                  setUserStatusUpdates({
-                                    ...userStatusUpdates,
-                                    [user.id]: e.target.value,
-                                  })
-                                }
-                                className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#059669]"
-                              >
-                                <option
-                                  value="active"
-                                  className={adminOptionClass}
-                                >
-                                  Active
-                                </option>
-                                <option
-                                  value="inactive"
-                                  className={adminOptionClass}
-                                >
-                                  Inactive
-                                </option>
-                                <option
-                                  value="blocked"
-                                  className={adminOptionClass}
-                                >
-                                  Blocked
-                                </option>
-                              </select>
-                              <button
-                                onClick={() =>
-                                  handleUserStatusSave(user.id, user.status)
-                                }
-                                className="ml-2 px-3 py-1 rounded-lg bg-[#059669] hover:bg-[#047857] text-slate-900 dark:text-white text-xs font-semibold transition-colors"
-                              >
-                                Save
-                              </button>
-                              <button
-                                onClick={() => setSelectedUser(user)}
-                                className="ml-2 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors"
-                              >
-                                View
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setIsUserWalletOpen(true);
-                                }}
-                                className="ml-2 px-3 py-1 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-semibold transition-colors"
-                              >
-                                Wallet
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                      <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                        {limitedUsers.map((user) => {
+                          const initials = user.name
+                            ? user.name.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+                            : (user.email?.[0] || 'U').toUpperCase();
+                          const canSave = (userStatusUpdates[user.id] || user.status) !== user.status;
+                          return (
+                            <tr key={user.id} className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                              {/* User col with avatar */}
+                              <td className="py-3.5 px-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                                    {initials}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-slate-900 dark:text-white text-sm truncate leading-tight">
+                                      {user.name || <span className="text-slate-400 italic">No name</span>}
+                                    </p>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">ID: {String(user.id).slice(0, 8)}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              {/* Contact */}
+                              <td className="py-3.5 px-5">
+                                <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{user.email || '—'}</p>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500">{user.phoneNumber || '—'}</p>
+                              </td>
+                              {/* Status badge */}
+                              <td className="py-3.5 px-5">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${getStatusClasses(user.status)}`}>
+                                  {user.status}
+                                </span>
+                              </td>
+                              {/* Wallet */}
+                              <td className="py-3.5 px-5">
+                                <span className={`text-sm font-semibold ${user?.Wallet?.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                  {user?.Wallet ? `₹${formatAmount(user.Wallet.balance)}` : '—'}
+                                </span>
+                              </td>
+                              {/* Joined */}
+                              <td className="py-3.5 px-5">
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  {new Date(user.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              </td>
+                              {/* Actions */}
+                              <td className="py-3.5 px-5">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <select
+                                    value={userStatusUpdates[user.id] || user.status}
+                                    onChange={(e) => setUserStatusUpdates({ ...userStatusUpdates, [user.id]: e.target.value })}
+                                    className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669]"
+                                  >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="blocked">Blocked</option>
+                                  </select>
+                                  <button
+                                    onClick={() => handleUserStatusSave(user.id, user.status)}
+                                    disabled={!canSave}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setSelectedUser(user)}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    onClick={() => { setSelectedUser(user); setIsUserWalletOpen(true); }}
+                                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-800 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
+                                  >
+                                    Wallet
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                   {userActionStatus && (
-                    <div className="p-4 text-sm text-emerald-400">
+                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 text-xs text-emerald-500 font-medium">
                       {userActionStatus}
                     </div>
                   )}
                   {userActionError && (
-                    <div className="p-4 text-sm text-rose-400">
+                    <div className="px-5 py-3 border-t border-slate-100 dark:border-white/5 text-xs text-rose-400">
                       {userActionError}
                     </div>
                   )}
@@ -7217,7 +7241,7 @@ const AdminDashboard = () => {
                             Boolean(statusDraft) && statusDraft !== currentStatus;
                           const techFeeLabel =
                             currentTechFeeValue !== null &&
-                            currentTechFeeValue > 0
+                              currentTechFeeValue > 0
                               ? `INR ${formatAmount(currentTechFeeValue)}`
                               : "-";
                           const contactPhone =
@@ -7308,8 +7332,8 @@ const AdminDashboard = () => {
                                         )
                                       }
                                       className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${techFeeDraft !== "" && !isTechFeeValid
-                                          ? "border-rose-300 dark:border-rose-500/50"
-                                          : "border-slate-200 dark:border-white/10"
+                                        ? "border-rose-300 dark:border-rose-500/50"
+                                        : "border-slate-200 dark:border-white/10"
                                         }`}
                                     />
                                   </div>

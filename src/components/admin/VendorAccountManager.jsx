@@ -104,15 +104,15 @@ const MetricItem = ({ label, value, subtext }) => (
 const NavButton = ({ active, onClick, icon: Icon, label, badge }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${active
-        ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm font-semibold"
-        : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200"
+    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group ${active
+      ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm font-semibold border-l-[3px] border-l-[#059669]"
+      : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 border-l-[3px] border-l-transparent"
       }`}
   >
     <div className="flex items-center gap-3">
       <Icon
-        size={18}
-        className={`transition-colors ${active ? "text-[#059669]" : "group-hover:text-slate-600 dark:group-hover:text-slate-300"}`}
+        size={17}
+        className={`transition-colors flex-shrink-0 ${active ? "text-[#059669]" : "group-hover:text-slate-600 dark:group-hover:text-slate-300"}`}
       />
       <span className="text-sm">{label}</span>
     </div>
@@ -914,7 +914,10 @@ const VendorAccountManager = ({
         {/* Content Area */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar Tabs */}
-          <div className="w-64 border-r border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-black/20 p-4 flex flex-col gap-2 overflow-y-auto">
+          <div className="w-60 border-r border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-black/20 p-4 flex flex-col gap-1 overflow-y-auto">
+            <div className="px-3 pb-2 mb-1">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Navigation</span>
+            </div>
             <NavButton
               active={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
@@ -965,7 +968,7 @@ const VendorAccountManager = ({
           </div>
 
           {/* Main Panel */}
-          <div className="flex-1 overflow-y-auto p-8 bg-slate-50/50 dark:bg-transparent scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
+          <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 dark:bg-transparent scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
             {isLoading ? (
               <div className="flex items-center justify-center h-full text-slate-500 text-sm animate-pulse">
                 Loading account details...
@@ -987,8 +990,8 @@ const VendorAccountManager = ({
                 {actionMessage.text && (
                   <div
                     className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${actionMessage.type === "error"
-                        ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
-                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                      ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
+                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
                       }`}
                   >
                     {actionMessage.type === "error" ? (
@@ -1002,74 +1005,58 @@ const VendorAccountManager = ({
 
                 {/* OVERVIEW TAB */}
                 {activeTab === "overview" && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header */}
+                    <div className="flex items-center justify-between pb-2">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Account Overview</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Summary of vendor status, metrics, and recent activity</p>
+                      </div>
+                      <button onClick={loadData} className="p-1.5 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-colors" title="Refresh">
+                        <RotateCw size={15} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {/* Status Cards */}
-                      <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
-                        <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">
-                          Vendor Status
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                          <Store size={20} className="text-slate-400 dark:text-slate-500" />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.vendor?.status || "unknown")}`}
-                          >
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Vendor Status</div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.vendor?.status || "unknown")}`}>
                             {vendorData?.vendor?.status || "N/A"}
                           </span>
-                          <Store
-                            className="text-slate-300 dark:text-white/20"
-                            size={24}
-                          />
                         </div>
                       </div>
-                      <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
-                        <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">
-                          Brand Status
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
+                          <Building2 size={20} className="text-slate-400 dark:text-slate-500" />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span
-                              className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.brand?.status || brandData?.brand?.status)}`}
-                            >
-                              {vendorData?.brand?.status ||
-                                brandData?.brand?.status ||
-                                "N/A"}
-                            </span>
-                            <span className="text-[10px] text-slate-400 mt-1">
-                              Updated:{" "}
-                              {formatDate(
-                                vendorData?.brand?.updatedAt ||
-                                brandData?.brand?.updatedAt,
-                              )}
-                            </span>
-                          </div>
-                          <Building2
-                            className="text-slate-300 dark:text-white/20"
-                            size={24}
-                          />
+                        <div className="min-w-0">
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Brand Status</div>
+                          <span className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.brand?.status || brandData?.brand?.status)}`}>
+                            {vendorData?.brand?.status || brandData?.brand?.status || "N/A"}
+                          </span>
+                          <div className="text-[10px] text-slate-400 mt-0.5">Updated: {formatDate(vendorData?.brand?.updatedAt || brandData?.brand?.updatedAt)}</div>
                         </div>
                       </div>
-                      <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
-                        <div className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">
-                          Wallet
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center">
+                          <Wallet size={20} className="text-emerald-500" />
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Wallet Balance</div>
                           <span className="text-xl font-bold text-slate-900 dark:text-white">
                             INR {formatAmount(vendorData?.wallet?.balance || 0)}
                           </span>
-                          <Wallet
-                            className="text-slate-300 dark:text-white/20"
-                            size={24}
-                          />
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-1">
-                          Locked: INR{" "}
-                          {formatAmount(vendorData?.wallet?.lockedBalance || 0)}
+                          <div className="text-[10px] text-slate-400 mt-0.5">Locked: INR {formatAmount(vendorData?.wallet?.lockedBalance || 0)}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Metrics */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <MetricItem
                         label="Total QRs"
                         value={vendorData?.metrics?.totalQrs || 0}
@@ -1089,7 +1076,7 @@ const VendorAccountManager = ({
                     </div>
 
                     {/* CHARTS SECTION */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {/* Transaction Volume Chart */}
                       <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md min-h-[300px] flex flex-col">
                         <div className="flex items-center justify-between mb-6">
@@ -1248,13 +1235,20 @@ const VendorAccountManager = ({
 
                 {/* VENDOR PROFILE TAB */}
                 {activeTab === "profile" && vendorId && (
-                  <div className="max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header */}
+                    <div className="pb-2">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Store size={18} className="text-[#059669]" /> Vendor Profile
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Edit business details and account status</p>
+                    </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <Briefcase size={18} className="text-[#059669]" />{" "}
                         Business Details
                       </h3>
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputGroup
                           label="Business Name"
                           value={vendorForm.businessName}
@@ -1294,7 +1288,7 @@ const VendorAccountManager = ({
                           }
                           type="email"
                         />
-                        <div className="space-y-1.5">
+                        <div className="col-span-1 md:col-span-2 space-y-1.5">
                           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                             Address
                           </label>
@@ -1397,13 +1391,20 @@ const VendorAccountManager = ({
 
                 {/* BRAND SETTINGS TAB */}
                 {activeTab === "brand" && brandId && (
-                  <div className="max-w-2xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header */}
+                    <div className="pb-2">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Building2 size={18} className="text-[#059669]" /> Brand Settings
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure brand identity, credentials, and account status</p>
+                    </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                         <Building2 size={18} className="text-[#059669]" /> Brand
                         Identity
                       </h3>
-                      <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputGroup
                           label="Brand Name"
                           value={brandForm.name}
@@ -1418,40 +1419,36 @@ const VendorAccountManager = ({
                             setBrandForm({ ...brandForm, website: v })
                           }
                         />
-                        <div className="space-y-1.5">
+                        <div className="col-span-1 md:col-span-2 space-y-1.5">
                           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                             Brand Logo
                           </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleBrandLogoUpload}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors"
-                          />
-                          {brandForm.logoUrl && (
-                            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                              <img
-                                src={brandForm.logoUrl}
-                                alt="Brand logo preview"
-                                className="h-8 w-8 rounded-lg object-cover border border-slate-200/70 dark:border-white/10"
-                              />
-                              <span>Logo uploaded</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleBrandLogoUpload}
+                              className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 text-sm focus:outline-none focus:border-[#059669] transition-colors"
+                            />
+                            {brandForm.logoUrl && (
+                              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 flex-shrink-0">
+                                <img
+                                  src={brandForm.logoUrl}
+                                  alt="Brand logo preview"
+                                  className="h-10 w-10 rounded-lg object-cover border border-slate-200/70 dark:border-white/10"
+                                />
+                                <span className="text-emerald-600 font-medium">Logo uploaded</span>
+                              </div>
+                            )}
+                          </div>
                           {brandLogoUploadStatus && (
-                            <div className="text-[11px] text-emerald-600">
-                              {brandLogoUploadStatus}
-                            </div>
+                            <div className="text-[11px] text-emerald-600">{brandLogoUploadStatus}</div>
                           )}
                           {brandLogoUploadError && (
-                            <div className="text-[11px] text-rose-600">
-                              {brandLogoUploadError}
-                            </div>
+                            <div className="text-[11px] text-rose-600">{brandLogoUploadError}</div>
                           )}
                           {isUploadingBrandLogo && (
-                            <div className="text-[11px] text-slate-400">
-                              Uploading...
-                            </div>
+                            <div className="text-[11px] text-slate-400">Uploading...</div>
                           )}
                         </div>
                         <InputGroup
@@ -1652,7 +1649,31 @@ const VendorAccountManager = ({
 
                 {/* FINANCIALS TAB */}
                 {activeTab === "financials" && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header */}
+                    <div className="flex items-center justify-between pb-2">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Wallet size={18} className="text-[#059669]" /> Financials
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Wallet balance and recent transaction history</p>
+                      </div>
+                    </div>
+                    {/* Wallet Summary Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Available Balance</div>
+                        <div className="text-2xl font-bold text-emerald-500">INR {formatAmount(vendorData?.wallet?.balance || 0)}</div>
+                      </div>
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Locked Balance</div>
+                        <div className="text-2xl font-bold text-amber-500">INR {formatAmount(vendorData?.wallet?.lockedBalance || 0)}</div>
+                      </div>
+                      <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transactions</div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{transactions.length}</div>
+                      </div>
+                    </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm backdrop-blur-md">
                       <div className="px-6 py-4 border-b border-slate-200/50 dark:border-white/5 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -1720,7 +1741,22 @@ const VendorAccountManager = ({
 
                 {/* ORDERS TAB */}
                 {activeTab === "orders" && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header */}
+                    <div className="flex items-center justify-between pb-2">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <ShoppingBag size={18} className="text-[#059669]" /> QR Orders
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Review and manage QR batch orders for this vendor</p>
+                      </div>
+                      {pendingOrdersCount > 0 && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-sm font-semibold text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                          {pendingOrdersCount} Pending
+                        </span>
+                      )}
+                    </div>
                     {qrBatchError && (
                       <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm flex items-center gap-2">
                         <AlertCircle size={16} /> {qrBatchError}
@@ -1874,69 +1910,80 @@ const VendorAccountManager = ({
                 {/* CAMPAIGNS TAB */}
                 {activeTab === "campaigns" && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {/* Tab Header - only show on list view */}
+                    {!selectedCampaign && (
+                      <div className="pb-2">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Megaphone size={18} className="text-[#059669]" /> Campaigns
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">View and manage campaigns associated with this vendor</p>
+                      </div>
+                    )}
                     {!selectedCampaign ? (
                       <>
                         {/* CAMPAIGN LIST VIEW */}
-                        {(
-                          brandData?.campaigns ||
-                          vendorData?.campaigns ||
-                          []
-                        ).map((campaign) => (
-                          <div
-                            key={campaign.id}
-                            className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex flex-col gap-3 hover:border-[#059669]/50 dark:hover:border-[#059669]/50 transition-all backdrop-blur-md group"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
-                                  {campaign.title}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {(
+                            brandData?.campaigns ||
+                            vendorData?.campaigns ||
+                            []
+                          ).map((campaign) => (
+                            <div
+                              key={campaign.id}
+                              className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex flex-col gap-3 hover:border-[#059669]/50 dark:hover:border-[#059669]/50 transition-all backdrop-blur-md group"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                                    {campaign.title}
+                                  </div>
+                                  <div className="text-xs text-slate-500 line-clamp-1">
+                                    {campaign.description}
+                                  </div>
                                 </div>
-                                <div className="text-xs text-slate-500 line-clamp-1">
-                                  {campaign.description}
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusClasses(campaign.status)}`}
+                                >
+                                  {campaign.status}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
+                                <div>
+                                  <div className="text-[10px] text-slate-400 uppercase">
+                                    Budget
+                                  </div>
+                                  <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    INR {formatAmount(campaign.totalBudget)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-[10px] text-slate-400 uppercase">
+                                    Cashback
+                                  </div>
+                                  <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    INR {campaign.cashbackAmount}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[10px] text-slate-400 uppercase">
+                                    Ends
+                                  </div>
+                                  <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                    {formatDate(campaign.endDate)}
+                                  </div>
                                 </div>
                               </div>
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusClasses(campaign.status)}`}
-                              >
-                                {campaign.status}
-                              </span>
+                              <div className="flex justify-end pt-2">
+                                <button
+                                  onClick={() => setSelectedCampaign(campaign)}
+                                  className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-[#059669] hover:text-white transition-all text-xs font-bold flex items-center gap-2"
+                                >
+                                  <Eye size={14} /> View Activity
+                                </button>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-white/5">
-                              <div>
-                                <div className="text-[10px] text-slate-400 uppercase">
-                                  Budget
-                                </div>
-                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                  INR {formatAmount(campaign.totalBudget)}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-[10px] text-slate-400 uppercase">
-                                  Cashback
-                                </div>
-                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                  INR {campaign.cashbackAmount}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-[10px] text-slate-400 uppercase">
-                                  Ends
-                                </div>
-                                <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                  {formatDate(campaign.endDate)}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex justify-end pt-2">
-                              <button
-                                onClick={() => setSelectedCampaign(campaign)}
-                                className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-[#059669] hover:text-white transition-all text-xs font-bold flex items-center gap-2"
-                              >
-                                <Eye size={14} /> View Activity
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                         {(brandData?.campaigns || vendorData?.campaigns || [])
                           .length === 0 && (
                             <div className="text-center py-10 text-slate-400">
