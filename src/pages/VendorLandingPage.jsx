@@ -405,10 +405,24 @@ const VendorLandingPage = () => {
               >
                 Login
               </a>
-              <a href="#" className="hover:text-emerald-600 transition">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/vendor/privacy");
+                }}
+                className="hover:text-emerald-600 transition cursor-pointer"
+              >
                 Privacy Policy
               </a>
-              <a href="#" className="hover:text-emerald-600 transition">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/vendor/terms");
+                }}
+                className="hover:text-emerald-600 transition cursor-pointer"
+              >
                 Terms of Service
               </a>
               <a href="#" className="hover:text-emerald-600 transition">
