@@ -234,7 +234,7 @@ const RedeemQr = () => {
         <div className="space-y-4 py-6 border-y border-slate-200">
           <div className="flex justify-between items-center">
             <span className="text-slate-500 text-sm">Campaign</span>
-            <span className="font-medium text-slate-1000 text-right">
+            <span className="font-medium text-slate-900 text-right">
               {data.campaign}
             </span>
           </div>
@@ -244,15 +244,24 @@ const RedeemQr = () => {
           </div>
           {data.endDate && (
             <div className="flex justify-between items-center">
-              <span className="text-slate-500 text-sm">Campaign End Date</span>
+              <span className="text-slate-500 text-sm">End Date</span>
               <div className="flex items-center gap-1.5 text-slate-900 font-medium">
                 <Calendar size={14} className="text-slate-400" />
                 <span>
-                  {new Date(data.endDate).toLocaleDateString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                  {(() => {
+                    try {
+                      return new Date(data.endDate).toLocaleDateString(
+                        "en-IN",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        },
+                      );
+                    } catch (e) {
+                      return data.endDate;
+                    }
+                  })()}
                 </span>
               </div>
             </div>
