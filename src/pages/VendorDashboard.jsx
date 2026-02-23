@@ -88,6 +88,7 @@ import {
   changeUserPassword,
   sendEmailOtp,
   resetPasswordWithOtp,
+  getVendorRedemptions,
   getVendorRedemptionsMap,
   getVendorCustomers,
   exportVendorCustomers,
@@ -1460,6 +1461,74 @@ const VendorDashboard = () => {
     return params;
   };
 
+  const buildLocationPointsFromRedemptions = (redemptions) => {
+    const rows = Array.isArray(redemptions) ? redemptions : [];
+    const grouped = new Map();
+
+    rows.forEach((row) => {
+      const lat = Number(row?.lat);
+      const lng = Number(row?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const key = `${lat.toFixed(4)}:${lng.toFixed(4)}`;
+      const prev = grouped.get(key) || {
+        lat: Number(lat.toFixed(4)),
+        lng: Number(lng.toFixed(4)),
+        count: 0,
+        totalAmount: 0,
+        city: row?.city || null,
+        state: row?.state || null,
+      };
+
+      prev.count += 1;
+      prev.totalAmount = Number(
+        (Number(prev.totalAmount || 0) + Number(row?.amount || 0)).toFixed(2),
+      );
+      grouped.set(key, prev);
+    });
+
+    return Array.from(grouped.values());
+  };
+
+  const buildCustomersFromRedemptions = (redemptions) => {
+    const rows = Array.isArray(redemptions) ? redemptions : [];
+    const grouped = new Map();
+
+    rows.forEach((row) => {
+      const customerId =
+        row?.customer?.id || row?.userId || row?.customer?.phone || "unknown";
+      const prev = grouped.get(customerId) || {
+        userId: row?.customer?.id || null,
+        name: row?.customer?.name || "Unknown",
+        mobile: row?.customer?.phone || null,
+        codeCount: 0,
+        rewardsEarned: 0,
+        firstScanLocation:
+          [row?.city, row?.state, row?.pincode].filter(Boolean).join(", ") ||
+          "-",
+        memberSince: row?.createdAt || null,
+        lastScanned: row?.createdAt || null,
+      };
+
+      prev.codeCount += 1;
+      prev.rewardsEarned = Number(
+        (Number(prev.rewardsEarned || 0) + Number(row?.amount || 0)).toFixed(2),
+      );
+      if (!prev.memberSince || new Date(row?.createdAt) < new Date(prev.memberSince)) {
+        prev.memberSince = row?.createdAt || prev.memberSince;
+      }
+      if (!prev.lastScanned || new Date(row?.createdAt) > new Date(prev.lastScanned)) {
+        prev.lastScanned = row?.createdAt || prev.lastScanned;
+      }
+
+      grouped.set(customerId, prev);
+    });
+
+    return Array.from(grouped.values()).sort(
+      (a, b) => new Date(b.lastScanned || 0) - new Date(a.lastScanned || 0),
+    );
+  };
+
   const loadLocationsData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
@@ -1472,6 +1541,22 @@ const VendorDashboard = () => {
       setLocationsData(Array.isArray(data?.points) ? data.points : []);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      if (err?.status === 404) {
+        try {
+          const fallback = await getVendorRedemptions(authToken, {
+            ...buildExtraFilterParams(),
+            page: 1,
+            limit: 200,
+          });
+          setLocationsData(
+            buildLocationPointsFromRedemptions(fallback?.redemptions),
+          );
+          setExtraTabError("");
+          return;
+        } catch (fallbackErr) {
+          if (handleVendorAccessError(fallbackErr)) return;
+        }
+      }
       setExtraTabError(err.message || "Unable to load locations.");
     } finally {
       setIsLoadingExtraTab(false);
@@ -1490,6 +1575,20 @@ const VendorDashboard = () => {
       setCustomersData(Array.isArray(data?.customers) ? data.customers : []);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      if (err?.status === 404) {
+        try {
+          const fallback = await getVendorRedemptions(authToken, {
+            ...buildExtraFilterParams(),
+            page: 1,
+            limit: 200,
+          });
+          setCustomersData(buildCustomersFromRedemptions(fallback?.redemptions));
+          setExtraTabError("");
+          return;
+        } catch (fallbackErr) {
+          if (handleVendorAccessError(fallbackErr)) return;
+        }
+      }
       setExtraTabError(err.message || "Unable to load customers.");
     } finally {
       setIsLoadingExtraTab(false);
@@ -1505,6 +1604,11 @@ const VendorDashboard = () => {
       setInvoicesData(Array.isArray(data?.invoices) ? data.invoices : []);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      if (err?.status === 404) {
+        setInvoicesData([]);
+        setExtraTabError("");
+        return;
+      }
       setExtraTabError(err.message || "Unable to load invoices.");
     } finally {
       setIsLoadingExtraTab(false);

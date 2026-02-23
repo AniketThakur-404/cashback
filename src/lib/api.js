@@ -712,7 +712,14 @@ export const updateAdminBrandDetails = (token, brandId, payload) =>
   apiRequest(`/api/admin/brands/${brandId}`, {
     method: "PUT",
     token,
-    body: payload,
+    body:
+      payload && payload.defaultPlanType !== undefined
+        ? {
+            ...payload,
+            // Backward-compatible alias for older backend handlers.
+            planType: payload.planType ?? payload.defaultPlanType,
+          }
+        : payload,
   });
 
 export const adjustVendorWalletAdmin = (token, payload) =>
