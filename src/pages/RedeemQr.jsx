@@ -31,7 +31,10 @@ const RedeemQr = () => {
     const fetchQrCtx = async () => {
       try {
         const res = await verifyPublicQr(hash);
-        setData(res);
+        setData({
+          ...res,
+          endDate: res.endDate || res.qr?.Campaign?.endDate,
+        });
       } catch (err) {
         setError(err.message || "Invalid or expired QR code");
         if (err.data?.qr) {
@@ -72,7 +75,11 @@ const RedeemQr = () => {
           success: true,
           message: res.message,
           amount: res.amount,
+          endDate: res.endDate,
         });
+        if (res.endDate) {
+          setData((prev) => ({ ...prev, endDate: res.endDate }));
+        }
       } catch (err) {
         if (err?.status === 401) {
           storePostLoginRedirect(`/redeem/${hash}?claim=1`);
@@ -116,7 +123,11 @@ const RedeemQr = () => {
         success: true,
         message: res.message,
         amount: res.amount,
+        endDate: res.endDate,
       });
+      if (res.endDate) {
+        setData((prev) => ({ ...prev, endDate: res.endDate }));
+      }
     } catch (err) {
       if (err?.status === 401) {
         storePostLoginRedirect(`/redeem/${hash}?claim=1`);
