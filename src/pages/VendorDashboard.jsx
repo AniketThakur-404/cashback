@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { format } from "date-fns";
@@ -98,6 +98,13 @@ import {
   downloadVendorProductReport,
 } from "../lib/api";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import CampaignCard from "../components/vendor/CampaignCard";
+import {
+  formatAmount,
+  formatShortDate,
+  parseNumericValue,
+  buildAllocationGroups,
+} from "../lib/vendorUtils";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
@@ -129,12 +136,7 @@ L.Icon.Default.mergeOptions({
 });
 
 const VENDOR_TOKEN_KEY = "cashback_vendor_token";
-const formatAmount = (value) => {
-  if (value === undefined || value === null) return "0.00";
-  const numeric = Number(value);
-  if (Number.isFinite(numeric)) return numeric.toFixed(2);
-  return String(value);
-};
+// Redundant formatAmount removed
 
 const formatCompactAmount = (value) => {
   if (value === undefined || value === null) return "0.00";
@@ -154,12 +156,7 @@ const formatCompactAmount = (value) => {
   return `${sign}${compactText}K`;
 };
 
-const formatShortDate = (value) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return format(date, "dd MMM yyyy");
-};
+// Redundant formatShortDate removed
 
 const formatDate = (value) => {
   if (!value) return "-";
@@ -269,13 +266,7 @@ const formatTransactionDate = (value) => {
   return format(date, "dd MMM yyyy, p");
 };
 
-const parseNumericValue = (value, fallback = 0) => {
-  if (value === null || value === undefined || value === "") {
-    return fallback;
-  }
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
-};
+// Redundant parseNumericValue removed
 
 const parseOptionalNumber = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -316,25 +307,7 @@ const getGeneratedPrice = (qr) => {
   return parseNumericValue(qr?.Campaign?.cashbackAmount, 0);
 };
 
-const buildAllocationGroups = (allocations) => {
-  if (!Array.isArray(allocations)) return [];
-  const grouped = new Map();
-
-  allocations.forEach((alloc) => {
-    const price = parseNumericValue(alloc?.cashbackAmount, 0);
-    const quantity = parseInt(alloc?.quantity, 10) || 0;
-    const key = price.toFixed(2);
-    if (!grouped.has(key)) {
-      grouped.set(key, { price, quantity: 0, totalBudget: 0 });
-    }
-    const group = grouped.get(key);
-    const rowBudget = parseNumericValue(alloc?.totalBudget, 0);
-    group.quantity += quantity;
-    group.totalBudget += rowBudget || price * quantity;
-  });
-
-  return Array.from(grouped.values()).sort((a, b) => a.price - b.price);
-};
+// Redundant buildAllocationGroups removed
 
 const CAMPAIGN_FEE_GST_RATE = 0.18;
 const VOUCHER_COST_MAP = { digital_voucher: 0.2, printed_qr: 0.5, none: 0 };
@@ -371,31 +344,7 @@ const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
   };
 };
 
-const toRoman = (num) => {
-  const lookup = [
-    ["M", 1000],
-    ["CM", 900],
-    ["D", 500],
-    ["CD", 400],
-    ["C", 100],
-    ["XC", 90],
-    ["L", 50],
-    ["XL", 40],
-    ["X", 10],
-    ["IX", 9],
-    ["V", 5],
-    ["IV", 4],
-    ["I", 1],
-  ];
-  let roman = "";
-  for (const [k, v] of lookup) {
-    while (num >= v) {
-      roman += k;
-      num -= v;
-    }
-  }
-  return roman;
-};
+// Redundant toRoman removed
 
 const VendorDashboard = () => {
   const { section } = useParams();
@@ -680,8 +629,7 @@ const VendorDashboard = () => {
       .toISOString()
       .slice(0, 10),
   });
-  const [sheetCashbackForm, setSheetCashbackForm] = useState({});
-  const [assigningSheet, setAssigningSheet] = useState(null);
+  // Redundant states removed
   const [sheetPaymentData, setSheetPaymentData] = useState(null);
   const [campaignStatus, setCampaignStatus] = useState("");
   const [campaignError, setCampaignError] = useState("");
@@ -776,12 +724,7 @@ const VendorDashboard = () => {
   const [productImageUploadError, setProductImageUploadError] = useState("");
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editingCampaignDates, setEditingCampaignDates] = useState(null);
-  const [campaignDateForm, setCampaignDateForm] = useState({
-    startDate: "",
-    endDate: "",
-  });
-  const [savingCampaignDates, setSavingCampaignDates] = useState(false);
+  // Redundant states removed
   const [productModalContext, setProductModalContext] = useState(null); // 'campaign' or 'qr'
   const [failedProductImages, setFailedProductImages] = useState(
     () => new Set(),
@@ -1064,12 +1007,12 @@ const VendorDashboard = () => {
 
     let progressValue = 12;
     const progressTimer = setInterval(() => {
-      progressValue = Math.min(progressValue + 7, 88);
+      progressValue = Math.min(progressValue + 10, 92);
       setDownloadProgress((prev) => ({
         ...prev,
         progress: progressValue,
       }));
-    }, 220);
+    }, 150);
 
     try {
       setDownloadProgress((prev) => ({
@@ -1086,14 +1029,13 @@ const VendorDashboard = () => {
       });
       setTimeout(() => {
         setDownloadProgress({ show: false, progress: 0, message: "" });
-      }, 1400);
+      }, 450);
     } catch (err) {
       clearInterval(progressTimer);
       setDownloadProgress({ show: false, progress: 0, message: "" });
       throw err;
     }
   };
-
   const handleDownloadOrderPdf = async (orderId) => {
     if (!token || !orderId) return;
     setIsDownloadingPdf(orderId);
@@ -1119,19 +1061,7 @@ const VendorDashboard = () => {
     const campaignId = campaign?.id;
     if (!token || !campaignId) return;
     setIsDownloadingPdf(campaignId);
-
-    const isPostpaid = campaign?.planType === "postpaid";
-    const rawSheetIndex = Number.parseInt(
-      sheetCashbackForm?.[campaignId]?.sheetIndex,
-      10,
-    );
-    const selectedSheetIndex =
-      Number.isFinite(rawSheetIndex) && rawSheetIndex >= 0 ? rawSheetIndex : 0;
-    const hasSheetSelection = isPostpaid;
-    const sheetLabel = hasSheetSelection
-      ? toRoman(selectedSheetIndex + 1)
-      : null;
-    const downloadParams = sheetLabel ? { sheetLabel } : undefined;
+    const downloadParams = { fast: 1, skipLogo: 1 };
 
     try {
       await runDownloadWithProgress(
@@ -1141,6 +1071,7 @@ const VendorDashboard = () => {
       setStatusWithTimeout("Full campaign QR PDF downloaded successfully.");
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      setDownloadProgress({ show: false, progress: 0, message: "" });
       const errorMsg = err.message || "Failed to download PDF.";
       setStatusWithTimeout(errorMsg);
       toastError("Download Failed", errorMsg);
@@ -1159,6 +1090,7 @@ const VendorDashboard = () => {
         () =>
           downloadVendorInventoryQrPdf(token, {
             seriesCode: selectedQrSeries || undefined,
+            fast: 1,
           }),
         selectedQrSeries
           ? `Preparing ${selectedQrSeries} inventory PDF...`
@@ -2103,10 +2035,6 @@ const VendorDashboard = () => {
     setWallet(null);
     setQrs([]);
     setOrders([]);
-    setScanHash("");
-    setScanStatus("");
-    setScanError("");
-    setVerifyData(null);
     setCompanyProfile({
       businessName: "",
       contactPhone: "",
@@ -2386,6 +2314,7 @@ const VendorDashboard = () => {
       setCampaignStatusWithTimeout("Campaign paid and activated!");
       setSelectedPendingCampaign(null);
       setShowPaymentModal(false);
+      setCampaignTab("active");
 
       await Promise.all([
         loadWallet(),
@@ -3097,7 +3026,7 @@ const VendorDashboard = () => {
       // But we can just reload campaigns.
       await loadCampaigns();
       await loadCampaignStats();
-      setCampaignTab("active");
+      setCampaignTab("pending");
       openSuccessModal(
         "Campaign created",
         isPostpaid
@@ -6039,700 +5968,37 @@ Quantity: ${invoiceData.quantity} QRs
                                           </span>
                                         </div>
                                         <div className="space-y-4">
-                                          {campaigns.map((campaign) => {
-                                            const allocationGroups =
-                                              buildAllocationGroups(
-                                                campaign.allocations,
-                                              );
-                                            const totalQty =
-                                              allocationGroups.reduce(
-                                                (sum, group) =>
-                                                  sum + group.quantity,
-                                                0,
-                                              );
-                                            const fallbackBudget =
-                                              allocationGroups.reduce(
-                                                (sum, group) =>
-                                                  sum + group.totalBudget,
-                                                0,
-                                              );
-                                            const totalBudget =
-                                              parseNumericValue(
-                                                campaign.subtotal,
-                                                parseNumericValue(
-                                                  campaign.totalBudget,
-                                                  fallbackBudget,
-                                                ),
-                                              );
-                                            const campaignStats =
-                                              campaignStatsMap[campaign.id] ||
-                                              campaignStatsMap[
-                                                `title:${campaign.title}`
-                                              ] ||
-                                              {};
-                                            const statsTotal = Number(
-                                              campaignStats.totalQRsOrdered,
-                                            );
-                                            const statsRedeemed = Number(
-                                              campaignStats.totalUsersJoined,
-                                            );
-                                            const totalCount = Number.isFinite(
-                                              statsTotal,
-                                            )
-                                              ? Math.max(statsTotal, totalQty)
-                                              : totalQty;
-                                            const redeemedCount =
-                                              Number.isFinite(statsRedeemed)
-                                                ? statsRedeemed
-                                                : 0;
-                                            const activeCount = Math.max(
-                                              0,
-                                              totalCount - redeemedCount,
-                                            );
-
-                                            return (
-                                              <div
-                                                key={campaign.id}
-                                                className="rounded-2xl border border-gray-200/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-colors transition-shadow hover:border-primary/40 hover:shadow-md"
-                                              >
-                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                  <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                      <div className="text-base font-semibold text-gray-900 dark:text-white">
-                                                        {campaign.title}
-                                                      </div>
-                                                      <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wide">
-                                                        Active
-                                                      </span>
-                                                    </div>
-                                                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                                      ID:{" "}
-                                                      {campaign.id.slice(0, 10)}
-                                                      ...
-                                                    </div>
-                                                  </div>
-                                                  <div className="hidden sm:flex flex-wrap items-center gap-2 justify-end">
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        handleDownloadCampaignPdf(
-                                                          campaign,
-                                                        )
-                                                      }
-                                                      disabled={
-                                                        isDownloadingPdf ===
-                                                        campaign.id
-                                                      }
-                                                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
-                                                      title="Download QR Code"
-                                                      aria-label="Download QR Code"
-                                                    >
-                                                      <Download size={14} />
-                                                      Download QR Code
-                                                    </button>
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        setSelectedActiveCampaign(
-                                                          campaign,
-                                                        )
-                                                      }
-                                                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
-                                                      title="View Details"
-                                                      aria-label="View Details"
-                                                    >
-                                                      <Eye size={14} />
-                                                    </button>
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        handleDeleteCampaign(
-                                                          campaign,
-                                                        )
-                                                      }
-                                                      disabled={
-                                                        deletingCampaignId ===
-                                                        campaign.id
-                                                      }
-                                                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
-                                                      title="Delete"
-                                                      aria-label="Delete"
-                                                    >
-                                                      <Trash2 size={14} />
-                                                    </button>
-                                                  </div>
-                                                </div>
-                                                <div className="grid gap-2 sm:grid-cols-4">
-                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                      Budget
-                                                    </div>
-                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                      INR{" "}
-                                                      {formatAmount(
-                                                        totalBudget > 0
-                                                          ? totalBudget
-                                                          : campaign.planType ===
-                                                                "postpaid" &&
-                                                              Array.isArray(
-                                                                campaign.sheets,
-                                                              )
-                                                            ? campaign.sheets.reduce(
-                                                                (sum, s) =>
-                                                                  sum +
-                                                                  parseNumericValue(
-                                                                    s.amount,
-                                                                    0,
-                                                                  ) *
-                                                                    parseNumericValue(
-                                                                      s.count,
-                                                                      0,
-                                                                    ),
-                                                                0,
-                                                              )
-                                                            : totalBudget,
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                      Total QRs
-                                                    </div>
-                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                      {totalCount || 0}
-                                                    </div>
-                                                  </div>
-                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                      Active
-                                                    </div>
-                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                      {activeCount}
-                                                    </div>
-                                                  </div>
-                                                  <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-                                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                                                      Redeemed
-                                                    </div>
-                                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                      {redeemedCount}
-                                                    </div>
-                                                  </div>
-                                                </div>
-
-                                                {/* Campaign Start & End Date - Editable */}
-                                                {(() => {
-                                                  const campId = campaign.id;
-                                                  const isEditingDates =
-                                                    editingCampaignDates ===
-                                                    campId;
-                                                  return (
-                                                    <div className="flex flex-wrap items-center gap-3 mt-2 px-1">
-                                                      {!isEditingDates ? (
-                                                        <>
-                                                          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                              Start:
-                                                            </span>
-                                                            <span>
-                                                              {campaign.startDate
-                                                                ? formatShortDate(
-                                                                    campaign.startDate,
-                                                                  )
-                                                                : "—"}
-                                                            </span>
-                                                          </div>
-                                                          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                            <span className="font-medium text-gray-700 dark:text-gray-300">
-                                                              End:
-                                                            </span>
-                                                            <span>
-                                                              {campaign.endDate
-                                                                ? formatShortDate(
-                                                                    campaign.endDate,
-                                                                  )
-                                                                : "—"}
-                                                            </span>
-                                                          </div>
-                                                          <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                              setEditingCampaignDates(
-                                                                campId,
-                                                              );
-                                                              setCampaignDateForm(
-                                                                {
-                                                                  startDate:
-                                                                    campaign.startDate
-                                                                      ? new Date(
-                                                                          campaign.startDate,
-                                                                        )
-                                                                          .toISOString()
-                                                                          .slice(
-                                                                            0,
-                                                                            10,
-                                                                          )
-                                                                      : "",
-                                                                  endDate:
-                                                                    campaign.endDate
-                                                                      ? new Date(
-                                                                          campaign.endDate,
-                                                                        )
-                                                                          .toISOString()
-                                                                          .slice(
-                                                                            0,
-                                                                            10,
-                                                                          )
-                                                                      : "",
-                                                                },
-                                                              );
-                                                            }}
-                                                            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-                                                            title="Edit dates"
-                                                          >
-                                                            <Edit2 size={12} />
-                                                          </button>
-                                                        </>
-                                                      ) : (
-                                                        <>
-                                                          <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-                                                            <span className="uppercase tracking-wide font-medium">
-                                                              Start Date
-                                                            </span>
-                                                            <input
-                                                              type="date"
-                                                              value={
-                                                                campaignDateForm.startDate
-                                                              }
-                                                              onChange={(e) =>
-                                                                setCampaignDateForm(
-                                                                  (prev) => ({
-                                                                    ...prev,
-                                                                    startDate:
-                                                                      e.target
-                                                                        .value,
-                                                                  }),
-                                                                )
-                                                              }
-                                                              className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                                                            />
-                                                          </label>
-                                                          <label className="flex flex-col gap-0.5 text-[10px] text-gray-500 dark:text-gray-400">
-                                                            <span className="uppercase tracking-wide font-medium">
-                                                              End Date
-                                                            </span>
-                                                            <input
-                                                              type="date"
-                                                              value={
-                                                                campaignDateForm.endDate
-                                                              }
-                                                              min={
-                                                                campaignDateForm.startDate
-                                                              }
-                                                              onChange={(e) =>
-                                                                setCampaignDateForm(
-                                                                  (prev) => ({
-                                                                    ...prev,
-                                                                    endDate:
-                                                                      e.target
-                                                                        .value,
-                                                                  }),
-                                                                )
-                                                              }
-                                                              className="rounded-md border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-xs text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-primary"
-                                                            />
-                                                          </label>
-                                                          <button
-                                                            type="button"
-                                                            disabled={
-                                                              savingCampaignDates
-                                                            }
-                                                            onClick={async () => {
-                                                              try {
-                                                                setSavingCampaignDates(
-                                                                  true,
-                                                                );
-                                                                await updateVendorCampaign(
-                                                                  token,
-                                                                  campId,
-                                                                  {
-                                                                    startDate:
-                                                                      campaignDateForm.startDate,
-                                                                    endDate:
-                                                                      campaignDateForm.endDate,
-                                                                  },
-                                                                );
-                                                                toast.success(
-                                                                  "Campaign dates updated",
-                                                                );
-                                                                setEditingCampaignDates(
-                                                                  null,
-                                                                );
-                                                                fetchCampaigns();
-                                                              } catch (err) {
-                                                                toast.error(
-                                                                  err?.message ||
-                                                                    "Failed to update dates",
-                                                                );
-                                                              } finally {
-                                                                setSavingCampaignDates(
-                                                                  false,
-                                                                );
-                                                              }
-                                                            }}
-                                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 cursor-pointer"
-                                                          >
-                                                            {savingCampaignDates
-                                                              ? "Saving..."
-                                                              : "Save"}
-                                                          </button>
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              setEditingCampaignDates(
-                                                                null,
-                                                              )
-                                                            }
-                                                            className="inline-flex items-center px-2 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 text-gray-500 text-xs hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                                                          >
-                                                            Cancel
-                                                          </button>
-                                                        </>
-                                                      )}
-                                                    </div>
-                                                  );
-                                                })()}
-
-                                                {/* Sheet Cashback Assignment for Postpaid */}
-                                                {campaign.planType ===
-                                                  "postpaid" &&
-                                                  (() => {
-                                                    const totalQrs =
-                                                      totalCount || 0;
-
-                                                    // Use backend sheet data if available, else calculate
-                                                    let sheets = [];
-                                                    if (
-                                                      campaign.sheets &&
-                                                      campaign.sheets.length > 0
-                                                    ) {
-                                                      sheets =
-                                                        campaign.sheets.map(
-                                                          (s) => ({
-                                                            ...s,
-                                                            qrCount: s.count,
-                                                            amount: s.amount,
-                                                          }),
-                                                        );
-                                                    } else {
-                                                      const sheetCount =
-                                                        Math.ceil(
-                                                          totalQrs / 25,
-                                                        );
-
-                                                      sheets = Array.from(
-                                                        {
-                                                          length: sheetCount,
-                                                        },
-                                                        (_, i) => ({
-                                                          index: i,
-                                                          label: toRoman(i + 1),
-                                                          qrCount: Math.min(
-                                                            25,
-                                                            totalQrs - i * 25,
-                                                          ),
-                                                          amount: 0,
-                                                        }),
-                                                      );
-                                                    }
-                                                    const formKey = campaign.id;
-                                                    const form =
-                                                      sheetCashbackForm[
-                                                        formKey
-                                                      ] || {
-                                                        sheetIndex: 0,
-                                                        amount: "",
-                                                      };
-                                                    const isAssigning =
-                                                      assigningSheet ===
-                                                      campaign.id;
-                                                    const handleAssign =
-                                                      async () => {
-                                                        if (
-                                                          !form.amount ||
-                                                          isAssigning
-                                                        )
-                                                          return;
-                                                        setAssigningSheet(
-                                                          campaign.id,
-                                                        );
-                                                        try {
-                                                          const result =
-                                                            await assignSheetCashback(
-                                                              token,
-                                                              campaign.id,
-                                                              {
-                                                                sheetIndex:
-                                                                  form.sheetIndex,
-                                                                cashbackAmount:
-                                                                  parseFloat(
-                                                                    form.amount,
-                                                                  ),
-                                                              },
-                                                            );
-                                                          setStatusWithTimeout(
-                                                            result.message ||
-                                                              "Sheet updated! Proceeding to payment...",
-                                                          );
-                                                          // Clear form
-                                                          setSheetCashbackForm(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [formKey]: {
-                                                                ...form,
-                                                                amount: "",
-                                                              },
-                                                            }),
-                                                          );
-                                                          // Trigger Payment Modal
-                                                          const qty =
-                                                            sheets.find(
-                                                              (s) =>
-                                                                s.index ===
-                                                                form.sheetIndex,
-                                                            )?.qrCount || 0;
-                                                          const cashbackTotal =
-                                                            parseFloat(
-                                                              form.amount,
-                                                            ) * qty;
-
-                                                          const totalEst =
-                                                            cashbackTotal;
-
-                                                          setSheetPaymentData({
-                                                            campaignId:
-                                                              campaign.id,
-                                                            sheetIndex:
-                                                              form.sheetIndex,
-                                                            sheetLabel:
-                                                              sheets.find(
-                                                                (s) =>
-                                                                  s.index ===
-                                                                  form.sheetIndex,
-                                                              )?.label || "?",
-                                                            amount: parseFloat(
-                                                              form.amount,
-                                                            ),
-                                                            count: qty,
-                                                            totalCost: totalEst,
-                                                            breakdown: {
-                                                              cashback:
-                                                                cashbackTotal,
-                                                              tech: 0,
-                                                              voucher: 0,
-                                                            },
-                                                          });
-                                                          loadCampaigns(token);
-                                                        } catch (err) {
-                                                          setStatusWithTimeout(
-                                                            err.message ||
-                                                              "Failed to update sheet.",
-                                                          );
-                                                        } finally {
-                                                          setAssigningSheet(
-                                                            null,
-                                                          );
-                                                        }
-                                                      };
-                                                    return sheets.length > 0 ? (
-                                                      <div className="mt-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                                                        <div className="px-5 py-3 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/30">
-                                                          <div className="flex items-center gap-2">
-                                                            <div className="p-1.5 rounded-lg bg-emerald-100/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                                              <QrCode className="w-3.5 h-3.5" />
-                                                            </div>
-                                                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                                              Assign Cashback by
-                                                              Sheet
-                                                            </span>
-                                                          </div>
-                                                          <div className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-zinc-700">
-                                                            {sheets.length}{" "}
-                                                            Sheets
-                                                          </div>
-                                                        </div>
-                                                        <div className="p-5 grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
-                                                          <div className="sm:col-span-6">
-                                                            <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
-                                                              Select Target
-                                                              Sheet
-                                                            </label>
-                                                            <div className="relative">
-                                                              <select
-                                                                value={
-                                                                  form.sheetIndex
-                                                                }
-                                                                onChange={(e) =>
-                                                                  setSheetCashbackForm(
-                                                                    (prev) => ({
-                                                                      ...prev,
-                                                                      [formKey]:
-                                                                        {
-                                                                          ...form,
-                                                                          sheetIndex:
-                                                                            parseInt(
-                                                                              e
-                                                                                .target
-                                                                                .value,
-                                                                              10,
-                                                                            ),
-                                                                        },
-                                                                    }),
-                                                                  )
-                                                                }
-                                                                className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-3 pl-4 pr-8 text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all appearance-none cursor-pointer hover:bg-white dark:hover:bg-zinc-800"
-                                                              >
-                                                                {sheets.map(
-                                                                  (s) => (
-                                                                    <option
-                                                                      key={
-                                                                        s.index
-                                                                      }
-                                                                      value={
-                                                                        s.index
-                                                                      }
-                                                                      className="text-gray-900 dark:text-gray-100 py-1"
-                                                                    >
-                                                                      Sheet{" "}
-                                                                      {s.label}{" "}
-                                                                      (
-                                                                      {
-                                                                        s.qrCount
-                                                                      }{" "}
-                                                                      QRs)
-                                                                      {s.amount >
-                                                                      0
-                                                                        ? ` - INR ${s.amount}`
-                                                                        : ""}
-                                                                    </option>
-                                                                  ),
-                                                                )}
-                                                              </select>
-                                                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                                                <ChevronRight className="w-4 h-4 rotate-90" />
-                                                              </div>
-                                                            </div>
-                                                          </div>
-                                                          <div className="sm:col-span-3">
-                                                            <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block pl-1">
-                                                              Cashback (INR)
-                                                            </label>
-                                                            <div className="relative">
-                                                              <input
-                                                                type="number"
-                                                                min="0"
-                                                                step="0.01"
-                                                                placeholder="0.00"
-                                                                value={
-                                                                  form.amount
-                                                                }
-                                                                onChange={(e) =>
-                                                                  setSheetCashbackForm(
-                                                                    (prev) => ({
-                                                                      ...prev,
-                                                                      [formKey]:
-                                                                        {
-                                                                          ...form,
-                                                                          amount:
-                                                                            e
-                                                                              .target
-                                                                              .value,
-                                                                        },
-                                                                    }),
-                                                                  )
-                                                                }
-                                                                className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/50 px-4 text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all placeholder:font-normal placeholder:text-gray-400 hover:bg-white dark:hover:bg-zinc-800"
-                                                              />
-                                                            </div>
-                                                          </div>
-                                                          <div className="sm:col-span-3">
-                                                            <button
-                                                              type="button"
-                                                              onClick={
-                                                                handleAssign
-                                                              }
-                                                              disabled={
-                                                                isAssigning ||
-                                                                !form.amount
-                                                              }
-                                                              className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
-                                                            >
-                                                              {isAssigning ? (
-                                                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                                              ) : (
-                                                                <>
-                                                                  Save Changes
-                                                                  <CheckCircle2 className="w-4 h-4 transition-transform group-hover:scale-110" />
-                                                                </>
-                                                              )}
-                                                            </button>
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                    ) : null;
-                                                  })()}
-                                                <div className="flex flex-wrap items-center justify-end gap-2 pt-2 sm:hidden">
-                                                  <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                      handleDownloadCampaignPdf(
-                                                        campaign,
-                                                      )
-                                                    }
-                                                    disabled={
-                                                      isDownloadingPdf ===
-                                                      campaign.id
-                                                    }
-                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
-                                                    title="Download PDF"
-                                                    aria-label="Download PDF"
-                                                  >
-                                                    <Download size={14} />
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                      setSelectedActiveCampaign(
-                                                        campaign,
-                                                      )
-                                                    }
-                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
-                                                    title="View Details"
-                                                    aria-label="View Details"
-                                                  >
-                                                    <Eye size={14} />
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                      handleDeleteCampaign(
-                                                        campaign,
-                                                      )
-                                                    }
-                                                    disabled={
-                                                      deletingCampaignId ===
-                                                      campaign.id
-                                                    }
-                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
-                                                    title="Delete"
-                                                    aria-label="Delete"
-                                                  >
-                                                    <Trash2 size={14} />
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            );
-                                          })}
+                                          {campaigns.map((campaign) => (
+                                            <CampaignCard
+                                              key={campaign.id}
+                                              campaign={campaign}
+                                              campaignStats={
+                                                campaignStatsMap[campaign.id] ||
+                                                campaignStatsMap[
+                                                  `title:${campaign.title}`
+                                                ] ||
+                                                {}
+                                              }
+                                              token={token}
+                                              onDownloadQr={
+                                                handleDownloadCampaignPdf
+                                              }
+                                              onViewDetails={
+                                                setSelectedActiveCampaign
+                                              }
+                                              onDelete={handleDeleteCampaign}
+                                              deletingCampaignId={
+                                                deletingCampaignId
+                                              }
+                                              isDownloadingPdf={
+                                                isDownloadingPdf
+                                              }
+                                              loadCampaigns={loadCampaigns}
+                                              setSheetPaymentData={
+                                                setSheetPaymentData
+                                              }
+                                            />
+                                          ))}
                                         </div>
                                       </div>
                                     ),
@@ -6965,10 +6231,17 @@ Quantity: ${invoiceData.quantity} QRs
                                           </tr>
                                         ))}
                                       </tbody>
-                                      <tfoot className="bg-gray-50 dark:bg-zinc-800/30 font-semibold text-gray-900 dark:text-white">
-                                        <tr>
+                                      <tfoot className="bg-gray-50 dark:bg-zinc-800/30 text-gray-900 dark:text-white">
+                                        {/* Subtotal row – always shown */}
+                                        <tr className="font-semibold border-b border-dashed border-gray-200 dark:border-zinc-700">
                                           <td className="px-4 py-3">
-                                            Subtotal
+                                            Cashback Subtotal
+                                            {selectedPendingCampaign?.planType ===
+                                              "postpaid" && (
+                                              <div className="text-[10px] text-gray-400 font-normal">
+                                                Set later via sheet
+                                              </div>
+                                            )}
                                           </td>
                                           <td className="px-4 py-3 text-center">
                                             {pendingCampaignPayment.totalQty}{" "}
@@ -6976,49 +6249,96 @@ Quantity: ${invoiceData.quantity} QRs
                                           </td>
                                           <td className="px-4 py-3 text-right">
                                             INR{" "}
-                                            {pendingCampaignPayment.baseBudget.toFixed(
-                                              2,
-                                            )}
-                                          </td>
-                                        </tr>
-                                        {/* QR Generation Cost Row */}
-                                        <tr>
-                                          <td className="px-4 py-3 text-gray-500 font-normal">
-                                            QR Generation Cost (incl. GST, INR{" "}
                                             {formatAmount(
-                                              pendingCampaignPayment.printFeePerQrInclTax,
-                                            )}
-                                            /QR)
-                                          </td>
-                                          <td className="px-4 py-3 text-center text-gray-500 font-normal">
-                                            -
-                                          </td>
-                                          <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
-                                            + INR{" "}
-                                            {pendingCampaignPayment.printCost.toFixed(
-                                              2,
+                                              pendingCampaignPayment.baseBudget,
                                             )}
                                           </td>
                                         </tr>
-                                        {/* Voucher Cost Row */}
-                                        <tr>
-                                          <td className="px-4 py-3 text-gray-500 font-normal">
-                                            Voucher Cost (incl. GST, INR{" "}
-                                            {pendingCampaignPayment.voucherFeePerQrInclTax.toFixed(
-                                              2,
-                                            )}
-                                            /QR)
-                                          </td>
-                                          <td className="px-4 py-3 text-center text-gray-500 font-normal">
-                                            -
-                                          </td>
-                                          <td className="px-4 py-3 text-right font-normal text-gray-600 dark:text-gray-400">
-                                            + INR{" "}
-                                            {pendingCampaignPayment.voucherCost.toFixed(
-                                              2,
-                                            )}
-                                          </td>
-                                        </tr>
+                                        {/* Fee breakdown */}
+                                        {(() => {
+                                          const qrBaseRate = parseNumericValue(
+                                            qrPricePerUnit,
+                                            1,
+                                          );
+                                          const totalQrBaseCost =
+                                            pendingCampaignPayment.totalQty *
+                                            qrBaseRate;
+                                          const voucherFeePerQr =
+                                            pendingCampaignPayment.voucherFeePerQr ||
+                                            0;
+                                          const totalVoucherBaseCost =
+                                            pendingCampaignPayment.totalQty *
+                                            voucherFeePerQr;
+                                          const totalFeesBase =
+                                            totalQrBaseCost +
+                                            totalVoucherBaseCost;
+                                          const totalGst =
+                                            totalFeesBase *
+                                            CAMPAIGN_FEE_GST_RATE;
+                                          return (
+                                            <>
+                                              <tr className="text-xs text-gray-500 font-normal">
+                                                <td
+                                                  className="px-4 pt-3 pb-1"
+                                                  colSpan="2"
+                                                >
+                                                  QR Generation Fees (Excl. GST)
+                                                  <div className="text-[10px] text-gray-400">
+                                                    INR{" "}
+                                                    {formatAmount(qrBaseRate)}
+                                                    /QR ×{" "}
+                                                    {
+                                                      pendingCampaignPayment.totalQty
+                                                    }
+                                                  </div>
+                                                </td>
+                                                <td className="px-4 pt-3 pb-1 text-right">
+                                                  + INR{" "}
+                                                  {formatAmount(
+                                                    totalQrBaseCost,
+                                                  )}
+                                                </td>
+                                              </tr>
+                                              {voucherFeePerQr > 0 && (
+                                                <tr className="text-xs text-gray-500 font-normal">
+                                                  <td
+                                                    className="px-4 py-1"
+                                                    colSpan="2"
+                                                  >
+                                                    Voucher Fees (Excl. GST)
+                                                    <div className="text-[10px] text-gray-400">
+                                                      INR{" "}
+                                                      {formatAmount(
+                                                        voucherFeePerQr,
+                                                      )}
+                                                      /QR ×{" "}
+                                                      {
+                                                        pendingCampaignPayment.totalQty
+                                                      }
+                                                    </div>
+                                                  </td>
+                                                  <td className="px-4 py-1 text-right">
+                                                    + INR{" "}
+                                                    {formatAmount(
+                                                      totalVoucherBaseCost,
+                                                    )}
+                                                  </td>
+                                                </tr>
+                                              )}
+                                              <tr className="text-xs text-gray-500 font-normal border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                                <td
+                                                  className="px-4 pt-1 pb-3"
+                                                  colSpan="2"
+                                                >
+                                                  GST (18%)
+                                                </td>
+                                                <td className="px-4 pt-1 pb-3 text-right">
+                                                  + INR {formatAmount(totalGst)}
+                                                </td>
+                                              </tr>
+                                            </>
+                                          );
+                                        })()}
                                       </tfoot>
                                     </table>
                                   </div>
@@ -8718,19 +8038,28 @@ Quantity: ${invoiceData.quantity} QRs
                 onConfirm={async () => {
                   if (!sheetPaymentData) return;
                   try {
-                    await paySheetCashback(token, sheetPaymentData.campaignId, {
+                    const paymentResult = await paySheetCashback(
+                      token,
+                      sheetPaymentData.campaignId,
+                      {
                       sheetIndex: sheetPaymentData.sheetIndex,
                       cashbackAmount: sheetPaymentData.amount,
-                    });
+                      },
+                    );
+                    const paidAmount = Number(paymentResult?.totalPaid);
+                    const finalPaidAmount = Number.isFinite(paidAmount)
+                      ? paidAmount
+                      : sheetPaymentData.totalCost ||
+                        sheetPaymentData.amount * sheetPaymentData.count;
                     openSuccessModal(
                       "Payment Successful",
-                      `Successfully paid Rs. ${(
-                        sheetPaymentData.totalCost ||
-                        sheetPaymentData.amount * sheetPaymentData.count
-                      ).toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`,
+                      finalPaidAmount > 0
+                        ? `Successfully paid Rs. ${finalPaidAmount.toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`
+                        : paymentResult?.message ||
+                          `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
                     );
                     setSheetPaymentData(null);
-                    loadWallet();
+                    await Promise.all([loadWallet(token), loadCampaigns(token)]);
                   } catch (err) {
                     setStatusWithTimeout(err.message || "Payment failed");
                   }
@@ -8898,19 +8227,24 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 
                                 return (
                                   <>
-                                    {totalBudget > 0 && (
-                                      <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                          Subtotal
-                                        </td>
-                                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                          {totalQuantity} QRs
-                                        </td>
-                                        <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                          INR {formatAmount(totalBudget)}
-                                        </td>
-                                      </tr>
-                                    )}
+                                    {/* Cashback Subtotal – always shown */}
+                                    <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                      <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                        Cashback Subtotal
+                                        {paymentForm.campaign?.planType ===
+                                          "postpaid" && (
+                                          <div className="text-[10px] text-gray-400 font-normal">
+                                            Set later via sheet
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                        {totalQuantity} QRs
+                                      </td>
+                                      <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                        INR {formatAmount(totalBudget)}
+                                      </td>
+                                    </tr>
 
                                     {/* Fees Section */}
                                     <tr className="text-xs text-gray-500">
@@ -8920,26 +8254,29 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                       >
                                         QR Generation Fees (Excl. GST)
                                         <div className="text-[10px] text-gray-400">
-                                          INR {formatAmount(qrBaseRate)}/QR
+                                          INR {formatAmount(qrBaseRate)}/QR ×{" "}
+                                          {totalQuantity}
                                         </div>
                                       </td>
                                       <td className="px-5 pt-3 pb-1 text-right">
                                         + INR {formatAmount(totalQrBaseCost)}
                                       </td>
                                     </tr>
-                                    <tr className="text-xs text-gray-500">
-                                      <td className="px-5 py-1" colSpan="2">
-                                        Voucher Fees (Excl. GST)
-                                        <div className="text-[10px] text-gray-400">
-                                          INR {formatAmount(voucherBaseRate)}
-                                          /QR
-                                        </div>
-                                      </td>
-                                      <td className="px-5 py-1 text-right">
-                                        + INR{" "}
-                                        {formatAmount(totalVoucherBaseCost)}
-                                      </td>
-                                    </tr>
+                                    {voucherBaseRate > 0 && (
+                                      <tr className="text-xs text-gray-500">
+                                        <td className="px-5 py-1" colSpan="2">
+                                          Voucher Fees (Excl. GST)
+                                          <div className="text-[10px] text-gray-400">
+                                            INR {formatAmount(voucherBaseRate)}
+                                            /QR × {totalQuantity}
+                                          </div>
+                                        </td>
+                                        <td className="px-5 py-1 text-right">
+                                          + INR{" "}
+                                          {formatAmount(totalVoucherBaseCost)}
+                                        </td>
+                                      </tr>
+                                    )}
                                     <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
                                       <td
                                         className="px-5 pt-1 pb-3"
@@ -9209,3 +8546,9 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 };
 
 export default VendorDashboard;
+
+
+
+
+
+
