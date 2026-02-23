@@ -70,8 +70,12 @@ const RedeemQr = () => {
 
     const autoClaim = async () => {
       setRedeeming(true);
+      setRedeemStatus(null);
       try {
         const locationPayload = await captureClientLocation();
+        if (!locationPayload.lat || !locationPayload.lng) {
+          throw new Error("Location access is required to claim cashback.");
+        }
         const res = await scanQR(hash, token, locationPayload);
         setRedeemStatus({
           success: true,
@@ -88,7 +92,13 @@ const RedeemQr = () => {
           navigate("/wallet");
           return;
         }
-        setRedeemStatus({ success: false, message: err.message });
+        const msg = err.message || "Redemption failed";
+        setRedeemStatus({
+          success: false,
+          message: msg.includes("Location")
+            ? "Please enable location access to claim your cashback."
+            : msg,
+        });
         if (err.data?.qr) {
           const qr = err.data.qr;
           setData((prev) => ({
@@ -120,8 +130,12 @@ const RedeemQr = () => {
     }
 
     setRedeeming(true);
+    setRedeemStatus(null);
     try {
       const locationPayload = await captureClientLocation();
+      if (!locationPayload.lat || !locationPayload.lng) {
+        throw new Error("Location access is required to claim cashback.");
+      }
       const res = await scanQR(hash, token, locationPayload);
       setRedeemStatus({
         success: true,
@@ -138,7 +152,14 @@ const RedeemQr = () => {
         navigate("/wallet");
         return;
       }
-      setRedeemStatus({ success: false, message: err.message });
+      const msg = err.message || "Redemption failed";
+      setRedeemStatus({
+        success: false,
+        message: msg.includes("Location")
+          ? "Please enable location access to claim your cashback."
+          : msg,
+      });
+
       if (err.data?.qr) {
         const qr = err.data.qr;
         setData((prev) => ({
