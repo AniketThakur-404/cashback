@@ -33,6 +33,8 @@ const RedeemQr = () => {
         const res = await verifyPublicQr(hash);
         setData({
           ...res,
+          brandLogo: res.brandLogo || res.qr?.Campaign?.Brand?.logoUrl,
+          productId: res.productId || res.qr?.Campaign?.productId,
           endDate: res.endDate || res.qr?.Campaign?.endDate,
         });
       } catch (err) {
@@ -93,6 +95,8 @@ const RedeemQr = () => {
             ...prev,
             campaign: qr.Campaign?.title,
             brand: qr.Campaign?.Brand?.name,
+            brandLogo: qr.Campaign?.Brand?.logoUrl,
+            productId: qr.Campaign?.productId,
             amount: qr.cashbackAmount || qr.Campaign?.cashbackAmount,
             endDate: qr.Campaign?.endDate,
             status: qr.status,
@@ -141,6 +145,8 @@ const RedeemQr = () => {
           ...prev,
           campaign: qr.Campaign?.title,
           brand: qr.Campaign?.Brand?.name,
+          brandLogo: qr.Campaign?.Brand?.logoUrl,
+          productId: qr.Campaign?.productId,
           amount: qr.cashbackAmount || qr.Campaign?.cashbackAmount,
           endDate: qr.Campaign?.endDate,
           status: qr.status,
@@ -151,6 +157,15 @@ const RedeemQr = () => {
       setRedeeming(false);
     }
   };
+
+  useEffect(() => {
+    if (redeemStatus?.success && data?.productId) {
+      const timer = setTimeout(() => {
+        navigate(`/product-info/${data.productId}`);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [redeemStatus, data?.productId, navigate]);
 
   if (loading) {
     return (
@@ -201,7 +216,13 @@ const RedeemQr = () => {
           <div
             className={`w-16 h-16 ${data?.isError ? "bg-red-100" : "bg-emerald-100"} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-500`}
           >
-            {isRedeemed ? (
+            {data?.brandLogo ? (
+              <img
+                src={data.brandLogo}
+                alt={data.brand || "Brand Logo"}
+                className="w-full h-full object-cover rounded-full p-2"
+              />
+            ) : isRedeemed ? (
               <AlertCircle size={32} className="text-red-600" />
             ) : isExpired ? (
               <XCircle size={32} className="text-red-600" />
