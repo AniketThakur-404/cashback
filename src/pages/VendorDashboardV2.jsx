@@ -366,11 +366,10 @@ const VendorDashboardV2 = () => {
                 <button
                   key={`mobile-${item.key}`}
                   onClick={() => navigate(`/vendor/${item.key}`)}
-                  className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs ${
-                    isActive
-                      ? "bg-[#e5f4ec] text-[#0f6d54]"
-                      : "text-[#33463d] hover:bg-[#f1f7f3]"
-                  }`}
+                  className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs ${isActive
+                    ? "bg-[#e5f4ec] text-[#0f6d54]"
+                    : "text-[#33463d] hover:bg-[#f1f7f3]"
+                    }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {item.label}
@@ -603,7 +602,9 @@ const VendorDashboardV2 = () => {
                         position={[Number(point.lat), Number(point.lng)]}
                       >
                         <Popup>
-                          <p>{point.city || "Unknown"}</p>
+                          <p>
+                            {point.city || point.state ? `${point.city || ''}${point.city && point.state ? ', ' : ''}${point.state || ''}${point.pincode ? ` - ${point.pincode}` : ''}` : "Unknown"}
+                          </p>
                           <p>{point.count} scans</p>
                         </Popup>
                       </Marker>
@@ -616,7 +617,9 @@ const VendorDashboardV2 = () => {
                 <div className="space-y-2">
                   {mapPoints.map((point, i) => (
                     <div key={i} className="rounded-xl border p-2 text-sm">
-                      <p>{point.city || "Unknown"}</p>
+                      <p>
+                        {point.city || point.state ? `${point.city || ''}${point.city && point.state ? ', ' : ''}${point.state || ''}${point.pincode ? ` - ${point.pincode}` : ''}` : "Unknown"}
+                      </p>
                       <p>{point.count} scans</p>
                     </div>
                   ))}

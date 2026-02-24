@@ -658,13 +658,13 @@ const VendorDashboard = () => {
       return remaining.length
         ? remaining
         : [
-            {
-              id: Date.now(),
-              cashbackAmount: "",
-              quantity: "",
-              totalBudget: "",
-            },
-          ];
+          {
+            id: Date.now(),
+            cashbackAmount: "",
+            quantity: "",
+            totalBudget: "",
+          },
+        ];
     });
   };
 
@@ -2322,16 +2322,16 @@ const VendorDashboard = () => {
     const initialRows =
       campaign.allocations && campaign.allocations.length > 0
         ? campaign.allocations.map((a) => ({
-            ...a,
-            id: Date.now() + Math.random(),
-          }))
+          ...a,
+          id: Date.now() + Math.random(),
+        }))
         : [
-            {
-              id: Date.now(),
-              cashbackAmount: str(campaign.cashbackAmount),
-              quantity: "",
-            },
-          ];
+          {
+            id: Date.now(),
+            cashbackAmount: str(campaign.cashbackAmount),
+            quantity: "",
+          },
+        ];
 
     setPaymentForm({
       campaign,
@@ -2390,7 +2390,7 @@ const VendorDashboard = () => {
       const currentBalance = parseNumericValue(
         wallet?.availableBalance,
         parseNumericValue(wallet?.balance, 0) -
-          parseNumericValue(wallet?.lockedBalance, 0),
+        parseNumericValue(wallet?.lockedBalance, 0),
       );
 
       if (currentBalance < totalCost) {
@@ -2572,11 +2572,11 @@ const VendorDashboard = () => {
       validRows.length > 0
         ? validRows
         : [
-            {
-              cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
-              quantity: 1,
-            },
-          ];
+          {
+            cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
+            quantity: 1,
+          },
+        ];
 
     if (rowsToUse.length === 0 || rowsToUse[0].cashbackAmount <= 0) {
       setQrOrderError(
@@ -2671,7 +2671,7 @@ const VendorDashboard = () => {
       } else {
         setQrOrderStatus(
           `Generated ${successes} QRs successfully.` +
-            (failures > 0 ? ` (${failures} batches failed)` : ""),
+          (failures > 0 ? ` (${failures} batches failed)` : ""),
         );
         if (successes > 0) {
           openSuccessModal(
@@ -3225,8 +3225,8 @@ const VendorDashboard = () => {
         sku: productForm.sku?.trim() || null,
         mrp:
           productForm.mrp === undefined ||
-          productForm.mrp === null ||
-          productForm.mrp === ""
+            productForm.mrp === null ||
+            productForm.mrp === ""
             ? null
             : Number(productForm.mrp),
         variant: productForm.variant.trim() || null,
@@ -3748,17 +3748,17 @@ const VendorDashboard = () => {
       : null;
     const breakdownRows = priceGroups.length
       ? priceGroups.map((group) => ({
-          cashback: group.price,
-          quantity: group.qrs.length,
-          active: group.activeCount,
-          redeemed: group.redeemedCount,
-        }))
+        cashback: group.price,
+        quantity: group.qrs.length,
+        active: group.activeCount,
+        redeemed: group.redeemedCount,
+      }))
       : allocationGroups.map((group) => ({
-          cashback: group.price,
-          quantity: group.quantity,
-          active: 0,
-          redeemed: 0,
-        }));
+        cashback: group.price,
+        quantity: group.quantity,
+        active: 0,
+        redeemed: 0,
+      }));
 
     return {
       campaign,
@@ -3779,7 +3779,7 @@ const VendorDashboard = () => {
   const pendingWalletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-      parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.lockedBalance, 0),
   );
   const pendingCampaignShortfall = Math.max(
     pendingCampaignPayment.totalCost - pendingWalletBalance,
@@ -3803,7 +3803,7 @@ const VendorDashboard = () => {
   const walletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-      parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
   const displayedTransactions = showAllTransactions
@@ -4128,11 +4128,10 @@ const VendorDashboard = () => {
                           />
                           <label
                             htmlFor="logo-upload"
-                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
-                              registrationForm.logoPreview
-                                ? "border-primary bg-white"
-                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                            }`}
+                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${registrationForm.logoPreview
+                              ? "border-primary bg-white"
+                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                              }`}
                           >
                             {registrationForm.logoPreview ? (
                               <img
@@ -4547,11 +4546,10 @@ const VendorDashboard = () => {
                             onClick={() =>
                               setIsNotificationsOpen((prev) => !prev)
                             }
-                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
-                              isNotificationsOpen
-                                ? "ring-2 ring-primary/30 border-primary/40"
-                                : ""
-                            }`}
+                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${isNotificationsOpen
+                              ? "ring-2 ring-primary/30 border-primary/40"
+                              : ""
+                              }`}
                             aria-label="Notifications"
                           >
                             <Bell size={18} />
@@ -4645,9 +4643,9 @@ const VendorDashboard = () => {
                                   {isOverviewAll
                                     ? qrStats.active
                                     : overviewSelectedQrTotal -
-                                      (isOverviewUnassigned
-                                        ? 0
-                                        : overviewSelectedQrRedeemed)}
+                                    (isOverviewUnassigned
+                                      ? 0
+                                      : overviewSelectedQrRedeemed)}
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   Active QRs
@@ -4663,10 +4661,10 @@ const VendorDashboard = () => {
                                 {isOverviewAll
                                   ? qrStats.active
                                   : Math.max(
-                                      0,
-                                      overviewSelectedQrTotal -
-                                        overviewSelectedQrRedeemed,
-                                    )}
+                                    0,
+                                    overviewSelectedQrTotal -
+                                    overviewSelectedQrRedeemed,
+                                  )}
                               </span>
                               <span className="text-gray-400">|</span>
                               <span>
@@ -5016,7 +5014,7 @@ const VendorDashboard = () => {
                                       className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                       {brandLogoPreviewSrc &&
-                                      !imageLoadError ? (
+                                        !imageLoadError ? (
                                         <img
                                           src={brandLogoPreviewSrc}
                                           alt="Brand logo"
@@ -5916,7 +5914,7 @@ const VendorDashboard = () => {
                                     className={SECONDARY_BUTTON}
                                   >
                                     {isDownloadingPdf ===
-                                    `inventory:${selectedQrSeries || "all"}`
+                                      `inventory:${selectedQrSeries || "all"}`
                                       ? "Downloading..."
                                       : selectedQrSeries
                                         ? `Download Prebuilt (${selectedQrSeries})`
@@ -6079,7 +6077,7 @@ Quantity: ${invoiceData.quantity} QRs
                                               campaignStats={
                                                 campaignStatsMap[campaign.id] ||
                                                 campaignStatsMap[
-                                                  `title:${campaign.title}`
+                                                `title:${campaign.title}`
                                                 ] ||
                                                 {}
                                               }
@@ -6342,10 +6340,10 @@ Quantity: ${invoiceData.quantity} QRs
                                             Cashback Subtotal
                                             {selectedPendingCampaign?.planType ===
                                               "postpaid" && (
-                                              <div className="text-[10px] text-gray-400 font-normal">
-                                                Set later via sheet
-                                              </div>
-                                            )}
+                                                <div className="text-[10px] text-gray-400 font-normal">
+                                                  Set later via sheet
+                                                </div>
+                                              )}
                                           </td>
                                           <td className="px-4 py-3 text-center">
                                             {pendingCampaignPayment.totalQty}{" "}
@@ -6493,12 +6491,11 @@ Quantity: ${invoiceData.quantity} QRs
                                       isPayingCampaign ||
                                       !canPaySelectedPendingCampaign
                                     }
-                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
-                                      !canPaySelectedPendingCampaign &&
+                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${!canPaySelectedPendingCampaign &&
                                       !isPayingCampaign
-                                        ? "opacity-60 cursor-not-allowed"
-                                        : ""
-                                    }`}
+                                      ? "opacity-60 cursor-not-allowed"
+                                      : ""
+                                      }`}
                                   >
                                     {isPayingCampaign ? (
                                       <>Processing...</>
@@ -7046,11 +7043,10 @@ Quantity: ${invoiceData.quantity} QRs
                                   return (
                                     <tr
                                       key={product.id}
-                                      className={`${
-                                        idx % 2 === 0
-                                          ? "bg-gray-50 dark:bg-[#1a1a1a]"
-                                          : "bg-white dark:bg-[#0f0f0f]"
-                                      } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
+                                      className={`${idx % 2 === 0
+                                        ? "bg-gray-50 dark:bg-[#1a1a1a]"
+                                        : "bg-white dark:bg-[#0f0f0f]"
+                                        } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
                                     >
                                       <td className="px-4 py-4">
                                         {imageSrc && !hasImageError ? (
@@ -7107,11 +7103,10 @@ Quantity: ${invoiceData.quantity} QRs
                                       </td>
                                       <td className="px-4 py-4">
                                         <span
-                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                                            product.status === "active"
-                                              ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
-                                              : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                          }`}
+                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${product.status === "active"
+                                            ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
+                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                            }`}
                                         >
                                           {product.status || "active"}
                                         </span>
@@ -7487,7 +7482,7 @@ Quantity: ${invoiceData.quantity} QRs
                                         <Popup>
                                           <div className="text-xs">
                                             <div className="font-semibold">
-                                              {pt.city || "Unknown"}
+                                              {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
                                             </div>
                                             <div>{pt.count || 0} scans</div>
                                           </div>
@@ -7513,7 +7508,7 @@ Quantity: ${invoiceData.quantity} QRs
                                       className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
                                     >
                                       <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                        {pt.city || "Unknown"}
+                                        {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
                                       </div>
                                       <div className="text-[11px] text-gray-500 dark:text-gray-400">
                                         {pt.count || 0} scans
@@ -7857,7 +7852,7 @@ Quantity: ${invoiceData.quantity} QRs
                                             } catch (error) {
                                               setInvoiceShareStatus(
                                                 error.message ||
-                                                  "Unable to generate share link.",
+                                                "Unable to generate share link.",
                                               );
                                             }
                                           }}
@@ -8072,11 +8067,10 @@ Quantity: ${invoiceData.quantity} QRs
                               key={item.id}
                               type="button"
                               onClick={() => handleNotificationClick(item)}
-                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
-                                item.isRead
-                                  ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                                  : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-                              }`}
+                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${item.isRead
+                                ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                                : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+                                }`}
                             >
                               <div className="flex items-start gap-3">
                                 <div
@@ -8101,11 +8095,10 @@ Quantity: ${invoiceData.quantity} QRs
                                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                                     )}
                                     <span
-                                      className={`text-[10px] font-semibold ${
-                                        item.isRead
-                                          ? "text-gray-400 dark:text-gray-500"
-                                          : "text-primary"
-                                      }`}
+                                      className={`text-[10px] font-semibold ${item.isRead
+                                        ? "text-gray-400 dark:text-gray-500"
+                                        : "text-primary"
+                                        }`}
                                     >
                                       {item.isRead ? "Read" : "New"}
                                     </span>
@@ -8146,21 +8139,21 @@ Quantity: ${invoiceData.quantity} QRs
                       token,
                       sheetPaymentData.campaignId,
                       {
-                      sheetIndex: sheetPaymentData.sheetIndex,
-                      cashbackAmount: sheetPaymentData.amount,
+                        sheetIndex: sheetPaymentData.sheetIndex,
+                        cashbackAmount: sheetPaymentData.amount,
                       },
                     );
                     const paidAmount = Number(paymentResult?.totalPaid);
                     const finalPaidAmount = Number.isFinite(paidAmount)
                       ? paidAmount
                       : sheetPaymentData.totalCost ||
-                        sheetPaymentData.amount * sheetPaymentData.count;
+                      sheetPaymentData.amount * sheetPaymentData.count;
                     openSuccessModal(
                       "Payment Successful",
                       finalPaidAmount > 0
                         ? `Successfully paid Rs. ${finalPaidAmount.toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`
                         : paymentResult?.message ||
-                          `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
+                        `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
                     );
                     setSheetPaymentData(null);
                     await Promise.all([loadWallet(token), loadCampaigns(token)]);
@@ -8171,9 +8164,8 @@ Quantity: ${invoiceData.quantity} QRs
                 title="Confirm Sheet Payment"
                 message={
                   sheetPaymentData
-                    ? `You are about to pay for Sheet ${
-                        sheetPaymentData.sheetLabel
-                      } (${sheetPaymentData.count} QRs).
+                    ? `You are about to pay for Sheet ${sheetPaymentData.sheetLabel
+                    } (${sheetPaymentData.count} QRs).
 
 Breakdown:
 Cashback Deposit (No GST): Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
@@ -8277,7 +8269,7 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                     INR{" "}
                                     {formatAmount(
                                       parseNumericValue(row.cashbackAmount) *
-                                        parseNumericValue(row.quantity),
+                                      parseNumericValue(row.quantity),
                                     )}
                                   </td>
                                 </tr>
@@ -8337,10 +8329,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                         Cashback Subtotal
                                         {paymentForm.campaign?.planType ===
                                           "postpaid" && (
-                                          <div className="text-[10px] text-gray-400 font-normal">
-                                            Set later via sheet
-                                          </div>
-                                        )}
+                                            <div className="text-[10px] text-gray-400 font-normal">
+                                              Set later via sheet
+                                            </div>
+                                          )}
                                       </td>
                                       <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
                                         {totalQuantity} QRs
@@ -8414,18 +8406,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "digital_voucher",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "digital_voucher"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "digital_voucher"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "digital_voucher"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "digital_voucher"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Smartphone size={20} />
                             </div>
@@ -8454,18 +8444,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "printed_qr",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "printed_qr"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "printed_qr"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "printed_qr"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "printed_qr"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Printer size={20} />
                             </div>
@@ -8492,18 +8480,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "none",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "none"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "none"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "none"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "none"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Ban size={20} />
                             </div>
@@ -8566,10 +8552,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                   parseNumericValue(
                                     wallet?.availableBalance,
                                     parseNumericValue(wallet?.balance, 0) -
-                                      parseNumericValue(
-                                        wallet?.lockedBalance,
-                                        0,
-                                      ),
+                                    parseNumericValue(
+                                      wallet?.lockedBalance,
+                                      0,
+                                    ),
                                   ),
                                 )}
                               </span>

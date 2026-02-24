@@ -70,9 +70,9 @@ const VendorRedemptions = ({ token }) => {
         if (!redemptions.length) return;
         const headers = ["Date", "QR Code", "Amount", "Campaign", "Customer", "Phone"];
         const rows = redemptions.map(r => [
-            formatDate(r.redeemedAt),
-            r.uniqueHash,
-            r.cashbackAmount,
+            formatDate(r.createdAt),
+            r.qr?.hash || "-",
+            r.amount,
             r.campaign?.title || "-",
             r.customer?.name || "-",
             r.customer?.phone || "-"
@@ -97,7 +97,7 @@ const VendorRedemptions = ({ token }) => {
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Customer Redemptions</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">View QR redemption data (customer info masked)</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">View QR redemption data</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -200,9 +200,9 @@ const VendorRedemptions = ({ token }) => {
                             ) : (
                                 redemptions.map((r) => (
                                     <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{formatDate(r.redeemedAt)}</td>
-                                        <td className="px-4 py-3 text-sm font-mono text-violet-600 dark:text-violet-400">...{r.uniqueHash}</td>
-                                        <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 font-medium">₹{Number(r.cashbackAmount).toFixed(2)}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{formatDate(r.createdAt)}</td>
+                                        <td className="px-4 py-3 text-sm font-mono text-violet-600 dark:text-violet-400">...{r.qr?.hash || "-"}</td>
+                                        <td className="px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400 font-medium">₹{Number(r.amount).toFixed(2)}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{r.campaign?.title || "-"}</td>
                                         <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{r.customer?.name || "-"}</td>
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.customer?.phone || "-"}</td>
