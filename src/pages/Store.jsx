@@ -81,7 +81,7 @@ const ProductCard = ({
     !hasEnoughBalance;
 
   return (
-    <article className="group flex flex-col h-full rounded-[24px] bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+    <article className="group flex flex-col h-full rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
       <div
         className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}
       >
@@ -90,7 +90,7 @@ const ProductCard = ({
             src={imageSrc}
             alt={item.name}
             onError={() => setImgError(true)}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
