@@ -18,6 +18,7 @@ const UserProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [imgError, setImgError] = useState(false);
 
   const isAuthenticated = Boolean(token);
 
@@ -25,6 +26,7 @@ const UserProfileMenu = () => {
     if (typeof window === "undefined") return undefined;
     const handleAuthChange = () => {
       setToken(localStorage.getItem(AUTH_TOKEN_KEY));
+      setImgError(false);
     };
     window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
     return () =>
@@ -49,6 +51,7 @@ const UserProfileMenu = () => {
       setProfile(null);
       setError("");
       setIsLoading(false);
+      setImgError(false);
       return undefined;
     }
 
@@ -66,6 +69,7 @@ const UserProfileMenu = () => {
           phoneNumber: data.phoneNumber || "",
           avatarUrl: data.avatarUrl || "",
         });
+        setImgError(false);
       } catch (err) {
         if (!isActive) return;
         if (err.status === 401) {
@@ -90,6 +94,7 @@ const UserProfileMenu = () => {
     clearAuthToken();
     setToken(null);
     setIsOpen(false);
+    setImgError(false);
   };
 
   const goToWallet = () => {
@@ -107,22 +112,33 @@ const UserProfileMenu = () => {
     navigate("/help");
   };
 
+  // Get display name initial
+  const getInitial = () => {
+    if (profile?.name) {
+      return profile.name.charAt(0).toUpperCase();
+    }
+    return isAuthenticated ? "U" : "G";
+  };
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative z-60">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative h-8 w-8 rounded-full border border-gray-200 bg-yellow-400 dark:border-zinc-800 dark:bg-yellow-500 flex items-center justify-center shadow-sm overflow-hidden"
+        className="relative h-11 w-11 rounded-full border-2 border-white/40 bg-linear-to-br from-yellow-400 to-yellow-500 dark:border-zinc-800 dark:from-yellow-500 dark:to-yellow-600 flex items-center justify-center shadow-md overflow-hidden transition-transform active:scale-95 shrink-0"
         aria-label="Open user menu"
       >
-        {profile?.avatarUrl ? (
+        {profile?.avatarUrl && !imgError ? (
           <img
             src={resolvePublicAssetUrl(profile.avatarUrl)}
             alt={profile.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover rounded-full p-0.5"
+            onError={() => setImgError(true)}
           />
         ) : (
-          <User size={16} className="text-gray-900 dark:text-white" />
+          <span className="text-gray-900 border-gray-900 text-[18px] font-bold font-sans">
+            {getInitial()}
+          </span>
         )}
       </button>
 
