@@ -1061,7 +1061,7 @@ const AdminDashboard = () => {
   const activeSubSection = subSection || "";
   const activeNav =
     (activeSection === "vendors" || activeSection === "users") &&
-      activeSubSection
+    activeSubSection
       ? `${activeSection}-${activeSubSection}`
       : activeSection;
 
@@ -1459,7 +1459,7 @@ const AdminDashboard = () => {
       }
       const rawRedeemStore =
         normalizedMetadata.redeemStore &&
-          typeof normalizedMetadata.redeemStore === "object"
+        typeof normalizedMetadata.redeemStore === "object"
           ? normalizedMetadata.redeemStore
           : {};
       const normalizedRedeemProducts = normalizeRedeemProducts(
@@ -1615,7 +1615,7 @@ const AdminDashboard = () => {
     } else if (isRedeemCatalogRoute) {
       tasks.push(loadSettings(authToken));
     } else if (isSettingsRoute) {
-      tasks.push(loadSettings(authToken));
+      tasks.push(loadSettings(authToken), loadBrands(authToken));
     }
 
     if (tasks.length) {
@@ -2202,9 +2202,9 @@ const AdminDashboard = () => {
         ? value === ""
           ? ""
           : (() => {
-            const numeric = Number(value);
-            return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
-          })()
+              const numeric = Number(value);
+              return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+            })()
         : value;
     setRedeemProductDraft((prev) => ({
       ...(prev || {}),
@@ -2258,7 +2258,7 @@ const AdminDashboard = () => {
     try {
       const currentRedeemStore =
         settings?.metadata?.redeemStore &&
-          typeof settings.metadata.redeemStore === "object"
+        typeof settings.metadata.redeemStore === "object"
           ? settings.metadata.redeemStore
           : {};
 
@@ -2344,7 +2344,7 @@ const AdminDashboard = () => {
         (p, idx) =>
           idx !== editingRedeemProductIndex &&
           String(p?.id || "").toLowerCase() ===
-          String(normalizedData.id).toLowerCase(),
+            String(normalizedData.id).toLowerCase(),
       );
       if (exists) {
         setRedeemProductDraftError(
@@ -2410,9 +2410,9 @@ const AdminDashboard = () => {
           ? value === ""
             ? ""
             : (() => {
-              const numeric = Number(value);
-              return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
-            })()
+                const numeric = Number(value);
+                return Number.isFinite(numeric) ? Math.max(0, numeric) : "";
+              })()
           : value;
       return {
         ...(product || {}),
@@ -2464,7 +2464,7 @@ const AdminDashboard = () => {
     try {
       const currentRedeemStore =
         settings?.metadata?.redeemStore &&
-          typeof settings.metadata.redeemStore === "object"
+        typeof settings.metadata.redeemStore === "object"
           ? settings.metadata.redeemStore
           : {};
       const normalizedRedeemProducts = normalizeRedeemProducts(
@@ -4107,11 +4107,17 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-screen overflow-y-auto bg-slate-100 dark:bg-transparent"
-        style={effectiveTheme === 'light' ? {
-          backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        } : {}}
+      <div
+        className="flex-1 min-h-screen overflow-y-auto bg-slate-100 dark:bg-transparent"
+        style={
+          effectiveTheme === "light"
+            ? {
+                backgroundImage:
+                  "radial-gradient(circle, #cbd5e1 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+              }
+            : {}
+        }
       >
         {/* Header */}
         <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/90 border-b border-slate-200/80 dark:bg-[#0d0d0e]/90 dark:border-white/5">
@@ -4144,7 +4150,12 @@ const AdminDashboard = () => {
                   </h1>
                 </div>
                 <p className="text-[11px] text-slate-400 dark:text-white/40 truncate">
-                  {getGreeting()} — {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
+                  {getGreeting()} —{" "}
+                  {new Date().toLocaleDateString("en-IN", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "short",
+                  })}
                 </p>
               </div>
             </div>
@@ -4157,7 +4168,7 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   placeholder="Search..."
-                  value={searchQuery || ''}
+                  value={searchQuery || ""}
                   onChange={(e) => setSearchQuery?.(e.target.value)}
                   className="bg-transparent text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none w-full"
                 />
@@ -4171,7 +4182,10 @@ const AdminDashboard = () => {
                 aria-label="Refresh"
                 title="Refresh all data"
               >
-                <RefreshCw size={17} className={isRefreshing ? 'animate-spin' : ''} />
+                <RefreshCw
+                  size={17}
+                  className={isRefreshing ? "animate-spin" : ""}
+                />
               </button>
 
               {/* Notifications */}
@@ -4192,11 +4206,23 @@ const AdminDashboard = () => {
               {/* Admin avatar pill */}
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-white/10 ml-1">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center text-white text-[10px] font-bold shadow-sm flex-shrink-0">
-                  {adminInfo?.name ? adminInfo.name.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() : 'A'}
+                  {adminInfo?.name
+                    ? adminInfo.name
+                        .trim()
+                        .split(" ")
+                        .map((p) => p[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()
+                    : "A"}
                 </div>
                 <div className="hidden lg:block">
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-tight">{adminInfo?.name || 'Admin'}</p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Administrator</p>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-tight">
+                    {adminInfo?.name || "Admin"}
+                  </p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    Administrator
+                  </p>
                 </div>
               </div>
             </div>
@@ -4204,7 +4230,10 @@ const AdminDashboard = () => {
         </header>
 
         {/* Main Content */}
-        <main className="p-6 space-y-6 max-w-[1800px] mx-auto" style={{ background: 'transparent' }}>
+        <main
+          className="p-6 space-y-6 max-w-[1800px] mx-auto"
+          style={{ background: "transparent" }}
+        >
           {/* Overview Section - Admin Stats */}
           {isOverviewRoute && (
             <section
@@ -4443,13 +4472,13 @@ const AdminDashboard = () => {
                       orderAttentionCount +
                       pendingQrOrderCount >
                       0 && (
-                        <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">
-                          {pendingWithdrawalCount +
-                            orderAttentionCount +
-                            pendingQrOrderCount}{" "}
-                          pending
-                        </span>
-                      )}
+                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+                        {pendingWithdrawalCount +
+                          orderAttentionCount +
+                          pendingQrOrderCount}{" "}
+                        pending
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-3">
                     {[
@@ -4608,10 +4637,11 @@ const AdminDashboard = () => {
                     <button
                       key={option.value}
                       onClick={() => setAnalyticsRange(option.value)}
-                      className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${analyticsRange === option.value
-                        ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                        : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60"
-                        }`}
+                      className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 ${
+                        analyticsRange === option.value
+                          ? "bg-white dark:bg-white/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                          : "text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60"
+                      }`}
                     >
                       {option.label}
                     </button>
@@ -4865,11 +4895,12 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div
-                        className={`text-xs font-semibold px-2 py-1 rounded-md ${transactionTotals.credit - transactionTotals.debit >=
+                        className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                          transactionTotals.credit - transactionTotals.debit >=
                           0
-                          ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
-                          : "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10"
-                          }`}
+                            ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
+                            : "text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/10"
+                        }`}
                       >
                         {transactionTotals.credit - transactionTotals.debit >= 0
                           ? "Positive"
@@ -5013,15 +5044,15 @@ const AdminDashboard = () => {
                           </td>
                         </tr>
                       ) : orders.filter((order) => {
-                        const matchesVendor =
-                          filterVendorId === "all" ||
-                          order.vendorId === filterVendorId ||
-                          order.vendor?.id === filterVendorId;
-                        const matchesCampaign =
-                          filterCampaignId === "all" ||
-                          order.campaignId === filterCampaignId;
-                        return matchesVendor && matchesCampaign;
-                      }).length === 0 ? (
+                          const matchesVendor =
+                            filterVendorId === "all" ||
+                            order.vendorId === filterVendorId ||
+                            order.vendor?.id === filterVendorId;
+                          const matchesCampaign =
+                            filterCampaignId === "all" ||
+                            order.campaignId === filterCampaignId;
+                          return matchesVendor && matchesCampaign;
+                        }).length === 0 ? (
                         <tr>
                           <td
                             colSpan="6"
@@ -5084,12 +5115,13 @@ const AdminDashboard = () => {
                                 </td>
                                 <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-white/5">
                                   <span
-                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${order.status === "paid"
-                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                      : order.status === "shipped"
-                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
-                                        : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-                                      }`}
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                      order.status === "paid"
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                        : order.status === "shipped"
+                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+                                          : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+                                    }`}
                                   >
                                     {order.status || "pending"}
                                   </span>
@@ -5103,8 +5135,8 @@ const AdminDashboard = () => {
                                     className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#059669] text-white hover:bg-[#047857] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow"
                                   >
                                     {isPreparingBatchPdf &&
-                                      batchQrs.length > 0 &&
-                                      batchQrs[0].orderId === order.id ? (
+                                    batchQrs.length > 0 &&
+                                    batchQrs[0].orderId === order.id ? (
                                       <>
                                         <RefreshCw
                                           size={12}
@@ -5369,7 +5401,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionPerQr ||
-                            0,
+                              0,
                           )}
                         </div>
                       </div>
@@ -5379,7 +5411,7 @@ const AdminDashboard = () => {
                           INR{" "}
                           {formatAmount(
                             campaignAnalytics.metrics?.walletDeductionTotal ||
-                            0,
+                              0,
                           )}
                         </div>
                       </div>
@@ -5427,7 +5459,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-900 dark:text-white">
                           Total:{" "}
                           {campaignAnalytics.budget?.total !== null &&
-                            campaignAnalytics.budget?.total !== undefined
+                          campaignAnalytics.budget?.total !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.total)}`
                             : "Not set"}
                         </div>
@@ -5438,7 +5470,7 @@ const AdminDashboard = () => {
                         <div className="text-slate-500">
                           Remaining:{" "}
                           {campaignAnalytics.budget?.remaining !== null &&
-                            campaignAnalytics.budget?.remaining !== undefined
+                          campaignAnalytics.budget?.remaining !== undefined
                             ? `INR ${formatAmount(campaignAnalytics.budget.remaining)}`
                             : "-"}
                         </div>
@@ -6638,22 +6670,34 @@ const AdminDashboard = () => {
 
           {/* Users Management Section */}
           {isUsersRoute && (
-            <section id="users" className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-
+            <section
+              id="users"
+              className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
               {/* Section Header */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Users Management</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Manage and monitor all customer accounts</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Users Management
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    Manage and monitor all customer accounts
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {showAllUsers ? (
-                    <button onClick={() => setShowAllUsers(false)} className={adminGhostButtonClass}>
+                    <button
+                      onClick={() => setShowAllUsers(false)}
+                      className={adminGhostButtonClass}
+                    >
                       Show Less
                     </button>
                   ) : (
                     filteredUsers.length > 6 && (
-                      <button onClick={() => setShowAllUsers(true)} className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm font-semibold text-white transition-colors shadow-sm">
+                      <button
+                        onClick={() => setShowAllUsers(true)}
+                        className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm font-semibold text-white transition-colors shadow-sm"
+                      >
                         View All ({filteredUsers.length})
                       </button>
                     )
@@ -6664,33 +6708,78 @@ const AdminDashboard = () => {
               {/* Stat Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: 'Active', value: effectiveUserStatusCounts.active || 0, color: 'emerald', dot: 'bg-emerald-400 animate-pulse' },
-                  { label: 'Inactive', value: effectiveUserStatusCounts.inactive || 0, color: 'amber', dot: 'bg-amber-400' },
-                  { label: 'Blocked', value: effectiveUserStatusCounts.blocked || 0, color: 'rose', dot: 'bg-rose-400' },
-                  { label: 'Total', value: users.length, color: 'slate', dot: 'bg-slate-400' },
-                ].map(card => (
-                  <div key={card.label} className={`bg-white dark:bg-[#111113] border rounded-xl px-4 py-3 flex items-center gap-3
-                    ${card.color === 'emerald' ? 'border-emerald-200/60 dark:border-emerald-500/20' :
-                      card.color === 'amber' ? 'border-amber-200/60 dark:border-amber-500/20' :
-                        card.color === 'rose' ? 'border-rose-200/60 dark:border-rose-500/20' :
-                          'border-slate-200/60 dark:border-white/10'}`}>
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${card.dot}`} />
+                  {
+                    label: "Active",
+                    value: effectiveUserStatusCounts.active || 0,
+                    color: "emerald",
+                    dot: "bg-emerald-400 animate-pulse",
+                  },
+                  {
+                    label: "Inactive",
+                    value: effectiveUserStatusCounts.inactive || 0,
+                    color: "amber",
+                    dot: "bg-amber-400",
+                  },
+                  {
+                    label: "Blocked",
+                    value: effectiveUserStatusCounts.blocked || 0,
+                    color: "rose",
+                    dot: "bg-rose-400",
+                  },
+                  {
+                    label: "Total",
+                    value: users.length,
+                    color: "slate",
+                    dot: "bg-slate-400",
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.label}
+                    className={`bg-white dark:bg-[#111113] border rounded-xl px-4 py-3 flex items-center gap-3
+                    ${
+                      card.color === "emerald"
+                        ? "border-emerald-200/60 dark:border-emerald-500/20"
+                        : card.color === "amber"
+                          ? "border-amber-200/60 dark:border-amber-500/20"
+                          : card.color === "rose"
+                            ? "border-rose-200/60 dark:border-rose-500/20"
+                            : "border-slate-200/60 dark:border-white/10"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${card.dot}`}
+                    />
                     <div>
-                      <p className={`text-xl font-bold leading-tight
-                        ${card.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
-                          card.color === 'amber' ? 'text-amber-600 dark:text-amber-400' :
-                            card.color === 'rose' ? 'text-rose-600 dark:text-rose-400' :
-                              'text-slate-900 dark:text-white'}`}>{card.value}</p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">{card.label}</p>
+                      <p
+                        className={`text-xl font-bold leading-tight
+                        ${
+                          card.color === "emerald"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : card.color === "amber"
+                              ? "text-amber-600 dark:text-amber-400"
+                              : card.color === "rose"
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-slate-900 dark:text-white"
+                        }`}
+                      >
+                        {card.value}
+                      </p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                        {card.label}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
 
               {isLoadingUsers && (
-                <div className="text-slate-500 dark:text-slate-400 text-sm">Loading users...</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
+                  Loading users...
+                </div>
               )}
-              {usersError && <div className="text-rose-400 text-sm">{usersError}</div>}
+              {usersError && (
+                <div className="text-rose-400 text-sm">{usersError}</div>
+              )}
 
               {limitedUsers.length > 0 && (
                 <div className="bg-white dark:bg-[#111113] border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
@@ -6698,22 +6787,45 @@ const AdminDashboard = () => {
                     <table className="w-full text-sm min-w-[750px]">
                       <thead>
                         <tr className="border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]">
-                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">User</th>
-                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Contact</th>
-                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status</th>
-                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Wallet</th>
-                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Joined</th>
-                          <th className="text-right py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Actions</th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            User
+                          </th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Contact
+                          </th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Wallet
+                          </th>
+                          <th className="text-left py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Joined
+                          </th>
+                          <th className="text-right py-3 px-5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04]">
                         {limitedUsers.map((user) => {
                           const initials = user.name
-                            ? user.name.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
-                            : (user.email?.[0] || 'U').toUpperCase();
-                          const canSave = (userStatusUpdates[user.id] || user.status) !== user.status;
+                            ? user.name
+                                .trim()
+                                .split(" ")
+                                .map((p) => p[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()
+                            : (user.email?.[0] || "U").toUpperCase();
+                          const canSave =
+                            (userStatusUpdates[user.id] || user.status) !==
+                            user.status;
                           return (
-                            <tr key={user.id} className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                            <tr
+                              key={user.id}
+                              className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors"
+                            >
                               {/* User col with avatar */}
                               <td className="py-3.5 px-5">
                                 <div className="flex items-center gap-3">
@@ -6722,41 +6834,71 @@ const AdminDashboard = () => {
                                   </div>
                                   <div className="min-w-0">
                                     <p className="font-semibold text-slate-900 dark:text-white text-sm truncate leading-tight">
-                                      {user.name || <span className="text-slate-400 italic">No name</span>}
+                                      {user.name || (
+                                        <span className="text-slate-400 italic">
+                                          No name
+                                        </span>
+                                      )}
                                     </p>
-                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">ID: {String(user.id).slice(0, 8)}</p>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                                      ID: {String(user.id).slice(0, 8)}
+                                    </p>
                                   </div>
                                 </div>
                               </td>
                               {/* Contact */}
                               <td className="py-3.5 px-5">
-                                <p className="text-sm text-slate-700 dark:text-slate-300 truncate">{user.email || '—'}</p>
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500">{user.phoneNumber || '—'}</p>
+                                <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                                  {user.email || "—"}
+                                </p>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                  {user.phoneNumber || "—"}
+                                </p>
                               </td>
                               {/* Status badge */}
                               <td className="py-3.5 px-5">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${getStatusClasses(user.status)}`}>
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${getStatusClasses(user.status)}`}
+                                >
                                   {user.status}
                                 </span>
                               </td>
                               {/* Wallet */}
                               <td className="py-3.5 px-5">
-                                <span className={`text-sm font-semibold ${user?.Wallet?.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                  {user?.Wallet ? `₹${formatAmount(user.Wallet.balance)}` : '—'}
+                                <span
+                                  className={`text-sm font-semibold ${user?.Wallet?.balance > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"}`}
+                                >
+                                  {user?.Wallet
+                                    ? `₹${formatAmount(user.Wallet.balance)}`
+                                    : "—"}
                                 </span>
                               </td>
                               {/* Joined */}
                               <td className="py-3.5 px-5">
                                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                                  {new Date(user.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  {new Date(user.createdAt).toLocaleDateString(
+                                    "en-IN",
+                                    {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    },
+                                  )}
                                 </span>
                               </td>
                               {/* Actions */}
                               <td className="py-3.5 px-5">
                                 <div className="flex items-center justify-end gap-1.5">
                                   <select
-                                    value={userStatusUpdates[user.id] || user.status}
-                                    onChange={(e) => setUserStatusUpdates({ ...userStatusUpdates, [user.id]: e.target.value })}
+                                    value={
+                                      userStatusUpdates[user.id] || user.status
+                                    }
+                                    onChange={(e) =>
+                                      setUserStatusUpdates({
+                                        ...userStatusUpdates,
+                                        [user.id]: e.target.value,
+                                      })
+                                    }
                                     className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669]"
                                   >
                                     <option value="active">Active</option>
@@ -6764,7 +6906,9 @@ const AdminDashboard = () => {
                                     <option value="blocked">Blocked</option>
                                   </select>
                                   <button
-                                    onClick={() => handleUserStatusSave(user.id, user.status)}
+                                    onClick={() =>
+                                      handleUserStatusSave(user.id, user.status)
+                                    }
                                     disabled={!canSave}
                                     className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#059669] hover:bg-[#047857] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
@@ -6777,7 +6921,10 @@ const AdminDashboard = () => {
                                     View
                                   </button>
                                   <button
-                                    onClick={() => { setSelectedUser(user); setIsUserWalletOpen(true); }}
+                                    onClick={() => {
+                                      setSelectedUser(user);
+                                      setIsUserWalletOpen(true);
+                                    }}
                                     className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-800 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
                                   >
                                     Wallet
@@ -6835,30 +6982,33 @@ const AdminDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setSupportView("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "all"
-                    ? "bg-[#059669] text-white"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                    }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "all"
+                      ? "bg-[#059669] text-white"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
                 >
                   All ({supportCounts.total})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSupportView("product")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "product"
-                    ? "bg-amber-500 text-white"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                    }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "product"
+                      ? "bg-amber-500 text-white"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
                 >
                   Product Reports ({supportCounts.product})
                 </button>
                 <button
                   type="button"
                   onClick={() => setSupportView("other")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${supportView === "other"
-                    ? "bg-slate-700 text-white dark:bg-slate-600"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
-                    }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    supportView === "other"
+                      ? "bg-slate-700 text-white dark:bg-slate-600"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  }`}
                 >
                   Other Tickets ({supportCounts.other})
                 </button>
@@ -7044,7 +7194,9 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     Vendors Management
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Monitor and manage all vendor accounts.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    Monitor and manage all vendor accounts.
+                  </p>
                 </div>
                 {showVendorSummaries && (
                   <div className="flex flex-wrap items-center gap-2">
@@ -7085,7 +7237,10 @@ const AdminDashboard = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center">
-                          <CheckCircle2 size={20} className="text-emerald-500" />
+                          <CheckCircle2
+                            size={20}
+                            className="text-emerald-500"
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
@@ -7100,12 +7255,16 @@ const AdminDashboard = () => {
                         <div className="text-2xl font-bold text-emerald-500 leading-none">
                           {effectiveVendorStatusCounts.active || 0}
                         </div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">accounts</div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">
+                          accounts
+                        </div>
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">Monitoring currently active accounts.</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Monitoring currently active accounts.
+                      </span>
                     </div>
                   </div>
                   <div
@@ -7132,12 +7291,16 @@ const AdminDashboard = () => {
                             (effectiveVendorStatusCounts.rejected || 0) +
                             (effectiveVendorStatusCounts.expired || 0)}
                         </div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">accounts</div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">
+                          accounts
+                        </div>
                       </div>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                      <span className="text-xs text-slate-500 dark:text-slate-400">Includes paused, rejected, and expired vendors.</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Includes paused, rejected, and expired vendors.
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -7195,7 +7358,7 @@ const AdminDashboard = () => {
                           const techFeeDraft =
                             vendorTechFeeDrafts[vendor.id] ??
                             (currentTechFeeValue !== null &&
-                              currentTechFeeValue > 0
+                            currentTechFeeValue > 0
                               ? currentTechFeeValue.toFixed(2)
                               : "");
                           const parsedTechFeeDraft = Number(techFeeDraft);
@@ -7238,10 +7401,11 @@ const AdminDashboard = () => {
                             vendorStatusUpdates[vendor.id] || vendor.status,
                           ).toLowerCase();
                           const canSaveStatus =
-                            Boolean(statusDraft) && statusDraft !== currentStatus;
+                            Boolean(statusDraft) &&
+                            statusDraft !== currentStatus;
                           const techFeeLabel =
                             currentTechFeeValue !== null &&
-                              currentTechFeeValue > 0
+                            currentTechFeeValue > 0
                               ? `INR ${formatAmount(currentTechFeeValue)}`
                               : "-";
                           const contactPhone =
@@ -7331,10 +7495,11 @@ const AdminDashboard = () => {
                                           event.target.value,
                                         )
                                       }
-                                      className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${techFeeDraft !== "" && !isTechFeeValid
-                                        ? "border-rose-300 dark:border-rose-500/50"
-                                        : "border-slate-200 dark:border-white/10"
-                                        }`}
+                                      className={`w-28 pl-9 pr-2 py-1.5 rounded-lg border text-xs font-semibold bg-white dark:bg-black/20 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#059669] ${
+                                        techFeeDraft !== "" && !isTechFeeValid
+                                          ? "border-rose-300 dark:border-rose-500/50"
+                                          : "border-slate-200 dark:border-white/10"
+                                      }`}
                                     />
                                   </div>
                                   <button
@@ -7607,10 +7772,11 @@ const AdminDashboard = () => {
                       <button
                         key={filter.id}
                         onClick={() => setLogsFilter(filter.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${logsFilter === filter.id
-                          ? "bg-[#059669] text-white"
-                          : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
-                          }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                          logsFilter === filter.id
+                            ? "bg-[#059669] text-white"
+                            : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300"
+                        }`}
                       >
                         {filter.label}
                       </button>
@@ -7891,14 +8057,15 @@ const AdminDashboard = () => {
                               </td>
                               <td className="px-5 py-3">
                                 <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${String(product?.status).toLowerCase() ===
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    String(product?.status).toLowerCase() ===
                                     "inactive"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
-                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
-                                    }`}
+                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                  }`}
                                 >
                                   {String(product?.status).toLowerCase() ===
-                                    "inactive"
+                                  "inactive"
                                     ? "Inactive"
                                     : "Active"}
                                 </span>
@@ -8280,21 +8447,38 @@ const AdminDashboard = () => {
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                Link (Optional)
+                                Link to Brand
                               </label>
-                              <input
-                                type="text"
-                                value={banner?.link || ""}
-                                onChange={(e) =>
+                              <select
+                                value={
+                                  banner?.link?.startsWith("/brand-details/")
+                                    ? banner.link.replace("/brand-details/", "")
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  const val = e.target.value;
                                   handleBannerFieldChange(
                                     index,
                                     "link",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="/brand-details"
+                                    val
+                                      ? `/brand-details/${val}`
+                                      : "/brand-details",
+                                  );
+                                }}
                                 className={adminInputClass}
-                              />
+                              >
+                                <option value="">
+                                  Default (All Brands / None)
+                                </option>
+                                {brands.map((b) => (
+                                  <option
+                                    key={b.id || b._id}
+                                    value={b.id || b._id}
+                                  >
+                                    {b.name}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
 

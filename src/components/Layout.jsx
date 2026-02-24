@@ -110,7 +110,7 @@ const Layout = ({ children }) => {
           {isHome ? (
             <>
               <div className="flex items-center gap-2">
-                <div className="h-12 w-40 overflow-visible flex items-center">
+                <div className="h-12 w-40 mt-2 overflow-visible flex items-center">
                   <img
                     src={logoSrc}
                     alt="Assured Rewards"
@@ -119,12 +119,12 @@ const Layout = ({ children }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-5">
                 {/* ModeToggle removed */}
                 {/* Wallet Balance Pill */}
                 <div
                   onClick={() => navigate("/wallet")}
-                  className="bg-primary dark:bg-primary-strong text-white px-3 py-1 rounded-full flex items-center gap-1 text-sm font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
+                  className="bg-primary dark:bg-primary-strong text-white px-4 py-2 rounded-full flex items-center gap-1 text-sm font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
                 >
                   <Wallet size={14} />
                   <span>

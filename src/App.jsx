@@ -19,6 +19,10 @@ import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import Store from "./pages/Store";
 import AdminDashboard from "./pages/AdminDashboard";
+import LevelRewards from "./pages/LevelRewards";
+import BrandFAQs from "./pages/BrandFAQs";
+import HowVerifyWorks from "./pages/HowVerifyWorks";
+import AboutUs from "./pages/AboutUs";
 import VendorDashboard from "./pages/VendorDashboard";
 import VendorSignup from "./pages/VendorSignup";
 import HelpSupport from "./pages/HelpSupport";
@@ -36,6 +40,7 @@ import CameraScan from "./pages/CameraScan";
 import QRScanPage from "./pages/QRScanPage";
 import QRResultPage from "./pages/QRResultPage";
 import TransactionHistory from "./pages/TransactionHistory";
+import ScrollToTop from "./components/ScrollToTop";
 import RedeemPage from "./pages/RedeemPage";
 import PayoutStatus from "./pages/PayoutStatus";
 import ManageUPI from "./pages/ManageUPI";
@@ -60,6 +65,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <ToastProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route
               path="/admin"
@@ -127,6 +133,10 @@ function App() {
               />
               <Route path="/profile/terms" element={<TermsConditions />} />
               <Route path="/profile/contact" element={<ContactUs />} />
+              <Route path="/level-rewards" element={<LevelRewards />} />
+              <Route path="/brand-faqs" element={<BrandFAQs />} />
+              <Route path="/how-verify-works" element={<HowVerifyWorks />} />
+              <Route path="/about-us" element={<AboutUs />} />
 
               <Route path="/store" element={<Store />} />
               <Route path="/brand-details" element={<BrandDetails />} />

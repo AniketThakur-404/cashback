@@ -37,6 +37,7 @@ const Profile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [imgError, setImgError] = useState(false);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -73,6 +74,7 @@ const Profile = () => {
         phoneNumber: data.phoneNumber || "",
         avatarUrl: data.avatarUrl || "",
       });
+      setImgError(false);
     } catch (err) {
       setError(err.message || "Failed to load profile");
       if (err.status === 401) {
@@ -223,14 +225,17 @@ const Profile = () => {
                     <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : null}
-                {profile.avatarUrl ? (
+                {profile.avatarUrl && !imgError ? (
                   <img
                     src={resolvePublicAssetUrl(profile.avatarUrl)}
                     alt={profile.name}
                     className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                    onError={() => setImgError(true)}
                   />
                 ) : (
-                  <UserCircle size={48} className="text-primary/40" />
+                  <span className="text-3xl font-bold text-gray-700 dark:text-gray-300">
+                    {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
+                  </span>
                 )}
               </div>
             </div>
@@ -259,7 +264,7 @@ const Profile = () => {
               <MenuButton
                 icon={Star}
                 label="Level Rewards"
-                onClick={() => handleComingSoon("Level Rewards")}
+                to="/level-rewards"
               />
             </div>
           </div>
@@ -273,12 +278,12 @@ const Profile = () => {
               <MenuButton
                 icon={HelpCircle}
                 label="Brand FAQs"
-                onClick={() => handleComingSoon("Brand FAQs")}
+                to="/brand-faqs"
               />
               <MenuButton
                 icon={FileQuestion}
                 label="How Verify Works?"
-                onClick={() => handleComingSoon("How Verify Works")}
+                to="/how-verify-works"
               />
               <MenuButton icon={MessageCircle} label="General FAQ" to="/help" />
               <MenuButton
@@ -305,11 +310,7 @@ const Profile = () => {
                 label="Terms & Conditions"
                 to="/profile/terms"
               />
-              <MenuButton
-                icon={Info}
-                label="About Us"
-                onClick={() => handleComingSoon("About Us")}
-              />
+              <MenuButton icon={Info} label="About Us" to="/about-us" />
             </div>
           </div>
 

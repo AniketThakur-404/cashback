@@ -18,6 +18,8 @@ import {
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
   Briefcase,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   BarChart,
@@ -104,10 +106,11 @@ const MetricItem = ({ label, value, subtext }) => (
 const NavButton = ({ active, onClick, icon: Icon, label, badge }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group ${active
-      ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm font-semibold border-l-[3px] border-l-[#059669]"
-      : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 border-l-[3px] border-l-transparent"
-      }`}
+    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 group ${
+      active
+        ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm font-semibold border-l-[3px] border-l-[#059669]"
+        : "text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 border-l-[3px] border-l-transparent"
+    }`}
   >
     <div className="flex items-center gap-3">
       <Icon
@@ -172,6 +175,8 @@ const VendorAccountManager = ({
     website: "",
     logoUrl: "",
     qrPricePerUnit: "",
+    about: "",
+    faqs: [],
   });
   const [isUploadingBrandLogo, setIsUploadingBrandLogo] = useState(false);
   const [brandLogoUploadStatus, setBrandLogoUploadStatus] = useState("");
@@ -337,9 +342,11 @@ const VendorAccountManager = ({
           logoUrl: bData.brand?.logoUrl || "",
           qrPricePerUnit:
             bData.brand?.qrPricePerUnit !== undefined &&
-              bData.brand?.qrPricePerUnit !== null
+            bData.brand?.qrPricePerUnit !== null
               ? String(bData.brand.qrPricePerUnit)
               : "",
+          about: bData.brand?.about || "",
+          faqs: Array.isArray(bData.brand?.faqs) ? bData.brand.faqs : [],
         });
         setBrandStatusForm({
           status: bData.brand?.status || "active",
@@ -477,6 +484,31 @@ const VendorAccountManager = ({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleAddFaq = () => {
+    setBrandForm((prev) => ({
+      ...prev,
+      faqs: [
+        ...prev.faqs,
+        { id: Date.now().toString(), question: "", answer: "" },
+      ],
+    }));
+  };
+
+  const handleRemoveFaq = (idx) => {
+    setBrandForm((prev) => ({
+      ...prev,
+      faqs: prev.faqs.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const handleFaqChange = (idx, field, val) => {
+    setBrandForm((prev) => {
+      const next = [...prev.faqs];
+      next[idx] = { ...next[idx], [field]: val };
+      return { ...prev, faqs: next };
+    });
   };
 
   const handleBrandLogoUpload = async (event) => {
@@ -916,7 +948,9 @@ const VendorAccountManager = ({
           {/* Sidebar Tabs */}
           <div className="w-60 border-r border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-black/20 p-4 flex flex-col gap-1 overflow-y-auto">
             <div className="px-3 pb-2 mb-1">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Navigation</span>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                Navigation
+              </span>
             </div>
             <NavButton
               active={activeTab === "overview"}
@@ -989,10 +1023,11 @@ const VendorAccountManager = ({
                 {/* Status Message */}
                 {actionMessage.text && (
                   <div
-                    className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${actionMessage.type === "error"
-                      ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
-                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
-                      }`}
+                    className={`mb-6 p-4 rounded-xl border flex items-center gap-3 text-sm ${
+                      actionMessage.type === "error"
+                        ? "bg-rose-500/10 border-rose-500/20 text-rose-600"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                    }`}
                   >
                     {actionMessage.type === "error" ? (
                       <AlertCircle size={16} />
@@ -1009,10 +1044,18 @@ const VendorAccountManager = ({
                     {/* Tab Header */}
                     <div className="flex items-center justify-between pb-2">
                       <div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Account Overview</h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Summary of vendor status, metrics, and recent activity</p>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                          Account Overview
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Summary of vendor status, metrics, and recent activity
+                        </p>
                       </div>
-                      <button onClick={loadData} className="p-1.5 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-colors" title="Refresh">
+                      <button
+                        onClick={loadData}
+                        className="p-1.5 rounded-lg hover:bg-slate-200/60 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-colors"
+                        title="Refresh"
+                      >
                         <RotateCw size={15} />
                       </button>
                     </div>
@@ -1020,25 +1063,47 @@ const VendorAccountManager = ({
                       {/* Status Cards */}
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
                         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                          <Store size={20} className="text-slate-400 dark:text-slate-500" />
+                          <Store
+                            size={20}
+                            className="text-slate-400 dark:text-slate-500"
+                          />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Vendor Status</div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.vendor?.status || "unknown")}`}>
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">
+                            Vendor Status
+                          </div>
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.vendor?.status || "unknown")}`}
+                          >
                             {vendorData?.vendor?.status || "N/A"}
                           </span>
                         </div>
                       </div>
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
                         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                          <Building2 size={20} className="text-slate-400 dark:text-slate-500" />
+                          <Building2
+                            size={20}
+                            className="text-slate-400 dark:text-slate-500"
+                          />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Brand Status</div>
-                          <span className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.brand?.status || brandData?.brand?.status)}`}>
-                            {vendorData?.brand?.status || brandData?.brand?.status || "N/A"}
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">
+                            Brand Status
+                          </div>
+                          <span
+                            className={`w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusClasses(vendorData?.brand?.status || brandData?.brand?.status)}`}
+                          >
+                            {vendorData?.brand?.status ||
+                              brandData?.brand?.status ||
+                              "N/A"}
                           </span>
-                          <div className="text-[10px] text-slate-400 mt-0.5">Updated: {formatDate(vendorData?.brand?.updatedAt || brandData?.brand?.updatedAt)}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Updated:{" "}
+                            {formatDate(
+                              vendorData?.brand?.updatedAt ||
+                                brandData?.brand?.updatedAt,
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-4 shadow-sm flex items-center gap-3">
@@ -1046,11 +1111,18 @@ const VendorAccountManager = ({
                           <Wallet size={20} className="text-emerald-500" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">Wallet Balance</div>
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mb-1">
+                            Wallet Balance
+                          </div>
                           <span className="text-xl font-bold text-slate-900 dark:text-white">
                             INR {formatAmount(vendorData?.wallet?.balance || 0)}
                           </span>
-                          <div className="text-[10px] text-slate-400 mt-0.5">Locked: INR {formatAmount(vendorData?.wallet?.lockedBalance || 0)}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Locked: INR{" "}
+                            {formatAmount(
+                              vendorData?.wallet?.lockedBalance || 0,
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1239,9 +1311,12 @@ const VendorAccountManager = ({
                     {/* Tab Header */}
                     <div className="pb-2">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Store size={18} className="text-[#059669]" /> Vendor Profile
+                        <Store size={18} className="text-[#059669]" /> Vendor
+                        Profile
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Edit business details and account status</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Edit business details and account status
+                      </p>
                     </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -1364,7 +1439,7 @@ const VendorAccountManager = ({
                           disabled={
                             isSaving ||
                             vendorStatusForm.status ===
-                            vendorData?.vendor?.status
+                              vendorData?.vendor?.status
                           }
                           className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-900 dark:text-white text-xs font-semibold transition-all disabled:opacity-50"
                         >
@@ -1395,9 +1470,13 @@ const VendorAccountManager = ({
                     {/* Tab Header */}
                     <div className="pb-2">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Building2 size={18} className="text-[#059669]" /> Brand Settings
+                        <Building2 size={18} className="text-[#059669]" /> Brand
+                        Settings
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Configure brand identity, credentials, and account status</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Configure brand identity, credentials, and account
+                        status
+                      </p>
                     </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 shadow-sm backdrop-blur-md">
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -1437,18 +1516,26 @@ const VendorAccountManager = ({
                                   alt="Brand logo preview"
                                   className="h-10 w-10 rounded-lg object-cover border border-slate-200/70 dark:border-white/10"
                                 />
-                                <span className="text-emerald-600 font-medium">Logo uploaded</span>
+                                <span className="text-emerald-600 font-medium">
+                                  Logo uploaded
+                                </span>
                               </div>
                             )}
                           </div>
                           {brandLogoUploadStatus && (
-                            <div className="text-[11px] text-emerald-600">{brandLogoUploadStatus}</div>
+                            <div className="text-[11px] text-emerald-600">
+                              {brandLogoUploadStatus}
+                            </div>
                           )}
                           {brandLogoUploadError && (
-                            <div className="text-[11px] text-rose-600">{brandLogoUploadError}</div>
+                            <div className="text-[11px] text-rose-600">
+                              {brandLogoUploadError}
+                            </div>
                           )}
                           {isUploadingBrandLogo && (
-                            <div className="text-[11px] text-slate-400">Uploading...</div>
+                            <div className="text-[11px] text-slate-400">
+                              Uploading...
+                            </div>
                           )}
                         </div>
                         <InputGroup
@@ -1462,6 +1549,101 @@ const VendorAccountManager = ({
                           max={MAX_QR_PRICE}
                           step="0.01"
                         />
+                        <div className="col-span-1 md:col-span-2 space-y-1.5">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            About Brand
+                          </label>
+                          <textarea
+                            value={brandForm.about}
+                            onChange={(e) =>
+                              setBrandForm({
+                                ...brandForm,
+                                about: e.target.value,
+                              })
+                            }
+                            placeholder="Brief description of the brand..."
+                            rows={3}
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/50 transition-all shadow-sm resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="my-6 border-t border-slate-100 dark:border-white/5" />
+
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Activity size={18} className="text-[#059669]" />{" "}
+                          Brand FAQs
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={handleAddFaq}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition-all flex items-center gap-1.5"
+                        >
+                          <Plus size={14} /> Add FAQ
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {!brandForm.faqs || brandForm.faqs.length === 0 ? (
+                          <div className="text-center py-8 px-4 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
+                            <p className="text-xs text-slate-400">
+                              No custom FAQs defined. Default FAQs will be shown
+                              on the brand page.
+                            </p>
+                          </div>
+                        ) : (
+                          brandForm.faqs.map((faq, idx) => (
+                            <div
+                              key={faq.id || idx}
+                              className="p-4 rounded-xl border border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 space-y-3 relative group"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFaq(idx)}
+                                className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+                              >
+                                <X size={14} />
+                              </button>
+                              <div className="space-y-1.5 pr-8">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-tight ml-1">
+                                  Question
+                                </label>
+                                <input
+                                  type="text"
+                                  value={faq.question}
+                                  onChange={(e) =>
+                                    handleFaqChange(
+                                      idx,
+                                      "question",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 text-sm focus:border-emerald-500 outline-none transition-all"
+                                  placeholder="Enter question..."
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-tight ml-1">
+                                  Answer
+                                </label>
+                                <textarea
+                                  value={faq.answer}
+                                  onChange={(e) =>
+                                    handleFaqChange(
+                                      idx,
+                                      "answer",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 rounded-lg bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 text-sm focus:border-emerald-500 outline-none transition-all resize-none"
+                                  rows={2}
+                                  placeholder="Enter answer..."
+                                />
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
 
                       <div className="my-6 border-t border-slate-100 dark:border-white/5" />
@@ -1654,24 +1836,40 @@ const VendorAccountManager = ({
                     <div className="flex items-center justify-between pb-2">
                       <div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <Wallet size={18} className="text-[#059669]" /> Financials
+                          <Wallet size={18} className="text-[#059669]" />{" "}
+                          Financials
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Wallet balance and recent transaction history</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Wallet balance and recent transaction history
+                        </p>
                       </div>
                     </div>
                     {/* Wallet Summary Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Available Balance</div>
-                        <div className="text-2xl font-bold text-emerald-500">INR {formatAmount(vendorData?.wallet?.balance || 0)}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Available Balance
+                        </div>
+                        <div className="text-2xl font-bold text-emerald-500">
+                          INR {formatAmount(vendorData?.wallet?.balance || 0)}
+                        </div>
                       </div>
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Locked Balance</div>
-                        <div className="text-2xl font-bold text-amber-500">INR {formatAmount(vendorData?.wallet?.lockedBalance || 0)}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Locked Balance
+                        </div>
+                        <div className="text-2xl font-bold text-amber-500">
+                          INR{" "}
+                          {formatAmount(vendorData?.wallet?.lockedBalance || 0)}
+                        </div>
                       </div>
                       <div className="bg-white dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-xl p-4 shadow-sm">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transactions</div>
-                        <div className="text-2xl font-bold text-slate-900 dark:text-white">{transactions.length}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Transactions
+                        </div>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                          {transactions.length}
+                        </div>
                       </div>
                     </div>
                     <div className="bg-white/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm backdrop-blur-md">
@@ -1746,9 +1944,12 @@ const VendorAccountManager = ({
                     <div className="flex items-center justify-between pb-2">
                       <div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <ShoppingBag size={18} className="text-[#059669]" /> QR Orders
+                          <ShoppingBag size={18} className="text-[#059669]" />{" "}
+                          QR Orders
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Review and manage QR batch orders for this vendor</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Review and manage QR batch orders for this vendor
+                        </p>
                       </div>
                       {pendingOrdersCount > 0 && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-sm font-semibold text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-500/20">
@@ -1914,9 +2115,12 @@ const VendorAccountManager = ({
                     {!selectedCampaign && (
                       <div className="pb-2">
                         <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <Megaphone size={18} className="text-[#059669]" /> Campaigns
+                          <Megaphone size={18} className="text-[#059669]" />{" "}
+                          Campaigns
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">View and manage campaigns associated with this vendor</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          View and manage campaigns associated with this vendor
+                        </p>
                       </div>
                     )}
                     {!selectedCampaign ? (
@@ -1986,10 +2190,10 @@ const VendorAccountManager = ({
                         </div>
                         {(brandData?.campaigns || vendorData?.campaigns || [])
                           .length === 0 && (
-                            <div className="text-center py-10 text-slate-400">
-                              <p>No campaigns found</p>
-                            </div>
-                          )}
+                          <div className="text-center py-10 text-slate-400">
+                            <p>No campaigns found</p>
+                          </div>
+                        )}
                       </>
                     ) : (
                       /* CAMPAIGN DETAIL VIEW */
@@ -2288,73 +2492,73 @@ const VendorAccountManager = ({
 
                               {(analyticsData.budget ||
                                 analyticsData.topRedeemers?.length) && (
-                                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                      <div className="text-xs font-bold text-slate-500 uppercase mb-2">
-                                        Budget Check
-                                      </div>
-                                      <div className="text-sm text-slate-900 dark:text-white">
-                                        Total:{" "}
-                                        {analyticsData.budget?.total !== null &&
-                                          analyticsData.budget?.total !== undefined
-                                          ? `INR ${formatAmount(analyticsData.budget.total)}`
-                                          : "Not set"}
-                                      </div>
-                                      <div className="text-xs text-slate-500 mt-1">
-                                        Used: INR{" "}
-                                        {formatAmount(
-                                          analyticsData.budget?.used || 0,
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-slate-500">
-                                        Remaining:{" "}
-                                        {analyticsData.budget?.remaining !==
-                                          null &&
-                                          analyticsData.budget?.remaining !==
-                                          undefined
-                                          ? `INR ${formatAmount(analyticsData.budget.remaining)}`
-                                          : "-"}
-                                      </div>
-                                      <div className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                        Usage:{" "}
-                                        {analyticsData.budget?.usagePercent ?? 0}%
-                                      </div>
+                                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">
+                                      Budget Check
                                     </div>
-                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
-                                      <div className="text-xs font-bold text-slate-500 uppercase mb-2">
-                                        Top Redeemers
-                                      </div>
-                                      {analyticsData.topRedeemers?.length ? (
-                                        <div className="space-y-2 text-xs text-slate-500">
-                                          {analyticsData.topRedeemers
-                                            .slice(0, 3)
-                                            .map((redeemer, idx) => (
-                                              <div
-                                                key={idx}
-                                                className="flex items-center justify-between"
-                                              >
-                                                <span>
-                                                  User{" "}
-                                                  {redeemer.redeemedByUserId?.slice(
-                                                    0,
-                                                    6,
-                                                  ) || "Unknown"}
-                                                </span>
-                                                <span>
-                                                  {redeemer._count?._all || 0}{" "}
-                                                  scans
-                                                </span>
-                                              </div>
-                                            ))}
-                                        </div>
-                                      ) : (
-                                        <div className="text-xs text-slate-500">
-                                          No redeemer data yet.
-                                        </div>
+                                    <div className="text-sm text-slate-900 dark:text-white">
+                                      Total:{" "}
+                                      {analyticsData.budget?.total !== null &&
+                                      analyticsData.budget?.total !== undefined
+                                        ? `INR ${formatAmount(analyticsData.budget.total)}`
+                                        : "Not set"}
+                                    </div>
+                                    <div className="text-xs text-slate-500 mt-1">
+                                      Used: INR{" "}
+                                      {formatAmount(
+                                        analyticsData.budget?.used || 0,
                                       )}
                                     </div>
+                                    <div className="text-xs text-slate-500">
+                                      Remaining:{" "}
+                                      {analyticsData.budget?.remaining !==
+                                        null &&
+                                      analyticsData.budget?.remaining !==
+                                        undefined
+                                        ? `INR ${formatAmount(analyticsData.budget.remaining)}`
+                                        : "-"}
+                                    </div>
+                                    <div className="mt-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                      Usage:{" "}
+                                      {analyticsData.budget?.usagePercent ?? 0}%
+                                    </div>
                                   </div>
-                                )}
+                                  <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">
+                                      Top Redeemers
+                                    </div>
+                                    {analyticsData.topRedeemers?.length ? (
+                                      <div className="space-y-2 text-xs text-slate-500">
+                                        {analyticsData.topRedeemers
+                                          .slice(0, 3)
+                                          .map((redeemer, idx) => (
+                                            <div
+                                              key={idx}
+                                              className="flex items-center justify-between"
+                                            >
+                                              <span>
+                                                User{" "}
+                                                {redeemer.redeemedByUserId?.slice(
+                                                  0,
+                                                  6,
+                                                ) || "Unknown"}
+                                              </span>
+                                              <span>
+                                                {redeemer._count?._all || 0}{" "}
+                                                scans
+                                              </span>
+                                            </div>
+                                          ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-xs text-slate-500">
+                                        No redeemer data yet.
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

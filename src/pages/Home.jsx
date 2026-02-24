@@ -13,9 +13,10 @@ import {
   ArrowRight,
   Shield,
   QrCode,
+  Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import FallbackImage from "../components/FallbackImage";
@@ -152,7 +153,7 @@ const HeroCarousel = ({ items }) => {
                 "radial-gradient(circle at 16% 22%, rgba(255,255,255,0.28), transparent 42%), radial-gradient(circle at 82% 86%, rgba(255,255,255,0.16), transparent 44%)",
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/35" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/25 via-transparent to-black/35" />
           <div className="absolute -top-20 -right-14 w-56 h-56 rounded-full blur-3xl bg-white/10" />
           <div className="absolute -bottom-24 left-8 w-44 h-44 rounded-full blur-3xl bg-black/20" />
 
@@ -185,7 +186,7 @@ const HeroCarousel = ({ items }) => {
               >
                 {b.subtitle}
               </p>
-              <Link to="/brand-details" className="self-start mt-3">
+              <Link to={b.link || "/brand-details"} className="self-start mt-3">
                 <div
                   className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[12px] font-bold px-5 py-2.5 rounded-full active:scale-[0.95] transition-transform"
                   style={{ boxShadow: "0 10px 24px rgba(15, 23, 42, 0.34)" }}
@@ -250,6 +251,7 @@ const HeroCarousel = ({ items }) => {
 
 /* ---------------------- MAIN HOME ---------------------- */
 const Home = () => {
+  const navigate = useNavigate();
   const { authToken } = useAuth();
   const [homeData, setHomeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,8 +260,10 @@ const Home = () => {
 
   useEffect(() => {
     let live = true;
-    (async () => {
-      setIsLoading(true);
+
+    const fetchHomeData = async () => {
+      // Don't show full loading spinner for background refetches
+      if (!homeData) setIsLoading(true);
       try {
         const data = await getPublicHome();
         if (authToken) {
@@ -278,9 +282,33 @@ const Home = () => {
       } finally {
         if (live) setIsLoading(false);
       }
-    })();
+    };
+
+    fetchHomeData();
+
+    // Refresh when app becomes visible or regains focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchHomeData();
+      }
+    };
+    const handleFocus = () => fetchHomeData();
+
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    // Continuous polling every 30 seconds
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchHomeData();
+      }
+    }, 30000);
+
     return () => {
       live = false;
+      window.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(intervalId);
     };
   }, [authToken]);
 
@@ -375,23 +403,26 @@ const Home = () => {
     {
       label: "Owned",
       value: stats.productsOwned || 0,
-      color: "#f97316",
-      bg: "rgba(249,115,22,0.18)", // Increased opacity
-      border: "rgba(249,115,22,0.35)", // Stronger border
+      icon: Package,
+      color: "#059669",
+      bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+      lightBg: "rgba(5,150,105,0.08)",
     },
     {
       label: "Reported",
       value: stats.productsReported || 0,
-      color: "#ef4444",
-      bg: "rgba(239,68,68,0.15)", // Increased opacity
-      border: "rgba(239,68,68,0.35)", // Stronger border
+      icon: History,
+      color: "#3b82f6",
+      bg: "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)",
+      lightBg: "rgba(59,130,246,0.08)",
     },
     {
       label: "Wallet",
       value: fmtCash(stats.walletEarned),
-      color: "#059669",
-      bg: "rgba(5,150,105,0.15)", // Increased opacity
-      border: "rgba(5,150,105,0.35)", // Stronger border
+      icon: Wallet,
+      color: "#f59e0b",
+      bg: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+      lightBg: "rgba(245,158,11,0.08)",
     },
   ];
 
@@ -400,7 +431,7 @@ const Home = () => {
       ref={pageRef}
       className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-primary/10 dark:bg-zinc-950"
     >
-      <div className="px-4 pt-5 space-y-6">
+      <div className="px-4 pt-4 space-y-4">
         {/* --- 1 � HERO CAROUSEL --- */}
         {isLoading ? (
           <div
@@ -525,96 +556,65 @@ const Home = () => {
         </div>
 
         {/* --- 4 – YOUR ACTIVITY STATS --- */}
-        <div
-          className="home-activity-section"
-          style={{
-            opacity: 1,
-            display: "block",
-            visibility: "visible",
-            margin: "24px 0",
-          }}
-        >
-          <div
-            className="home-activity-card bg-white dark:bg-zinc-900 rounded-[28px] overflow-hidden"
-            style={{
-              opacity: 1,
-              display: "block",
-              visibility: "visible",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-              border: "1px solid rgba(0,0,0,0.05)",
-            }}
-          >
-            <div
-              style={{
-                height: 4,
-                opacity: 1,
-                background: "linear-gradient(90deg,#059669,#047857,#059669)",
-              }}
-            />
-            <div className="p-5" style={{ opacity: 1 }}>
-              <div
-                className="flex items-center gap-2 mb-4"
-                style={{ opacity: 1 }}
-              >
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-600"
-                  style={{ opacity: 1 }}
-                >
-                  <Crown size={14} className="text-white" />
-                </div>
-                <span
-                  className="text-[13px] font-black text-zinc-950 dark:text-white uppercase"
-                  style={{ letterSpacing: "0.15em", opacity: 1 }}
-                >
-                  Your Activity
-                </span>
+        <div className="home-activity-section space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-600 shadow-lg shadow-emerald-500/20">
+                <Crown size={16} className="text-white" />
               </div>
-              <div className="grid grid-cols-3 gap-2.5" style={{ opacity: 1 }}>
-                {statItems.map((s, i) => (
-                  <div
-                    key={i}
-                    className="home-stat-box rounded-2xl p-3 flex flex-col items-center justify-center text-center"
-                    style={{
-                      opacity: 1,
-                      background: s.bg,
-                      border: `1px solid ${s.border}`,
-                    }}
-                  >
-                    <div
-                      className="text-[9px] font-black uppercase mb-1"
-                      style={{
-                        letterSpacing: "0.1em",
-                        color: s.color,
-                        opacity: 1,
-                      }}
-                    >
-                      {s.label}
-                    </div>
-                    {isLoading ? (
-                      <div
-                        className="h-6 rounded-lg animate-pulse w-10"
-                        style={{ background: "rgba(0,0,0,0.15)", opacity: 1 }}
-                      />
-                    ) : (
-                      <div
-                        className="text-[18px] font-black leading-none"
-                        style={{
-                          opacity: 1,
-                          color: s.color,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {s.value}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-[15px] font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+                Your Activity
+              </h2>
             </div>
+            <Link
+              to="/history"
+              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+            >
+              View All <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {statItems.map((s, i) => (
+              <div
+                key={i}
+                className="relative overflow-hidden pt-0.5 pb-2 px-2 rounded-[22px] bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex flex-col items-center text-center"
+                style={{ boxShadow: "0 8px 16px -6px rgba(0,0,0,0.05)" }}
+              >
+                {/* Top Colored Bar */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-1"
+                  style={{ background: s.bg }}
+                />
+
+                <div
+                  className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 mt-2 mb-1"
+                  style={{ background: s.lightBg }}
+                >
+                  <s.icon size={18} style={{ color: s.color }} />
+                </div>
+
+                <div>
+                  <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">
+                    {s.label}
+                  </div>
+                  {isLoading ? (
+                    <div className="h-5 w-10 mx-auto bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+                  ) : (
+                    <div
+                      className="text-[18px] font-black text-zinc-950 dark:text-white leading-tight"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {s.value}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* --- 5 � PARTNER BRANDS --- */}
+        {/* --- 5  PARTNER BRANDS --- */}
         <div className="brands-rail">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -624,40 +624,20 @@ const Home = () => {
               >
                 <Star size={10} style={{ color: "#059669" }} />
               </div>
-              <span
-                className="text-[11px] font-bold text-gray-500 uppercase"
-                style={{ letterSpacing: "0.12em" }}
-              >
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
                 Partner Brands
               </span>
             </div>
-            <button
-              onClick={() => setShowAllBrands(!showAllBrands)}
-              className="text-[10px] font-bold flex items-center gap-0.5"
-              style={{ color: "#059669" }}
-            >
-              {showAllBrands ? "Less" : "All"}{" "}
-              <ChevronRight
-                size={12}
-                className={`transition-transform ${showAllBrands ? "rotate-90" : ""}`}
-              />
-            </button>
           </div>
-          <div
-            className={
-              showAllBrands
-                ? "grid grid-cols-4 gap-4"
-                : "flex gap-4 overflow-x-auto pb-2 no-scrollbar"
-            }
-          >
+          <div className="flex gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar -mx-4 px-4 snap-x">
             {isLoading ? (
               Array(5)
                 .fill(0)
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="w-[60px] h-[60px] rounded-2xl animate-pulse shrink-0"
-                    style={{ background: "rgba(0,0,0,0.06)" }}
+                    className="w-[66px] h-[66px] rounded-[22px] animate-pulse shrink-0 snap-center"
+                    style={{ background: "rgba(0,0,0,0.04)" }}
                   />
                 ))
             ) : brands.length > 0 ? (
@@ -665,29 +645,23 @@ const Home = () => {
                 <Link
                   key={b.id}
                   to={`/brand-details/${b.id}`}
-                  className="brand-item flex flex-col items-center gap-1.5 shrink-0 active:scale-[0.92] transition-transform"
-                  style={{
-                    opacity: 1,
-                    visibility: "visible",
-                    transform: "none",
-                  }}
+                  className="brand-item flex flex-col items-center gap-2 shrink-0 active:scale-[0.94] transition-transform snap-center group"
                 >
-                  <div
-                    className="w-[60px] h-[60px] rounded-2xl bg-white p-[3px]"
-                    style={{
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <div className="w-full h-full rounded-xl bg-white overflow-hidden flex items-center justify-center">
+                  <div className="w-[66px] h-[66px] rounded-[24px] bg-white p-[3px] transition-shadow shadow-sm group-hover:shadow-md border border-gray-100 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="w-full h-full rounded-[20px] bg-linear-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden flex items-center justify-center relative">
                       <FallbackImage
                         src={resolveBrandLogoUrl(b.logoUrl || b.logo)}
                         alt={b.name}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover object-center absolute inset-0 z-10"
+                        fallback={
+                          <span className="text-[22px] font-bold bg-clip-text text-transparent bg-linear-to-br from-emerald-500 to-emerald-700 dark:from-emerald-400 dark:to-emerald-600 absolute z-0 flex items-center justify-center w-full h-full">
+                            {b.name ? b.name.charAt(0).toUpperCase() : "B"}
+                          </span>
+                        }
                       />
                     </div>
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-500 truncate w-14 text-center">
+                  <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 truncate w-16 text-center tracking-tight">
                     {b.name}
                   </span>
                 </Link>
@@ -717,72 +691,101 @@ const Home = () => {
             </span>
           </div>
           <div className="flex gap-3.5 overflow-x-auto pb-3 no-scrollbar snap-x snap-mandatory">
-            {defaultOffers.map((o, i) => (
-              <div
-                key={i}
-                className="offer-card min-w-[175px] h-[120px] rounded-[22px] p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform"
-                style={{
-                  background: o.gradient,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                  opacity: 1,
-                  visibility: "visible",
-                  transform: "none",
-                }}
-              >
-                <div
-                  className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-xl"
-                  style={{ background: "rgba(255,255,255,0.06)" }}
-                />
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-lg">{o.emoji}</span>
-                    <span
-                      className="text-[9px] font-bold uppercase"
-                      style={{
-                        color: "rgba(255,255,255,0.5)",
-                        letterSpacing: "0.1em",
-                      }}
-                    >
-                      Get Upto
-                    </span>
-                  </div>
+            {isLoading ? (
+              Array(3)
+                .fill(0)
+                .map((_, i) => (
                   <div
-                    className="text-[24px] font-black text-white tracking-tight leading-none"
-                    style={{ textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
-                  >
-                    {o.amount}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-[10px] font-bold px-3 py-1 rounded-full text-white"
+                    key={i}
+                    className="offer-card min-w-[175px] h-[120px] rounded-[22px] p-4 bg-gray-100 dark:bg-zinc-800 animate-pulse snap-center shrink-0"
+                  />
+                ))
+            ) : brands.length > 0 ? (
+              brands.slice(0, 5).map((b, i) => {
+                const gradients = [
+                  "linear-gradient(135deg, #f97316, #ef4444, #e11d48)",
+                  "linear-gradient(135deg, #475569, #334155, #0f172a)",
+                  "linear-gradient(135deg, #10b981, #16a34a, #166534)",
+                  "linear-gradient(135deg, #8b5cf6, #6d28d9, #4c1d95)",
+                  "linear-gradient(135deg, #0ea5e9, #0284c7, #0369a1)",
+                ];
+                const emojis = ["🔥", "✨", "🌟", "🎁", "💎"];
+                const amounts = ["₹1,100", "₹1,400", "₹120", "₹500", "₹2,000"];
+
+                return (
+                  <div
+                    key={b.id || i}
+                    onClick={() =>
+                      navigate(`/brand-details/${b.id || b._id || ""}`)
+                    }
+                    className="offer-card min-w-[175px] h-[120px] rounded-[22px] p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform shrink-0 cursor-pointer"
                     style={{
-                      background: "rgba(255,255,255,0.1)",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: gradients[i % gradients.length],
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                     }}
                   >
-                    {o.brand}
-                  </span>
-                  <div
-                    className="w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform"
-                    style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                  >
-                    <ArrowRight size={13} className="text-gray-800" />
+                    <div
+                      className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-xl"
+                      style={{ background: "rgba(255,255,255,0.06)" }}
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-lg">
+                          {emojis[i % emojis.length]}
+                        </span>
+                        <span
+                          className="text-[9px] font-bold uppercase"
+                          style={{
+                            color: "rgba(255,255,255,0.5)",
+                            letterSpacing: "0.1em",
+                          }}
+                        >
+                          Get Upto
+                        </span>
+                      </div>
+                      <div
+                        className="text-[24px] font-black text-white tracking-tight leading-none"
+                        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
+                      >
+                        {amounts[i % amounts.length]}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span
+                        className="text-[10px] font-bold px-3 py-1 rounded-full text-white truncate max-w-[90px]"
+                        style={{
+                          background: "rgba(255,255,255,0.1)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                        }}
+                      >
+                        {b.name}
+                      </span>
+                      <div
+                        className="w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform cursor-pointer"
+                        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                      >
+                        <ArrowRight size={13} className="text-gray-800" />
+                      </div>
+                    </div>
+                    <div
+                      className="offer-shine absolute inset-y-0 left-0 w-1/4 -translate-x-full"
+                      style={{
+                        background:
+                          "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
+                      }}
+                    />
                   </div>
-                </div>
-                <div
-                  className="offer-shine absolute inset-y-0 left-0 w-1/4 -translate-x-full"
-                  style={{
-                    background:
-                      "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
-                  }}
-                />
+                );
+              })
+            ) : (
+              <div className="text-[12px] text-gray-400 italic px-4">
+                No top offers available.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* --- 7 � PRODUCT REPORTS --- */}
+        {/* --- 7 • PRODUCT REPORTS --- */}
         <Link
           to="/product-report"
           className="block active:scale-[0.98] transition-transform"
@@ -806,7 +809,7 @@ const Home = () => {
               </div>
               <div>
                 <div className="text-[13px] font-bold text-gray-900">
-                  Product Reports
+                  My Reports
                 </div>
                 <div className="text-[10px] text-gray-500">
                   {isLoading
