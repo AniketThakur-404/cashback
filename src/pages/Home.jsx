@@ -133,9 +133,9 @@ const HeroCarousel = React.memo(({ items }) => {
 
   return (
     <div
-      className="hero-carousel relative isolate w-full h-[224px] sm:h-[244px] rounded-[30px] overflow-hidden border border-white/20"
+      className="hero-carousel relative isolate w-full h-[240px] sm:h-[260px] rounded-[40px] overflow-hidden border border-white/25"
       style={{
-        boxShadow: "0 24px 56px -16px rgba(15, 23, 42, 0.32)",
+        boxShadow: "0 28px 64px -12px rgba(15, 23, 42, 0.4)",
         touchAction: "pan-y",
       }}
     >
@@ -146,10 +146,10 @@ const HeroCarousel = React.memo(({ items }) => {
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.18}
           onDragEnd={handleDragEnd}
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -60 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0"
         >
           <div
@@ -163,66 +163,71 @@ const HeroCarousel = React.memo(({ items }) => {
             className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(circle at 16% 22%, rgba(255,255,255,0.28), transparent 42%), radial-gradient(circle at 82% 86%, rgba(255,255,255,0.16), transparent 44%)",
+                "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 50%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.2), transparent 50%)",
             }}
           />
-          <div className="absolute inset-0 bg-linear-to-r from-black/25 via-transparent to-black/35" />
-          <div className="absolute -top-20 -right-14 w-56 h-56 rounded-full blur-3xl bg-white/10" />
-          <div className="absolute -bottom-24 left-8 w-44 h-44 rounded-full blur-3xl bg-black/20" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-black/20" />
 
-          <div className="relative z-10 h-full px-5 sm:px-6 py-5 sm:py-6 grid grid-cols-12 gap-3 sm:gap-4">
-            <div className="col-span-8 sm:col-span-7 min-w-0 flex flex-col justify-between">
+          {/* Subtle noise/texture overlay for premium look */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
+
+          <div className="relative z-10 h-full px-7 sm:px-8 py-7 sm:py-8 flex items-center justify-between gap-6">
+            <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
               <div
-                className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full border mb-3 backdrop-blur-md"
+                className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-4 backdrop-blur-xl"
                 style={{
-                  background: "rgba(255,255,255,0.18)",
-                  borderColor: "rgba(255,255,255,0.28)",
+                  background: "rgba(255,255,255,0.12)",
+                  borderColor: "rgba(255,255,255,0.2)",
                 }}
               >
-                <Zap size={10} className="text-yellow-300" />
+                <Zap size={10} className="text-yellow-400 fill-yellow-400" />
                 <span
                   className="text-[10px] font-bold text-white uppercase"
-                  style={{ letterSpacing: "0.15em" }}
+                  style={{ letterSpacing: "0.2em" }}
                 >
                   Exclusive
                 </span>
               </div>
               <h3
-                className="text-[34px] sm:text-[38px] font-black text-white leading-[0.95] tracking-tight max-w-[11ch]"
-                style={{ textShadow: "0 6px 20px rgba(0,0,0,0.24)" }}
+                className="text-[32px] sm:text-[40px] font-bold text-white leading-[1.1] tracking-tight"
+                style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
               >
                 {b.title}
               </h3>
               <p
-                className="text-[12px] sm:text-[13px] mt-2 font-medium"
-                style={{ color: "rgba(255,255,255,0.82)" }}
+                className="text-[13px] sm:text-[14px] mt-2.5 font-medium"
+                style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 {b.subtitle}
               </p>
-              <Link to={b.link || "/brand-details"} className="self-start mt-3">
+              <Link to={b.link || "/brand-details"} className="self-start mt-6">
                 <div
-                  className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[12px] font-bold px-5 py-2.5 rounded-full active:scale-[0.95] transition-transform"
-                  style={{ boxShadow: "0 10px 24px rgba(15, 23, 42, 0.34)" }}
+                  className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-7 py-3 rounded-full active:scale-[0.92] transition-all hover:pr-8 group"
+                  style={{ boxShadow: "0 15px 35px -5px rgba(0,0,0,0.4)" }}
                 >
-                  Explore <ArrowRight size={14} />
+                  Explore{" "}
+                  <ArrowRight
+                    size={16}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
                 </div>
               </Link>
             </div>
 
-            <div className="col-span-4 sm:col-span-5 flex items-end justify-end pb-2">
-              <div className="relative w-full max-w-[192px] sm:max-w-[216px] aspect-[4/3] rounded-[20px] overflow-hidden border border-white/35 shadow-2xl bg-black/20">
+            <div className="flex shrink-0 items-center justify-center">
+              <div className="relative w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] rounded-[32px] overflow-hidden border-2 border-white/20 shadow-2xl rotate-[3deg] group">
                 <FallbackImage
                   src={resolvePublicAssetUrl(b.img)}
                   alt="Offer"
-                  className="w-full h-full object-cover scale-[1.03]"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   fallback={
                     <Sparkles
-                      className="w-full h-full"
-                      style={{ color: "rgba(255,255,255,0.22)" }}
+                      className="w-full h-full p-8"
+                      style={{ color: "rgba(255,255,255,0.2)" }}
                     />
                   }
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/10" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-white/10" />
               </div>
             </div>
           </div>

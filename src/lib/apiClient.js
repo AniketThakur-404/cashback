@@ -38,6 +38,7 @@ export const resolvePublicAssetUrl = (path) => {
   const source = String(path).trim();
   if (!source) return "";
 
+  // Absolute URLs are returned as-is
   if (
     source.startsWith("http://") ||
     source.startsWith("https://") ||
@@ -47,11 +48,20 @@ export const resolvePublicAssetUrl = (path) => {
     return source;
   }
 
-  // Handle paths that might be like "uploads/..." or "/uploads/..." or "api/uploads/..."
   const normalized = source.replace(/\\/g, "/");
+  
+  // Decide whether to prefix with API URL or keep as local path
+  // We prefix if it matches common upload path patterns
+  const isUploadPath = /^\/?(api\/)?uploads\//i.test(normalized);
+  
   const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
 
-  return buildApiUrl(cleanPath);
+  if (isUploadPath) {
+    return buildApiUrl(cleanPath);
+  }
+
+  // Otherwise treat as a local public asset
+  return cleanPath;
 };
 
 const parseResponse = async (response) => {
