@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Shield,
   QrCode,
+  Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -152,7 +153,7 @@ const HeroCarousel = ({ items }) => {
                 "radial-gradient(circle at 16% 22%, rgba(255,255,255,0.28), transparent 42%), radial-gradient(circle at 82% 86%, rgba(255,255,255,0.16), transparent 44%)",
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-transparent to-black/35" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/25 via-transparent to-black/35" />
           <div className="absolute -top-20 -right-14 w-56 h-56 rounded-full blur-3xl bg-white/10" />
           <div className="absolute -bottom-24 left-8 w-44 h-44 rounded-full blur-3xl bg-black/20" />
 
@@ -185,7 +186,7 @@ const HeroCarousel = ({ items }) => {
               >
                 {b.subtitle}
               </p>
-              <Link to="/brand-details" className="self-start mt-3">
+              <Link to={b.link || "/brand-details"} className="self-start mt-3">
                 <div
                   className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[12px] font-bold px-5 py-2.5 rounded-full active:scale-[0.95] transition-transform"
                   style={{ boxShadow: "0 10px 24px rgba(15, 23, 42, 0.34)" }}
@@ -402,23 +403,26 @@ const Home = () => {
     {
       label: "Owned",
       value: stats.productsOwned || 0,
-      color: "#f97316",
-      bg: "rgba(249,115,22,0.18)", // Increased opacity
-      border: "rgba(249,115,22,0.35)", // Stronger border
+      icon: Package,
+      color: "#059669",
+      bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+      lightBg: "rgba(5,150,105,0.08)",
     },
     {
       label: "Reported",
       value: stats.productsReported || 0,
-      color: "#ef4444",
-      bg: "rgba(239,68,68,0.15)", // Increased opacity
-      border: "rgba(239,68,68,0.35)", // Stronger border
+      icon: History,
+      color: "#3b82f6",
+      bg: "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)",
+      lightBg: "rgba(59,130,246,0.08)",
     },
     {
       label: "Wallet",
       value: fmtCash(stats.walletEarned),
-      color: "#059669",
-      bg: "rgba(5,150,105,0.15)", // Increased opacity
-      border: "rgba(5,150,105,0.35)", // Stronger border
+      icon: Wallet,
+      color: "#f59e0b",
+      bg: "linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)",
+      lightBg: "rgba(245,158,11,0.08)",
     },
   ];
 
@@ -427,7 +431,7 @@ const Home = () => {
       ref={pageRef}
       className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-primary/10 dark:bg-zinc-950"
     >
-      <div className="px-4 pt-5 space-y-6">
+      <div className="px-4 pt-4 space-y-4">
         {/* --- 1 � HERO CAROUSEL --- */}
         {isLoading ? (
           <div
@@ -552,92 +556,61 @@ const Home = () => {
         </div>
 
         {/* --- 4 – YOUR ACTIVITY STATS --- */}
-        <div
-          className="home-activity-section"
-          style={{
-            opacity: 1,
-            display: "block",
-            visibility: "visible",
-            margin: "24px 0",
-          }}
-        >
-          <div
-            className="home-activity-card bg-white dark:bg-zinc-900 rounded-[28px] overflow-hidden"
-            style={{
-              opacity: 1,
-              display: "block",
-              visibility: "visible",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-              border: "1px solid rgba(0,0,0,0.05)",
-            }}
-          >
-            <div
-              style={{
-                height: 4,
-                opacity: 1,
-                background: "linear-gradient(90deg,#059669,#047857,#059669)",
-              }}
-            />
-            <div className="p-5" style={{ opacity: 1 }}>
-              <div
-                className="flex items-center gap-2 mb-4"
-                style={{ opacity: 1 }}
-              >
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-600"
-                  style={{ opacity: 1 }}
-                >
-                  <Crown size={14} className="text-white" />
-                </div>
-                <span
-                  className="text-[13px] font-black text-zinc-950 dark:text-white uppercase"
-                  style={{ letterSpacing: "0.15em", opacity: 1 }}
-                >
-                  Your Activity
-                </span>
+        <div className="home-activity-section space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-600 shadow-lg shadow-emerald-500/20">
+                <Crown size={16} className="text-white" />
               </div>
-              <div className="grid grid-cols-3 gap-2.5" style={{ opacity: 1 }}>
-                {statItems.map((s, i) => (
-                  <div
-                    key={i}
-                    className="home-stat-box rounded-2xl p-3 flex flex-col items-center justify-center text-center"
-                    style={{
-                      opacity: 1,
-                      background: s.bg,
-                      border: `1px solid ${s.border}`,
-                    }}
-                  >
-                    <div
-                      className="text-[9px] font-black uppercase mb-1"
-                      style={{
-                        letterSpacing: "0.1em",
-                        color: s.color,
-                        opacity: 1,
-                      }}
-                    >
-                      {s.label}
-                    </div>
-                    {isLoading ? (
-                      <div
-                        className="h-6 rounded-lg animate-pulse w-10"
-                        style={{ background: "rgba(0,0,0,0.15)", opacity: 1 }}
-                      />
-                    ) : (
-                      <div
-                        className="text-[18px] font-black leading-none"
-                        style={{
-                          opacity: 1,
-                          color: s.color,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {s.value}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-[15px] font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+                Your Activity
+              </h2>
             </div>
+            <Link
+              to="/history"
+              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+            >
+              View All <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {statItems.map((s, i) => (
+              <div
+                key={i}
+                className="relative overflow-hidden pt-0.5 pb-2 px-2 rounded-[22px] bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex flex-col items-center text-center"
+                style={{ boxShadow: "0 8px 16px -6px rgba(0,0,0,0.05)" }}
+              >
+                {/* Top Colored Bar */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-1"
+                  style={{ background: s.bg }}
+                />
+
+                <div
+                  className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 mt-2 mb-1"
+                  style={{ background: s.lightBg }}
+                >
+                  <s.icon size={18} style={{ color: s.color }} />
+                </div>
+
+                <div>
+                  <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">
+                    {s.label}
+                  </div>
+                  {isLoading ? (
+                    <div className="h-5 w-10 mx-auto bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+                  ) : (
+                    <div
+                      className="text-[18px] font-black text-zinc-950 dark:text-white leading-tight"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {s.value}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -836,7 +809,7 @@ const Home = () => {
               </div>
               <div>
                 <div className="text-[13px] font-bold text-gray-900">
-                  Product Reports
+                  My Reports
                 </div>
                 <div className="text-[10px] text-gray-500">
                   {isLoading

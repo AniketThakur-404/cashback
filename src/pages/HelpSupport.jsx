@@ -62,7 +62,7 @@ const HelpSupport = () => {
       </div>
 
       {/* Chat Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-green-500 p-5 shadow-lg">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-orange-500 to-green-500 p-5 shadow-lg">
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm text-white">
