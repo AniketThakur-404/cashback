@@ -35,10 +35,23 @@ export const buildApiUrl = (path, baseOverride = BASE_URL) => {
 
 export const resolvePublicAssetUrl = (path) => {
   if (!path) return "";
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    return path;
+  const source = String(path).trim();
+  if (!source) return "";
+
+  if (
+    source.startsWith("http://") ||
+    source.startsWith("https://") ||
+    source.startsWith("data:") ||
+    source.startsWith("blob:")
+  ) {
+    return source;
   }
-  return buildApiUrl(path.startsWith("/") ? path : `/${path}`);
+
+  // Handle paths that might be like "uploads/..." or "/uploads/..." or "api/uploads/..."
+  const normalized = source.replace(/\\/g, "/");
+  const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
+
+  return buildApiUrl(cleanPath);
 };
 
 const parseResponse = async (response) => {

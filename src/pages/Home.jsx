@@ -23,30 +23,12 @@ import FallbackImage from "../components/FallbackImage";
 import VideoSpotlight from "../components/VideoSpotlight";
 import HowItWorks from "../components/HowItWorks";
 import { getPublicHome, getUserHomeStats } from "../lib/api";
-import { getApiBaseUrl } from "../lib/apiClient";
+import { getApiBaseUrl, resolvePublicAssetUrl } from "../lib/apiClient";
 import { useAuth } from "../lib/auth";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const API_BASE_URL = getApiBaseUrl();
-
-const resolveBrandLogoUrl = (value) => {
-  if (!value) return "";
-  const source = String(value).trim();
-  if (!source) return "";
-  if (/^(https?:\/\/|data:|blob:)/i.test(source)) return source;
-  const normalized = source.replace(/\\/g, "/");
-  const isUploadPath = /^\/?(api\/)?uploads\//i.test(normalized);
-  if (isUploadPath) {
-    const withLeadingSlash = normalized.startsWith("/")
-      ? normalized
-      : `/${normalized}`;
-    return API_BASE_URL
-      ? `${API_BASE_URL}${withLeadingSlash}`
-      : withLeadingSlash;
-  }
-  return normalized;
-};
 
 /* -- Mock Data -- */
 const heroBanners = [
@@ -86,8 +68,39 @@ const defaultOffers = [
   },
 ];
 
+const quickActions = [
+  {
+    to: "/wallet",
+    icon: Wallet,
+    label: "Wallet",
+    gradient: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+    shadow: "rgba(139,92,246,0.3)",
+  },
+  {
+    to: "/history",
+    icon: History,
+    label: "History",
+    gradient: "linear-gradient(135deg,#f59e0b,#d97706)",
+    shadow: "rgba(245,158,11,0.3)",
+  },
+  {
+    to: "/product-report",
+    icon: Shield,
+    label: "Reports",
+    gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
+    shadow: "rgba(59,130,246,0.3)",
+  },
+  {
+    to: "/wallet",
+    icon: Gift,
+    label: "Rewards",
+    gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
+    shadow: "rgba(236,72,153,0.3)",
+  },
+];
+
 /* -- Hero Carousel -- */
-const HeroCarousel = ({ items }) => {
+const HeroCarousel = React.memo(({ items }) => {
   const banners = items?.length ? items : heroBanners;
   const [cur, setCur] = useState(0);
   const b = banners[cur];
@@ -199,7 +212,7 @@ const HeroCarousel = ({ items }) => {
             <div className="col-span-4 sm:col-span-5 flex items-end justify-end pb-2">
               <div className="relative w-full max-w-[192px] sm:max-w-[216px] aspect-[4/3] rounded-[20px] overflow-hidden border border-white/35 shadow-2xl bg-black/20">
                 <FallbackImage
-                  src={resolveBrandLogoUrl(b.img)}
+                  src={resolvePublicAssetUrl(b.img)}
                   alt="Offer"
                   className="w-full h-full object-cover scale-[1.03]"
                   fallback={
@@ -247,7 +260,7 @@ const HeroCarousel = ({ items }) => {
       </div>
     </div>
   );
-};
+});
 
 /* ---------------------- MAIN HOME ---------------------- */
 const Home = () => {
@@ -297,12 +310,12 @@ const Home = () => {
     window.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleFocus);
 
-    // Continuous polling every 30 seconds
+    // Continuous polling every 60 seconds (reduced frequency for performance)
     const intervalId = setInterval(() => {
       if (document.visibilityState === "visible") {
         fetchHomeData();
       }
-    }, 30000);
+    }, 60000);
 
     return () => {
       live = false;
@@ -331,32 +344,36 @@ const Home = () => {
       });
       gsap.to(".scan-icon-breathe", {
         scale: 1.08,
-        duration: 1.8,
+        duration: 2.1,
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
+        force3D: true,
       });
       gsap.to(".scan-ring-1", {
         rotation: 360,
-        duration: 25,
+        duration: 30,
         repeat: -1,
         ease: "none",
+        force3D: true,
       });
       gsap.to(".scan-ring-2", {
         rotation: -360,
-        duration: 35,
+        duration: 40,
         repeat: -1,
         ease: "none",
+        force3D: true,
       });
       // Quick actions animation removed for alignment reliability
       // Brand items and offer cards animations removed for visibility reliability
       gsap.to(".offer-shine", {
-        x: "300%",
-        duration: 2.5,
+        x: "400%",
+        duration: 3,
         repeat: -1,
         repeatDelay: 5,
         ease: "power1.inOut",
-        stagger: 0.7,
+        stagger: 0.8,
+        force3D: true,
       });
     }, pageRef);
     return () => ctx.revert();
@@ -367,37 +384,6 @@ const Home = () => {
   const stats = homeData?.stats || {};
   const fmtCash = (v) =>
     !v ? "₹0" : typeof v === "number" ? `₹${v.toFixed(0)}` : v;
-
-  const quickActions = [
-    {
-      to: "/wallet",
-      icon: Wallet,
-      label: "Wallet",
-      gradient: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
-      shadow: "rgba(139,92,246,0.3)",
-    },
-    {
-      to: "/history",
-      icon: History,
-      label: "History",
-      gradient: "linear-gradient(135deg,#f59e0b,#d97706)",
-      shadow: "rgba(245,158,11,0.3)",
-    },
-    {
-      to: "/product-report",
-      icon: Shield,
-      label: "Reports",
-      gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
-      shadow: "rgba(59,130,246,0.3)",
-    },
-    {
-      to: "/wallet",
-      icon: Gift,
-      label: "Rewards",
-      gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
-      shadow: "rgba(236,72,153,0.3)",
-    },
-  ];
 
   const statItems = [
     {
@@ -650,7 +636,7 @@ const Home = () => {
                   <div className="w-[66px] h-[66px] rounded-[24px] bg-white p-[3px] transition-shadow shadow-sm group-hover:shadow-md border border-gray-100 dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="w-full h-full rounded-[20px] bg-linear-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden flex items-center justify-center relative">
                       <FallbackImage
-                        src={resolveBrandLogoUrl(b.logoUrl || b.logo)}
+                        src={resolvePublicAssetUrl(b.logoUrl || b.logo)}
                         alt={b.name}
                         className="w-full h-full object-cover object-center absolute inset-0 z-10"
                         fallback={

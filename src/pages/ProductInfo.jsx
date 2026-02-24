@@ -7,19 +7,10 @@ import {
   getPublicProductDetails,
   getPublicProducts,
 } from "../lib/api";
-import { getApiBaseUrl } from "../lib/apiClient";
+import { getApiBaseUrl, resolvePublicAssetUrl } from "../lib/apiClient";
 import HowItWorks from "../components/HowItWorks";
 
 const API_BASE_URL = getApiBaseUrl();
-
-const resolvePublicAssetUrl = (value) => {
-  if (!value) return "/placeholder.svg";
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith("/uploads/")) {
-    return API_BASE_URL ? `${API_BASE_URL}${value}` : value;
-  }
-  return value;
-};
 
 const ProductInfo = () => {
   const { id } = useParams();
@@ -171,15 +162,6 @@ const ProductInfo = () => {
             alt={`${displayProduct.name} banner`}
             className="w-full h-44 object-cover"
           />
-          <button
-            type="button"
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-800/90 border border-gray-200 dark:border-zinc-700 flex items-center justify-center shadow-md"
-          >
-            <ChevronRight
-              size={18}
-              className="text-gray-700 dark:text-gray-300"
-            />
-          </button>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">

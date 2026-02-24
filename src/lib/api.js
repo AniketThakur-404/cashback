@@ -52,10 +52,10 @@ const downloadAuthedFile = async (token, path, fallbackName) => {
   window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
 };
 
-export const sendOtp = (phoneNumber) =>
+export const sendOtp = (phoneNumber, name = "", email = "") =>
   apiRequest("/api/auth/send-otp", {
     method: "POST",
-    body: { phoneNumber },
+    body: { phoneNumber, name, email },
   });
 
 export const verifyOtp = (phoneNumber, otp) =>

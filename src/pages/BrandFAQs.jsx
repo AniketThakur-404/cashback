@@ -86,7 +86,7 @@ const BrandFAQs = () => {
             Still need help?
           </p>
           <button
-            onClick={() => navigate("/contact")}
+            onClick={() => navigate("/profile/contact")}
             className="text-sm font-bold text-primary hover:text-primary-strong transition-colors"
           >
             Contact Support

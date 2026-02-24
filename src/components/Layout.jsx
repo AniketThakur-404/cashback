@@ -7,7 +7,12 @@ import LiquidDock from "./LiquidDock";
 import { useTheme } from "./ThemeProvider";
 import UserProfileMenu from "./UserProfileMenu";
 import { getWalletSummary } from "../lib/api";
-import { AUTH_CHANGE_EVENT, AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
+import {
+  AUTH_CHANGE_EVENT,
+  AUTH_TOKEN_KEY,
+  clearAuthToken,
+  useAuth,
+} from "../lib/auth";
 
 const Layout = ({ children }) => {
   const mainRef = useRef(null);
@@ -46,22 +51,9 @@ const Layout = ({ children }) => {
 
   const { effectiveTheme } = useTheme();
   const logoSrc = "/light theme incentify logo.png";
-  const [authToken, setAuthToken] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem(AUTH_TOKEN_KEY) || "";
-  });
+  const { authToken } = useAuth();
   const [walletBalance, setWalletBalance] = useState(null);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const handleAuthChange = () => {
-      setAuthToken(localStorage.getItem(AUTH_TOKEN_KEY) || "");
-    };
-    window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
-    return () =>
-      window.removeEventListener(AUTH_CHANGE_EVENT, handleAuthChange);
-  }, []);
 
   useEffect(() => {
     if (!isHome) return;

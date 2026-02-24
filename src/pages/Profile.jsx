@@ -22,16 +22,14 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 import { getMe, updateUserProfile, uploadUserAvatar } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
-import { AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
+import { AUTH_TOKEN_KEY, clearAuthToken, useAuth } from "../lib/auth";
 import { useToast } from "../components/ui/ToastContext";
 import { lockModalScroll, unlockModalScroll } from "../lib/modalScrollLock";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { info } = useToast();
-  const [token, setToken] = useState(() =>
-    localStorage.getItem(AUTH_TOKEN_KEY),
-  );
+  const { authToken: token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
