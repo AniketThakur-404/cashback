@@ -189,7 +189,7 @@ const HeroCarousel = React.memo(({ items }) => {
                 </span>
               </div>
               <h3
-                className="text-[32px] sm:text-[40px] font-bold text-white leading-[1.1] tracking-tight"
+                className="text-[32px] sm:text-[25px] font-bold text-white leading-[1.1] tracking-tight"
                 style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
               >
                 {b.title}
