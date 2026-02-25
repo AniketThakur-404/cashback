@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MessageSquare,
@@ -78,7 +78,7 @@ const HelpSupport = () => {
             </div>
           </div>
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/918368926325"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-lg bg-white/20 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition-colors hover:bg-white/30"
@@ -157,7 +157,7 @@ const HelpSupport = () => {
             <div>
               <p className="text-xs text-gray-400 font-medium">Call Us</p>
               <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                1800-123-456 (Toll Free)
+                +91 83689 26325
               </p>
             </div>
           </div>
@@ -170,14 +170,18 @@ const HelpSupport = () => {
           <Link to="/terms" className="hover:text-amber-500 transition-colors">
             Terms & Conditions
           </Link>
-          <span className="text-gray-300 dark:text-gray-600">•</span>
+          <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
+            &bull;
+          </span>
           <Link
             to="/privacy-policy"
             className="hover:text-amber-500 transition-colors"
           >
             Privacy Policy
           </Link>
-          <span className="text-gray-300 dark:text-gray-600">•</span>
+          <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
+            &bull;
+          </span>
           <Link
             to="/brand-registration"
             className="hover:text-amber-500 transition-colors"
@@ -186,8 +190,14 @@ const HelpSupport = () => {
           </Link>
         </div>
         <p className="text-xs text-gray-400/80 font-medium">
-          <span className="text-orange-500 font-bold mr-1">○</span> Powered by
-          Assured Rewards <span className="mx-1">•</span> Secure & Trusted
+          <span className="text-orange-500 font-bold mr-1" aria-hidden="true">
+            &#9675;
+          </span>{" "}
+          Powered by Assured Rewards{" "}
+          <span className="mx-1" aria-hidden="true">
+            &bull;
+          </span>{" "}
+          Secure & Trusted
         </p>
       </div>
     </div>
@@ -195,3 +205,4 @@ const HelpSupport = () => {
 };
 
 export default HelpSupport;
+

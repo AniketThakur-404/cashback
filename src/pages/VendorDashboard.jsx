@@ -645,6 +645,9 @@ const VendorDashboard = () => {
   const [campaignTab, setCampaignTab] = useState("create"); // 'create', 'pending', 'active'
   const [selectedPendingCampaign, setSelectedPendingCampaign] = useState(null);
   const [selectedActiveCampaign, setSelectedActiveCampaign] = useState(null);
+  const [campaignQrBreakdownMap, setCampaignQrBreakdownMap] = useState({});
+  const [loadingCampaignBreakdownId, setLoadingCampaignBreakdownId] =
+    useState("");
   const [isPayingCampaign, setIsPayingCampaign] = useState(false);
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
@@ -1126,6 +1129,8 @@ const VendorDashboard = () => {
     setDeletingBatchKey(null);
     lastAutoFilledCashbackRef.current = null;
     setSelectedActiveCampaign(null);
+    setCampaignQrBreakdownMap({});
+    setLoadingCampaignBreakdownId("");
     setQrs([]);
     setQrTotal(0);
     setQrPage(1);
@@ -1381,6 +1386,105 @@ const VendorDashboard = () => {
       }
     } finally {
       setIsLoadingQrs(false);
+    }
+  };
+
+  const loadCampaignQrBreakdown = async (
+    campaign,
+    authToken = token,
+  ) => {
+    const campaignId = campaign?.id;
+    if (!authToken || !campaignId) return;
+
+    const expectedTotalRaw = Number(
+      campaignStatsMap[campaignId]?.totalQRsOrdered ??
+      campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
+    );
+    const expectedTotal = Number.isFinite(expectedTotalRaw)
+      ? Math.max(0, expectedTotalRaw)
+      : 0;
+
+    setLoadingCampaignBreakdownId(campaignId);
+
+    try {
+      const grouped = new Map();
+      const limit = 200;
+      let page = 1;
+      let pages = 1;
+      let matchedCount = 0;
+      let safety = 0;
+
+      while (page <= pages && safety < 150) {
+        const data = await getVendorQrs(authToken, { page, limit });
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.data || [];
+        const total = Number.isFinite(Number(data?.total))
+          ? Number(data.total)
+          : items.length;
+        pages = Number.isFinite(Number(data?.pages))
+          ? Number(data.pages)
+          : Math.max(1, Math.ceil(total / limit));
+
+        items.forEach((qr) => {
+          const qrCampaignId = qr?.Campaign?.id || qr?.campaignId || null;
+          if (qrCampaignId !== campaignId) return;
+
+          matchedCount += 1;
+          const price = parseNumericValue(
+            qr?.cashbackAmount,
+            parseNumericValue(qr?.Campaign?.cashbackAmount, 0),
+          );
+          const key = price.toFixed(2);
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              price,
+              priceKey: key,
+              quantity: 0,
+              activeCount: 0,
+              redeemedCount: 0,
+            });
+          }
+
+          const group = grouped.get(key);
+          group.quantity += 1;
+          if (isRedeemedQrStatus(qr?.status)) {
+            group.redeemedCount += 1;
+          } else if (!isInactiveQrStatus(qr?.status)) {
+            group.activeCount += 1;
+          }
+        });
+
+        if (expectedTotal > 0 && matchedCount >= expectedTotal) {
+          break;
+        }
+        if (items.length < limit) {
+          break;
+        }
+
+        page += 1;
+        safety += 1;
+      }
+
+      const priceGroups = Array.from(grouped.values()).sort(
+        (a, b) => b.price - a.price,
+      );
+
+      setCampaignQrBreakdownMap((prev) => ({
+        ...prev,
+        [campaignId]: {
+          priceGroups,
+          matchedCount,
+          complete: expectedTotal > 0 ? matchedCount >= expectedTotal : true,
+          loadedAt: Date.now(),
+        },
+      }));
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+    } finally {
+      setLoadingCampaignBreakdownId((prev) =>
+        prev === campaignId ? "" : prev,
+      );
     }
   };
 
@@ -3737,6 +3841,16 @@ const VendorDashboard = () => {
     });
     return map;
   }, [qrsGroupedByCampaign]);
+  useEffect(() => {
+    if (!selectedActiveCampaign?.id || !token) return;
+    if (campaignQrBreakdownMap[selectedActiveCampaign.id]) return;
+    loadCampaignQrBreakdown(selectedActiveCampaign, token);
+  }, [
+    selectedActiveCampaign,
+    token,
+    campaignQrBreakdownMap,
+    campaignStatsMap,
+  ]);
   const activeCampaignDetails = useMemo(() => {
     if (!selectedActiveCampaign) return null;
     const campaign = selectedActiveCampaign;
@@ -3766,7 +3880,40 @@ const VendorDashboard = () => {
     })();
     const printCost = totalQty * qrPricePerUnit;
     const stats = campaignQrMap.get(campaign.id);
-    const priceGroups = stats?.priceGroups || [];
+    const campaignStats =
+      campaignStatsMap[campaign.id] ||
+      campaignStatsMap[`title:${campaign.title}`] ||
+      null;
+    const statsTotal = Number(campaignStats?.totalQRsOrdered);
+    const statsRedeemed = Number(campaignStats?.totalUsersJoined);
+    const fallbackTotal = Number(stats?.stats?.total);
+    const fallbackRedeemed = Number(stats?.stats?.redeemed);
+    const totalCount = Number.isFinite(statsTotal)
+      ? Math.max(statsTotal, totalQty)
+      : Number.isFinite(fallbackTotal)
+        ? Math.max(fallbackTotal, totalQty)
+        : totalQty;
+    const redeemedCount = Number.isFinite(statsRedeemed)
+      ? statsRedeemed
+      : Number.isFinite(fallbackRedeemed)
+        ? fallbackRedeemed
+        : 0;
+    const activeCount = Math.max(0, totalCount - redeemedCount);
+    const campaignQrBreakdown = campaignQrBreakdownMap[campaign.id];
+    const fetchedPriceGroups = campaignQrBreakdown?.priceGroups || [];
+    const priceGroups = fetchedPriceGroups.length
+      ? fetchedPriceGroups
+      : stats?.priceGroups || [];
+    const qrBreakdownTotal = priceGroups.reduce((sum, group) => {
+      const groupQty =
+        Number(group?.quantity) ||
+        Number(group?.qrs?.length) ||
+        0;
+      return sum + groupQty;
+    }, 0);
+    const hasCompleteQrBreakdown =
+      campaignQrBreakdown?.complete ||
+      (qrBreakdownTotal > 0 && qrBreakdownTotal >= totalCount);
     const productId =
       campaign.productId ||
       (Array.isArray(campaign.allocations)
@@ -3775,18 +3922,36 @@ const VendorDashboard = () => {
     const product = productId
       ? products.find((item) => item.id === productId)
       : null;
-    const breakdownRows = priceGroups.length
-      ? priceGroups.map((group) => ({
+    const priceGroupByKey = new Map(
+      priceGroups.map((group) => [group.priceKey, group]),
+    );
+    const breakdownType =
+      priceGroups.length && (hasCompleteQrBreakdown || !allocationGroups.length)
+        ? "qr"
+        : "allocation";
+    const breakdownRows = breakdownType === "allocation"
+      ? allocationGroups
+        .map((group) => {
+          const key = group.price.toFixed(2);
+          const qrGroup = priceGroupByKey.get(key);
+          const redeemed = Math.max(
+            0,
+            Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
+          );
+          return {
+            cashback: group.price,
+            quantity: group.quantity,
+            // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
+            active: Math.max(0, group.quantity - redeemed),
+            redeemed,
+          };
+        })
+        .sort((a, b) => b.cashback - a.cashback)
+      : priceGroups.map((group) => ({
         cashback: group.price,
-        quantity: group.qrs.length,
+        quantity: Number(group.quantity) || group.qrs?.length || 0,
         active: group.activeCount,
         redeemed: group.redeemedCount,
-      }))
-      : allocationGroups.map((group) => ({
-        cashback: group.price,
-        quantity: group.quantity,
-        active: 0,
-        redeemed: 0,
       }));
 
     return {
@@ -3796,10 +3961,21 @@ const VendorDashboard = () => {
       totalBudget,
       printCost,
       stats,
+      totalCount,
+      redeemedCount,
+      activeCount,
+      breakdownType,
       product,
       breakdownRows,
     };
-  }, [selectedActiveCampaign, campaignQrMap, products, qrPricePerUnit]);
+  }, [
+    selectedActiveCampaign,
+    campaignQrMap,
+    campaignQrBreakdownMap,
+    campaignStatsMap,
+    products,
+    qrPricePerUnit,
+  ]);
   const activeCampaign = activeCampaignDetails?.campaign;
   const pendingCampaignPayment = useMemo(
     () => getCampaignPaymentSummary(selectedPendingCampaign, qrPricePerUnit),
@@ -6588,7 +6764,7 @@ Quantity: ${invoiceData.quantity} QRs
                                   </div>
                                 )}
 
-                                <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="grid gap-3 sm:grid-cols-4">
                                   <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
                                     <div className="text-[10px] uppercase tracking-wide text-gray-500">
                                       Budget
@@ -6605,10 +6781,15 @@ Quantity: ${invoiceData.quantity} QRs
                                       Total QRs
                                     </div>
                                     <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                      {activeCampaignDetails.stats?.stats
-                                        .total ||
-                                        activeCampaignDetails.totalQty ||
-                                        0}
+                                      {activeCampaignDetails.totalCount}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
+                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      Active
+                                    </div>
+                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                      {activeCampaignDetails.activeCount}
                                     </div>
                                   </div>
                                   <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
@@ -6616,29 +6797,35 @@ Quantity: ${invoiceData.quantity} QRs
                                       Redeemed
                                     </div>
                                     <div className="text-lg font-bold text-primary">
-                                      {activeCampaignDetails.stats?.stats
-                                        .redeemed || 0}
+                                      {activeCampaignDetails.redeemedCount}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                   Active QRs:{" "}
-                                  {activeCampaignDetails.stats?.stats.active ||
-                                    0}{" "}
+                                  {activeCampaignDetails.activeCount}{" "}
                                   - Redeemed:{" "}
-                                  {activeCampaignDetails.stats?.stats
-                                    .redeemed || 0}
+                                  {activeCampaignDetails.redeemedCount}
                                 </div>
 
                                 <div>
-                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                                    <Package
-                                      size={16}
-                                      className="text-primary"
-                                    />
-                                    {activeCampaignDetails.stats?.stats.total
-                                      ? "QR Breakdown"
-                                      : "Allocation Breakdown"}
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-2">
+                                      <Package
+                                        size={16}
+                                        className="text-primary"
+                                      />
+                                      {activeCampaignDetails.breakdownType ===
+                                        "allocation"
+                                        ? "Allocation Breakdown"
+                                        : "QR Breakdown"}
+                                    </span>
+                                    {loadingCampaignBreakdownId ===
+                                      activeCampaign?.id && (
+                                        <span className="text-[11px] font-medium text-gray-400">
+                                          Loading full data...
+                                        </span>
+                                      )}
                                   </h4>
                                   <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
                                     <table className="w-full text-left text-sm">
@@ -7526,21 +7713,21 @@ Quantity: ${invoiceData.quantity} QRs
                             )}
                           </div>
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm dark:shadow-none">
-                            <div className="overflow-x-auto">
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
+                            <div className="w-full">
                               <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
                                   <tr>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Customer</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Mobile</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Codes</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Rewards Earned</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">
-                                      First Scan Location
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Customer</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Mobile</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Codes</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Rewards</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">
+                                      Location
                                     </th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Member Since</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide">Last Scanned</th>
-                                    <th className="px-6 py-4 font-semibold tracking-wide text-right">Action</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Joined</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Last Scanned</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide text-right">Action</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
@@ -7571,42 +7758,42 @@ Quantity: ${invoiceData.quantity} QRs
                                         key={customer.userId || customer.mobile}
                                         className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors group"
                                       >
-                                        <td className="px-6 py-4">
-                                          <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                        <td className="px-5 py-4 align-top">
+                                          <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
                                               {customer.name?.[0]?.toUpperCase() || "C"}
                                             </div>
-                                            <span className="font-medium text-gray-900 dark:text-white truncate">{customer.name || "-"}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white break-words max-w-[150px]">{customer.name || "-"}</span>
                                           </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 align-top">
                                           {customer.mobile || "-"}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-5 py-4 align-top">
                                           <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-medium">
                                             {customer.codeCount || 0}
                                           </span>
                                         </td>
-                                        <td className="px-6 py-4 font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                        <td className="px-5 py-4 font-semibold text-emerald-600 dark:text-emerald-400 align-top">
                                           ₹{formatAmount(customer.rewardsEarned)}
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 truncate max-w-[150px]" title={customer.firstScanLocation || "-"}>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 break-words max-w-[150px] align-top">
                                           {customer.firstScanLocation || "-"}
                                         </td>
-                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
                                           {formatDate(customer.memberSince)}
                                         </td>
-                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
                                           {formatDate(customer.lastScanned)}
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-5 py-4 text-right align-top">
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               setSelectedCustomerModal(customer);
                                               setIsCustomerModalOpen(true);
                                             }}
-                                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto"
+                                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto whitespace-nowrap"
                                           >
                                             <Eye className="w-3.5 h-3.5" />
                                             View History

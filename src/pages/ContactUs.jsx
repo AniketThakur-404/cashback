@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import {
   Mail,
   Phone,
@@ -59,7 +59,7 @@ const ContactUs = () => {
             Reach out to AssuredRewards Support Team
             <br />
             <span className="font-semibold text-gray-700 dark:text-gray-300">
-              support@assuredrewards.in • +91 1800-123-4567
+              support@assuredrewards.in {" "} &bull; {" "} +91 83689 26325
             </span>
           </p>
         </div>
@@ -110,7 +110,7 @@ const ContactUs = () => {
           </a>
 
           <a
-            href="tel:+911800123456"
+            href="tel:+918368926325"
             className="flex items-center gap-4 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm active:scale-[0.98] transition-all"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 text-green-500">
@@ -121,7 +121,7 @@ const ContactUs = () => {
                 Call Us
               </p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                +91 1800-123-4567
+                +91 83689 26325
               </p>
             </div>
             <ChevronRight
@@ -281,3 +281,4 @@ const ContactUs = () => {
 };
 
 export default ContactUs;
+

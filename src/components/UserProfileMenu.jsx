@@ -121,7 +121,7 @@ const UserProfileMenu = () => {
   };
 
   return (
-    <div ref={containerRef} className="relative z-60">
+    <div ref={containerRef} className="relative z-60 flex items-center">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -136,7 +136,7 @@ const UserProfileMenu = () => {
             onError={() => setImgError(true)}
           />
         ) : (
-          <span className="text-gray-900 border-gray-900 text-[18px] font-bold font-sans">
+          <span className="text-gray-900 border-gray-900 text-[18px] font-bold font-sans leading-none">
             {getInitial()}
           </span>
         )}

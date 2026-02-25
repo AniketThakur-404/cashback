@@ -1,5 +1,5 @@
 param(
-    [string]$Host = "root@82.112.235.245",
+    [string]$Server = "root@82.112.235.245",
     [string]$RemoteAppDir = "/var/www/cashback/cashback",
     [string]$Branch = "main",
     [string]$Pm2App = "cashback-api"
@@ -18,7 +18,7 @@ pm2 restart $Pm2App --update-env &&
 pm2 status $Pm2App
 "@
 
-ssh $Host $remoteCommand
+ssh $Server $remoteCommand
 if ($LASTEXITCODE -ne 0) {
     throw "Backend deploy failed."
 }
