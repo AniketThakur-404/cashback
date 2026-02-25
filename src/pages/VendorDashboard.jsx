@@ -113,6 +113,7 @@ import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
 import VendorSupport from "../components/vendor/VendorSupport";
 import CustomerDetailsModal from "../components/vendor/CustomerDetailsModal";
+import AdvancedFilters from "../components/vendor/AdvancedFilters";
 import ProductEditModal from "../components/ProductEditModal";
 import StarBorder from "../components/StarBorder";
 
@@ -453,7 +454,9 @@ const VendorDashboard = () => {
     dateTo: "",
     campaignId: "",
     city: "",
+    state: "",
     mobile: "",
+    productId: "",
     invoiceNo: "",
   });
   const [locationsData, setLocationsData] = useState([]);
@@ -1563,6 +1566,8 @@ const VendorDashboard = () => {
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
     if (dashboardFilters.city) params.city = dashboardFilters.city.trim();
+    if (dashboardFilters.state) params.state = dashboardFilters.state.trim();
+    if (dashboardFilters.productId) params.productId = dashboardFilters.productId;
     if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
     if (dashboardFilters.invoiceNo)
       params.invoiceNo = dashboardFilters.invoiceNo.trim();
@@ -7600,118 +7605,21 @@ Quantity: ${invoiceData.quantity} QRs
                               </button>
                             </div>
                           )}
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 p-5 shadow-sm dark:shadow-none">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
-                              <div className="space-y-1.5">
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From Date</label>
-                                <input
-                                  type="date"
-                                  value={dashboardFilters.dateFrom}
-                                  onChange={(event) =>
-                                    setDashboardFilters((prev) => ({
-                                      ...prev,
-                                      dateFrom: event.target.value,
-                                    }))
-                                  }
-                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To Date</label>
-                                <input
-                                  type="date"
-                                  value={dashboardFilters.dateTo}
-                                  onChange={(event) =>
-                                    setDashboardFilters((prev) => ({
-                                      ...prev,
-                                      dateTo: event.target.value,
-                                    }))
-                                  }
-                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Campaign</label>
-                                <select
-                                  value={dashboardFilters.campaignId}
-                                  onChange={(event) =>
-                                    setDashboardFilters((prev) => ({
-                                      ...prev,
-                                      campaignId: event.target.value,
-                                    }))
-                                  }
-                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
-                                >
-                                  <option value="">All campaigns</option>
-                                  {campaigns.map((campaign) => (
-                                    <option key={campaign.id} value={campaign.id}>
-                                      {campaign.title}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</label>
-                                <input
-                                  type="text"
-                                  placeholder="City"
-                                  value={dashboardFilters.city}
-                                  onChange={(event) =>
-                                    setDashboardFilters((prev) => ({
-                                      ...prev,
-                                      city: event.target.value,
-                                    }))
-                                  }
-                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
-                                />
-                              </div>
-                              <div className="space-y-1.5">
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mobile</label>
-                                <input
-                                  type="text"
-                                  placeholder="Mobile"
-                                  value={dashboardFilters.mobile}
-                                  onChange={(event) =>
-                                    setDashboardFilters((prev) => ({
-                                      ...prev,
-                                      mobile: event.target.value,
-                                    }))
-                                  }
-                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
-                                />
-                              </div>
-                              <div className="flex gap-2 w-full xl:col-span-1">
-                                <button
-                                  type="button"
-                                  onClick={handleApplyExtraFilters}
-                                  className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center justify-center gap-2 font-medium"
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                  Apply
-                                </button>
-                              </div>
-                            </div>
-                            <div className="mt-4 flex justify-end border-t border-gray-100 dark:border-zinc-800/80 pt-4">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  exportVendorCustomers(
-                                    token,
-                                    buildExtraFilterParams(),
-                                  )
-                                }
-                                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow text-sm"
-                              >
-                                <Download className="w-4 h-4" />
-                                Export CSV
-                              </button>
-                            </div>
-                            {extraTabError && (
-                              <p className="mt-3 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
-                                {extraTabError}
-                              </p>
-                            )}
-                          </div>
+                          <AdvancedFilters
+                            filters={dashboardFilters}
+                            setFilters={setDashboardFilters}
+                            onApply={handleApplyExtraFilters}
+                            campaigns={campaigns}
+                            products={products}
+                            showExport={true}
+                            onExport={() => exportVendorCustomers(token, buildExtraFilterParams())}
+                            variant="customers"
+                          />
+                          {extraTabError && (
+                            <p className="mt-3 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
+                              {extraTabError}
+                            </p>
+                          )}
 
                           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
                             <div className="w-full">
@@ -7812,86 +7720,19 @@ Quantity: ${invoiceData.quantity} QRs
 
                     {activeTab === "locations" && (
                       <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateFrom}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateFrom: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateTo}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateTo: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <select
-                              value={dashboardFilters.campaignId}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  campaignId: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            >
-                              <option value="">All campaigns</option>
-                              {campaigns.map((campaign) => (
-                                <option key={campaign.id} value={campaign.id}>
-                                  {campaign.title}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="City"
-                              value={dashboardFilters.city}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  city: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Mobile"
-                              value={dashboardFilters.mobile}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  mobile: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleApplyExtraFilters}
-                              className={`${PRIMARY_BUTTON} rounded-lg`}
-                            >
-                              Apply
-                            </button>
-                          </div>
-                          {extraTabError && (
-                            <p className="mt-3 text-xs text-rose-500">
-                              {extraTabError}
-                            </p>
-                          )}
-                        </div>
-
+                        <AdvancedFilters
+                          filters={dashboardFilters}
+                          setFilters={setDashboardFilters}
+                          onApply={handleApplyExtraFilters}
+                          campaigns={campaigns}
+                          products={products}
+                          variant="locations"
+                        />
+                        {extraTabError && (
+                          <p className="mt-3 text-xs text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-2 rounded-lg">
+                            {extraTabError}
+                          </p>
+                        )}
                         {isLoadingExtraTab ? (
                           <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
                             Loading locations...
@@ -7946,50 +7787,64 @@ Quantity: ${invoiceData.quantity} QRs
                                 </MapContainer>
                               </div>
                             </div>
-                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  Clusters
-                                </div>
-                                <span className="text-xs text-gray-400 dark:text-gray-500">
-                                  {locationsData.length} locations
-                                </span>
-                              </div>
-                              <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                                {locationsData.length === 0 ? (
-                                  <div className="text-xs text-gray-500 py-8 text-center">
-                                    No locations found.
+                            {(() => {
+                              const grouped = {};
+                              locationsData.forEach((pt) => {
+                                const city = pt.city || "";
+                                const state = pt.state || "";
+                                const key = city + "|||" + state;
+                                if (!grouped[key]) {
+                                  grouped[key] = { city, state, totalScans: 0, pincodes: new Set(), lat: pt.lat, lng: pt.lng };
+                                }
+                                grouped[key].totalScans += (pt.count || 0);
+                                if (pt.pincode) grouped[key].pincodes.add(pt.pincode);
+                              });
+                              const clusters = Object.values(grouped)
+                                .filter((c) => c.city || c.state)
+                                .sort((a, b) => b.totalScans - a.totalScans);
+                              return (
+                                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Clusters</div>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">{clusters.length} regions</span>
                                   </div>
-                                ) : (
-                                  locationsData.map((pt, i) => (
-                                    <button
-                                      type="button"
-                                      key={`cluster-${pt.lat}-${pt.lng}-${i}`}
-                                      onClick={() => handleClusterClick(pt)}
-                                      className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                            <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                          </div>
-                                          <div className="min-w-0">
-                                            <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                              {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}` : "Unknown"}
+                                  <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+                                    {clusters.length === 0 ? (
+                                      <div className="text-xs text-gray-500 py-8 text-center">No locations found.</div>
+                                    ) : (
+                                      clusters.map((cluster, i) => (
+                                        <button
+                                          type="button"
+                                          key={"cluster-" + cluster.city + "-" + cluster.state + "-" + i}
+                                          onClick={() => handleClusterClick(cluster)}
+                                          className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                              </div>
+                                              <div className="min-w-0">
+                                                <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                  {(cluster.city || '') + (cluster.city && cluster.state ? ', ' : '') + (cluster.state || '')}
+                                                </div>
+                                                <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                                  <span className="font-medium text-emerald-600 dark:text-emerald-400">{cluster.totalScans} scans</span>
+                                                </div>
+                                              </div>
                                             </div>
-                                            <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                              <span>{pt.count || 0} scans</span>
-                                              {pt.pincode && <span>• {pt.pincode}</span>}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500">#{i + 1}</span>
+                                              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
                                             </div>
                                           </div>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
-                                      </div>
-                                    </button>
-                                  ))
-                                )}
-                              </div>
-                            </div>
+                                        </button>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
