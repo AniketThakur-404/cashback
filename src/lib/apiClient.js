@@ -35,10 +35,33 @@ export const buildApiUrl = (path, baseOverride = BASE_URL) => {
 
 export const resolvePublicAssetUrl = (path) => {
   if (!path) return "";
-  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:")) {
-    return path;
+  const source = String(path).trim();
+  if (!source) return "";
+
+  // Absolute URLs are returned as-is
+  if (
+    source.startsWith("http://") ||
+    source.startsWith("https://") ||
+    source.startsWith("data:") ||
+    source.startsWith("blob:")
+  ) {
+    return source;
   }
-  return buildApiUrl(path.startsWith("/") ? path : `/${path}`);
+
+  const normalized = source.replace(/\\/g, "/");
+  
+  // Decide whether to prefix with API URL or keep as local path
+  // We prefix if it matches common upload path patterns
+  const isUploadPath = /^\/?(api\/)?uploads\//i.test(normalized);
+  
+  const cleanPath = normalized.startsWith("/") ? normalized : `/${normalized}`;
+
+  if (isUploadPath) {
+    return buildApiUrl(cleanPath);
+  }
+
+  // Otherwise treat as a local public asset
+  return cleanPath;
 };
 
 const parseResponse = async (response) => {

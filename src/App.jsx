@@ -101,13 +101,11 @@ function App() {
             <Route path="/scan/:hash" element={<QRScanPage />} />
             <Route path="/scan/result" element={<QRResultPage />} />
 
-            {/* Standalone legal/info pages */}
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsConditions />} />
-            <Route path="/contact" element={<ContactUs />} />
-
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsConditions />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="/gift-cards" element={<GiftCards />} />
               <Route path="/gift-cards-list" element={<GiftCardsList />} />
               <Route

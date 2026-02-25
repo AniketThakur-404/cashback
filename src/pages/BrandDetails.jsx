@@ -13,7 +13,7 @@ import {
 import FallbackImage from "../components/FallbackImage";
 import HowItWorks from "../components/HowItWorks";
 import { getPublicBrandDetails, getPublicBrands } from "../lib/api";
-import { getApiBaseUrl } from "../lib/apiClient";
+import { getApiBaseUrl, resolvePublicAssetUrl } from "../lib/apiClient";
 
 const BrandAccordion = ({ title, items }) => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -71,15 +71,6 @@ const BrandAccordion = ({ title, items }) => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-
-const resolvePublicAssetUrl = (value) => {
-  if (!value) return "/placeholder.svg";
-  if (/^https?:\/\//i.test(value)) return value;
-  if (value.startsWith("/uploads/")) {
-    return API_BASE_URL ? `${API_BASE_URL}${value}` : value;
-  }
-  return value;
-};
 
 const buildProductReportPath = (brand, product) => {
   const params = new URLSearchParams();
@@ -227,6 +218,14 @@ const BrandDetails = () => {
             src={displayBrand.banner}
             alt={`${displayBrand.name} banner`}
             className="w-full h-36 object-cover"
+            fallback={
+              <div className="w-full h-full bg-linear-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center">
+                <Sparkles
+                  className="text-gray-400 dark:text-zinc-600"
+                  size={32}
+                />
+              </div>
+            }
           />
           <div className="p-4 space-y-3">
             <div className="flex items-start justify-between gap-3">

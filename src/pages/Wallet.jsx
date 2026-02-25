@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserDashboard } from "../lib/api";
-import { AUTH_TOKEN_KEY, clearAuthToken, popPostLoginRedirect } from "../lib/auth";
+import {
+  AUTH_TOKEN_KEY,
+  clearAuthToken,
+  popPostLoginRedirect,
+  useAuth,
+  storeAuthToken,
+} from "../lib/auth";
 import WalletAuth from "../components/wallet/WalletAuth";
 import RedeemCard from "../components/wallet/RedeemCard";
 import WithdrawCard from "../components/wallet/WithdrawCard";
 import WalletActionModal from "../components/wallet/WalletActionModal";
-import { ArrowUpRight, ShoppingBag, ChevronRight, ShieldCheck, Clock } from "lucide-react";
+import {
+  ArrowUpRight,
+  ShoppingBag,
+  ChevronRight,
+  ShieldCheck,
+  Clock,
+} from "lucide-react";
 
 // Helper to format currency
 const formatAmount = (value) => {
@@ -20,7 +32,7 @@ const normalizeTxType = (value) => String(value || "").toUpperCase();
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const [token, setToken] = useState(() => localStorage.getItem(AUTH_TOKEN_KEY));
+  const { authToken: token } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -52,7 +64,7 @@ const Wallet = () => {
   };
 
   const handleLoginSuccess = (newToken) => {
-    setToken(newToken);
+    storeAuthToken(newToken);
     const redirectTarget = popPostLoginRedirect();
     if (redirectTarget) {
       navigate(redirectTarget);
@@ -61,7 +73,6 @@ const Wallet = () => {
 
   const handleSignOut = () => {
     clearAuthToken();
-    setToken(null);
     setDashboard(null);
   };
 
@@ -83,16 +94,17 @@ const Wallet = () => {
   const lastQrCredit = transactions.find(
     (tx) =>
       normalizeTxType(tx.type) === "CREDIT" &&
-      String(tx.category || "").toLowerCase() === "cashback_payout"
+      String(tx.category || "").toLowerCase() === "cashback_payout",
   );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-4 pb-32 transition-colors duration-300 font-admin-body">
       <div className="max-w-md mx-auto space-y-6">
-
         {/* Header Title */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">My Wallet</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            My Wallet
+          </h1>
         </div>
 
         {error && (
@@ -108,16 +120,22 @@ const Wallet = () => {
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/5 rounded-full blur-2xl pointer-events-none" />
 
           <div className="relative z-10">
-            <div className="text-sm font-medium text-white/90 mb-1 opacity-90">Cashback Wallet</div>
+            <div className="text-sm font-medium text-white/90 mb-1 opacity-90">
+              Cashback Wallet
+            </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold tracking-tight">Rs {formatAmount(balance)}</span>
+              <span className="text-4xl font-extrabold tracking-tight">
+                Rs {formatAmount(balance)}
+              </span>
             </div>
           </div>
 
           <div className="relative z-10 mt-6">
             <div className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 flex items-center gap-2 border border-white/10 w-full sm:w-fit">
               <ShieldCheck size={16} className="text-white" />
-              <span className="text-[11px] font-medium text-white/90">Powered by UPI & Net Banking - Secure transfers</span>
+              <span className="text-[11px] font-medium text-white/90">
+                Powered by UPI & Net Banking - Secure transfers
+              </span>
             </div>
           </div>
         </div>
@@ -140,7 +158,7 @@ const Wallet = () => {
         {/* 2. Action Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => setActiveModal('withdraw')}
+            onClick={() => setActiveModal("withdraw")}
             className="flex flex-col items-center justify-center gap-2 bg-primary text-primary-foreground py-5 px-4 rounded-2xl shadow-md hover:bg-primary-strong transition-colors active:scale-95 duration-200"
           >
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center mb-1">
@@ -150,7 +168,7 @@ const Wallet = () => {
           </button>
 
           <button
-            onClick={() => navigate('/gift-cards')}
+            onClick={() => navigate("/gift-cards")}
             className="flex flex-col items-center justify-center gap-2 bg-zinc-900 dark:bg-zinc-800 text-white py-5 px-4 rounded-2xl shadow-md hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors active:scale-95 duration-200"
           >
             <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center mb-1">
@@ -165,7 +183,9 @@ const Wallet = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Clock size={18} className="text-gray-400" />
-              <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Recent Activity</h2>
+              <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">
+                Recent Activity
+              </h2>
             </div>
             <button className="text-xs font-bold text-primary flex items-center gap-0.5 hover:underline">
               View All <ChevronRight size={14} />
@@ -173,7 +193,9 @@ const Wallet = () => {
           </div>
 
           {isLoading && !transactions.length ? (
-            <div className="p-4 text-center text-xs text-gray-400">Loading transactions...</div>
+            <div className="p-4 text-center text-xs text-gray-400">
+              Loading transactions...
+            </div>
           ) : transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
               <span className="text-xs">No transactions yet</span>
@@ -186,15 +208,22 @@ const Wallet = () => {
                   <div key={tx.id} className="flex items-start justify-between">
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-gray-900 dark:text-white">
-                        {tx.description || (isCredit ? 'Cashback Received' : 'Withdrawal')}
+                        {tx.description ||
+                          (isCredit ? "Cashback Received" : "Withdrawal")}
                       </span>
                       <span className="text-xs text-gray-400 mt-0.5">
                         {/* Date formatting could be improved with date-fns if available, using basic JS for now */}
-                        {new Date(tx.createdAt).toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : 'Yesterday'}
+                        {new Date(tx.createdAt).toLocaleDateString() ===
+                        new Date().toLocaleDateString()
+                          ? "Today"
+                          : "Yesterday"}
                       </span>
                     </div>
-                    <div className={`text-sm font-bold ${isCredit ? 'text-primary' : 'text-gray-900 dark:text-white'}`}>
-                      {isCredit ? '+' : '-'} Rs {Math.floor(Number(tx.amount || 0))}
+                    <div
+                      className={`text-sm font-bold ${isCredit ? "text-primary" : "text-gray-900 dark:text-white"}`}
+                    >
+                      {isCredit ? "+" : "-"} Rs{" "}
+                      {Math.floor(Number(tx.amount || 0))}
                     </div>
                   </div>
                 );
@@ -205,7 +234,7 @@ const Wallet = () => {
 
         {/* Modals */}
         <WalletActionModal
-          isOpen={activeModal === 'withdraw'}
+          isOpen={activeModal === "withdraw"}
           onClose={() => setActiveModal(null)}
           title="Withdraw Funds"
         >
@@ -217,20 +246,15 @@ const Wallet = () => {
         </WalletActionModal>
 
         <WalletActionModal
-          isOpen={activeModal === 'redeem'}
+          isOpen={activeModal === "redeem"}
           onClose={() => setActiveModal(null)}
           title="Redeem Gift Card"
         >
-          <RedeemCard
-            token={token}
-            onRedeemSuccess={handleActionSuccess}
-          />
+          <RedeemCard token={token} onRedeemSuccess={handleActionSuccess} />
         </WalletActionModal>
-
       </div>
     </div>
   );
 };
 
 export default Wallet;
-

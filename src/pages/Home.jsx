@@ -23,30 +23,12 @@ import FallbackImage from "../components/FallbackImage";
 import VideoSpotlight from "../components/VideoSpotlight";
 import HowItWorks from "../components/HowItWorks";
 import { getPublicHome, getUserHomeStats } from "../lib/api";
-import { getApiBaseUrl } from "../lib/apiClient";
+import { getApiBaseUrl, resolvePublicAssetUrl } from "../lib/apiClient";
 import { useAuth } from "../lib/auth";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const API_BASE_URL = getApiBaseUrl();
-
-const resolveBrandLogoUrl = (value) => {
-  if (!value) return "";
-  const source = String(value).trim();
-  if (!source) return "";
-  if (/^(https?:\/\/|data:|blob:)/i.test(source)) return source;
-  const normalized = source.replace(/\\/g, "/");
-  const isUploadPath = /^\/?(api\/)?uploads\//i.test(normalized);
-  if (isUploadPath) {
-    const withLeadingSlash = normalized.startsWith("/")
-      ? normalized
-      : `/${normalized}`;
-    return API_BASE_URL
-      ? `${API_BASE_URL}${withLeadingSlash}`
-      : withLeadingSlash;
-  }
-  return normalized;
-};
 
 /* -- Mock Data -- */
 const heroBanners = [
@@ -86,11 +68,41 @@ const defaultOffers = [
   },
 ];
 
+const quickActions = [
+  {
+    to: "/wallet",
+    icon: Wallet,
+    label: "Wallet",
+    gradient: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+    shadow: "rgba(139,92,246,0.3)",
+  },
+  {
+    to: "/history",
+    icon: History,
+    label: "History",
+    gradient: "linear-gradient(135deg,#f59e0b,#d97706)",
+    shadow: "rgba(245,158,11,0.3)",
+  },
+  {
+    to: "/product-report",
+    icon: Shield,
+    label: "Reports",
+    gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
+    shadow: "rgba(59,130,246,0.3)",
+  },
+  {
+    to: "/wallet",
+    icon: Gift,
+    label: "Rewards",
+    gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
+    shadow: "rgba(236,72,153,0.3)",
+  },
+];
+
 /* -- Hero Carousel -- */
-const HeroCarousel = ({ items }) => {
+const HeroCarousel = React.memo(({ items }) => {
   const banners = items?.length ? items : heroBanners;
   const [cur, setCur] = useState(0);
-  const b = banners[cur];
 
   useEffect(() => {
     if (banners.length <= 1) return undefined;
@@ -120,101 +132,110 @@ const HeroCarousel = ({ items }) => {
 
   return (
     <div
-      className="hero-carousel relative isolate w-full h-[224px] sm:h-[244px] rounded-[30px] overflow-hidden border border-white/20"
+      className="hero-carousel relative isolate w-full h-[240px] sm:h-[260px] rounded-3xl overflow-hidden border border-white/25"
       style={{
-        boxShadow: "0 24px 56px -16px rgba(15, 23, 42, 0.32)",
+        boxShadow: "0 28px 64px -12px rgba(15, 23, 42, 0.4)",
         touchAction: "pan-y",
       }}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={cur}
-          drag={banners.length > 1 ? "x" : false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.18}
-          onDragEnd={handleDragEnd}
-          initial={{ opacity: 0, x: 60 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -60 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0"
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                b.gradient || "linear-gradient(135deg,#14532d,#15803d,#059669)",
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at 16% 22%, rgba(255,255,255,0.28), transparent 42%), radial-gradient(circle at 82% 86%, rgba(255,255,255,0.16), transparent 44%)",
-            }}
-          />
-          <div className="absolute inset-0 bg-linear-to-r from-black/25 via-transparent to-black/35" />
-          <div className="absolute -top-20 -right-14 w-56 h-56 rounded-full blur-3xl bg-white/10" />
-          <div className="absolute -bottom-24 left-8 w-44 h-44 rounded-full blur-3xl bg-black/20" />
+      <motion.div
+        className="flex h-full w-full"
+        animate={{ x: `-${cur * 100}%` }}
+        transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+        drag={banners.length > 1 ? "x" : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        style={{ touchAction: "pan-y" }}
+      >
+        {banners.map((b, i) => (
+          <div key={i} className="relative flex-none w-full h-full">
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  b.gradient ||
+                  "linear-gradient(135deg,#14532d,#15803d,#059669)",
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 50%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.2), transparent 50%)",
+              }}
+            />
+            <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-black/20" />
 
-          <div className="relative z-10 h-full px-5 sm:px-6 py-5 sm:py-6 grid grid-cols-12 gap-3 sm:gap-4">
-            <div className="col-span-8 sm:col-span-7 min-w-0 flex flex-col justify-between">
-              <div
-                className="inline-flex w-fit items-center gap-1 px-2.5 py-1 rounded-full border mb-3 backdrop-blur-md"
-                style={{
-                  background: "rgba(255,255,255,0.18)",
-                  borderColor: "rgba(255,255,255,0.28)",
-                }}
-              >
-                <Zap size={10} className="text-yellow-300" />
-                <span
-                  className="text-[10px] font-bold text-white uppercase"
-                  style={{ letterSpacing: "0.15em" }}
-                >
-                  Exclusive
-                </span>
-              </div>
-              <h3
-                className="text-[34px] sm:text-[38px] font-black text-white leading-[0.95] tracking-tight max-w-[11ch]"
-                style={{ textShadow: "0 6px 20px rgba(0,0,0,0.24)" }}
-              >
-                {b.title}
-              </h3>
-              <p
-                className="text-[12px] sm:text-[13px] mt-2 font-medium"
-                style={{ color: "rgba(255,255,255,0.82)" }}
-              >
-                {b.subtitle}
-              </p>
-              <Link to={b.link || "/brand-details"} className="self-start mt-3">
+            {/* Subtle noise/texture overlay for premium look */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
+
+            <div className="relative z-10 h-full px-7 sm:px-8 py-7 sm:py-8 flex items-center justify-between gap-6">
+              <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
                 <div
-                  className="inline-flex items-center gap-1.5 bg-white text-gray-900 text-[12px] font-bold px-5 py-2.5 rounded-full active:scale-[0.95] transition-transform"
-                  style={{ boxShadow: "0 10px 24px rgba(15, 23, 42, 0.34)" }}
+                  className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-4 backdrop-blur-xl"
+                  style={{
+                    background: "rgba(255,255,255,0.12)",
+                    borderColor: "rgba(255,255,255,0.2)",
+                  }}
                 >
-                  Explore <ArrowRight size={14} />
+                  <Zap size={10} className="text-yellow-400 fill-yellow-400" />
+                  <span
+                    className="text-[10px] font-bold text-white uppercase"
+                    style={{ letterSpacing: "0.2em" }}
+                  >
+                    Exclusive
+                  </span>
                 </div>
-              </Link>
-            </div>
-
-            <div className="col-span-4 sm:col-span-5 flex items-end justify-end pb-2">
-              <div className="relative w-full max-w-[192px] sm:max-w-[216px] aspect-[4/3] rounded-[20px] overflow-hidden border border-white/35 shadow-2xl bg-black/20">
-                <FallbackImage
-                  src={resolveBrandLogoUrl(b.img)}
-                  alt="Offer"
-                  className="w-full h-full object-cover scale-[1.03]"
-                  fallback={
-                    <Sparkles
-                      className="w-full h-full"
-                      style={{ color: "rgba(255,255,255,0.22)" }}
+                <h3
+                  className="text-[32px] sm:text-[25px] font-bold text-white leading-[1.1] tracking-tight"
+                  style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+                >
+                  {b.title}
+                </h3>
+                <p
+                  className="text-[13px] sm:text-[14px] mt-2.5 font-medium"
+                  style={{ color: "rgba(255,255,255,0.85)" }}
+                >
+                  {b.subtitle}
+                </p>
+                <Link
+                  to={b.link || "/brand-details"}
+                  className="self-start mt-6"
+                >
+                  <div
+                    className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-7 py-3 rounded-xl active:scale-[0.92] transition-all hover:pr-8 group"
+                    style={{ boxShadow: "0 15px 35px -5px rgba(0,0,0,0.4)" }}
+                  >
+                    Explore{" "}
+                    <ArrowRight
+                      size={16}
+                      className="group-hover:translate-x-1 transition-transform"
                     />
-                  }
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/10" />
+                  </div>
+                </Link>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-center">
+                <div className="relative w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl group">
+                  <FallbackImage
+                    src={resolvePublicAssetUrl(b.img)}
+                    alt="Offer"
+                    className="w-full h-full object-cover transition-opacity duration-700"
+                    fallback={
+                      <Sparkles
+                        className="w-full h-full p-8"
+                        style={{ color: "rgba(255,255,255,0.2)" }}
+                      />
+                    }
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-white/10" />
+                </div>
               </div>
             </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        ))}
+      </motion.div>
 
       {/* Progress */}
       <div
@@ -230,24 +251,9 @@ const HeroCarousel = ({ items }) => {
           style={{ background: "rgba(255,255,255,0.6)" }}
         />
       </div>
-      {/* Dots */}
-      <div className="absolute bottom-4 left-5 sm:left-6 flex gap-1.5 z-30">
-        {banners.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCur(i)}
-            className="rounded-full transition-all duration-300"
-            style={{
-              height: 5,
-              width: i === cur ? 20 : 5,
-              background: i === cur ? "#fff" : "rgba(255,255,255,0.25)",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
-};
+});
 
 /* ---------------------- MAIN HOME ---------------------- */
 const Home = () => {
@@ -297,12 +303,12 @@ const Home = () => {
     window.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleFocus);
 
-    // Continuous polling every 30 seconds
+    // Continuous polling every 60 seconds (reduced frequency for performance)
     const intervalId = setInterval(() => {
       if (document.visibilityState === "visible") {
         fetchHomeData();
       }
-    }, 30000);
+    }, 60000);
 
     return () => {
       live = false;
@@ -331,32 +337,36 @@ const Home = () => {
       });
       gsap.to(".scan-icon-breathe", {
         scale: 1.08,
-        duration: 1.8,
+        duration: 2.1,
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
+        force3D: true,
       });
       gsap.to(".scan-ring-1", {
         rotation: 360,
-        duration: 25,
+        duration: 30,
         repeat: -1,
         ease: "none",
+        force3D: true,
       });
       gsap.to(".scan-ring-2", {
         rotation: -360,
-        duration: 35,
+        duration: 40,
         repeat: -1,
         ease: "none",
+        force3D: true,
       });
       // Quick actions animation removed for alignment reliability
       // Brand items and offer cards animations removed for visibility reliability
       gsap.to(".offer-shine", {
-        x: "300%",
-        duration: 2.5,
+        x: "400%",
+        duration: 3,
         repeat: -1,
         repeatDelay: 5,
         ease: "power1.inOut",
-        stagger: 0.7,
+        stagger: 0.8,
+        force3D: true,
       });
     }, pageRef);
     return () => ctx.revert();
@@ -367,37 +377,6 @@ const Home = () => {
   const stats = homeData?.stats || {};
   const fmtCash = (v) =>
     !v ? "₹0" : typeof v === "number" ? `₹${v.toFixed(0)}` : v;
-
-  const quickActions = [
-    {
-      to: "/wallet",
-      icon: Wallet,
-      label: "Wallet",
-      gradient: "linear-gradient(135deg,#8b5cf6,#7c3aed)",
-      shadow: "rgba(139,92,246,0.3)",
-    },
-    {
-      to: "/history",
-      icon: History,
-      label: "History",
-      gradient: "linear-gradient(135deg,#f59e0b,#d97706)",
-      shadow: "rgba(245,158,11,0.3)",
-    },
-    {
-      to: "/product-report",
-      icon: Shield,
-      label: "Reports",
-      gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
-      shadow: "rgba(59,130,246,0.3)",
-    },
-    {
-      to: "/wallet",
-      icon: Gift,
-      label: "Rewards",
-      gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
-      shadow: "rgba(236,72,153,0.3)",
-    },
-  ];
 
   const statItems = [
     {
@@ -446,7 +425,7 @@ const Home = () => {
         {!isLoading && (
           <Link to="/scan" className="scan-cta block">
             <div
-              className="relative rounded-[28px] p-6 overflow-hidden active:scale-[0.97] transition-transform"
+              className="relative rounded-3xl p-6 overflow-hidden active:scale-[0.97] transition-transform"
               style={{
                 background: "linear-gradient(135deg,#0d1f12,#143d1f,#1a5c2c)",
                 boxShadow: "0 12px 36px -8px rgba(5,150,105,0.2)",
@@ -504,7 +483,7 @@ const Home = () => {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-[22px] font-black text-white tracking-tight leading-tight">
+                  <h2 className="text-[22px] font-bold text-white tracking-tight leading-tight">
                     Scan & Earn
                   </h2>
                   <p
@@ -578,7 +557,7 @@ const Home = () => {
             {statItems.map((s, i) => (
               <div
                 key={i}
-                className="relative overflow-hidden pt-0.5 pb-2 px-2 rounded-[22px] bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex flex-col items-center text-center"
+                className="relative overflow-hidden pt-0.5 pb-2 px-2 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex flex-col items-center text-center"
                 style={{ boxShadow: "0 8px 16px -6px rgba(0,0,0,0.05)" }}
               >
                 {/* Top Colored Bar */}
@@ -602,7 +581,7 @@ const Home = () => {
                     <div className="h-5 w-10 mx-auto bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
                   ) : (
                     <div
-                      className="text-[18px] font-black text-zinc-950 dark:text-white leading-tight"
+                      className="text-[18px] font-bold text-zinc-950 dark:text-white leading-tight"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {s.value}
@@ -636,7 +615,7 @@ const Home = () => {
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="w-[66px] h-[66px] rounded-[22px] animate-pulse shrink-0 snap-center"
+                    className="w-[66px] h-[66px] rounded-2xl animate-pulse shrink-0 snap-center"
                     style={{ background: "rgba(0,0,0,0.04)" }}
                   />
                 ))
@@ -647,10 +626,10 @@ const Home = () => {
                   to={`/brand-details/${b.id}`}
                   className="brand-item flex flex-col items-center gap-2 shrink-0 active:scale-[0.94] transition-transform snap-center group"
                 >
-                  <div className="w-[66px] h-[66px] rounded-[24px] bg-white p-[3px] transition-shadow shadow-sm group-hover:shadow-md border border-gray-100 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="w-full h-full rounded-[20px] bg-linear-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden flex items-center justify-center relative">
+                  <div className="w-[66px] h-[66px] rounded-2xl bg-white p-[3px] transition-shadow shadow-sm group-hover:shadow-md border border-gray-100 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="w-full h-full rounded-xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden flex items-center justify-center relative">
                       <FallbackImage
-                        src={resolveBrandLogoUrl(b.logoUrl || b.logo)}
+                        src={resolvePublicAssetUrl(b.logoUrl || b.logo)}
                         alt={b.name}
                         className="w-full h-full object-cover object-center absolute inset-0 z-10"
                         fallback={
@@ -718,7 +697,7 @@ const Home = () => {
                     onClick={() =>
                       navigate(`/brand-details/${b.id || b._id || ""}`)
                     }
-                    className="offer-card min-w-[175px] h-[120px] rounded-[22px] p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform shrink-0 cursor-pointer"
+                    className="offer-card min-w-[175px] h-[120px] rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform shrink-0 cursor-pointer"
                     style={{
                       background: gradients[i % gradients.length],
                       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
@@ -744,7 +723,7 @@ const Home = () => {
                         </span>
                       </div>
                       <div
-                        className="text-[24px] font-black text-white tracking-tight leading-none"
+                        className="text-[24px] font-bold text-white tracking-tight leading-none"
                         style={{ textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
                       >
                         {amounts[i % amounts.length]}
