@@ -48,6 +48,7 @@ import {
   Save,
   Building2,
   MapPin,
+  Search,
 } from "lucide-react";
 import {
   getMe,
@@ -110,8 +111,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
-import VendorRedemptions from "../components/vendor/VendorRedemptions";
 import VendorSupport from "../components/vendor/VendorSupport";
+import CustomerDetailsModal from "../components/vendor/CustomerDetailsModal";
 import ProductEditModal from "../components/ProductEditModal";
 import StarBorder from "../components/StarBorder";
 
@@ -359,10 +360,9 @@ const VendorDashboard = () => {
     "campaigns",
     "products",
     "wallet",
-    "redemptions",
+    "customers",
     "support",
     "locations",
-    "customers",
     "billing",
     "reports",
   ]);
@@ -462,7 +462,11 @@ const VendorDashboard = () => {
   const [reportsData, setReportsData] = useState([]);
   const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
   const [extraTabError, setExtraTabError] = useState("");
+  const [clusterCityFilter, setClusterCityFilter] = useState(null);
   const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
+
+  const [selectedCustomerModal, setSelectedCustomerModal] = useState(null);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
   const [showAllInventory, setShowAllInventory] = useState(false);
 
@@ -1303,7 +1307,7 @@ const VendorDashboard = () => {
     let target = metadataTab ? `/vendor/${metadataTab}` : "/vendor/overview";
     switch (notification?.type) {
       case "qr-redeemed":
-        target = "/vendor/redemptions";
+        target = "/vendor/customers";
         break;
       case "wallet-recharge":
       case "wallet-debit":
@@ -1650,6 +1654,20 @@ const VendorDashboard = () => {
     if (activeTab === "reports") {
       await loadReportsData(authToken);
     }
+  };
+
+  const handleClusterClick = (cluster) => {
+    const city = cluster.city || "";
+    if (!city) return;
+    setDashboardFilters((prev) => ({ ...prev, city, mobile: "" }));
+    setClusterCityFilter(city);
+    navigate("/vendor/customers");
+  };
+
+  const handleClearClusterFilter = () => {
+    setClusterCityFilter(null);
+    setDashboardFilters((prev) => ({ ...prev, city: "" }));
+    loadCustomersData(token);
   };
 
   const loadCompanyProfile = async (authToken = token) => {
@@ -2099,6 +2117,17 @@ const VendorDashboard = () => {
   // Scroll to top on route/tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeTab]);
+
+  // Load customer data when switching to Customer Summary sub-tab
+  useEffect(() => {
+    if (activeTab === "customers" && token) {
+      loadCustomersData(token);
+    }
+    // Clear cluster filter when leaving the customer subtab
+    if (activeTab !== "customers") {
+      setClusterCityFilter(null);
+    }
   }, [activeTab]);
 
   const handleSignIn = async () => {
@@ -4135,7 +4164,6 @@ const VendorDashboard = () => {
                           >
                             {registrationForm.logoPreview ? (
                               <img
-                                src={registrationForm.logoPreview}
                                 alt="Logo"
                                 className="w-full h-full object-cover"
                               />
@@ -4427,8 +4455,8 @@ const VendorDashboard = () => {
                             icon: BadgeCheck,
                           },
                           {
-                            id: "redemptions",
-                            label: "Redemptions",
+                            id: "customers",
+                            label: "Customers",
                             icon: Users,
                           },
                           {
@@ -4436,11 +4464,7 @@ const VendorDashboard = () => {
                             label: "Locations",
                             icon: Globe,
                           },
-                          {
-                            id: "customers",
-                            label: "Customers",
-                            icon: Users,
-                          },
+
                           { id: "wallet", label: "Wallet", icon: Wallet },
                           {
                             id: "billing",
@@ -7361,9 +7385,242 @@ Quantity: ${invoiceData.quantity} QRs
                       </div>
                     )}
 
-                    {/* Redemptions Tab - Customer redemption history */}
-                    {activeTab === "redemptions" && (
-                      <VendorRedemptions token={token} />
+                    {/* Customers Tab */}
+                    {activeTab === "customers" && (
+                      <div className="space-y-4">
+                        <div className="space-y-4">
+                          {/* Location filter breadcrumb */}
+                          {clusterCityFilter && (
+                            <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3">
+                              <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span className="text-sm text-emerald-800 dark:text-emerald-300 font-medium">
+                                Showing customers from: <strong>{clusterCityFilter}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleClearClusterFilter}
+                                className="ml-auto text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors"
+                                title="Clear location filter"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setClusterCityFilter(null); setDashboardFilters(prev => ({ ...prev, city: "" })); navigate("/vendor/locations"); }}
+                                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-medium transition-colors whitespace-nowrap"
+                              >
+                                ← Back to Map
+                              </button>
+                            </div>
+                          )}
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 p-5 shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 items-end">
+                              <div className="space-y-1.5">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From Date</label>
+                                <input
+                                  type="date"
+                                  value={dashboardFilters.dateFrom}
+                                  onChange={(event) =>
+                                    setDashboardFilters((prev) => ({
+                                      ...prev,
+                                      dateFrom: event.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To Date</label>
+                                <input
+                                  type="date"
+                                  value={dashboardFilters.dateTo}
+                                  onChange={(event) =>
+                                    setDashboardFilters((prev) => ({
+                                      ...prev,
+                                      dateTo: event.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Campaign</label>
+                                <select
+                                  value={dashboardFilters.campaignId}
+                                  onChange={(event) =>
+                                    setDashboardFilters((prev) => ({
+                                      ...prev,
+                                      campaignId: event.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
+                                >
+                                  <option value="">All campaigns</option>
+                                  {campaigns.map((campaign) => (
+                                    <option key={campaign.id} value={campaign.id}>
+                                      {campaign.title}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">City</label>
+                                <input
+                                  type="text"
+                                  placeholder="City"
+                                  value={dashboardFilters.city}
+                                  onChange={(event) =>
+                                    setDashboardFilters((prev) => ({
+                                      ...prev,
+                                      city: event.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mobile</label>
+                                <input
+                                  type="text"
+                                  placeholder="Mobile"
+                                  value={dashboardFilters.mobile}
+                                  onChange={(event) =>
+                                    setDashboardFilters((prev) => ({
+                                      ...prev,
+                                      mobile: event.target.value,
+                                    }))
+                                  }
+                                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
+                                />
+                              </div>
+                              <div className="flex gap-2 w-full xl:col-span-1">
+                                <button
+                                  type="button"
+                                  onClick={handleApplyExtraFilters}
+                                  className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center justify-center gap-2 font-medium"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                  Apply
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-4 flex justify-end border-t border-gray-100 dark:border-zinc-800/80 pt-4">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  exportVendorCustomers(
+                                    token,
+                                    buildExtraFilterParams(),
+                                  )
+                                }
+                                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow text-sm"
+                              >
+                                <Download className="w-4 h-4" />
+                                Export CSV
+                              </button>
+                            </div>
+                            {extraTabError && (
+                              <p className="mt-3 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
+                                {extraTabError}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden shadow-sm dark:shadow-none">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
+                                  <tr>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Customer</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Mobile</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Codes</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Rewards Earned</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">
+                                      First Scan Location
+                                    </th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Member Since</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide">Last Scanned</th>
+                                    <th className="px-6 py-4 font-semibold tracking-wide text-right">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                  {isLoadingExtraTab ? (
+                                    <tr>
+                                      <td colSpan={8} className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-3">
+                                          <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" />
+                                          <span className="text-gray-500 dark:text-gray-400 font-medium tracking-wide">Loading customers...</span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ) : customersData.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={8} className="px-6 py-16 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-3">
+                                          <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center mb-2">
+                                            <Users className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                          </div>
+                                          <h3 className="text-base font-semibold text-gray-900 dark:text-white">No customers found</h3>
+                                          <p className="text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters to see more results</p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    customersData.map((customer) => (
+                                      <tr
+                                        key={customer.userId || customer.mobile}
+                                        className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors group"
+                                      >
+                                        <td className="px-6 py-4">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                              {customer.name?.[0]?.toUpperCase() || "C"}
+                                            </div>
+                                            <span className="font-medium text-gray-900 dark:text-white truncate">{customer.name || "-"}</span>
+                                          </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                                          {customer.mobile || "-"}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-medium">
+                                            {customer.codeCount || 0}
+                                          </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                          ₹{formatAmount(customer.rewardsEarned)}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300 truncate max-w-[150px]" title={customer.firstScanLocation || "-"}>
+                                          {customer.firstScanLocation || "-"}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                          {formatDate(customer.memberSince)}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                          {formatDate(customer.lastScanned)}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedCustomerModal(customer);
+                                              setIsCustomerModalOpen(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto"
+                                          >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            View History
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     {activeTab === "locations" && (
@@ -7480,11 +7737,21 @@ Quantity: ${invoiceData.quantity} QRs
                                         ]}
                                       >
                                         <Popup>
-                                          <div className="text-xs">
-                                            <div className="font-semibold">
+                                          <div className="text-xs min-w-[140px]">
+                                            <div className="font-semibold text-gray-900">
                                               {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
                                             </div>
-                                            <div>{pt.count || 0} scans</div>
+                                            <div className="text-gray-600 mt-0.5">{pt.count || 0} scans</div>
+                                            {pt.city && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleClusterClick(pt)}
+                                                className="mt-2 w-full text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-md transition-colors flex items-center justify-center gap-1"
+                                              >
+                                                <Users size={12} />
+                                                View Customers
+                                              </button>
+                                            )}
                                           </div>
                                         </Popup>
                                       </Marker>
@@ -7493,27 +7760,45 @@ Quantity: ${invoiceData.quantity} QRs
                               </div>
                             </div>
                             <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                                Clusters
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  Clusters
+                                </div>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">
+                                  {locationsData.length} locations
+                                </span>
                               </div>
                               <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
                                 {locationsData.length === 0 ? (
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-gray-500 py-8 text-center">
                                     No locations found.
                                   </div>
                                 ) : (
                                   locationsData.map((pt, i) => (
-                                    <div
+                                    <button
+                                      type="button"
                                       key={`cluster-${pt.lat}-${pt.lng}-${i}`}
-                                      className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
+                                      onClick={() => handleClusterClick(pt)}
+                                      className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
                                     >
-                                      <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                        {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                            <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                              {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}` : "Unknown"}
+                                            </div>
+                                            <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                              <span>{pt.count || 0} scans</span>
+                                              {pt.pincode && <span>• {pt.pincode}</span>}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
                                       </div>
-                                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                        {pt.count || 0} scans
-                                      </div>
-                                    </div>
+                                    </button>
                                   ))
                                 )}
                               </div>
@@ -7523,169 +7808,7 @@ Quantity: ${invoiceData.quantity} QRs
                       </div>
                     )}
 
-                    {activeTab === "customers" && (
-                      <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateFrom}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateFrom: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateTo}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateTo: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <select
-                              value={dashboardFilters.campaignId}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  campaignId: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            >
-                              <option value="">All campaigns</option>
-                              {campaigns.map((campaign) => (
-                                <option key={campaign.id} value={campaign.id}>
-                                  {campaign.title}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="City"
-                              value={dashboardFilters.city}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  city: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Mobile"
-                              value={dashboardFilters.mobile}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  mobile: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleApplyExtraFilters}
-                              className={`${PRIMARY_BUTTON} rounded-lg`}
-                            >
-                              Apply
-                            </button>
-                          </div>
-                          <div className="mt-3 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                exportVendorCustomers(
-                                  token,
-                                  buildExtraFilterParams(),
-                                )
-                              }
-                              className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
-                            >
-                              <Download size={14} />
-                              Export CSV
-                            </button>
-                          </div>
-                          {extraTabError && (
-                            <p className="mt-3 text-xs text-rose-500">
-                              {extraTabError}
-                            </p>
-                          )}
-                        </div>
 
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3">Customer</th>
-                                <th className="px-4 py-3">Mobile</th>
-                                <th className="px-4 py-3">Codes</th>
-                                <th className="px-4 py-3">Rewards Earned</th>
-                                <th className="px-4 py-3">
-                                  First Scan Location
-                                </th>
-                                <th className="px-4 py-3">Member Since</th>
-                                <th className="px-4 py-3">Last Scanned</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                              {isLoadingExtraTab ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    Loading customers...
-                                  </td>
-                                </tr>
-                              ) : customersData.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    No customers found.
-                                  </td>
-                                </tr>
-                              ) : (
-                                customersData.map((customer) => (
-                                  <tr key={customer.userId || customer.mobile}>
-                                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
-                                      {customer.name || "-"}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                      {customer.mobile || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {customer.codeCount || 0}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      INR {formatAmount(customer.rewardsEarned)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {customer.firstScanLocation || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(customer.memberSince)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(customer.lastScanned)}
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
 
                     {activeTab === "billing" && (
                       <div className="space-y-4">
@@ -8630,6 +8753,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
             </>
           )}
         </>
+
+        <CustomerDetailsModal
+          isOpen={isCustomerModalOpen}
+          onClose={() => {
+            setIsCustomerModalOpen(false);
+            setTimeout(() => setSelectedCustomerModal(null), 300); // clear after animation
+          }}
+          customer={selectedCustomerModal}
+          token={token}
+        />
       </div>
     </>
   );
