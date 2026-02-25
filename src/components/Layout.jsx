@@ -7,12 +7,7 @@ import LiquidDock from "./LiquidDock";
 import { useTheme } from "./ThemeProvider";
 import UserProfileMenu from "./UserProfileMenu";
 import { getWalletSummary } from "../lib/api";
-import {
-  AUTH_CHANGE_EVENT,
-  AUTH_TOKEN_KEY,
-  clearAuthToken,
-  useAuth,
-} from "../lib/auth";
+import { clearAuthToken, useAuth } from "../lib/auth";
 
 const Layout = ({ children }) => {
   const mainRef = useRef(null);
@@ -49,7 +44,7 @@ const Layout = ({ children }) => {
     }
   }, [location.pathname]);
 
-  const { effectiveTheme } = useTheme();
+  useTheme();
   const logoSrc = "/light theme incentify logo.png";
   const { authToken } = useAuth();
   const [walletBalance, setWalletBalance] = useState(null);
@@ -74,7 +69,6 @@ const Layout = ({ children }) => {
         if (!isActive) return;
         if (err?.status === 401) {
           clearAuthToken();
-          setAuthToken("");
         }
         setWalletBalance(null);
       } finally {
