@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { format } from "date-fns";
@@ -4724,7 +4724,7 @@ const VendorDashboard = () => {
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="relative">
+                        {/* <div className="relative">
                           <input
                             type="search"
                             placeholder="Search..."
@@ -4743,7 +4743,7 @@ const VendorDashboard = () => {
                               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                             />
                           </svg>
-                        </div>
+                        </div> */}
                         <div className="relative mr-2">
                           <button
                             ref={notificationsTriggerRef}
