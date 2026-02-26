@@ -27,10 +27,10 @@ const PrivacyPolicy = () => {
 
         <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6">
           <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            This Privacy Policy describes how Assured Rewards (“Company”, “we”,
-            “our”, or “us”) collects, uses, processes, and protects information
+            This Privacy Policy describes how Assured Rewards ("Company", "we",
+            "our", or "us") collects, uses, processes, and protects information
             when you access or use the Assured Rewards web application and
-            website (collectively the “Platform” or “Service”). By accessing or
+            website (collectively the "Platform" or "Service"). By accessing or
             using our Platform, you acknowledge that you have read and
             understood this Privacy Policy and agree to the collection and use
             of information in accordance with the terms set forth herein.
@@ -63,7 +63,7 @@ const PrivacyPolicy = () => {
               Cashback, reward credits, or wallet balances are issued based on
               eligible transactions. Rewards are subject to validity periods
               starting from the credit date and must be redeemed or withdrawn per
-              the Platform’s Terms &amp; Conditions. Expired rewards may be
+              the Platform"s Terms &amp; Conditions. Expired rewards may be
               forfeited unless otherwise allowed at our discretion. The Company
               reserves the right to modify reward structures, eligibility
               criteria, or expiration timelines with prior notice on the Platform.
@@ -163,7 +163,7 @@ const PrivacyPolicy = () => {
 
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              10. Children’s Privacy
+              10. Children"s Privacy
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               The Platform is not intended for individuals under 18. We do not

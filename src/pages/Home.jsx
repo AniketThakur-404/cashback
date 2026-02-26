@@ -131,7 +131,7 @@ const HeroCarousel = React.memo(({ items }) => {
 
   return (
     <div
-      className="hero-carousel relative isolate w-full h-[240px] sm:h-[260px] rounded-3xl overflow-hidden border border-white/25"
+      className="hero-carousel relative isolate w-full h-[280px] sm:h-[270px] rounded-3xl overflow-hidden border border-white/25"
       style={{
         boxShadow: "0 28px 64px -12px rgba(15, 23, 42, 0.4)",
         touchAction: "pan-y",
@@ -169,10 +169,10 @@ const HeroCarousel = React.memo(({ items }) => {
             {/* Subtle noise/texture overlay for premium look */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
 
-            <div className="relative z-10 h-full px-7 sm:px-8 py-7 sm:py-8 flex items-center justify-between gap-6">
+            <div className="relative z-10 h-full px-5 sm:px-8 py-5 sm:py-7 flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
                 <div
-                  className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-4 backdrop-blur-xl"
+                  className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-2.5 backdrop-blur-xl"
                   style={{
                     background: "rgba(255,255,255,0.12)",
                     borderColor: "rgba(255,255,255,0.2)",
@@ -187,23 +187,23 @@ const HeroCarousel = React.memo(({ items }) => {
                   </span>
                 </div>
                 <h3
-                  className="text-[32px] sm:text-[25px] font-bold text-white leading-[1.1] tracking-tight"
+                  className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.1] tracking-tight"
                   style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
                 >
                   {b.title}
                 </h3>
                 <p
-                  className="text-[13px] sm:text-[14px] mt-2.5 font-medium"
+                  className="text-[12px] sm:text-[14px] mt-2 font-medium"
                   style={{ color: "rgba(255,255,255,0.85)" }}
                 >
                   {b.subtitle}
                 </p>
                 <Link
                   to={b.link || "/brand-details"}
-                  className="self-start mt-6"
+                  className="self-start mt-4"
                 >
                   <div
-                    className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-7 py-3 rounded-xl active:scale-[0.92] transition-all hover:pr-8 group"
+                    className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-6 py-2.5 rounded-xl active:scale-[0.92] transition-all hover:pr-8 group"
                     style={{ boxShadow: "0 15px 35px -5px rgba(0,0,0,0.4)" }}
                   >
                     Explore{" "}
@@ -216,7 +216,7 @@ const HeroCarousel = React.memo(({ items }) => {
               </div>
 
               <div className="flex shrink-0 items-center justify-center">
-                <div className="relative w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl group">
+                <div className="relative w-[110px] h-[110px] sm:w-[160px] sm:h-[160px] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl group">
                   <FallbackImage
                     src={resolvePublicAssetUrl(b.img)}
                     alt="Offer"
@@ -280,7 +280,7 @@ const Home = () => {
                 productsReported: s.productsReported || 0,
                 walletEarned: s.totalEarned || 0,
               };
-          } catch (_) {}
+          } catch (_) { }
         }
         if (live) setHomeData(data);
       } catch (_) {

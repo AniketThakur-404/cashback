@@ -45,7 +45,7 @@ const HowVerifyWorks = () => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            How Verify Works
+            How Assured Rewards Works
           </h1>
         </div>
 
@@ -57,7 +57,7 @@ const HowVerifyWorks = () => {
             Simple, Fast, Secure
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-            Our Verify system protects you from counterfeit products while
+            Our Assured Rewards system protects you from counterfeit products while
             instantly rewarding you for your genuine purchases.
           </p>
         </div>
