@@ -1743,89 +1743,142 @@ const VendorDashboard = () => {
     }
   };
 
-  const resolveCustomerLocations = async (customers) => {
-    const needGeocode = customers.filter(
-      (c) =>
-        (!c.firstScanLocation || c.firstScanLocation === "-") &&
-        Number.isFinite(Number(c.lat)) &&
-        Number.isFinite(Number(c.lng)),
-    );
-    if (needGeocode.length === 0) return customers;
-
-    const uniqueCoords = new Map();
-    needGeocode.forEach((c) => {
-      const key = `${Number(c.lat).toFixed(3)}_${Number(c.lng).toFixed(3)}`;
-      if (!uniqueCoords.has(key)) uniqueCoords.set(key, c);
-    });
-
-    const resolved = new Map();
-    const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
-    for (const [key, c] of entries) {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${c.lat}&lon=${c.lng}&format=json&zoom=10&accept-language=en`,
-          { headers: { "User-Agent": "AssuredRewards/1.0" } },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const addr = data?.address || {};
-          const city =
-            addr.city ||
-            addr.town ||
-            addr.village ||
-            addr.suburb ||
-            addr.county ||
-            "";
-          const state = addr.state || "";
-          const parts = [city, state].filter(Boolean);
-          resolved.set(key, parts.join(", ") || "");
-        }
-      } catch {
-        // skip
-      }
-    }
-
-    return customers.map((c) => {
-      if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
-      if (!Number.isFinite(Number(c.lat)) || !Number.isFinite(Number(c.lng)))
-        return c;
-      const key = `${Number(c.lat).toFixed(3)}_${Number(c.lng).toFixed(3)}`;
-      const loc = resolved.get(key);
-      if (loc) return { ...c, firstScanLocation: loc };
-      return c;
-    });
-  };
-
   const loadCustomersData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const data = await getVendorCustomers(
-        authToken,
-        buildExtraFilterParams(),
-      );
-      let customers = Array.isArray(data?.customers) ? data.customers : [];
-      customers = await resolveCustomerLocations(customers);
+      // Fetch customers and redemptions in parallel
+      const [custResult, redemResult] = await Promise.allSettled([
+        getVendorCustomers(authToken, buildExtraFilterParams()),
+        getVendorRedemptions(authToken, {
+          ...buildExtraFilterParams(),
+          page: 1,
+          limit: 500,
+        }),
+      ]);
+
+      let customers = [];
+      if (custResult.status === "fulfilled") {
+        customers = Array.isArray(custResult.value?.customers)
+          ? custResult.value.customers
+          : [];
+      }
+
+      // Build a location map from redemptions: userId/phone -> {lat, lng, city, state}
+      const locationMap = new Map();
+      if (redemResult.status === "fulfilled") {
+        const redemptions = Array.isArray(redemResult.value?.redemptions)
+          ? redemResult.value.redemptions
+          : [];
+        redemptions.forEach((r) => {
+          const custId =
+            r?.customer?.id || r?.userId || r?.customer?.phone || null;
+          if (!custId) return;
+          if (locationMap.has(custId)) return; // keep first/earliest
+          const lat = Number(r?.lat);
+          const lng = Number(r?.lng);
+          const city = r?.city || "";
+          const state = r?.state || "";
+          const pincode = r?.pincode || "";
+          if (city || state || (Number.isFinite(lat) && Number.isFinite(lng))) {
+            locationMap.set(custId, { lat, lng, city, state, pincode });
+          }
+        });
+      }
+
+      // If customers are empty but redemptions exist, build from redemptions
+      if (
+        customers.length === 0 &&
+        redemResult.status === "fulfilled" &&
+        Array.isArray(redemResult.value?.redemptions) &&
+        redemResult.value.redemptions.length > 0
+      ) {
+        customers = buildCustomersFromRedemptions(
+          redemResult.value.redemptions,
+        );
+      }
+
+      // Merge location data into customers
+      const needsGeocode = [];
+      customers = customers.map((c) => {
+        if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
+        // Try to find location from redemptions map
+        const custId = c.userId || c.mobile || null;
+        const loc = custId ? locationMap.get(custId) : null;
+        if (loc) {
+          if (loc.city || loc.state) {
+            const parts = [loc.city, loc.state].filter(Boolean);
+            return {
+              ...c,
+              firstScanLocation: parts.join(", "),
+            };
+          }
+          // Has lat/lng but no city/state - queue for reverse geocoding
+          if (Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+            needsGeocode.push({ customer: c, lat: loc.lat, lng: loc.lng });
+          }
+        }
+        return c;
+      });
+
+      // Reverse geocode any remaining coords
+      if (needsGeocode.length > 0) {
+        const uniqueCoords = new Map();
+        needsGeocode.forEach(({ lat, lng }) => {
+          const key = `${lat.toFixed(3)}_${lng.toFixed(3)}`;
+          if (!uniqueCoords.has(key)) uniqueCoords.set(key, { lat, lng });
+        });
+
+        const resolved = new Map();
+        const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
+        for (const [key, coord] of entries) {
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${coord.lat}&lon=${coord.lng}&format=json&zoom=10&accept-language=en`,
+              { headers: { "User-Agent": "AssuredRewards/1.0" } },
+            );
+            if (res.ok) {
+              const data = await res.json();
+              const addr = data?.address || {};
+              const city =
+                addr.city ||
+                addr.town ||
+                addr.village ||
+                addr.suburb ||
+                addr.county ||
+                "";
+              const state = addr.state || "";
+              const parts = [city, state].filter(Boolean);
+              resolved.set(key, parts.join(", ") || "Unknown");
+            }
+          } catch {
+            // skip
+          }
+        }
+
+        // Apply resolved locations
+        const geocodeMap = new Map();
+        needsGeocode.forEach(({ customer, lat, lng }) => {
+          const key = `${lat.toFixed(3)}_${lng.toFixed(3)}`;
+          const loc = resolved.get(key);
+          if (loc) {
+            geocodeMap.set(customer.userId || customer.mobile, loc);
+          }
+        });
+
+        customers = customers.map((c) => {
+          if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
+          const custId = c.userId || c.mobile;
+          const loc = geocodeMap.get(custId);
+          if (loc) return { ...c, firstScanLocation: loc };
+          return c;
+        });
+      }
+
       setCustomersData(customers);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      if (err?.status === 404) {
-        try {
-          const fallback = await getVendorRedemptions(authToken, {
-            ...buildExtraFilterParams(),
-            page: 1,
-            limit: 200,
-          });
-          let customers = buildCustomersFromRedemptions(fallback?.redemptions);
-          customers = await resolveCustomerLocations(customers);
-          setCustomersData(customers);
-          setExtraTabError("");
-          return;
-        } catch (fallbackErr) {
-          if (handleVendorAccessError(fallbackErr)) return;
-        }
-      }
       setExtraTabError(err.message || "Unable to load customers.");
     } finally {
       setIsLoadingExtraTab(false);
