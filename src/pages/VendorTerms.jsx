@@ -1,149 +1,302 @@
 import React from "react";
-import {
-  ArrowLeft,
-  FileCheck,
-  Building2,
-  AlertTriangle,
-  Scale,
-  Ban,
-  Wallet2,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const VendorTerms = () => {
   const navigate = useNavigate();
 
-  const sections = [
-    {
-      icon: FileCheck,
-      title: "Service Terms",
-      content: [
-        "Acceptance of these terms is mandatory for creating vendor campaigns",
-        "Vendors must provide accurate legal name and contact details",
-        "Assured Rewards reserves the right to modify platform behavior and fees",
-        "Account access is limited to authorized business representatives",
-      ],
-    },
-    {
-      icon: Building2,
-      title: "Vendor Obligations",
-      content: [
-        "Honoring all cashback rewards validated by the Assured Rewards platform",
-        "Ensuring products tagged with QR codes are genuine and legal",
-        "Maintaining sufficient wallet balance for prepaid cashback campaigns",
-        "Setting fair cashback percentages that comply with local advertising laws",
-      ],
-    },
-    {
-      icon: Wallet2,
-      title: "Financials & Settlements",
-      content: [
-        "Platform fees are deducted as per the agreed plan at the time of campaign creation",
-        "Payouts are processed based on verified customer scan activity",
-        "Minimum wallet recharge amounts may apply for active campaigns",
-        "Recharges are non-refundable but can be used across multiple campaigns",
-      ],
-    },
-    {
-      icon: Ban,
-      title: "Prohibited Conduct",
-      content: [
-        "Generating fake scans or using bots to inflate campaign data",
-        "Circumventing platform fees via offline arrangements with customers",
-        "Charging customers extra for products because of cashback eligibility",
-        "Sharing account credentials with unauthorized third parties",
-      ],
-    },
-    {
-      icon: AlertTriangle,
-      title: "Termination & Disputes",
-      content: [
-        "Violation of terms results in immediate campaign suspension",
-        "Unclaimed cashback in inactive accounts may be forfeited after 12 months",
-        "Disputes regarding scan validity will be resolved by Assured Rewards analytics",
-        "Assured Rewards is not responsible for vendor product liability issues",
-      ],
-    },
-    {
-      icon: Scale,
-      title: "Limitation & Indemnity",
-      content: [
-        "Vendor agrees to indemnify Assured Rewards against claims related to product quality",
-        "Maximum platform liability is limited to the fees paid in the last 30 days",
-        "Services are provided 'as-is' with reasonable uptime commitment",
-        "Governed by the laws of India; Jurisdictional courts defined in the master agreement",
-      ],
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans p-6 md:p-12 transition-colors duration-300">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-4">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
-            Vendor Terms & Conditions
-          </h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center gap-4 mb-2">
+          {/* <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 rounded-full hover:bg-white dark:hover:bg-zinc-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
+          </button> */}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Terms & Conditions
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Effective Date: 25 Feb 2026
+            </p>
+          </div>
         </div>
 
-        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100">
-          <p className="text-sm font-semibold text-amber-600 mb-6 uppercase tracking-widest">
-            Last updated: February 23, 2026
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Welcome to Assured Rewards.
+            <br />
+            <br />
+            These Terms of Service ("Terms") govern your access to and use of
+            the Assured Rewards web application and website (collectively
+            referred to as the "Platform" or "Service").
+            <br />
+            <br />
+            By accessing or using the Platform, you agree to be legally bound by
+            these Terms, along with our Privacy Policy. If you do not agree to
+            these Terms, you must discontinue use of the Platform immediately.
           </p>
 
-          <div className="prose prose-lg max-w-none">
-            <p className="text-gray-600 leading-relaxed mb-10 text-lg">
-              These terms govern the business relationship between your brand
-              and the Assured Rewards platform. By utilizing our QR-based
-              retention services, you agree to uphold the following standards of
-              integrity.
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              1. Definitions
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              For the purposes of these Terms, "User," "you," or "your" refers
+              to any individual who accesses or uses the Platform. "Company,"
+              "we," "our," or "us" refers to Assured Rewards. "Services" refers
+              to the cashback, rewards, wallet features, referral programs, and
+              related services provided through the Platform.
             </p>
+          </section>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {sections.map((section, index) => (
-                <div key={index} className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-700">
-                      <section.icon size={24} />
-                    </div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {section.title}
-                    </h2>
-                  </div>
-                  <ul className="space-y-3">
-                    {section.content.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="text-sm text-gray-600 flex items-start gap-3"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              2. Eligibility
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              By using Assured Rewards, you represent and warrant that you are
+              at least 18 years of age and legally capable of entering into a
+              binding agreement under applicable law.
+              <br />
+              <br />
+              We reserve the right to suspend or terminate accounts that do not
+              meet eligibility requirements or are found to be in violation of
+              these Terms.
+            </p>
+          </section>
 
-            <div className="mt-12 p-6 bg-amber-50 rounded-3xl border border-amber-100">
-              <div className="flex gap-4">
-                <AlertTriangle className="text-amber-600 shrink-0" size={24} />
-                <p className="text-sm text-amber-900">
-                  <strong>Fraud Policy:</strong> We have a zero-tolerance policy
-                  for fraudulent QR management. Suspicious patterns will result
-                  in immediate wallet freezing and business blacklisting across
-                  the network.
-                </p>
-              </div>
-            </div>
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              3. Account Registration and Responsibility
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              To access certain features of the Platform, you may be required to
+              create an account. You agree to provide accurate, current, and
+              complete information during registration and to update such
+              information as necessary.
+              <br />
+              <br />
+              You are responsible for maintaining the confidentiality of your
+              login credentials and for all activities that occur under your
+              account. Any unauthorized use of your account must be reported
+              immediately.
+              <br />
+              <br />
+              We reserve the right to suspend or terminate accounts that provide
+              false information or engage in suspicious or fraudulent activity.
+            </p>
+          </section>
 
-            <div className="mt-8 text-center pt-8 border-t border-gray-50">
-              <p className="text-sm text-gray-400">
-                Questions about these terms? Reach out to
-                legal@assuredrewards.in
-              </p>
-            </div>
-          </div>
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              4. Rewards, Cashback, and Wallet
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Assured Rewards provides users with cashback, reward credits,
+              referral bonuses, or promotional incentives based on eligible
+              transactions completed through partnered merchants or campaigns
+              available on the Platform.
+              <br />
+              <br />
+              All rewards are subject to transaction validation and
+              confirmation. Rewards may be delayed, reversed, or withheld in
+              cases of cancellations, returns, chargebacks, fraudulent activity,
+              duplicate transactions, misuse of promotions, or violation of
+              these Terms.
+              <br />
+              <br />
+              Rewards or wallet balances may be subject to a specified validity
+              period calculated from the date they are credited. Users are
+              responsible for redeeming or withdrawing eligible rewards within
+              the applicable timeframe. Expired rewards may be forfeited at our
+              discretion.
+              <br />
+              <br />
+              We reserve the right to modify reward structures, promotional
+              campaigns, eligibility criteria, withdrawal limits, processing
+              timelines, or redemption policies at any time.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              5. Prohibited Conduct
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              You agree not to use the Platform in a manner that:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed space-y-1">
+              <li>Violates any applicable laws or regulations</li>
+              <li>Engages in fraudulent or deceptive practices</li>
+              <li>Manipulates transactions to generate artificial rewards</li>
+              <li>Creates multiple accounts to exploit promotions</li>
+              <li>
+                Interferes with the proper functioning or security of the
+                Platform
+              </li>
+              <li>
+                Attempts unauthorized access to systems, data, or other user
+                accounts
+              </li>
+            </ul>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mt-2">
+              Violation of these provisions may result in immediate suspension
+              or permanent termination of your account and forfeiture of pending
+              rewards.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              6. Intellectual Property
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              All content, trademarks, logos, graphics, text, software, and
+              other materials available on the Platform are the property of
+              Assured Rewards or its licensors and are protected under
+              applicable intellectual property laws.
+              <br />
+              <br />
+              You are granted a limited, non-exclusive, non-transferable license
+              to access and use the Platform for personal, non-commercial
+              purposes only. You may not reproduce, distribute, modify,
+              republish, or exploit any content without prior written consent.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              7. User Content
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              If the Platform allows users to submit reviews, comments, or other
+              content, you are solely responsible for the content you post. You
+              represent that such content does not infringe any third-party
+              rights and does not violate any applicable law.
+              <br />
+              <br />
+              We reserve the right to monitor, edit, or remove content that is
+              deemed unlawful, offensive, misleading, or in violation of these
+              Terms.
+              <br />
+              <br />
+              By submitting content, you grant Assured Rewards a non-exclusive,
+              royalty-free, worldwide license to use, reproduce, and display
+              such content in connection with the operation and promotion of the
+              Platform.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              8. Third-Party Services and Merchants
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              The Platform may contain links to third-party websites or
+              merchants. Transactions conducted with third-party merchants are
+              solely between you and the respective merchant. We do not control
+              and are not responsible for the products, services, return
+              policies, delivery timelines, or conduct of third parties.
+              <br />
+              <br />
+              Eligibility for rewards remains subject to merchant confirmation
+              and validation.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              9. Disclaimer of Warranties
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              The Platform and all services are provided on an "as is" and "as
+              available" basis. We do not guarantee uninterrupted access,
+              error-free operation, or the accuracy and completeness of
+              information available on the Platform.
+              <br />
+              <br />
+              To the fullest extent permitted by law, we disclaim all
+              warranties, express or implied, including but not limited to
+              merchantability, fitness for a particular purpose, and
+              non-infringement.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              10. Limitation of Liability
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              To the maximum extent permitted by applicable law, Assured Rewards
+              shall not be liable for any indirect, incidental, special,
+              consequential, or punitive damages arising out of or related to
+              your use of the Platform.
+              <br />
+              <br />
+              Nothing in these Terms shall exclude or limit liability where such
+              exclusion is not permitted under applicable law.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              11. Suspension and Termination
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We reserve the right to suspend, restrict, or terminate access to
+              the Platform at our discretion if a user violates these Terms,
+              engages in fraudulent behavior, or misuses the reward system.
+              <br />
+              <br />
+              Upon termination, access to the Platform will cease immediately,
+              and any unverified or pending rewards may be forfeited.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              12. Governing Law
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              These Terms shall be governed by and construed in accordance with
+              the laws of India. Any disputes arising out of or relating to
+              these Terms shall be subject to the exclusive jurisdiction of the
+              courts located in New Delhi.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              13. Changes to These Terms
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We may update or modify these Terms at any time. Updated versions
+              will be posted on this page with a revised effective date.
+              Continued use of the Platform after such updates constitutes
+              acceptance of the revised Terms.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              14. Contact Information
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              If you have any questions regarding these Terms of Service, please
+              contact:
+              <br />
+              <br />
+              Assured Rewards
+              <br />
+              Email: <strong>support@assuredrewards.in</strong>
+              <br />
+              Website: <strong>assuredrewards.in</strong>
+            </p>
+          </section>
         </div>
       </div>
     </div>
