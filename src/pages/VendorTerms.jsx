@@ -81,12 +81,6 @@ const VendorTerms = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-3 bg-gray-50 rounded-2xl hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition-all border border-gray-100"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
             Vendor Terms & Conditions
           </h1>

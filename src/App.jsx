@@ -77,8 +77,8 @@ function App() {
               path="/admin/:section/:subSection"
               element={<AdminDashboard />}
             />
-            <Route path="/vendor-dashboard" element={<VendorDashboard />} />
-            <Route path="/vendor" element={<VendorLandingPage />} />
+            <Route path="/vendor" element={<VendorDashboard />} />
+            {/* <Route path="/vendor" element={<VendorLandingPage />} /> */}
             <Route path="/vendor/:section" element={<VendorDashboard />} />
             <Route
               path="/vendor-panel"
