@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { BadgeCheck, ScanLine, Gift } from "lucide-react";
+import { BadgeCheck, ScanLine, Gift, QrCode } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -7,9 +7,9 @@ gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
   {
-    icon: BadgeCheck,
-    label: "Look for Logo",
-    sub: "Spot the Assured Rewards logo on any premium partner product.",
+    icon: QrCode,
+    label: "Look for QR",
+    sub: "Spot the Assured Rewards QR code on any premium partner product.",
   },
   {
     icon: ScanLine,
