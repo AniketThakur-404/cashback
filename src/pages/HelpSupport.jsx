@@ -70,7 +70,7 @@ const HelpSupport = () => {
             </div>
             <div>
               <h3 className="font-bold text-white text-base">
-                Chat with RewardBot
+                Chat with Support 
               </h3>
               <p className="text-xs text-white/90 font-medium">
                 Get instant help 24/7
@@ -187,6 +187,15 @@ const HelpSupport = () => {
             className="hover:text-amber-500 transition-colors"
           >
             For Brands
+          </Link>
+          <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
+            &bull;
+          </span>
+          <Link
+            to="/return-refund"
+            className="hover:text-amber-500 transition-colors"
+          >
+            Return &amp; Refund
           </Link>
         </div>
         <p className="text-xs text-gray-400/80 font-medium">

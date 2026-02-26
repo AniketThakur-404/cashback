@@ -49,6 +49,7 @@ import TermsConditions from "./pages/TermsConditions";
 import ContactUs from "./pages/ContactUs";
 import History from "./pages/History";
 import ProductReport from "./pages/ProductReport";
+import ReturnRefund from "./pages/ReturnRefund";
 
 function App() {
   const AppLayout = () => (
@@ -105,6 +106,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsConditions />} />
+              <Route path="/return-refund" element={<ReturnRefund />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/gift-cards" element={<GiftCards />} />
               <Route path="/gift-cards-list" element={<GiftCardsList />} />

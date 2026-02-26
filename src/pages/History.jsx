@@ -152,13 +152,6 @@ const History = () => {
               Your scanned products and wallet activities will appear here after
               your first successful scan.
             </p>
-            <button
-              onClick={() => navigate("/")}
-              className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-strong text-white font-semibold shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center gap-2"
-            >
-              <ShoppingBag size={18} />
-              <span>Browse Products</span>
-            </button>
           </div>
         ) : (
           <>

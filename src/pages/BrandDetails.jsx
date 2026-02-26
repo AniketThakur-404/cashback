@@ -9,6 +9,7 @@ import {
   Search,
   ChevronDown,
   HelpCircle,
+  Sparkles,
 } from "lucide-react";
 import FallbackImage from "../components/FallbackImage";
 import HowItWorks from "../components/HowItWorks";

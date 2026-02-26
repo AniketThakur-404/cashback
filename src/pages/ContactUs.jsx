@@ -139,7 +139,7 @@ const ContactUs = () => {
                 Visit Us
               </p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                123 Business Park, Tech City, India 500001
+                D-6/1, Pocket D, Okhla Phase II, Okhla Industrial Estate, New Delhi, Delhi 110020
               </p>
             </div>
           </div>
@@ -201,7 +201,7 @@ const ContactUs = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3 text-sm text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none transition-all placeholder:text-gray-400"
-                  placeholder="hello@example.com"
+                  placeholder="hello@gmail.com"
                   required
                 />
               </div>

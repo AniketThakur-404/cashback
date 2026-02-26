@@ -8,7 +8,6 @@ import {
   Save,
   User,
   UserCircle,
-  Star,
   HelpCircle,
   FileText,
   MessageCircle,
@@ -259,11 +258,13 @@ const Profile = () => {
                 label="Edit Profile"
                 onClick={() => setShowEditModal(true)}
               />
+              {/*
               <MenuButton
                 icon={Star}
                 label="Level Rewards"
                 to="/level-rewards"
               />
+              */}
             </div>
           </div>
 
@@ -299,16 +300,21 @@ const Profile = () => {
             </h3>
             <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
               <MenuButton
-                icon={Shield}
-                label="Privacy Policy"
-                to="/profile/privacy-policy"
-              />
-              <MenuButton
-                icon={FileText}
-                label="Terms & Conditions"
-                to="/profile/terms"
-              />
-              <MenuButton icon={Info} label="About Us" to="/about-us" />
+              icon={Shield}
+              label="Privacy Policy"
+              to="/profile/privacy-policy"
+            />
+            <MenuButton
+              icon={FileText}
+              label="Terms & Conditions"
+              to="/profile/terms"
+            />
+            <MenuButton
+              icon={Shield}
+              label="Return & Refund"
+              to="/return-refund"
+            />
+            <MenuButton icon={Info} label="About Us" to="/about-us" />
             </div>
           </div>
 
