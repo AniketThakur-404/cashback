@@ -1,7 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import {
   Gift,
-  FileText,
   ChevronRight,
   Sparkles,
   History,
@@ -91,7 +90,7 @@ const quickActions = [
     shadow: "rgba(59,130,246,0.3)",
   },
   {
-    to: "/wallet",
+    to: "/store",
     icon: Gift,
     label: "Rewards",
     gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
@@ -763,43 +762,6 @@ const Home = () => {
             )}
           </div>
         </div>
-
-        {/* --- 7 • PRODUCT REPORTS --- */}
-        <Link
-          to="/product-report"
-          className="block active:scale-[0.98] transition-transform"
-        >
-          <div
-            className="bg-white rounded-2xl p-4 flex items-center justify-between"
-            style={{
-              boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-              border: "1px solid rgba(0,0,0,0.04)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg,#3b82f6,#4f46e5)",
-                  boxShadow: "0 4px 12px rgba(59,130,246,0.2)",
-                }}
-              >
-                <FileText size={18} className="text-white" />
-              </div>
-              <div>
-                <div className="text-[13px] font-bold text-gray-900">
-                  My Reports
-                </div>
-                <div className="text-[10px] text-gray-500">
-                  {isLoading
-                    ? "Loading..."
-                    : `${stats.productsReported || 0} reported issues`}
-                </div>
-              </div>
-            </div>
-            <ChevronRight size={16} className="text-gray-300" />
-          </div>
-        </Link>
 
         {/* --- 8 � VIDEO SPOTLIGHT --- */}
         <div>

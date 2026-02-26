@@ -48,6 +48,7 @@ import {
   Save,
   Building2,
   MapPin,
+  Search,
 } from "lucide-react";
 import {
   getMe,
@@ -110,8 +111,9 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
-import VendorRedemptions from "../components/vendor/VendorRedemptions";
 import VendorSupport from "../components/vendor/VendorSupport";
+import CustomerDetailsModal from "../components/vendor/CustomerDetailsModal";
+import AdvancedFilters from "../components/vendor/AdvancedFilters";
 import ProductEditModal from "../components/ProductEditModal";
 import StarBorder from "../components/StarBorder";
 
@@ -359,10 +361,9 @@ const VendorDashboard = () => {
     "campaigns",
     "products",
     "wallet",
-    "redemptions",
+    "customers",
     "support",
     "locations",
-    "customers",
     "billing",
     "reports",
   ]);
@@ -453,7 +454,9 @@ const VendorDashboard = () => {
     dateTo: "",
     campaignId: "",
     city: "",
+    state: "",
     mobile: "",
+    productId: "",
     invoiceNo: "",
   });
   const [locationsData, setLocationsData] = useState([]);
@@ -462,7 +465,11 @@ const VendorDashboard = () => {
   const [reportsData, setReportsData] = useState([]);
   const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
   const [extraTabError, setExtraTabError] = useState("");
+  const [clusterCityFilter, setClusterCityFilter] = useState(null);
   const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
+
+  const [selectedCustomerModal, setSelectedCustomerModal] = useState(null);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
   const [showAllInventory, setShowAllInventory] = useState(false);
 
@@ -641,6 +648,9 @@ const VendorDashboard = () => {
   const [campaignTab, setCampaignTab] = useState("create"); // 'create', 'pending', 'active'
   const [selectedPendingCampaign, setSelectedPendingCampaign] = useState(null);
   const [selectedActiveCampaign, setSelectedActiveCampaign] = useState(null);
+  const [campaignQrBreakdownMap, setCampaignQrBreakdownMap] = useState({});
+  const [loadingCampaignBreakdownId, setLoadingCampaignBreakdownId] =
+    useState("");
   const [isPayingCampaign, setIsPayingCampaign] = useState(false);
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
@@ -1122,6 +1132,8 @@ const VendorDashboard = () => {
     setDeletingBatchKey(null);
     lastAutoFilledCashbackRef.current = null;
     setSelectedActiveCampaign(null);
+    setCampaignQrBreakdownMap({});
+    setLoadingCampaignBreakdownId("");
     setQrs([]);
     setQrTotal(0);
     setQrPage(1);
@@ -1303,7 +1315,7 @@ const VendorDashboard = () => {
     let target = metadataTab ? `/vendor/${metadataTab}` : "/vendor/overview";
     switch (notification?.type) {
       case "qr-redeemed":
-        target = "/vendor/redemptions";
+        target = "/vendor/customers";
         break;
       case "wallet-recharge":
       case "wallet-debit":
@@ -1377,6 +1389,105 @@ const VendorDashboard = () => {
       }
     } finally {
       setIsLoadingQrs(false);
+    }
+  };
+
+  const loadCampaignQrBreakdown = async (
+    campaign,
+    authToken = token,
+  ) => {
+    const campaignId = campaign?.id;
+    if (!authToken || !campaignId) return;
+
+    const expectedTotalRaw = Number(
+      campaignStatsMap[campaignId]?.totalQRsOrdered ??
+      campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
+    );
+    const expectedTotal = Number.isFinite(expectedTotalRaw)
+      ? Math.max(0, expectedTotalRaw)
+      : 0;
+
+    setLoadingCampaignBreakdownId(campaignId);
+
+    try {
+      const grouped = new Map();
+      const limit = 200;
+      let page = 1;
+      let pages = 1;
+      let matchedCount = 0;
+      let safety = 0;
+
+      while (page <= pages && safety < 150) {
+        const data = await getVendorQrs(authToken, { page, limit });
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.data || [];
+        const total = Number.isFinite(Number(data?.total))
+          ? Number(data.total)
+          : items.length;
+        pages = Number.isFinite(Number(data?.pages))
+          ? Number(data.pages)
+          : Math.max(1, Math.ceil(total / limit));
+
+        items.forEach((qr) => {
+          const qrCampaignId = qr?.Campaign?.id || qr?.campaignId || null;
+          if (qrCampaignId !== campaignId) return;
+
+          matchedCount += 1;
+          const price = parseNumericValue(
+            qr?.cashbackAmount,
+            parseNumericValue(qr?.Campaign?.cashbackAmount, 0),
+          );
+          const key = price.toFixed(2);
+          if (!grouped.has(key)) {
+            grouped.set(key, {
+              price,
+              priceKey: key,
+              quantity: 0,
+              activeCount: 0,
+              redeemedCount: 0,
+            });
+          }
+
+          const group = grouped.get(key);
+          group.quantity += 1;
+          if (isRedeemedQrStatus(qr?.status)) {
+            group.redeemedCount += 1;
+          } else if (!isInactiveQrStatus(qr?.status)) {
+            group.activeCount += 1;
+          }
+        });
+
+        if (expectedTotal > 0 && matchedCount >= expectedTotal) {
+          break;
+        }
+        if (items.length < limit) {
+          break;
+        }
+
+        page += 1;
+        safety += 1;
+      }
+
+      const priceGroups = Array.from(grouped.values()).sort(
+        (a, b) => b.price - a.price,
+      );
+
+      setCampaignQrBreakdownMap((prev) => ({
+        ...prev,
+        [campaignId]: {
+          priceGroups,
+          matchedCount,
+          complete: expectedTotal > 0 ? matchedCount >= expectedTotal : true,
+          loadedAt: Date.now(),
+        },
+      }));
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+    } finally {
+      setLoadingCampaignBreakdownId((prev) =>
+        prev === campaignId ? "" : prev,
+      );
     }
   };
 
@@ -1455,6 +1566,8 @@ const VendorDashboard = () => {
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
     if (dashboardFilters.city) params.city = dashboardFilters.city.trim();
+    if (dashboardFilters.state) params.state = dashboardFilters.state.trim();
+    if (dashboardFilters.productId) params.productId = dashboardFilters.productId;
     if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
     if (dashboardFilters.invoiceNo)
       params.invoiceNo = dashboardFilters.invoiceNo.trim();
@@ -1650,6 +1763,20 @@ const VendorDashboard = () => {
     if (activeTab === "reports") {
       await loadReportsData(authToken);
     }
+  };
+
+  const handleClusterClick = (cluster) => {
+    const city = cluster.city || "";
+    if (!city) return;
+    setDashboardFilters((prev) => ({ ...prev, city, mobile: "" }));
+    setClusterCityFilter(city);
+    navigate("/vendor/customers");
+  };
+
+  const handleClearClusterFilter = () => {
+    setClusterCityFilter(null);
+    setDashboardFilters((prev) => ({ ...prev, city: "" }));
+    loadCustomersData(token);
   };
 
   const loadCompanyProfile = async (authToken = token) => {
@@ -2099,6 +2226,17 @@ const VendorDashboard = () => {
   // Scroll to top on route/tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeTab]);
+
+  // Load customer data when switching to Customer Summary sub-tab
+  useEffect(() => {
+    if (activeTab === "customers" && token) {
+      loadCustomersData(token);
+    }
+    // Clear cluster filter when leaving the customer subtab
+    if (activeTab !== "customers") {
+      setClusterCityFilter(null);
+    }
   }, [activeTab]);
 
   const handleSignIn = async () => {
@@ -3708,6 +3846,16 @@ const VendorDashboard = () => {
     });
     return map;
   }, [qrsGroupedByCampaign]);
+  useEffect(() => {
+    if (!selectedActiveCampaign?.id || !token) return;
+    if (campaignQrBreakdownMap[selectedActiveCampaign.id]) return;
+    loadCampaignQrBreakdown(selectedActiveCampaign, token);
+  }, [
+    selectedActiveCampaign,
+    token,
+    campaignQrBreakdownMap,
+    campaignStatsMap,
+  ]);
   const activeCampaignDetails = useMemo(() => {
     if (!selectedActiveCampaign) return null;
     const campaign = selectedActiveCampaign;
@@ -3737,7 +3885,40 @@ const VendorDashboard = () => {
     })();
     const printCost = totalQty * qrPricePerUnit;
     const stats = campaignQrMap.get(campaign.id);
-    const priceGroups = stats?.priceGroups || [];
+    const campaignStats =
+      campaignStatsMap[campaign.id] ||
+      campaignStatsMap[`title:${campaign.title}`] ||
+      null;
+    const statsTotal = Number(campaignStats?.totalQRsOrdered);
+    const statsRedeemed = Number(campaignStats?.totalUsersJoined);
+    const fallbackTotal = Number(stats?.stats?.total);
+    const fallbackRedeemed = Number(stats?.stats?.redeemed);
+    const totalCount = Number.isFinite(statsTotal)
+      ? Math.max(statsTotal, totalQty)
+      : Number.isFinite(fallbackTotal)
+        ? Math.max(fallbackTotal, totalQty)
+        : totalQty;
+    const redeemedCount = Number.isFinite(statsRedeemed)
+      ? statsRedeemed
+      : Number.isFinite(fallbackRedeemed)
+        ? fallbackRedeemed
+        : 0;
+    const activeCount = Math.max(0, totalCount - redeemedCount);
+    const campaignQrBreakdown = campaignQrBreakdownMap[campaign.id];
+    const fetchedPriceGroups = campaignQrBreakdown?.priceGroups || [];
+    const priceGroups = fetchedPriceGroups.length
+      ? fetchedPriceGroups
+      : stats?.priceGroups || [];
+    const qrBreakdownTotal = priceGroups.reduce((sum, group) => {
+      const groupQty =
+        Number(group?.quantity) ||
+        Number(group?.qrs?.length) ||
+        0;
+      return sum + groupQty;
+    }, 0);
+    const hasCompleteQrBreakdown =
+      campaignQrBreakdown?.complete ||
+      (qrBreakdownTotal > 0 && qrBreakdownTotal >= totalCount);
     const productId =
       campaign.productId ||
       (Array.isArray(campaign.allocations)
@@ -3746,18 +3927,36 @@ const VendorDashboard = () => {
     const product = productId
       ? products.find((item) => item.id === productId)
       : null;
-    const breakdownRows = priceGroups.length
-      ? priceGroups.map((group) => ({
+    const priceGroupByKey = new Map(
+      priceGroups.map((group) => [group.priceKey, group]),
+    );
+    const breakdownType =
+      priceGroups.length && (hasCompleteQrBreakdown || !allocationGroups.length)
+        ? "qr"
+        : "allocation";
+    const breakdownRows = breakdownType === "allocation"
+      ? allocationGroups
+        .map((group) => {
+          const key = group.price.toFixed(2);
+          const qrGroup = priceGroupByKey.get(key);
+          const redeemed = Math.max(
+            0,
+            Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
+          );
+          return {
+            cashback: group.price,
+            quantity: group.quantity,
+            // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
+            active: Math.max(0, group.quantity - redeemed),
+            redeemed,
+          };
+        })
+        .sort((a, b) => b.cashback - a.cashback)
+      : priceGroups.map((group) => ({
         cashback: group.price,
-        quantity: group.qrs.length,
+        quantity: Number(group.quantity) || group.qrs?.length || 0,
         active: group.activeCount,
         redeemed: group.redeemedCount,
-      }))
-      : allocationGroups.map((group) => ({
-        cashback: group.price,
-        quantity: group.quantity,
-        active: 0,
-        redeemed: 0,
       }));
 
     return {
@@ -3767,10 +3966,21 @@ const VendorDashboard = () => {
       totalBudget,
       printCost,
       stats,
+      totalCount,
+      redeemedCount,
+      activeCount,
+      breakdownType,
       product,
       breakdownRows,
     };
-  }, [selectedActiveCampaign, campaignQrMap, products, qrPricePerUnit]);
+  }, [
+    selectedActiveCampaign,
+    campaignQrMap,
+    campaignQrBreakdownMap,
+    campaignStatsMap,
+    products,
+    qrPricePerUnit,
+  ]);
   const activeCampaign = activeCampaignDetails?.campaign;
   const pendingCampaignPayment = useMemo(
     () => getCampaignPaymentSummary(selectedPendingCampaign, qrPricePerUnit),
@@ -4135,7 +4345,6 @@ const VendorDashboard = () => {
                           >
                             {registrationForm.logoPreview ? (
                               <img
-                                src={registrationForm.logoPreview}
                                 alt="Logo"
                                 className="w-full h-full object-cover"
                               />
@@ -4427,8 +4636,8 @@ const VendorDashboard = () => {
                             icon: BadgeCheck,
                           },
                           {
-                            id: "redemptions",
-                            label: "Redemptions",
+                            id: "customers",
+                            label: "Customers",
                             icon: Users,
                           },
                           {
@@ -4436,11 +4645,7 @@ const VendorDashboard = () => {
                             label: "Locations",
                             icon: Globe,
                           },
-                          {
-                            id: "customers",
-                            label: "Customers",
-                            icon: Users,
-                          },
+
                           { id: "wallet", label: "Wallet", icon: Wallet },
                           {
                             id: "billing",
@@ -6564,7 +6769,7 @@ Quantity: ${invoiceData.quantity} QRs
                                   </div>
                                 )}
 
-                                <div className="grid gap-3 sm:grid-cols-3">
+                                <div className="grid gap-3 sm:grid-cols-4">
                                   <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
                                     <div className="text-[10px] uppercase tracking-wide text-gray-500">
                                       Budget
@@ -6581,10 +6786,15 @@ Quantity: ${invoiceData.quantity} QRs
                                       Total QRs
                                     </div>
                                     <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                      {activeCampaignDetails.stats?.stats
-                                        .total ||
-                                        activeCampaignDetails.totalQty ||
-                                        0}
+                                      {activeCampaignDetails.totalCount}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
+                                    <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      Active
+                                    </div>
+                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                      {activeCampaignDetails.activeCount}
                                     </div>
                                   </div>
                                   <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 p-3">
@@ -6592,29 +6802,35 @@ Quantity: ${invoiceData.quantity} QRs
                                       Redeemed
                                     </div>
                                     <div className="text-lg font-bold text-primary">
-                                      {activeCampaignDetails.stats?.stats
-                                        .redeemed || 0}
+                                      {activeCampaignDetails.redeemedCount}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                   Active QRs:{" "}
-                                  {activeCampaignDetails.stats?.stats.active ||
-                                    0}{" "}
+                                  {activeCampaignDetails.activeCount}{" "}
                                   - Redeemed:{" "}
-                                  {activeCampaignDetails.stats?.stats
-                                    .redeemed || 0}
+                                  {activeCampaignDetails.redeemedCount}
                                 </div>
 
                                 <div>
-                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                                    <Package
-                                      size={16}
-                                      className="text-primary"
-                                    />
-                                    {activeCampaignDetails.stats?.stats.total
-                                      ? "QR Breakdown"
-                                      : "Allocation Breakdown"}
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-2">
+                                      <Package
+                                        size={16}
+                                        className="text-primary"
+                                      />
+                                      {activeCampaignDetails.breakdownType ===
+                                        "allocation"
+                                        ? "Allocation Breakdown"
+                                        : "QR Breakdown"}
+                                    </span>
+                                    {loadingCampaignBreakdownId ===
+                                      activeCampaign?.id && (
+                                        <span className="text-[11px] font-medium text-gray-400">
+                                          Loading full data...
+                                        </span>
+                                      )}
                                   </h4>
                                   <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
                                     <table className="w-full text-left text-sm">
@@ -7361,93 +7577,162 @@ Quantity: ${invoiceData.quantity} QRs
                       </div>
                     )}
 
-                    {/* Redemptions Tab - Customer redemption history */}
-                    {activeTab === "redemptions" && (
-                      <VendorRedemptions token={token} />
+                    {/* Customers Tab */}
+                    {activeTab === "customers" && (
+                      <div className="space-y-4">
+                        <div className="space-y-4">
+                          {/* Location filter breadcrumb */}
+                          {clusterCityFilter && (
+                            <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3">
+                              <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span className="text-sm text-emerald-800 dark:text-emerald-300 font-medium">
+                                Showing customers from: <strong>{clusterCityFilter}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleClearClusterFilter}
+                                className="ml-auto text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors"
+                                title="Clear location filter"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setClusterCityFilter(null); setDashboardFilters(prev => ({ ...prev, city: "" })); navigate("/vendor/locations"); }}
+                                className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 font-medium transition-colors whitespace-nowrap"
+                              >
+                                ← Back to Map
+                              </button>
+                            </div>
+                          )}
+                          <AdvancedFilters
+                            filters={dashboardFilters}
+                            setFilters={setDashboardFilters}
+                            onApply={handleApplyExtraFilters}
+                            campaigns={campaigns}
+                            products={products}
+                            showExport={true}
+                            onExport={() => exportVendorCustomers(token, buildExtraFilterParams())}
+                            variant="customers"
+                          />
+                          {extraTabError && (
+                            <p className="mt-3 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
+                              {extraTabError}
+                            </p>
+                          )}
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
+                            <div className="w-full">
+                              <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
+                                  <tr>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Customer</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Mobile</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Codes</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Rewards</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">
+                                      Location
+                                    </th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Joined</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide">Last Scanned</th>
+                                    <th className="px-5 py-4 font-semibold tracking-wide text-right">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                  {isLoadingExtraTab ? (
+                                    <tr>
+                                      <td colSpan={8} className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-3">
+                                          <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" />
+                                          <span className="text-gray-500 dark:text-gray-400 font-medium tracking-wide">Loading customers...</span>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ) : customersData.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={8} className="px-6 py-16 text-center">
+                                        <div className="flex flex-col items-center justify-center gap-3">
+                                          <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center mb-2">
+                                            <Users className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                          </div>
+                                          <h3 className="text-base font-semibold text-gray-900 dark:text-white">No customers found</h3>
+                                          <p className="text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters to see more results</p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    customersData.map((customer) => (
+                                      <tr
+                                        key={customer.userId || customer.mobile}
+                                        className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors group"
+                                      >
+                                        <td className="px-5 py-4 align-top">
+                                          <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                                              {customer.name?.[0]?.toUpperCase() || "C"}
+                                            </div>
+                                            <span className="font-medium text-gray-900 dark:text-white break-words max-w-[150px]">{customer.name || "-"}</span>
+                                          </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 align-top">
+                                          {customer.mobile || "-"}
+                                        </td>
+                                        <td className="px-5 py-4 align-top">
+                                          <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-medium">
+                                            {customer.codeCount || 0}
+                                          </span>
+                                        </td>
+                                        <td className="px-5 py-4 font-semibold text-emerald-600 dark:text-emerald-400 align-top">
+                                          ₹{formatAmount(customer.rewardsEarned)}
+                                        </td>
+                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 break-words max-w-[150px] align-top">
+                                          {customer.firstScanLocation || "-"}
+                                        </td>
+                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
+                                          {formatDate(customer.memberSince)}
+                                        </td>
+                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
+                                          {formatDate(customer.lastScanned)}
+                                        </td>
+                                        <td className="px-5 py-4 text-right align-top">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedCustomerModal(customer);
+                                              setIsCustomerModalOpen(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto whitespace-nowrap"
+                                          >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            View History
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     {activeTab === "locations" && (
                       <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateFrom}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateFrom: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateTo}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateTo: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <select
-                              value={dashboardFilters.campaignId}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  campaignId: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            >
-                              <option value="">All campaigns</option>
-                              {campaigns.map((campaign) => (
-                                <option key={campaign.id} value={campaign.id}>
-                                  {campaign.title}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="City"
-                              value={dashboardFilters.city}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  city: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Mobile"
-                              value={dashboardFilters.mobile}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  mobile: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleApplyExtraFilters}
-                              className={`${PRIMARY_BUTTON} rounded-lg`}
-                            >
-                              Apply
-                            </button>
-                          </div>
-                          {extraTabError && (
-                            <p className="mt-3 text-xs text-rose-500">
-                              {extraTabError}
-                            </p>
-                          )}
-                        </div>
-
+                        <AdvancedFilters
+                          filters={dashboardFilters}
+                          setFilters={setDashboardFilters}
+                          onApply={handleApplyExtraFilters}
+                          campaigns={campaigns}
+                          products={products}
+                          variant="locations"
+                        />
+                        {extraTabError && (
+                          <p className="mt-3 text-xs text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-2 rounded-lg">
+                            {extraTabError}
+                          </p>
+                        )}
                         {isLoadingExtraTab ? (
                           <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
                             Loading locations...
@@ -7480,11 +7765,21 @@ Quantity: ${invoiceData.quantity} QRs
                                         ]}
                                       >
                                         <Popup>
-                                          <div className="text-xs">
-                                            <div className="font-semibold">
+                                          <div className="text-xs min-w-[140px]">
+                                            <div className="font-semibold text-gray-900">
                                               {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
                                             </div>
-                                            <div>{pt.count || 0} scans</div>
+                                            <div className="text-gray-600 mt-0.5">{pt.count || 0} scans</div>
+                                            {pt.city && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleClusterClick(pt)}
+                                                className="mt-2 w-full text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-md transition-colors flex items-center justify-center gap-1"
+                                              >
+                                                <Users size={12} />
+                                                View Customers
+                                              </button>
+                                            )}
                                           </div>
                                         </Popup>
                                       </Marker>
@@ -7492,200 +7787,70 @@ Quantity: ${invoiceData.quantity} QRs
                                 </MapContainer>
                               </div>
                             </div>
-                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
-                              <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                                Clusters
-                              </div>
-                              <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                                {locationsData.length === 0 ? (
-                                  <div className="text-xs text-gray-500">
-                                    No locations found.
+                            {(() => {
+                              const grouped = {};
+                              locationsData.forEach((pt) => {
+                                const city = pt.city || "";
+                                const state = pt.state || "";
+                                const key = city + "|||" + state;
+                                if (!grouped[key]) {
+                                  grouped[key] = { city, state, totalScans: 0, pincodes: new Set(), lat: pt.lat, lng: pt.lng };
+                                }
+                                grouped[key].totalScans += (pt.count || 0);
+                                if (pt.pincode) grouped[key].pincodes.add(pt.pincode);
+                              });
+                              const clusters = Object.values(grouped)
+                                .filter((c) => c.city || c.state)
+                                .sort((a, b) => b.totalScans - a.totalScans);
+                              return (
+                                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">Clusters</div>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">{clusters.length} regions</span>
                                   </div>
-                                ) : (
-                                  locationsData.map((pt, i) => (
-                                    <div
-                                      key={`cluster-${pt.lat}-${pt.lng}-${i}`}
-                                      className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-2"
-                                    >
-                                      <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                        {pt.city || pt.state ? `${pt.city || ''}${pt.city && pt.state ? ', ' : ''}${pt.state || ''}${pt.pincode ? ` - ${pt.pincode}` : ''}` : "Unknown"}
-                                      </div>
-                                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                        {pt.count || 0} scans
-                                      </div>
-                                    </div>
-                                  ))
-                                )}
-                              </div>
-                            </div>
+                                  <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+                                    {clusters.length === 0 ? (
+                                      <div className="text-xs text-gray-500 py-8 text-center">No locations found.</div>
+                                    ) : (
+                                      clusters.map((cluster, i) => (
+                                        <button
+                                          type="button"
+                                          key={"cluster-" + cluster.city + "-" + cluster.state + "-" + i}
+                                          onClick={() => handleClusterClick(cluster)}
+                                          className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                              </div>
+                                              <div className="min-w-0">
+                                                <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                  {(cluster.city || '') + (cluster.city && cluster.state ? ', ' : '') + (cluster.state || '')}
+                                                </div>
+                                                <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                                  <span className="font-medium text-emerald-600 dark:text-emerald-400">{cluster.totalScans} scans</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500">#{i + 1}</span>
+                                              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
+                                            </div>
+                                          </div>
+                                        </button>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
                     )}
 
-                    {activeTab === "customers" && (
-                      <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateFrom}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateFrom: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="date"
-                              value={dashboardFilters.dateTo}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  dateTo: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <select
-                              value={dashboardFilters.campaignId}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  campaignId: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            >
-                              <option value="">All campaigns</option>
-                              {campaigns.map((campaign) => (
-                                <option key={campaign.id} value={campaign.id}>
-                                  {campaign.title}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              type="text"
-                              placeholder="City"
-                              value={dashboardFilters.city}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  city: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Mobile"
-                              value={dashboardFilters.mobile}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  mobile: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleApplyExtraFilters}
-                              className={`${PRIMARY_BUTTON} rounded-lg`}
-                            >
-                              Apply
-                            </button>
-                          </div>
-                          <div className="mt-3 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                exportVendorCustomers(
-                                  token,
-                                  buildExtraFilterParams(),
-                                )
-                              }
-                              className={`${SECONDARY_BUTTON} rounded-lg text-xs inline-flex items-center gap-2`}
-                            >
-                              <Download size={14} />
-                              Export CSV
-                            </button>
-                          </div>
-                          {extraTabError && (
-                            <p className="mt-3 text-xs text-rose-500">
-                              {extraTabError}
-                            </p>
-                          )}
-                        </div>
 
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3">Customer</th>
-                                <th className="px-4 py-3">Mobile</th>
-                                <th className="px-4 py-3">Codes</th>
-                                <th className="px-4 py-3">Rewards Earned</th>
-                                <th className="px-4 py-3">
-                                  First Scan Location
-                                </th>
-                                <th className="px-4 py-3">Member Since</th>
-                                <th className="px-4 py-3">Last Scanned</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                              {isLoadingExtraTab ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    Loading customers...
-                                  </td>
-                                </tr>
-                              ) : customersData.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    No customers found.
-                                  </td>
-                                </tr>
-                              ) : (
-                                customersData.map((customer) => (
-                                  <tr key={customer.userId || customer.mobile}>
-                                    <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
-                                      {customer.name || "-"}
-                                    </td>
-                                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                      {customer.mobile || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {customer.codeCount || 0}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      INR {formatAmount(customer.rewardsEarned)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {customer.firstScanLocation || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(customer.memberSince)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(customer.lastScanned)}
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
 
                     {activeTab === "billing" && (
                       <div className="space-y-4">
@@ -8630,6 +8795,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
             </>
           )}
         </>
+
+        <CustomerDetailsModal
+          isOpen={isCustomerModalOpen}
+          onClose={() => {
+            setIsCustomerModalOpen(false);
+            setTimeout(() => setSelectedCustomerModal(null), 300); // clear after animation
+          }}
+          customer={selectedCustomerModal}
+          token={token}
+        />
       </div>
     </>
   );

@@ -7,12 +7,7 @@ import LiquidDock from "./LiquidDock";
 import { useTheme } from "./ThemeProvider";
 import UserProfileMenu from "./UserProfileMenu";
 import { getWalletSummary } from "../lib/api";
-import {
-  AUTH_CHANGE_EVENT,
-  AUTH_TOKEN_KEY,
-  clearAuthToken,
-  useAuth,
-} from "../lib/auth";
+import { clearAuthToken, useAuth } from "../lib/auth";
 
 const Layout = ({ children }) => {
   const mainRef = useRef(null);
@@ -49,7 +44,7 @@ const Layout = ({ children }) => {
     }
   }, [location.pathname]);
 
-  const { effectiveTheme } = useTheme();
+  useTheme();
   const logoSrc = "/light theme incentify logo.png";
   const { authToken } = useAuth();
   const [walletBalance, setWalletBalance] = useState(null);
@@ -74,7 +69,6 @@ const Layout = ({ children }) => {
         if (!isActive) return;
         if (err?.status === 401) {
           clearAuthToken();
-          setAuthToken("");
         }
         setWalletBalance(null);
       } finally {
@@ -95,14 +89,12 @@ const Layout = ({ children }) => {
       <div className="w-full max-w-md bg-white dark:bg-zinc-950 min-h-[100dvh] shadow-2xl relative flex flex-col transition-colors duration-300">
         {/* TOP HEADER */}
         <header
-          className={`bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe ${isHome ? "py-3" : "py-3"} sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 flex items-center transition-colors duration-300 ${
-            isHome ? "justify-between" : "justify-start"
-          }`}
+          className="bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe h-16 sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 transition-colors duration-300 flex items-center"
         >
           {isHome ? (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="h-12 w-40 mt-2 overflow-visible flex items-center">
+            <div className="w-full h-full flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="h-full w-40 overflow-visible flex items-center">
                   <img
                     src={logoSrc}
                     alt="Assured Rewards"
@@ -111,15 +103,15 @@ const Layout = ({ children }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-5">
+              <div className="flex h-full items-center gap-3">
                 {/* ModeToggle removed */}
                 {/* Wallet Balance Pill */}
                 <div
                   onClick={() => navigate("/wallet")}
-                  className="bg-primary dark:bg-primary-strong text-white px-4 py-2 rounded-full flex items-center gap-1 text-sm font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
+                  className="bg-primary dark:bg-primary-strong text-white px-4 h-11 rounded-full inline-flex items-center justify-center gap-1.5 text-sm font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
                 >
-                  <Wallet size={14} />
-                  <span>
+                  <Wallet size={14} className="shrink-0" />
+                  <span className="leading-none">
                     {authToken
                       ? isWalletLoading
                         ? "\u20B9 0.00"
@@ -129,9 +121,9 @@ const Layout = ({ children }) => {
                 </div>
                 <UserProfileMenu />
               </div>
-            </>
+            </div>
           ) : (
-            <div className="flex items-center justify-between w-full h-12">
+            <div className="w-full h-full flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <LiquidButton
                   type="button"
@@ -142,7 +134,7 @@ const Layout = ({ children }) => {
                 >
                   <ChevronLeft size={18} className="text-current" />
                 </LiquidButton>
-                <h1 className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                <h1 className="text-base font-semibold leading-none text-gray-800 dark:text-gray-100">
                   {headerTitle}
                 </h1>
               </div>
@@ -159,7 +151,7 @@ const Layout = ({ children }) => {
           ref={mainRef}
           className="flex-1 transition-colors duration-300 overflow-x-hidden overflow-y-auto ios-scroll"
         >
-          <div className="pb-dock-safe">{children}</div>
+          <div className={isHome ? "" : "pb-dock-safe"}>{children}</div>
         </main>
 
         {/* BOTTOM NAVIGATION */}
