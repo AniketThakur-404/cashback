@@ -9,7 +9,6 @@ const WalletAuth = ({ onLoginSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [otpHint, setOtpHint] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
@@ -30,7 +29,6 @@ const WalletAuth = ({ onLoginSuccess }) => {
     }
     setError("");
     setStatus("");
-    setOtpHint("");
     setIsSendingOtp(true);
     try {
       const data = await sendOtp(
@@ -39,11 +37,9 @@ const WalletAuth = ({ onLoginSuccess }) => {
         email.trim().toLowerCase(),
       );
       setOtpSent(true);
-      setStatus(data?.message || "OTP generated.");
-      if (data?.otp) {
-        setOtpHint(`Test OTP: ${data.otp}`);
-        setOtp(String(data.otp));
-      }
+      setStatus("A 6-digit verification code has been sent to your phone.");
+      // Auto-fill with the real OTP from backend (now always random)
+      if (data?.otp) setOtp(String(data.otp));
     } catch (err) {
       setError(err.message || "Failed to send OTP.");
     } finally {
@@ -157,11 +153,7 @@ const WalletAuth = ({ onLoginSuccess }) => {
         )}
       </div>
 
-      {otpHint && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm font-medium rounded-xl text-center">
-          {otpHint}
-        </div>
-      )}
+
 
       {status && (
         <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-medium rounded-xl text-center">
