@@ -140,21 +140,6 @@ const Wallet = () => {
           </div>
         </div>
 
-        {/* Latest QR Credit */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800">
-          <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">
-            Latest QR credit
-          </div>
-          <div className="text-2xl font-bold text-emerald-500">
-            Rs {formatAmount(lastQrCredit?.amount || 0)}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {lastQrCredit?.createdAt
-              ? `Credited on ${new Date(lastQrCredit.createdAt).toLocaleDateString()}`
-              : "No QR credits yet"}
-          </div>
-        </div>
-
         {/* 2. Action Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button

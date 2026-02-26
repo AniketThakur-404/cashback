@@ -4585,10 +4585,11 @@ const VendorDashboard = () => {
                       <div className="grid grid-cols-2 gap-2">
                         <StarBorder
                           as="div"
-                          className="w-full"
+                          className="w-full cursor-pointer"
                           color="var(--primary)"
                           speed="5s"
                           innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                          onClick={() => navigate("/vendor/wallet")}
                         >
                           <div className="flex flex-col items-center justify-center w-full">
                             <div className="text-[10px] text-gray-500 mb-0.5">
@@ -4605,10 +4606,11 @@ const VendorDashboard = () => {
                         </StarBorder>
                         <StarBorder
                           as="div"
-                          className="w-full"
+                          className="w-full cursor-pointer"
                           color="var(--primary)"
                           speed="5s"
                           innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                          onClick={() => navigate("/vendor/campaigns")}
                         >
                           <div className="flex flex-col items-center justify-center w-full">
                             <div className="text-[10px] text-gray-500 mb-0.5">
@@ -7640,8 +7642,8 @@ Quantity: ${invoiceData.quantity} QRs
                           )}
 
                           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
-                            <div className="w-full">
-                              <table className="w-full text-sm text-left">
+                            <div className="w-full overflow-x-auto">
+                              <table className="w-full min-w-[900px] text-sm text-left">
                                 <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
                                   <tr>
                                     <th className="px-5 py-4 font-semibold tracking-wide">
@@ -7789,9 +7791,9 @@ Quantity: ${invoiceData.quantity} QRs
                             Loading locations...
                           </div>
                         ) : (
-                          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
                             <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
-                              <div className="h-[480px]">
+                              <div className="h-[520px]">
                                 <MapContainer
                                   center={locationMapCenter}
                                   zoom={5}
@@ -7849,10 +7851,18 @@ Quantity: ${invoiceData.quantity} QRs
                               locationsData.forEach((pt) => {
                                 const city = pt.city || "";
                                 const state = pt.state || "";
-                                const key = city + "|||" + state;
+                                // If no city/state, use rounded coords as the grouping key
+                                const key =
+                                  city || state
+                                    ? city + "|||" + state
+                                    : `coord_${Number(pt.lat).toFixed(2)}_${Number(pt.lng).toFixed(2)}`;
                                 if (!grouped[key]) {
                                   grouped[key] = {
-                                    city,
+                                    city:
+                                      city ||
+                                      (pt.lat
+                                        ? `Area (${Number(pt.lat).toFixed(2)}, ${Number(pt.lng).toFixed(2)})`
+                                        : "Unknown Area"),
                                     state,
                                     totalScans: 0,
                                     pincodes: new Set(),
@@ -7864,9 +7874,9 @@ Quantity: ${invoiceData.quantity} QRs
                                 if (pt.pincode)
                                   grouped[key].pincodes.add(pt.pincode);
                               });
-                              const clusters = Object.values(grouped)
-                                .filter((c) => c.city || c.state)
-                                .sort((a, b) => b.totalScans - a.totalScans);
+                              const clusters = Object.values(grouped).sort(
+                                (a, b) => b.totalScans - a.totalScans,
+                              );
                               return (
                                 <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
                                   <div className="flex items-center justify-between mb-3">

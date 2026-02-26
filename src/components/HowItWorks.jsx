@@ -112,7 +112,11 @@ const HowItWorks = () => {
                     border: "1.5px solid rgba(5,150,105,0.15)",
                   }}
                 >
-                  <Icon size={26} style={{ color: "#059669" }} strokeWidth={1.7} />
+                  <Icon
+                    size={26}
+                    style={{ color: "#059669" }}
+                    strokeWidth={1.7}
+                  />
                 </div>
 
                 {/* Label */}

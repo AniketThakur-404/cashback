@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Loader2, ShieldCheck, Wallet } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 import { getClaimPreview, getWalletSummary, redeemClaim } from "../lib/api";
 import { AUTH_TOKEN_KEY } from "../lib/auth";
 import WalletAuth from "../components/wallet/WalletAuth";
@@ -15,9 +21,14 @@ const formatAmount = (value) => {
 const Claim = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = useMemo(() => String(searchParams.get("token") || "").trim(), [searchParams]);
+  const token = useMemo(
+    () => String(searchParams.get("token") || "").trim(),
+    [searchParams],
+  );
 
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem(AUTH_TOKEN_KEY));
+  const [authToken, setAuthToken] = useState(() =>
+    localStorage.getItem(AUTH_TOKEN_KEY),
+  );
   const [preview, setPreview] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [error, setError] = useState("");
@@ -55,17 +66,23 @@ const Claim = () => {
       const result = await redeemClaim(authToken, token, locationPayload);
       setRedeemStatus({
         success: true,
-        message: result.status === "claimed" ? "Already claimed. Wallet updated." : "Reward credited to wallet."
+        message:
+          result.status === "claimed"
+            ? "Already claimed. Wallet updated."
+            : "Reward credited to wallet.",
       });
       setWalletSnapshot(result);
 
       const walletData = await getWalletSummary(authToken);
       setWalletSnapshot((prev) => ({
         ...prev,
-        walletSummary: walletData
+        walletSummary: walletData,
       }));
     } catch (err) {
-      setRedeemStatus({ success: false, message: err.message || "Claim failed." });
+      setRedeemStatus({
+        success: false,
+        message: err.message || "Claim failed.",
+      });
     } finally {
       setRedeeming(false);
     }
@@ -96,9 +113,12 @@ const Claim = () => {
   }
 
   const previewStatus = preview?.status || "unclaimed";
-  const recentTransactions = walletSnapshot?.walletSummary?.recentTransactions || [];
+  const recentTransactions =
+    walletSnapshot?.walletSummary?.recentTransactions || [];
   const latestCredit = recentTransactions.find(
-    (tx) => String(tx.type || "").toUpperCase() === "CREDIT" && String(tx.category || "").toLowerCase() === "cashback_payout"
+    (tx) =>
+      String(tx.type || "").toUpperCase() === "CREDIT" &&
+      String(tx.category || "").toLowerCase() === "cashback_payout",
   );
 
   return (
@@ -116,13 +136,17 @@ const Claim = () => {
           <h1 className="text-2xl font-bold text-slate-900 max-w-[80%] mx-auto leading-tight">
             Claim your reward
           </h1>
-          <p className="text-slate-500 text-sm">Token status: {previewStatus}</p>
+          <p className="text-slate-500 text-sm">
+            Token status: {previewStatus}
+          </p>
         </div>
 
         <div className="space-y-4 py-6 border-y border-slate-200">
           <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
             <span className="text-slate-500 text-sm">Claim Amount</span>
-            <span className="font-bold text-2xl text-emerald-600">Rs {formatAmount(preview?.amount)}</span>
+            <span className="font-bold text-2xl text-emerald-600">
+              Rs {formatAmount(preview?.amount)}
+            </span>
           </div>
           {previewStatus === "expired" && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
@@ -144,8 +168,11 @@ const Claim = () => {
           <>
             {redeemStatus && (
               <div
-                className={`p-4 rounded-xl text-sm font-medium flex items-start gap-3 ${redeemStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
-                  }`}
+                className={`p-4 rounded-xl text-sm font-medium flex items-start gap-3 ${
+                  redeemStatus.success
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-red-50 text-red-700"
+                }`}
               >
                 {redeemStatus.success ? (
                   <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
@@ -178,15 +205,6 @@ const Claim = () => {
                   </div>
                 </div>
 
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-2">
-                    Latest QR credit
-                  </div>
-                  <div className="text-lg font-bold text-emerald-600">
-                    Rs {formatAmount(latestCredit?.amount || walletSnapshot?.transaction?.amount)}
-                  </div>
-                </div>
-
                 {recentTransactions.length > 0 && (
                   <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
                     <div className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
@@ -194,10 +212,22 @@ const Claim = () => {
                     </div>
                     <div className="space-y-2">
                       {recentTransactions.slice(0, 5).map((tx) => (
-                        <div key={tx.id} className="flex justify-between text-sm text-slate-700">
+                        <div
+                          key={tx.id}
+                          className="flex justify-between text-sm text-slate-700"
+                        >
                           <span>{tx.description || tx.category}</span>
-                          <span className={String(tx.type || "").toUpperCase() === "CREDIT" ? "text-emerald-600 font-semibold" : "text-slate-700 font-semibold"}>
-                            {String(tx.type || "").toUpperCase() === "CREDIT" ? "+" : "-"} Rs {formatAmount(tx.amount)}
+                          <span
+                            className={
+                              String(tx.type || "").toUpperCase() === "CREDIT"
+                                ? "text-emerald-600 font-semibold"
+                                : "text-slate-700 font-semibold"
+                            }
+                          >
+                            {String(tx.type || "").toUpperCase() === "CREDIT"
+                              ? "+"
+                              : "-"}{" "}
+                            Rs {formatAmount(tx.amount)}
                           </span>
                         </div>
                       ))}

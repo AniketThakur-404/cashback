@@ -239,13 +239,6 @@ const BrandDetails = () => {
                   Verified brand partner
                 </div>
               </div>
-              <Link
-                to={buildProductReportPath(displayBrand)}
-                className="shrink-0 bg-amber-500 text-white text-[11px] font-semibold px-3 py-2 rounded-full inline-flex items-center gap-1 shadow-sm hover:bg-amber-600 transition-colors"
-              >
-                <AlertTriangle size={14} />
-                Report Product
-              </Link>
             </div>
 
             <div className="flex flex-wrap gap-3 text-[11px] text-primary-strong">
@@ -407,15 +400,6 @@ const BrandDetails = () => {
                       <ChevronRight size={16} className="text-primary-strong" />
                     </div>
                   </Link>
-                  <div className="mt-2 flex justify-end">
-                    <Link
-                      to={reportPath}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 hover:text-amber-700"
-                    >
-                      <AlertTriangle size={12} />
-                      Report this product
-                    </Link>
-                  </div>
                 </div>
               );
             })

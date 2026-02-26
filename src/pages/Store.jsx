@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Gift, ShoppingBag, Sparkles, Wallet } from "lucide-react";
 import {
   getPublicStoreData,
@@ -52,7 +53,7 @@ const ProductCard = ({
   const isOutOfStock = Number.isFinite(stockValue) && stockValue <= 0;
   const hasEnoughBalance = amount > 0 && walletBalance >= amount;
 
-  let actionLabel = "Redeem Now";
+  let actionLabel = "Redeem";
   let buttonStyle =
     "bg-primary hover:bg-primary-strong text-white shadow-lg shadow-primary/20";
 
@@ -60,7 +61,7 @@ const ProductCard = ({
     actionLabel = "Processing...";
     buttonStyle = "bg-primary/70 text-white cursor-wait";
   } else if (!isAuthenticated) {
-    actionLabel = "Login to Redeem";
+    actionLabel = "Login";
     buttonStyle =
       "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400";
   } else if (isOutOfStock) {
@@ -68,7 +69,7 @@ const ProductCard = ({
     buttonStyle =
       "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600 cursor-not-allowed";
   } else if (!hasEnoughBalance) {
-    actionLabel = "Insufficient Balance";
+    actionLabel = "Low Balance";
     buttonStyle =
       "bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-500 border border-amber-100 dark:border-amber-800/20";
   }
@@ -81,9 +82,9 @@ const ProductCard = ({
     !hasEnoughBalance;
 
   return (
-    <article className="group flex flex-col h-full rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
+    <article className="group flex flex-col h-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
       <div
-        className={`h-48 relative overflow-hidden bg-gradient-to-br ${gradient}`}
+        className={`h-28 sm:h-40 relative overflow-hidden bg-gradient-to-br ${gradient}`}
       >
         {imageSrc && !imgError ? (
           <img
@@ -94,50 +95,49 @@ const ProductCard = ({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <ShoppingBag className="text-white/20 w-16 h-16" />
+            <ShoppingBag className="text-white/20 w-10 h-10 sm:w-14 sm:h-14" />
           </div>
         )}
         <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-60" />
-        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/20 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
           {item.category || "General"}
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="flex-1 p-5 flex flex-col">
+      <div className="flex-1 p-3 sm:p-4 flex flex-col">
         {/* Brand & Title */}
-        <div className="mb-2">
+        <div className="mb-1.5">
           {item.brand && (
-            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
-              <Sparkles size={10} /> {item.brand}
+            <p className="text-[9px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
+              <Sparkles size={8} /> {item.brand}
             </p>
           )}
           <h3
-            className="text-base font-bold text-slate-900 dark:text-white leading-tight line-clamp-1"
+            className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-white leading-tight line-clamp-1"
             title={item.name}
           >
             {item.name}
           </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
-            {item.description ||
-              "Premium reward product exclusively available for our loyal members."}
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 leading-relaxed">
+            {item.description || "Premium reward for loyal members."}
           </p>
         </div>
 
         {/* Price Tag */}
-        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-2 mt-2">
+        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-1.5 mt-auto">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Required
             </p>
-            <div className="text-xl font-bold text-slate-900 dark:text-white mt-0">
+            <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-0">
               {formatPoints(amount)}
             </div>
           </div>
 
           {Number.isFinite(stockValue) && (
             <div
-              className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
+              className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md border ${
                 stockValue < 5
                   ? "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800/30 dark:text-rose-400"
                   : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/30 dark:text-emerald-400"
@@ -152,10 +152,10 @@ const ProductCard = ({
           type="button"
           disabled={disableRedeem}
           onClick={() => onRedeem(item)}
-          className={`w-full mt-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${buttonStyle}`}
+          className={`w-full mt-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center justify-center gap-1 transition-all active:scale-[0.98] ${buttonStyle}`}
         >
           {actionLabel}
-          {!disableRedeem && <ArrowRight size={14} />}
+          {!disableRedeem && <ArrowRight size={12} />}
         </button>
       </div>
     </article>
@@ -163,6 +163,7 @@ const ProductCard = ({
 };
 
 const Store = () => {
+  const navigate = useNavigate();
   const { authToken, isAuthenticated } = useAuth();
   const [storeData, setStoreData] = useState({
     categories: [],
@@ -326,7 +327,12 @@ const Store = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1.5 pr-4 shadow-sm">
+            <div
+              className={`flex items-center gap-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1.5 pr-4 shadow-sm ${!isAuthenticated ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+              onClick={() => {
+                if (!isAuthenticated) navigate("/profile");
+              }}
+            >
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                 <Wallet size={20} />
               </div>
@@ -369,7 +375,7 @@ const Store = () => {
       )}
 
       {isLoading ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-2 gap-3">
           {[...Array(4)].map((_, index) => (
             <div
               key={index}
@@ -385,7 +391,7 @@ const Store = () => {
           </p>
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-2 gap-3">
           {activeItems.map((item) => (
             <ProductCard
               key={item.id}
