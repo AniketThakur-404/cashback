@@ -1646,6 +1646,67 @@ const VendorDashboard = () => {
     );
   };
 
+  const reverseGeocodePoints = async (points) => {
+    const needGeocode = points.filter(
+      (pt) =>
+        !pt.city &&
+        !pt.state &&
+        Number.isFinite(Number(pt.lat)) &&
+        Number.isFinite(Number(pt.lng)),
+    );
+    if (needGeocode.length === 0) return points;
+
+    // Deduplicate by rounded coords to minimise API calls
+    const uniqueCoords = new Map();
+    needGeocode.forEach((pt) => {
+      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
+      if (!uniqueCoords.has(key)) uniqueCoords.set(key, pt);
+    });
+
+    const resolved = new Map();
+    // Nominatim allows max 1 req/sec; limit to first 10 unique coords
+    const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
+    for (const [key, pt] of entries) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${pt.lat}&lon=${pt.lng}&format=json&zoom=10&accept-language=en`,
+          { headers: { "User-Agent": "AssuredRewards/1.0" } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const addr = data?.address || {};
+          const city =
+            addr.city ||
+            addr.town ||
+            addr.village ||
+            addr.suburb ||
+            addr.county ||
+            "";
+          const state = addr.state || "";
+          const pincode = addr.postcode || "";
+          resolved.set(key, { city, state, pincode });
+        }
+      } catch {
+        // silently skip failed geocodes
+      }
+    }
+
+    return points.map((pt) => {
+      if (pt.city || pt.state) return pt;
+      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
+      const geo = resolved.get(key);
+      if (geo) {
+        return {
+          ...pt,
+          city: geo.city || pt.city || "",
+          state: geo.state || pt.state || "",
+          pincode: geo.pincode || pt.pincode || "",
+        };
+      }
+      return pt;
+    });
+  };
+
   const loadLocationsData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
@@ -1655,7 +1716,9 @@ const VendorDashboard = () => {
         authToken,
         buildExtraFilterParams(),
       );
-      setLocationsData(Array.isArray(data?.points) ? data.points : []);
+      let pts = Array.isArray(data?.points) ? data.points : [];
+      pts = await reverseGeocodePoints(pts);
+      setLocationsData(pts);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err?.status === 404) {
@@ -1665,9 +1728,9 @@ const VendorDashboard = () => {
             page: 1,
             limit: 200,
           });
-          setLocationsData(
-            buildLocationPointsFromRedemptions(fallback?.redemptions),
-          );
+          let pts = buildLocationPointsFromRedemptions(fallback?.redemptions);
+          pts = await reverseGeocodePoints(pts);
+          setLocationsData(pts);
           setExtraTabError("");
           return;
         } catch (fallbackErr) {
@@ -1680,6 +1743,59 @@ const VendorDashboard = () => {
     }
   };
 
+  const resolveCustomerLocations = async (customers) => {
+    const needGeocode = customers.filter(
+      (c) =>
+        (!c.firstScanLocation || c.firstScanLocation === "-") &&
+        Number.isFinite(Number(c.lat)) &&
+        Number.isFinite(Number(c.lng)),
+    );
+    if (needGeocode.length === 0) return customers;
+
+    const uniqueCoords = new Map();
+    needGeocode.forEach((c) => {
+      const key = `${Number(c.lat).toFixed(3)}_${Number(c.lng).toFixed(3)}`;
+      if (!uniqueCoords.has(key)) uniqueCoords.set(key, c);
+    });
+
+    const resolved = new Map();
+    const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
+    for (const [key, c] of entries) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${c.lat}&lon=${c.lng}&format=json&zoom=10&accept-language=en`,
+          { headers: { "User-Agent": "AssuredRewards/1.0" } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const addr = data?.address || {};
+          const city =
+            addr.city ||
+            addr.town ||
+            addr.village ||
+            addr.suburb ||
+            addr.county ||
+            "";
+          const state = addr.state || "";
+          const parts = [city, state].filter(Boolean);
+          resolved.set(key, parts.join(", ") || "");
+        }
+      } catch {
+        // skip
+      }
+    }
+
+    return customers.map((c) => {
+      if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
+      if (!Number.isFinite(Number(c.lat)) || !Number.isFinite(Number(c.lng)))
+        return c;
+      const key = `${Number(c.lat).toFixed(3)}_${Number(c.lng).toFixed(3)}`;
+      const loc = resolved.get(key);
+      if (loc) return { ...c, firstScanLocation: loc };
+      return c;
+    });
+  };
+
   const loadCustomersData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
@@ -1689,7 +1805,9 @@ const VendorDashboard = () => {
         authToken,
         buildExtraFilterParams(),
       );
-      setCustomersData(Array.isArray(data?.customers) ? data.customers : []);
+      let customers = Array.isArray(data?.customers) ? data.customers : [];
+      customers = await resolveCustomerLocations(customers);
+      setCustomersData(customers);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err?.status === 404) {
@@ -1699,9 +1817,9 @@ const VendorDashboard = () => {
             page: 1,
             limit: 200,
           });
-          setCustomersData(
-            buildCustomersFromRedemptions(fallback?.redemptions),
-          );
+          let customers = buildCustomersFromRedemptions(fallback?.redemptions);
+          customers = await resolveCustomerLocations(customers);
+          setCustomersData(customers);
           setExtraTabError("");
           return;
         } catch (fallbackErr) {
