@@ -182,15 +182,15 @@ const HelpSupport = () => {
           <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
             &bull;
           </span>
-          <Link
+          {/* <Link
             to="/brand-registration"
             className="hover:text-amber-500 transition-colors"
           >
             For Brands
-          </Link>
-          <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
+          </Link> */}
+          {/* <span className="text-gray-300 dark:text-gray-600" aria-hidden="true">
             &bull;
-          </span>
+          </span> */}
           <Link
             to="/return-refund"
             className="hover:text-amber-500 transition-colors"

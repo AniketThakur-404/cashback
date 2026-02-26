@@ -63,12 +63,14 @@ const VendorLandingPage = () => {
     {
       icon: QrCode,
       title: "Zero Friction",
-      description: "Customers just scan and pay. No apps to download.",
+      description:
+        "Every unique QR confirms a genuine product and credits cashback instantly.",
     },
     {
       icon: RefreshCw,
       title: "Automatic Retention",
-      description: "Bring them back with expiring cashback offers.",
+      description:
+        "Set campaign budgets and let expiring cashback phrases prompt repeat visits.",
     },
     {
       icon: BarChart3,
@@ -81,12 +83,12 @@ const VendorLandingPage = () => {
     {
       number: 1,
       title: "Set Cashback",
-      description: "Define your cashback % (e.g. 5%)",
+      description: "Configure cashback value and expiry for each campaign.",
     },
     {
       number: 2,
       title: "Customer Scans",
-      description: "Customer scans QR & pays",
+      description: "Customer scans the QR on your pack and pays any way they want.",
     },
     {
       number: 3,
@@ -114,8 +116,15 @@ const VendorLandingPage = () => {
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold text-emerald-600 tracking-tight">
-            {APP_NAME}
+          <div className="flex items-center gap-3">
+            <img
+              src="/light theme incentify logo.png"
+              alt={`${APP_NAME} logo`}
+              className="h-9 object-contain"
+            />
+            <span className="text-2xl font-bold text-emerald-600 tracking-tight">
+              {APP_NAME}
+            </span>
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
             <a href="#" className="hover:text-emerald-600 transition-colors">
@@ -146,11 +155,11 @@ const VendorLandingPage = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] tracking-tight text-balance">
-                Turn One Time Shoppers into Loyal Regulars.
+                Promote your genuine products with QR-powered rewards.
               </h1>
               <p className="text-xl text-gray-500 leading-relaxed text-balance max-w-lg">
-                Automatic cashback rewards that bring customers back without the
-                complexity of loyalty cards or apps.
+                Assured Rewards lets you reward every scan, track wallet credits,
+                and recover shoppers without building a new loyalty program.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
@@ -199,14 +208,11 @@ const VendorLandingPage = () => {
                     </div>
                   </div>
                   <div className="h-px bg-gray-100"></div>
-                  <p className="text-base text-gray-600">
-                    Your cashback is ready! Come back and use it on your next
-                    purchase at{" "}
-                    <span className="font-bold text-gray-900">
-                      Coffee House
-                    </span>
-                    .
-                  </p>
+                <p className="text-base text-gray-600">
+                  Cashback is instantly credited, so your customer knows they
+                  earned value the moment the QR scans. The wallet balance shows
+                  up on every visit.
+                </p>
                   <button className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20 active:scale-[0.98]">
                     View Wallet
                   </button>
@@ -228,7 +234,8 @@ const VendorLandingPage = () => {
       <section className="py-16 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-500 mb-10 font-medium">
-            Trusted by 500+ Businesses
+            Trusted by vendors who run campaigns across retail, food, and
+            FMCG brands.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12 opacity-70 hover:opacity-100 transition-opacity duration-300">
             {logos.map((logo, idx) => (
@@ -256,8 +263,8 @@ const VendorLandingPage = () => {
               Why Vendors Love Us
             </h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-              Build lasting relationships with your customers without the
-              technical headache.
+              Launch cashback, validate QR codes, and see the lifetime value
+              of every shopper inside one dashboard.
             </p>
           </div>
 

@@ -1,141 +1,218 @@
-import React from 'react';
-import { ArrowLeft, Shield, Eye, Lock, Users, FileText, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const PrivacyPolicy = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const sections = [
-        {
-            icon: Shield,
-            title: "Information We Collect",
-            content: [
-                "Personal information (name, email, phone number) when you register",
-                "Transaction history and cashback earnings",
-                "Device information and usage data",
-                "Location data for service delivery",
-                "QR code scanning activity"
-            ]
-        },
-        {
-            icon: Eye,
-            title: "How We Use Your Information",
-            content: [
-                "Process cashback rewards and transactions",
-                "Verify product authenticity and prevent fraud",
-                "Send notifications about offers and rewards",
-                "Improve our services and user experience",
-                "Comply with legal obligations"
-            ]
-        },
-        {
-            icon: Lock,
-            title: "Data Security",
-            content: [
-                "We use industry-standard encryption to protect your data",
-                "Secure servers with regular security audits",
-                "Limited access to personal information",
-                "Regular backups and disaster recovery procedures"
-            ]
-        },
-        {
-            icon: Users,
-            title: "Information Sharing",
-            content: [
-                "We do not sell your personal information to third parties",
-                "Partner brands may receive aggregated, anonymized data",
-                "Service providers who assist in operations (under strict agreements)",
-                "Law enforcement when legally required"
-            ]
-        },
-        {
-            icon: FileText,
-            title: "Your Rights",
-            content: [
-                "Access your personal data at any time",
-                "Request correction of inaccurate information",
-                "Delete your account and associated data",
-                "Opt-out of marketing communications",
-                "Export your data in a portable format"
-            ]
-        },
-        {
-            icon: Mail,
-            title: "Contact Us",
-            content: [
-                "For privacy concerns, email us at privacy@assuredrewards.in",
-                "Data protection queries: dpo@assuredrewards.in",
-                "Response time: Within 48 hours"
-            ]
-        }
-    ];
-
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300">
-            <div className="max-w-3xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-2">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 rounded-full hover:bg-white dark:hover:bg-zinc-900 transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
-                    </button>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
-                </div>
-
-                <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                        Last updated: February 10, 2026
-                    </p>
-
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <p className="text-gray-700 dark:text-gray-300 mb-6">
-                            At Assured Rewards, we take your privacy seriously. This Privacy Policy explains how we collect,
-                            use, disclose, and safeguard your information when you use our cashback rewards platform.
-                        </p>
-
-                        <div className="space-y-8">
-                            {sections.map((section, index) => (
-                                <div key={index} className="border-l-4 border-primary pl-4 py-2">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
-                                            <section.icon size={20} />
-                                        </div>
-                                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                                            {section.title}
-                                        </h2>
-                                    </div>
-                                    <ul className="space-y-2 ml-13">
-                                        {section.content.map((item, idx) => (
-                                            <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
-                                                <span className="text-primary mt-1.5">â€¢</span>
-                                                <span>{item}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-8 p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20">
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                <strong>Note:</strong> We may update this Privacy Policy from time to time.
-                                We will notify you of any changes by posting the new Privacy Policy on this page
-                                and updating the "Last updated" date.
-                            </p>
-                        </div>
-
-                        <div className="mt-6 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                By using Assured Rewards, you agree to this Privacy Policy.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center gap-4 mb-2">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 rounded-full hover:bg-white dark:hover:bg-zinc-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Privacy Policy
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Effective Date: 25 Feb 2026
+            </p>
+          </div>
         </div>
-    );
+
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 space-y-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            This Privacy Policy describes how Assured Rewards (“Company”, “we”,
+            “our”, or “us”) collects, uses, processes, and protects information
+            when you access or use the Assured Rewards web application and
+            website (collectively the “Platform” or “Service”). By accessing or
+            using our Platform, you acknowledge that you have read and
+            understood this Privacy Policy and agree to the collection and use
+            of information in accordance with the terms set forth herein.
+          </p>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              1. Information We Collect
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We may collect personal information such as your full name, mobile
+              number, email address, date of birth, postal address, and any
+              additional details required for account verification or reward
+              processing. When necessary for withdrawals, fraud prevention, or
+              regulatory compliance, we may also collect identification
+              information and payment-related details. This data helps us create
+              and manage user accounts, verify identity, process cashback and
+              rewards, facilitate withdrawals, communicate service updates,
+              resolve disputes, and provide customer support. Limited user
+              information may be shared with partnered merchants or brands
+              strictly for operational purposes.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              2. Rewards and Wallet Policy
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Cashback, reward credits, or wallet balances are issued based on
+              eligible transactions. Rewards are subject to validity periods
+              starting from the credit date and must be redeemed or withdrawn per
+              the Platform’s Terms &amp; Conditions. Expired rewards may be
+              forfeited unless otherwise allowed at our discretion. The Company
+              reserves the right to modify reward structures, eligibility
+              criteria, or expiration timelines with prior notice on the Platform.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              3. Automatically Collected Information
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We automatically collect technical and usage data such as IP
+              address, browser type, device information, operating system,
+              access times, referring URLs, pages viewed, clickstream activity,
+              and session duration. This data supports system security, fraud
+              prevention, performance analysis, user experience improvements,
+              and Platform optimization.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              4. Cookies and Similar Technologies
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Cookies and similar tracking tools enhance functionality, analyze
+              usage, remember preferences, and improve browsing experiences. You
+              may configure your browser to refuse cookies or receive alerts,
+              but disabling cookies may limit features or affect Platform
+              performance.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              5. Use of Information
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Information is used to operate and maintain the Service, process
+              transactions and rewards, prevent fraud, communicate updates,
+              respond to inquiries, optimize performance, and comply with legal
+              obligations. We do not sell or rent personal information for third
+              party marketing purposes.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              6. Disclosure of Information
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We share data with trusted service providers (payment gateways,
+              hosting, analytics, support systems, infrastructure partners) under
+              confidentiality agreements. Partnered merchants may receive
+              information strictly for verification and reward validation.
+              Disclosures also occur to comply with law, regulatory authorities,
+              court orders, or to protect legal rights, prevent fraud, or ensure
+              safety.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              7. Data Security
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We implement technical and organizational safeguards designed to
+              protect data against unauthorized access, misuse, alteration, or
+              disclosure. While we follow commercially acceptable standards, no
+              method of transmission or storage is entirely secure.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              8. Data Retention
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Personal information is retained as long as necessary to fulfill
+              the outlined purposes, maintain accounts, comply with laws, resolve
+              disputes, and enforce agreements. Users may request deletion via
+              support; we will delete or anonymize data subject to legal
+              requirements.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              9. Third-Party Websites
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              The Platform may link to third-party sites or services. We are not
+              responsible for their content or privacy practices. Please review
+              their policies before interaction.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              10. Children’s Privacy
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              The Platform is not intended for individuals under 18. We do not
+              knowingly collect data from minors. If we discover such data, we
+              will remove it promptly.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              11. User Rights
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Subject to applicable laws, users may access, update, correct, or
+              request deletion of their personal information via the contact
+              details below.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              12. Updates to This Privacy Policy
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              We may revise this Privacy Policy from time to time. Any updates
+              will be posted on this page along with an effective date. Continued
+              use after updates constitutes acceptance of the revised policy.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+              13. Contact Information
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Assured Rewards
+              <br />
+              Email: <strong>support@assuredrewards.in</strong>
+              <br />
+              Website: <strong>assuredrewards.in</strong>
+              <br />
+              Registered Office Address: D-6/1, Okhla Phase 2, New Delhi -
+              110020
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default PrivacyPolicy;
