@@ -1748,11 +1748,20 @@ const VendorDashboard = () => {
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
+      const allFilters = buildExtraFilterParams();
+      // Remove city/state from customers API params (it doesn't support location filtering)
+      // Keep them for redemptions API which has the location data
+      const {
+        city: filterCity,
+        state: filterState,
+        ...custApiParams
+      } = allFilters;
+
       // Fetch customers and redemptions in parallel
       const [custResult, redemResult] = await Promise.allSettled([
-        getVendorCustomers(authToken, buildExtraFilterParams()),
+        getVendorCustomers(authToken, custApiParams),
         getVendorRedemptions(authToken, {
-          ...buildExtraFilterParams(),
+          ...allFilters,
           page: 1,
           limit: 500,
         }),
@@ -1873,6 +1882,18 @@ const VendorDashboard = () => {
           const loc = geocodeMap.get(custId);
           if (loc) return { ...c, firstScanLocation: loc };
           return c;
+        });
+      }
+
+      // Apply city/state filter client-side (since customers API doesn't support it)
+      if (filterCity || filterState) {
+        const cityLower = (filterCity || "").toLowerCase();
+        const stateLower = (filterState || "").toLowerCase();
+        customers = customers.filter((c) => {
+          const loc = (c.firstScanLocation || "").toLowerCase();
+          if (cityLower && !loc.includes(cityLower)) return false;
+          if (stateLower && !loc.includes(stateLower)) return false;
+          return true;
         });
       }
 
