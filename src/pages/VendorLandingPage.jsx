@@ -88,7 +88,8 @@ const VendorLandingPage = () => {
     {
       number: 2,
       title: "Customer Scans",
-      description: "Customer scans the QR on your pack and pays any way they want.",
+      description:
+        "Customer scans the QR on your pack and pays any way they want.",
     },
     {
       number: 3,
@@ -158,8 +159,9 @@ const VendorLandingPage = () => {
                 Promote your genuine products with QR-powered rewards.
               </h1>
               <p className="text-xl text-gray-500 leading-relaxed text-balance max-w-lg">
-                Assured Rewards lets you reward every scan, track wallet credits,
-                and recover shoppers without building a new loyalty program.
+                Assured Rewards lets you reward every scan, track wallet
+                credits, and recover shoppers without building a new loyalty
+                program.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
@@ -200,7 +202,7 @@ const VendorLandingPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 font-medium uppercase tracking-wide">
-                        Cashback Received
+                        Customer Cashback
                       </p>
                       <p className="text-3xl font-bold text-gray-900">
                         +₹50.00
@@ -208,11 +210,11 @@ const VendorLandingPage = () => {
                     </div>
                   </div>
                   <div className="h-px bg-gray-100"></div>
-                <p className="text-base text-gray-600">
-                  Cashback is instantly credited, so your customer knows they
-                  earned value the moment the QR scans. The wallet balance shows
-                  up on every visit.
-                </p>
+                  <p className="text-base text-gray-600">
+                    Cashback is instantly credited, so your customer knows they
+                    earned value the moment the QR scans. The wallet balance
+                    shows up on every visit.
+                  </p>
                   <button className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-semibold hover:bg-emerald-700 transition shadow-lg shadow-emerald-600/20 active:scale-[0.98]">
                     View Wallet
                   </button>
@@ -234,8 +236,8 @@ const VendorLandingPage = () => {
       <section className="py-16 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-500 mb-10 font-medium">
-            Trusted by vendors who run campaigns across retail, food, and
-            FMCG brands.
+            Trusted by vendors who run campaigns across retail, food, and FMCG
+            brands.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-6 md:gap-12 opacity-70 hover:opacity-100 transition-opacity duration-300">
             {logos.map((logo, idx) => (
@@ -263,8 +265,8 @@ const VendorLandingPage = () => {
               Why Vendors Love Us
             </h2>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-              Launch cashback, validate QR codes, and see the lifetime value
-              of every shopper inside one dashboard.
+              Launch cashback, validate QR codes, and see the lifetime value of
+              every shopper inside one dashboard.
             </p>
           </div>
 
