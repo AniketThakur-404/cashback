@@ -1749,19 +1749,15 @@ const VendorDashboard = () => {
     setExtraTabError("");
     try {
       const allFilters = buildExtraFilterParams();
-      // Remove city/state from customers API params (it doesn't support location filtering)
-      // Keep them for redemptions API which has the location data
-      const {
-        city: filterCity,
-        state: filterState,
-        ...custApiParams
-      } = allFilters;
+      // Remove city/state from ALL API params — backend doesn't store resolved city names
+      // We apply city/state filtering client-side after reverse geocoding
+      const { city: filterCity, state: filterState, ...apiParams } = allFilters;
 
       // Fetch customers and redemptions in parallel
       const [custResult, redemResult] = await Promise.allSettled([
-        getVendorCustomers(authToken, custApiParams),
+        getVendorCustomers(authToken, apiParams),
         getVendorRedemptions(authToken, {
-          ...allFilters,
+          ...apiParams,
           page: 1,
           limit: 500,
         }),
