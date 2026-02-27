@@ -2818,7 +2818,7 @@ const VendorDashboard = () => {
       ]);
       openSuccessModal(
         "Campaign deleted",
-        refundedAmount > 0
+        refundedAmount > 0 && !isPostpaid
           ? `Campaign deleted. INR ${refundedAmount.toFixed(2)} moved from locked balance to your available wallet.`
           : "Campaign deleted.",
       );
@@ -4204,6 +4204,7 @@ const VendorDashboard = () => {
       parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
+  const isPostpaid = brandProfile?.defaultPlanType === "postpaid";
   const displayedTransactions = showAllTransactions
     ? transactions
     : transactions.slice(0, 5);
@@ -7571,6 +7572,19 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           )}
                         </div>
+
+                        {/* Navigate to Campaigns */}
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="button"
+                            onClick={() => navigate("/vendor/campaigns")}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold transition-all active:scale-[0.98]"
+                          >
+                            <Megaphone size={12} />
+                            Go to Campaigns
+                            <ChevronRight size={12} />
+                          </button>
+                        </div>
                       </div>
                     )}
                     {/* Wallet Section */}
@@ -7586,7 +7600,9 @@ Quantity: ${invoiceData.quantity} QRs
                         </div>
 
                         {/* Balance Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                          className={`grid grid-cols-1 ${!isPostpaid ? "md:grid-cols-2" : ""} gap-6`}
+                        >
                           {/* Available Balance */}
                           <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
                             <div className="text-xs font-medium text-gray-500 mb-2">
@@ -7600,18 +7616,20 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           </div>
 
-                          {/* Locked Balance */}
-                          <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
-                            <div className="text-xs font-medium text-gray-500 mb-2">
-                              Locked balance
+                          {/* Locked Balance - only for prepaid */}
+                          {!isPostpaid && (
+                            <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
+                              <div className="text-xs font-medium text-gray-500 mb-2">
+                                Locked balance
+                              </div>
+                              <div
+                                className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+                                title={`INR ${formatAmount(lockedBalance)}`}
+                              >
+                                INR {formatCompactAmount(lockedBalance)}
+                              </div>
                             </div>
-                            <div
-                              className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-                              title={`INR ${formatAmount(lockedBalance)}`}
-                            >
-                              INR {formatCompactAmount(lockedBalance)}
-                            </div>
-                          </div>
+                          )}
                         </div>
 
                         {/* Recharge Section */}
@@ -8675,7 +8693,9 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                 title="Delete campaign?"
                 message={
                   campaignToDelete
-                    ? `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
+                    ? isPostpaid
+                      ? `Delete "${campaignToDelete.title}"? This will void all linked QRs.`
+                      : `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
                     : ""
                 }
                 confirmText="Delete Campaign"

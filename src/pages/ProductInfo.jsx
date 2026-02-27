@@ -119,7 +119,7 @@ const ProductInfo = () => {
 
   if (!product) {
     return (
-      <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
+      <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-4 transition-colors duration-300">
         <div className="px-4 mt-4 text-xs text-gray-500">
           No product information available.
         </div>
@@ -154,14 +154,16 @@ const ProductInfo = () => {
   ];
 
   return (
-    <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
-      <div className="px-4 mt-4 space-y-4">
-        <div className="relative rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm transition-colors duration-300">
-          <FallbackImage
-            src={displayProduct.banner || displayProduct.image}
-            alt={`${displayProduct.name} banner`}
-            className="w-full h-44 object-cover"
-          />
+    <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-4 transition-colors duration-300">
+      <div className="px-4 pb-4 space-y-4">
+        <div className="relative rounded-b-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm transition-colors duration-300">
+          <div className="w-full aspect-[4/3] bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
+            <FallbackImage
+              src={displayProduct.banner || displayProduct.image}
+              alt={`${displayProduct.name} banner`}
+              className="w-full h-full object-contain p-3"
+            />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">
