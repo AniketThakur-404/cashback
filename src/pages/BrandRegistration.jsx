@@ -555,7 +555,7 @@ const BrandRegistration = () => {
 
       // Success
       // alert("Welcome! Your brand has been registered.");
-      navigate("/vendor-dashboard"); // Redirect to Dashboard
+      navigate("/vendor"); // Redirect to Dashboard
     } catch (err) {
       console.error("Submission error:", err);
       setError(err.message || "Failed to process request. Please try again.");

@@ -1646,6 +1646,67 @@ const VendorDashboard = () => {
     );
   };
 
+  const reverseGeocodePoints = async (points) => {
+    const needGeocode = points.filter(
+      (pt) =>
+        !pt.city &&
+        !pt.state &&
+        Number.isFinite(Number(pt.lat)) &&
+        Number.isFinite(Number(pt.lng)),
+    );
+    if (needGeocode.length === 0) return points;
+
+    // Deduplicate by rounded coords to minimise API calls
+    const uniqueCoords = new Map();
+    needGeocode.forEach((pt) => {
+      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
+      if (!uniqueCoords.has(key)) uniqueCoords.set(key, pt);
+    });
+
+    const resolved = new Map();
+    // Nominatim allows max 1 req/sec; limit to first 10 unique coords
+    const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
+    for (const [key, pt] of entries) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${pt.lat}&lon=${pt.lng}&format=json&zoom=10&accept-language=en`,
+          { headers: { "User-Agent": "AssuredRewards/1.0" } },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const addr = data?.address || {};
+          const city =
+            addr.city ||
+            addr.town ||
+            addr.village ||
+            addr.suburb ||
+            addr.county ||
+            "";
+          const state = addr.state || "";
+          const pincode = addr.postcode || "";
+          resolved.set(key, { city, state, pincode });
+        }
+      } catch {
+        // silently skip failed geocodes
+      }
+    }
+
+    return points.map((pt) => {
+      if (pt.city || pt.state) return pt;
+      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
+      const geo = resolved.get(key);
+      if (geo) {
+        return {
+          ...pt,
+          city: geo.city || pt.city || "",
+          state: geo.state || pt.state || "",
+          pincode: geo.pincode || pt.pincode || "",
+        };
+      }
+      return pt;
+    });
+  };
+
   const loadLocationsData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
@@ -1655,7 +1716,9 @@ const VendorDashboard = () => {
         authToken,
         buildExtraFilterParams(),
       );
-      setLocationsData(Array.isArray(data?.points) ? data.points : []);
+      let pts = Array.isArray(data?.points) ? data.points : [];
+      pts = await reverseGeocodePoints(pts);
+      setLocationsData(pts);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err?.status === 404) {
@@ -1665,9 +1728,9 @@ const VendorDashboard = () => {
             page: 1,
             limit: 200,
           });
-          setLocationsData(
-            buildLocationPointsFromRedemptions(fallback?.redemptions),
-          );
+          let pts = buildLocationPointsFromRedemptions(fallback?.redemptions);
+          pts = await reverseGeocodePoints(pts);
+          setLocationsData(pts);
           setExtraTabError("");
           return;
         } catch (fallbackErr) {
@@ -1685,29 +1748,154 @@ const VendorDashboard = () => {
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const data = await getVendorCustomers(
-        authToken,
-        buildExtraFilterParams(),
-      );
-      setCustomersData(Array.isArray(data?.customers) ? data.customers : []);
+      const allFilters = buildExtraFilterParams();
+      // Remove city/state from ALL API params — backend doesn't store resolved city names
+      // We apply city/state filtering client-side after reverse geocoding
+      const { city: filterCity, state: filterState, ...apiParams } = allFilters;
+
+      // Fetch customers and redemptions in parallel
+      const [custResult, redemResult] = await Promise.allSettled([
+        getVendorCustomers(authToken, apiParams),
+        getVendorRedemptions(authToken, {
+          ...apiParams,
+          page: 1,
+          limit: 500,
+        }),
+      ]);
+
+      let customers = [];
+      if (custResult.status === "fulfilled") {
+        customers = Array.isArray(custResult.value?.customers)
+          ? custResult.value.customers
+          : [];
+      }
+
+      // Build a location map from redemptions: userId/phone -> {lat, lng, city, state}
+      const locationMap = new Map();
+      if (redemResult.status === "fulfilled") {
+        const redemptions = Array.isArray(redemResult.value?.redemptions)
+          ? redemResult.value.redemptions
+          : [];
+        redemptions.forEach((r) => {
+          const custId =
+            r?.customer?.id || r?.userId || r?.customer?.phone || null;
+          if (!custId) return;
+          if (locationMap.has(custId)) return; // keep first/earliest
+          const lat = Number(r?.lat);
+          const lng = Number(r?.lng);
+          const city = r?.city || "";
+          const state = r?.state || "";
+          const pincode = r?.pincode || "";
+          if (city || state || (Number.isFinite(lat) && Number.isFinite(lng))) {
+            locationMap.set(custId, { lat, lng, city, state, pincode });
+          }
+        });
+      }
+
+      // If customers are empty but redemptions exist, build from redemptions
+      if (
+        customers.length === 0 &&
+        redemResult.status === "fulfilled" &&
+        Array.isArray(redemResult.value?.redemptions) &&
+        redemResult.value.redemptions.length > 0
+      ) {
+        customers = buildCustomersFromRedemptions(
+          redemResult.value.redemptions,
+        );
+      }
+
+      // Merge location data into customers
+      const needsGeocode = [];
+      customers = customers.map((c) => {
+        if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
+        // Try to find location from redemptions map
+        const custId = c.userId || c.mobile || null;
+        const loc = custId ? locationMap.get(custId) : null;
+        if (loc) {
+          if (loc.city || loc.state) {
+            const parts = [loc.city, loc.state].filter(Boolean);
+            return {
+              ...c,
+              firstScanLocation: parts.join(", "),
+            };
+          }
+          // Has lat/lng but no city/state - queue for reverse geocoding
+          if (Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+            needsGeocode.push({ customer: c, lat: loc.lat, lng: loc.lng });
+          }
+        }
+        return c;
+      });
+
+      // Reverse geocode any remaining coords
+      if (needsGeocode.length > 0) {
+        const uniqueCoords = new Map();
+        needsGeocode.forEach(({ lat, lng }) => {
+          const key = `${lat.toFixed(3)}_${lng.toFixed(3)}`;
+          if (!uniqueCoords.has(key)) uniqueCoords.set(key, { lat, lng });
+        });
+
+        const resolved = new Map();
+        const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
+        for (const [key, coord] of entries) {
+          try {
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${coord.lat}&lon=${coord.lng}&format=json&zoom=10&accept-language=en`,
+              { headers: { "User-Agent": "AssuredRewards/1.0" } },
+            );
+            if (res.ok) {
+              const data = await res.json();
+              const addr = data?.address || {};
+              const city =
+                addr.city ||
+                addr.town ||
+                addr.village ||
+                addr.suburb ||
+                addr.county ||
+                "";
+              const state = addr.state || "";
+              const parts = [city, state].filter(Boolean);
+              resolved.set(key, parts.join(", ") || "Unknown");
+            }
+          } catch {
+            // skip
+          }
+        }
+
+        // Apply resolved locations
+        const geocodeMap = new Map();
+        needsGeocode.forEach(({ customer, lat, lng }) => {
+          const key = `${lat.toFixed(3)}_${lng.toFixed(3)}`;
+          const loc = resolved.get(key);
+          if (loc) {
+            geocodeMap.set(customer.userId || customer.mobile, loc);
+          }
+        });
+
+        customers = customers.map((c) => {
+          if (c.firstScanLocation && c.firstScanLocation !== "-") return c;
+          const custId = c.userId || c.mobile;
+          const loc = geocodeMap.get(custId);
+          if (loc) return { ...c, firstScanLocation: loc };
+          return c;
+        });
+      }
+
+      // Apply city/state filter client-side (since customers API doesn't support it)
+      if (filterCity || filterState) {
+        const cityLower = (filterCity || "").toLowerCase();
+        const stateLower = (filterState || "").toLowerCase();
+        customers = customers.filter((c) => {
+          const loc = (c.firstScanLocation || "").toLowerCase();
+          if (cityLower && !loc.includes(cityLower)) return false;
+          if (stateLower && !loc.includes(stateLower)) return false;
+          return true;
+        });
+      }
+
+      setCustomersData(customers);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      if (err?.status === 404) {
-        try {
-          const fallback = await getVendorRedemptions(authToken, {
-            ...buildExtraFilterParams(),
-            page: 1,
-            limit: 200,
-          });
-          setCustomersData(
-            buildCustomersFromRedemptions(fallback?.redemptions),
-          );
-          setExtraTabError("");
-          return;
-        } catch (fallbackErr) {
-          if (handleVendorAccessError(fallbackErr)) return;
-        }
-      }
       setExtraTabError(err.message || "Unable to load customers.");
     } finally {
       setIsLoadingExtraTab(false);
@@ -2630,7 +2818,7 @@ const VendorDashboard = () => {
       ]);
       openSuccessModal(
         "Campaign deleted",
-        refundedAmount > 0
+        refundedAmount > 0 && !isPostpaid
           ? `Campaign deleted. INR ${refundedAmount.toFixed(2)} moved from locked balance to your available wallet.`
           : "Campaign deleted.",
       );
@@ -4016,6 +4204,7 @@ const VendorDashboard = () => {
       parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
+  const isPostpaid = brandProfile?.defaultPlanType === "postpaid";
   const displayedTransactions = showAllTransactions
     ? transactions
     : transactions.slice(0, 5);
@@ -4585,10 +4774,11 @@ const VendorDashboard = () => {
                       <div className="grid grid-cols-2 gap-2">
                         <StarBorder
                           as="div"
-                          className="w-full"
+                          className="w-full cursor-pointer"
                           color="var(--primary)"
                           speed="5s"
                           innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                          onClick={() => navigate("/vendor/wallet")}
                         >
                           <div className="flex flex-col items-center justify-center w-full">
                             <div className="text-[10px] text-gray-500 mb-0.5">
@@ -4605,10 +4795,11 @@ const VendorDashboard = () => {
                         </StarBorder>
                         <StarBorder
                           as="div"
-                          className="w-full"
+                          className="w-full cursor-pointer"
                           color="var(--primary)"
                           speed="5s"
                           innerClassName="bg-white dark:bg-[#000] shadow-sm dark:shadow-none"
+                          onClick={() => navigate("/vendor/campaigns")}
                         >
                           <div className="flex flex-col items-center justify-center w-full">
                             <div className="text-[10px] text-gray-500 mb-0.5">
@@ -7381,6 +7572,19 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           )}
                         </div>
+
+                        {/* Navigate to Campaigns */}
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="button"
+                            onClick={() => navigate("/vendor/campaigns")}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold transition-all active:scale-[0.98]"
+                          >
+                            <Megaphone size={12} />
+                            Go to Campaigns
+                            <ChevronRight size={12} />
+                          </button>
+                        </div>
                       </div>
                     )}
                     {/* Wallet Section */}
@@ -7396,7 +7600,9 @@ Quantity: ${invoiceData.quantity} QRs
                         </div>
 
                         {/* Balance Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div
+                          className={`grid grid-cols-1 ${!isPostpaid ? "md:grid-cols-2" : ""} gap-6`}
+                        >
                           {/* Available Balance */}
                           <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
                             <div className="text-xs font-medium text-gray-500 mb-2">
@@ -7410,18 +7616,20 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           </div>
 
-                          {/* Locked Balance */}
-                          <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
-                            <div className="text-xs font-medium text-gray-500 mb-2">
-                              Locked balance
+                          {/* Locked Balance - only for prepaid */}
+                          {!isPostpaid && (
+                            <div className="rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] p-6 shadow-sm dark:shadow-none">
+                              <div className="text-xs font-medium text-gray-500 mb-2">
+                                Locked balance
+                              </div>
+                              <div
+                                className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
+                                title={`INR ${formatAmount(lockedBalance)}`}
+                              >
+                                INR {formatCompactAmount(lockedBalance)}
+                              </div>
                             </div>
-                            <div
-                              className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight"
-                              title={`INR ${formatAmount(lockedBalance)}`}
-                            >
-                              INR {formatCompactAmount(lockedBalance)}
-                            </div>
-                          </div>
+                          )}
                         </div>
 
                         {/* Recharge Section */}
@@ -7640,8 +7848,8 @@ Quantity: ${invoiceData.quantity} QRs
                           )}
 
                           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
-                            <div className="w-full">
-                              <table className="w-full text-sm text-left">
+                            <div className="w-full overflow-x-auto">
+                              <table className="w-full min-w-[900px] text-sm text-left">
                                 <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
                                   <tr>
                                     <th className="px-5 py-4 font-semibold tracking-wide">
@@ -7789,9 +7997,9 @@ Quantity: ${invoiceData.quantity} QRs
                             Loading locations...
                           </div>
                         ) : (
-                          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+                          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
                             <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
-                              <div className="h-[480px]">
+                              <div className="h-[520px]">
                                 <MapContainer
                                   center={locationMapCenter}
                                   zoom={5}
@@ -7849,10 +8057,18 @@ Quantity: ${invoiceData.quantity} QRs
                               locationsData.forEach((pt) => {
                                 const city = pt.city || "";
                                 const state = pt.state || "";
-                                const key = city + "|||" + state;
+                                // If no city/state, use rounded coords as the grouping key
+                                const key =
+                                  city || state
+                                    ? city + "|||" + state
+                                    : `coord_${Number(pt.lat).toFixed(2)}_${Number(pt.lng).toFixed(2)}`;
                                 if (!grouped[key]) {
                                   grouped[key] = {
-                                    city,
+                                    city:
+                                      city ||
+                                      (pt.lat
+                                        ? `Area (${Number(pt.lat).toFixed(2)}, ${Number(pt.lng).toFixed(2)})`
+                                        : "Unknown Area"),
                                     state,
                                     totalScans: 0,
                                     pincodes: new Set(),
@@ -7864,9 +8080,9 @@ Quantity: ${invoiceData.quantity} QRs
                                 if (pt.pincode)
                                   grouped[key].pincodes.add(pt.pincode);
                               });
-                              const clusters = Object.values(grouped)
-                                .filter((c) => c.city || c.state)
-                                .sort((a, b) => b.totalScans - a.totalScans);
+                              const clusters = Object.values(grouped).sort(
+                                (a, b) => b.totalScans - a.totalScans,
+                              );
                               return (
                                 <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
                                   <div className="flex items-center justify-between mb-3">
@@ -8477,7 +8693,9 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                 title="Delete campaign?"
                 message={
                   campaignToDelete
-                    ? `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
+                    ? isPostpaid
+                      ? `Delete "${campaignToDelete.title}"? This will void all linked QRs.`
+                      : `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
                     : ""
                 }
                 confirmText="Delete Campaign"

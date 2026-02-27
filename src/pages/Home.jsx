@@ -83,13 +83,6 @@ const quickActions = [
     shadow: "rgba(245,158,11,0.3)",
   },
   {
-    to: "/product-report",
-    icon: Shield,
-    label: "Reports",
-    gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)",
-    shadow: "rgba(59,130,246,0.3)",
-  },
-  {
     to: "/store",
     icon: Gift,
     label: "Rewards",
@@ -280,7 +273,7 @@ const Home = () => {
                 productsReported: s.productsReported || 0,
                 walletEarned: s.totalEarned || 0,
               };
-          } catch (_) { }
+          } catch (_) {}
         }
         if (live) setHomeData(data);
       } catch (_) {
@@ -385,14 +378,6 @@ const Home = () => {
       color: "#059669",
       bg: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
       lightBg: "rgba(5,150,105,0.08)",
-    },
-    {
-      label: "Reported",
-      value: stats.productsReported || 0,
-      icon: History,
-      color: "#3b82f6",
-      bg: "linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)",
-      lightBg: "rgba(59,130,246,0.08)",
     },
     {
       label: "Wallet",
@@ -507,7 +492,7 @@ const Home = () => {
         )}
 
         {/* --- 3 – QUICK ACTIONS --- */}
-        <div className="quick-actions grid grid-cols-4 gap-2">
+        <div className="quick-actions grid grid-cols-3 gap-3">
           {quickActions.map((item, i) => (
             <Link
               key={i}
@@ -552,41 +537,40 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {statItems.map((s, i) => (
               <div
                 key={i}
-                className="relative overflow-hidden pt-0.5 pb-2 px-2 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex flex-col items-center text-center"
-                style={{ boxShadow: "0 8px 16px -6px rgba(0,0,0,0.05)" }}
+                className="group relative overflow-hidden p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between"
               >
-                {/* Top Colored Bar */}
-                <div
-                  className="absolute top-0 left-0 right-0 h-1"
-                  style={{ background: s.bg }}
-                />
-
-                <div
-                  className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 mt-2 mb-1"
-                  style={{ background: s.lightBg }}
-                >
-                  <s.icon size={18} style={{ color: s.color }} />
-                </div>
-
-                <div>
-                  <div className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-0.5">
+                <div className="flex flex-col gap-1 z-10">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                     {s.label}
-                  </div>
+                  </span>
                   {isLoading ? (
-                    <div className="h-5 w-10 mx-auto bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+                    <div className="h-6 w-12 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-md" />
                   ) : (
-                    <div
-                      className="text-[18px] font-bold text-zinc-950 dark:text-white leading-tight"
+                    <span
+                      className="text-[20px] font-black text-zinc-900 dark:text-white leading-none mt-0.5"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {s.value}
-                    </div>
+                    </span>
                   )}
                 </div>
+
+                <div
+                  className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0 z-10"
+                  style={{ background: s.lightBg }}
+                >
+                  <s.icon size={20} style={{ color: s.color }} />
+                </div>
+
+                {/* Subtle floating glow orb in the background */}
+                <div
+                  className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full blur-2xl opacity-30 dark:opacity-20"
+                  style={{ background: s.bg }}
+                />
               </div>
             ))}
           </div>
@@ -607,39 +591,41 @@ const Home = () => {
               </span>
             </div>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 pt-1 no-scrollbar -mx-4 px-4 snap-x">
+          <div className="flex gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar -mx-4 px-4 snap-x">
             {isLoading ? (
               Array(5)
                 .fill(0)
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="w-[66px] h-[66px] rounded-2xl animate-pulse shrink-0 snap-center"
-                    style={{ background: "rgba(0,0,0,0.04)" }}
-                  />
+                    className="flex flex-col items-center gap-1.5 shrink-0 snap-center"
+                  >
+                    <div
+                      className="w-[60px] h-[60px] rounded-2xl animate-pulse"
+                      style={{ background: "rgba(0,0,0,0.04)" }}
+                    />
+                    <div className="w-10 h-2.5 rounded bg-gray-100 animate-pulse" />
+                  </div>
                 ))
             ) : brands.length > 0 ? (
               brands.map((b) => (
                 <Link
                   key={b.id}
                   to={`/brand-details/${b.id}`}
-                  className="brand-item flex flex-col items-center gap-2 shrink-0 active:scale-[0.94] transition-transform snap-center group"
+                  className="brand-item flex flex-col items-center gap-1.5 shrink-0 snap-center active:scale-[0.94] transition-transform"
                 >
-                  <div className="w-[66px] h-[66px] rounded-2xl bg-white p-[3px] transition-shadow shadow-sm group-hover:shadow-md border border-gray-100 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="w-full h-full rounded-xl bg-linear-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 overflow-hidden flex items-center justify-center relative">
-                      <FallbackImage
-                        src={resolvePublicAssetUrl(b.logoUrl || b.logo)}
-                        alt={b.name}
-                        className="w-full h-full object-cover object-center absolute inset-0 z-10"
-                        fallback={
-                          <span className="text-[22px] font-bold bg-clip-text text-transparent bg-linear-to-br from-emerald-500 to-emerald-700 dark:from-emerald-400 dark:to-emerald-600 absolute z-0 flex items-center justify-center w-full h-full">
-                            {b.name ? b.name.charAt(0).toUpperCase() : "B"}
-                          </span>
-                        }
-                      />
-                    </div>
+                  <div className="w-[60px] h-[60px] rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-sm overflow-hidden flex items-center justify-center">
+                    <img
+                      src={resolvePublicAssetUrl(b.logoUrl || b.logo)}
+                      alt={b.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.parentElement.innerHTML = `<span style="font-size:22px;font-weight:700;color:#059669">${b.name?.charAt(0)?.toUpperCase() || "B"}</span>`;
+                      }}
+                    />
                   </div>
-                  <span className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 truncate w-16 text-center tracking-tight">
+                  <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 truncate w-[65px] text-center">
                     {b.name}
                   </span>
                 </Link>
@@ -698,15 +684,24 @@ const Home = () => {
                     }
                     className="offer-card min-w-[175px] h-[120px] rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform shrink-0 cursor-pointer"
                     style={{
-                      background: gradients[i % gradients.length],
+                      background: "#1a1a1a",
                       boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                     }}
                   >
-                    <div
-                      className="absolute -top-6 -right-6 w-28 h-28 rounded-full blur-xl"
-                      style={{ background: "rgba(255,255,255,0.06)" }}
+                    {/* Brand image as full background */}
+                    <img
+                      src={resolvePublicAssetUrl(
+                        b.logoUrl || b.banner || b.logo,
+                      )}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
                     />
-                    <div>
+                    {/* Dark overlay for text readability */}
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-black/10" />
+                    <div className="relative z-10">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="text-lg">
                           {emojis[i % emojis.length]}
@@ -714,29 +709,35 @@ const Home = () => {
                         <span
                           className="text-[9px] font-bold uppercase"
                           style={{
-                            color: "rgba(255,255,255,0.5)",
+                            color: "rgba(255,255,255,0.6)",
                             letterSpacing: "0.1em",
                           }}
                         >
-                          Get Upto
+                          Exclusive Brand
                         </span>
                       </div>
                       <div
-                        className="text-[24px] font-bold text-white tracking-tight leading-none"
-                        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.2)" }}
+                        className="text-[18px] font-bold text-white tracking-tight leading-tight"
+                        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
                       >
-                        {amounts[i % amounts.length]}
+                        {b.name}
                       </div>
+                      {b.about && (
+                        <p className="text-[9px] text-white/60 mt-1 line-clamp-1 leading-tight">
+                          {b.about}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between mt-auto">
+                    <div className="relative z-10 flex items-center justify-between mt-auto">
                       <span
                         className="text-[10px] font-bold px-3 py-1 rounded-full text-white truncate max-w-[90px]"
                         style={{
-                          background: "rgba(255,255,255,0.1)",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          background: "rgba(255,255,255,0.15)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          backdropFilter: "blur(4px)",
                         }}
                       >
-                        {b.name}
+                        Explore
                       </span>
                       <div
                         className="w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform cursor-pointer"
@@ -761,6 +762,40 @@ const Home = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* --- 7.5 PRODUCT REPORT --- */}
+        <div className="mb-5">
+          <Link
+            to="/product-report"
+            className="group relative overflow-hidden rounded-[20px] bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all flex items-center p-3.5 mx-0.5"
+            style={{ boxShadow: "0 8px 16px -6px rgba(0,0,0,0.05)" }}
+          >
+            <div
+              className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0"
+              style={{ background: "rgba(59,130,246,0.08)" }}
+            >
+              <Shield
+                size={20}
+                style={{ color: "#3b82f6" }}
+                strokeWidth={2.5}
+              />
+            </div>
+            <div className="ml-3.5 flex-1">
+              <h3 className="text-[14px] font-black text-zinc-950 dark:text-white leading-tight tracking-tight">
+                Product Report
+              </h3>
+              <p className="text-[10px] font-medium text-gray-500 mt-0.5">
+                Report fake or unauthorized items
+              </p>
+            </div>
+            <div className="w-7 h-7 rounded-full bg-gray-50 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+              <ChevronRight
+                size={14}
+                className="text-gray-400 group-hover:text-blue-500 transition-colors"
+              />
+            </div>
+          </Link>
         </div>
 
         {/* --- 8 � VIDEO SPOTLIGHT --- */}
