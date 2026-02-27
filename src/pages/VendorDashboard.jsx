@@ -460,6 +460,9 @@ const VendorDashboard = () => {
     invoiceNo: "",
   });
   const [locationsData, setLocationsData] = useState([]);
+  const [isLoadingOverviewLocations, setIsLoadingOverviewLocations] =
+    useState(false);
+  const [overviewLocationsError, setOverviewLocationsError] = useState("");
   const [customersData, setCustomersData] = useState([]);
   const [invoicesData, setInvoicesData] = useState([]);
   const [reportsData, setReportsData] = useState([]);
@@ -1707,39 +1710,62 @@ const VendorDashboard = () => {
     });
   };
 
+  const fetchLocationPoints = async (
+    authToken = token,
+    filtersOverride = null,
+  ) => {
+    const filters = filtersOverride || buildExtraFilterParams();
+    try {
+      const data = await getVendorRedemptionsMap(authToken, filters);
+      let points = Array.isArray(data?.points) ? data.points : [];
+      points = await reverseGeocodePoints(points);
+      return points;
+    } catch (err) {
+      if (err?.status !== 404) throw err;
+      const fallback = await getVendorRedemptions(authToken, {
+        ...filters,
+        page: 1,
+        limit: 200,
+      });
+      let points = buildLocationPointsFromRedemptions(fallback?.redemptions);
+      points = await reverseGeocodePoints(points);
+      return points;
+    }
+  };
+
   const loadLocationsData = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const data = await getVendorRedemptionsMap(
-        authToken,
-        buildExtraFilterParams(),
-      );
-      let pts = Array.isArray(data?.points) ? data.points : [];
-      pts = await reverseGeocodePoints(pts);
-      setLocationsData(pts);
+      const points = await fetchLocationPoints(authToken);
+      setLocationsData(points);
+      setOverviewLocationsError("");
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      if (err?.status === 404) {
-        try {
-          const fallback = await getVendorRedemptions(authToken, {
-            ...buildExtraFilterParams(),
-            page: 1,
-            limit: 200,
-          });
-          let pts = buildLocationPointsFromRedemptions(fallback?.redemptions);
-          pts = await reverseGeocodePoints(pts);
-          setLocationsData(pts);
-          setExtraTabError("");
-          return;
-        } catch (fallbackErr) {
-          if (handleVendorAccessError(fallbackErr)) return;
-        }
-      }
       setExtraTabError(err.message || "Unable to load locations.");
     } finally {
       setIsLoadingExtraTab(false);
+    }
+  };
+
+  const loadOverviewLocationsPreview = async (
+    authToken = token,
+    filtersOverride = null,
+  ) => {
+    if (!authToken) return;
+    setIsLoadingOverviewLocations(true);
+    setOverviewLocationsError("");
+    try {
+      const points = await fetchLocationPoints(authToken, filtersOverride);
+      setLocationsData(points);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setOverviewLocationsError(
+        err.message || "Unable to load location analytics preview.",
+      );
+    } finally {
+      setIsLoadingOverviewLocations(false);
     }
   };
 
@@ -2295,6 +2321,15 @@ const VendorDashboard = () => {
     }
     loadExtraTabData(token);
   }, [token, activeTab]);
+
+  useEffect(() => {
+    if (!token || activeTab !== "overview") return;
+    const overviewFilters =
+      overviewCampaignId === "all" || overviewCampaignId === "unassigned"
+        ? {}
+        : { campaignId: overviewCampaignId };
+    loadOverviewLocationsPreview(token, overviewFilters);
+  }, [token, activeTab, overviewCampaignId]);
 
   useEffect(() => {
     if (!token) return;
@@ -4208,6 +4243,52 @@ const VendorDashboard = () => {
   const displayedTransactions = showAllTransactions
     ? transactions
     : transactions.slice(0, 5);
+  const overviewLocationPoints = useMemo(
+    () =>
+      locationsData.filter(
+        (point) =>
+          Number.isFinite(Number(point?.lat)) &&
+          Number.isFinite(Number(point?.lng)),
+      ),
+    [locationsData],
+  );
+  const overviewLocationClusters = useMemo(() => {
+    const grouped = new Map();
+    overviewLocationPoints.forEach((point) => {
+      const city = String(point?.city || "").trim();
+      const state = String(point?.state || "").trim();
+      const key =
+        city || state
+          ? `${city.toLowerCase()}|||${state.toLowerCase()}`
+          : `coord_${Number(point.lat).toFixed(2)}_${Number(point.lng).toFixed(2)}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          city:
+            city ||
+            `Area (${Number(point.lat).toFixed(2)}, ${Number(point.lng).toFixed(2)})`,
+          state,
+          totalScans: 0,
+          lat: Number(point.lat),
+          lng: Number(point.lng),
+        });
+      }
+      const cluster = grouped.get(key);
+      cluster.totalScans += Number(point?.count || 0);
+    });
+    return Array.from(grouped.values()).sort(
+      (a, b) => b.totalScans - a.totalScans,
+    );
+  }, [overviewLocationPoints]);
+  const overviewLocationSummary = useMemo(
+    () => ({
+      regions: overviewLocationClusters.length,
+      scans: overviewLocationClusters.reduce(
+        (sum, cluster) => sum + Number(cluster.totalScans || 0),
+        0,
+      ),
+    }),
+    [overviewLocationClusters],
+  );
   const locationMapCenter = useMemo(() => {
     if (!locationsData.length) return [20.5937, 78.9629];
     const firstPoint = locationsData.find(
@@ -5103,6 +5184,157 @@ const VendorDashboard = () => {
                           campaignSeries={campaignPerformanceSeries}
                           selectionLabel={overviewCampaignLabel}
                         />
+
+                        <div className="grid grid-cols-1 xl:grid-cols-[1.75fr_1fr] gap-4">
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
+                            <div className="flex items-center justify-between gap-3 mb-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full bg-emerald-600/15 flex items-center justify-center">
+                                  <MapPin
+                                    size={16}
+                                    className="text-emerald-600 dark:text-emerald-400"
+                                  />
+                                </div>
+                                <div>
+                                  <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+                                    Location Analytics
+                                  </h3>
+                                  <p className="text-xs text-gray-500">
+                                    Live map preview from redemption scans
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => navigate("/vendor/locations")}
+                                className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 inline-flex items-center gap-1"
+                              >
+                                Open full map
+                                <ChevronRight size={14} />
+                              </button>
+                            </div>
+
+                            {overviewLocationsError &&
+                              overviewLocationPoints.length === 0 && (
+                                <div className="mb-3 rounded-lg border border-rose-200 dark:border-rose-400/20 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-300">
+                                  {overviewLocationsError}
+                                </div>
+                              )}
+
+                            {isLoadingOverviewLocations &&
+                            overviewLocationPoints.length === 0 ? (
+                              <div className="h-[320px] rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex items-center justify-center text-sm text-gray-500">
+                                Loading map preview...
+                              </div>
+                            ) : overviewLocationPoints.length === 0 ? (
+                              <div className="h-[320px] rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex flex-col items-center justify-center gap-2 text-sm text-gray-500">
+                                <MapPin size={18} className="text-gray-400" />
+                                No location points yet. Scan redemptions to see
+                                map activity.
+                              </div>
+                            ) : (
+                              <div className="h-[320px] rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+                                <MapContainer
+                                  center={locationMapCenter}
+                                  zoom={5}
+                                  scrollWheelZoom={false}
+                                  className="h-full w-full"
+                                >
+                                  <TileLayer
+                                    attribution="&copy; OpenStreetMap contributors"
+                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  />
+                                  {overviewLocationPoints
+                                    .slice(0, 120)
+                                    .map((point, index) => (
+                                      <Marker
+                                        key={`overview-loc-${point.lat}-${point.lng}-${index}`}
+                                        position={[
+                                          Number(point.lat),
+                                          Number(point.lng),
+                                        ]}
+                                      >
+                                        <Popup>
+                                          <div className="text-xs min-w-[140px]">
+                                            <div className="font-semibold text-gray-900">
+                                              {point.city || point.state
+                                                ? `${point.city || ""}${point.city && point.state ? ", " : ""}${point.state || ""}${point.pincode ? ` - ${point.pincode}` : ""}`
+                                                : "Unknown area"}
+                                            </div>
+                                            <div className="text-gray-600 mt-0.5">
+                                              {point.count || 0} scans
+                                            </div>
+                                          </div>
+                                        </Popup>
+                                      </Marker>
+                                    ))}
+                                </MapContainer>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3">
+                                <div className="text-[11px] text-gray-500">
+                                  Regions
+                                </div>
+                                <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                                  {overviewLocationSummary.regions}
+                                </div>
+                              </div>
+                              <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3">
+                                <div className="text-[11px] text-gray-500">
+                                  Total Scans
+                                </div>
+                                <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                                  {overviewLocationSummary.scans}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Top Regions
+                              </h4>
+                              <span className="text-xs text-gray-500">
+                                {overviewLocationClusters.length} tracked
+                              </span>
+                            </div>
+                            <div className="space-y-2 max-h-[244px] overflow-y-auto pr-1">
+                              {overviewLocationClusters.length === 0 ? (
+                                <div className="text-xs text-gray-500 py-8 text-center rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+                                  No regional data available.
+                                </div>
+                              ) : (
+                                overviewLocationClusters
+                                  .slice(0, 8)
+                                  .map((cluster, index) => (
+                                    <div
+                                      key={`overview-cluster-${cluster.city}-${cluster.state}-${index}`}
+                                      className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3 flex items-center justify-between"
+                                    >
+                                      <div className="min-w-0">
+                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                          {(cluster.city || "") +
+                                            (cluster.city && cluster.state
+                                              ? ", "
+                                              : "") +
+                                            (cluster.state || "")}
+                                        </div>
+                                        <div className="text-[11px] text-gray-500 mt-0.5">
+                                          {cluster.totalScans} scans
+                                        </div>
+                                      </div>
+                                      <span className="text-[10px] font-bold text-gray-400">
+                                        #{index + 1}
+                                      </span>
+                                    </div>
+                                  ))
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
                         <div
                           id="overview"
