@@ -157,11 +157,13 @@ const ProductInfo = () => {
     <div className="bg-primary/10 dark:bg-zinc-950 min-h-full pb-24 transition-colors duration-300">
       <div className="px-4 mt-4 space-y-4">
         <div className="relative rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm transition-colors duration-300">
-          <FallbackImage
-            src={displayProduct.banner || displayProduct.image}
-            alt={`${displayProduct.name} banner`}
-            className="w-full h-44 object-cover"
-          />
+          <div className="w-full aspect-[3/2] bg-gray-100 dark:bg-zinc-900/40 flex items-center justify-center">
+            <FallbackImage
+              src={displayProduct.banner || displayProduct.image}
+              alt={`${displayProduct.name} banner`}
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-3 transition-colors duration-300">
