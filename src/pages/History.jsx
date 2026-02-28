@@ -116,12 +116,12 @@ const History = () => {
               {summary.scans}
             </div>
           </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800 overflow-hidden">
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Earned
             </div>
-            <div className="text-xl font-bold text-emerald-600 mt-1">
-              INR {formatAmount(summary.totalRedeemed)}
+            <div className="text-lg font-medium text-emerald-600 mt-1 truncate">
+              ₹{formatAmount(summary.totalRedeemed)}
             </div>
           </div>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800">
