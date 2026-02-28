@@ -109,7 +109,9 @@ const History = () => {
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Scans</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Scans
+            </div>
             <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
               {summary.scans}
             </div>
@@ -177,12 +179,12 @@ const History = () => {
                             {item.Campaign?.title || "Campaign"}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {formatDate(item.redeemedAt || item.updatedAt)}{" "}
-                            | Hash: {String(item.uniqueHash || "").slice(0, 10)}
+                            {formatDate(item.redeemedAt || item.updatedAt)} |
+                            Hash: {String(item.uniqueHash || "").slice(0, 10)}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-bold text-emerald-600">
+                        <div className="text-right shrink-0 whitespace-nowrap">
+                          <div className="text-sm font-medium text-emerald-600">
                             INR {formatAmount(item.cashbackAmount)}
                           </div>
                           <div className="text-[11px] text-gray-500 capitalize">
@@ -210,9 +212,13 @@ const History = () => {
                   </div>
                 ) : (
                   transactions.map((tx) => {
-                    const isCredit = String(tx.type || "").toLowerCase() === "credit";
+                    const isCredit =
+                      String(tx.type || "").toLowerCase() === "credit";
                     return (
-                      <div key={tx.id} className="p-4 flex items-center justify-between gap-3">
+                      <div
+                        key={tx.id}
+                        className="p-4 flex items-center justify-between gap-3"
+                      >
                         <div className="flex items-center gap-3 min-w-0">
                           <div
                             className={`w-9 h-9 rounded-full flex items-center justify-center ${
@@ -227,18 +233,22 @@ const History = () => {
                           </div>
                           <div className="min-w-0">
                             <div className="text-sm font-semibold text-gray-900 dark:text-white capitalize truncate">
-                              {(tx.category || "transaction").replace(/_/g, " ")}
+                              {(tx.category || "transaction").replace(
+                                /_/g,
+                                " ",
+                              )}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(tx.createdAt)} | {tx.status || "success"}
+                              {formatDate(tx.createdAt)} |{" "}
+                              {tx.status || "success"}
                             </div>
                           </div>
                         </div>
-                        <div
-                          className={`text-sm font-bold ${isCredit ? "text-emerald-600" : "text-rose-600"}`}
+                        <span
+                          className={`text-sm font-medium shrink-0 whitespace-nowrap ${isCredit ? "text-emerald-600" : "text-rose-600"}`}
                         >
                           {isCredit ? "+" : "-"}INR {formatAmount(tx.amount)}
-                        </div>
+                        </span>
                       </div>
                     );
                   })
