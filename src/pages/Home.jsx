@@ -367,6 +367,7 @@ const Home = () => {
   const brands = homeData?.brands || [];
   const banners = homeData?.banners?.length ? homeData.banners : heroBanners;
   const stats = homeData?.stats || {};
+  const topOffers = homeData?.topOffers || [];
   const fmtCash = (v) =>
     !v ? "₹0" : typeof v === "number" ? `₹${v.toFixed(0)}` : v;
 
@@ -593,18 +594,15 @@ const Home = () => {
           </div>
           <div className="flex gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar -mx-4 px-4 snap-x">
             {isLoading ? (
-              Array(5)
+              Array(6)
                 .fill(0)
                 .map((_, i) => (
                   <div
                     key={i}
                     className="flex flex-col items-center gap-1.5 shrink-0 snap-center"
                   >
-                    <div
-                      className="w-[60px] h-[60px] rounded-2xl animate-pulse"
-                      style={{ background: "rgba(0,0,0,0.04)" }}
-                    />
-                    <div className="w-10 h-2.5 rounded bg-gray-100 animate-pulse" />
+                    <div className="w-[64px] h-[64px] rounded-[18px] bg-gray-100 dark:bg-zinc-800 animate-pulse" />
+                    <div className="w-10 h-2.5 rounded-full bg-gray-100 dark:bg-zinc-800 animate-pulse mt-0.5" />
                   </div>
                 ))
             ) : brands.length > 0 ? (
@@ -612,20 +610,20 @@ const Home = () => {
                 <Link
                   key={b.id}
                   to={`/brand-details/${b.id}`}
-                  className="brand-item flex flex-col items-center gap-1.5 shrink-0 snap-center active:scale-[0.94] transition-transform"
+                  className="brand-item flex flex-col items-center gap-1.5 shrink-0 snap-center group"
                 >
-                  <div className="w-[60px] h-[60px] rounded-2xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 shadow-sm overflow-hidden flex items-center justify-center">
+                  <div className="w-[64px] h-[64px] rounded-[18px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] dark:shadow-none overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_8px_16px_rgba(5,150,105,0.1)]">
                     <img
                       src={resolvePublicAssetUrl(b.logoUrl || b.logo)}
                       alt={b.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-2.5 transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
                         e.target.style.display = "none";
-                        e.target.parentElement.innerHTML = `<span style="font-size:22px;font-weight:700;color:#059669">${b.name?.charAt(0)?.toUpperCase() || "B"}</span>`;
+                        e.target.parentElement.innerHTML = `<span style="font-size:24px;font-weight:900;color:#059669;font-family:system-ui">${b.name?.charAt(0)?.toUpperCase() || "B"}</span>`;
                       }}
                     />
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 truncate w-[65px] text-center">
+                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 truncate w-[68px] text-center transition-colors group-hover:text-gray-900 dark:group-hover:text-emerald-50 mt-0.5">
                     {b.name}
                   </span>
                 </Link>
@@ -638,121 +636,123 @@ const Home = () => {
           </div>
         </div>
 
-        {/* --- 6 � TOP OFFERS --- */}
-        <div className="offers-rail">
-          <div className="flex items-center gap-2 mb-3">
+        {/* --- 6. TOP OFFERS --- */}
+        <div className="offers-rail relative py-3 my-1">
+          {/* Subtle full-bleed background */}
+          <div className="absolute inset-0 -mx-4 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-900/5 dark:to-transparent -z-10 pointer-events-none" />
+
+          <div className="flex items-center gap-2 mb-4 px-1">
             <div
-              className="w-5 h-5 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(5,150,105,0.1)" }}
+              className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm"
+              style={{ background: "rgba(5,150,105,0.12)" }}
             >
-              <TrendingUp size={10} style={{ color: "#059669" }} />
+              <TrendingUp
+                size={14}
+                className="text-emerald-700 dark:text-emerald-400"
+              />
             </div>
             <span
-              className="text-[11px] font-bold text-gray-500 uppercase"
-              style={{ letterSpacing: "0.12em" }}
+              className="text-[13px] font-black text-emerald-950 dark:text-emerald-50 uppercase"
+              style={{ letterSpacing: "0.15em" }}
             >
               Top Offers
             </span>
           </div>
-          <div className="flex gap-3.5 overflow-x-auto pb-3 no-scrollbar snap-x snap-mandatory">
+          <div className="flex gap-3 overflow-x-auto pb-5 no-scrollbar snap-x snap-mandatory -mx-4 px-4 items-center">
             {isLoading ? (
-              Array(3)
+              Array(4)
                 .fill(0)
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="offer-card min-w-[175px] h-[120px] rounded-[22px] p-4 bg-gray-100 dark:bg-zinc-800 animate-pulse snap-center shrink-0"
+                    className="offer-card w-[130px] h-[165px] rounded-[24px] bg-black/5 dark:bg-white/5 animate-pulse snap-center shrink-0"
                   />
                 ))
-            ) : brands.length > 0 ? (
-              brands.slice(0, 5).map((b, i) => {
-                const gradients = [
-                  "linear-gradient(135deg, #f97316, #ef4444, #e11d48)",
-                  "linear-gradient(135deg, #475569, #334155, #0f172a)",
-                  "linear-gradient(135deg, #10b981, #16a34a, #166534)",
-                  "linear-gradient(135deg, #8b5cf6, #6d28d9, #4c1d95)",
-                  "linear-gradient(135deg, #0ea5e9, #0284c7, #0369a1)",
-                ];
-                const emojis = ["🔥", "✨", "🌟", "🎁", "💎"];
-                const amounts = ["₹1,100", "₹1,400", "₹120", "₹500", "₹2,000"];
+            ) : topOffers.length > 0 ? (
+              topOffers.map((offer, i) => {
+                const amountText = `₹${Number(offer.maxCashback).toLocaleString("en-IN")}`;
 
                 return (
                   <div
-                    key={b.id || i}
-                    onClick={() =>
-                      navigate(`/brand-details/${b.id || b._id || ""}`)
-                    }
-                    className="offer-card min-w-[175px] h-[120px] rounded-2xl p-4 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.95] transition-transform shrink-0 cursor-pointer"
-                    style={{
-                      background: "#1a1a1a",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                    }}
+                    key={offer.id || i}
+                    onClick={() => navigate(`/product-info/${offer.id}`)}
+                    className="offer-card group w-[130px] h-[165px] rounded-[24px] p-0 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.96] transition-all shrink-0 cursor-pointer shadow-md bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800"
                   >
-                    {/* Brand image as full background */}
-                    <img
-                      src={resolvePublicAssetUrl(
-                        b.logoUrl || b.banner || b.logo,
-                      )}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
-                    />
-                    {/* Dark overlay for text readability */}
-                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-black/10" />
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-lg">
-                          {emojis[i % emojis.length]}
+                    {/* Inner Content Container */}
+                    <div className="w-full h-full flex flex-col relative z-10 overflow-hidden text-center justify-between rounded-[24px]">
+                      {/* Top Filled Section */}
+                      <div className="w-full flex-1 pt-3 pb-2 px-2 flex flex-col items-center justify-center relative bg-linear-to-b from-emerald-50/80 to-emerald-50/20 dark:from-emerald-900/20 dark:to-zinc-900/10">
+                        {/* Subtle inner top glow */}
+                        <div
+                          className="absolute -top-10 w-24 h-24 rounded-full blur-[24px] opacity-40 pointer-events-none"
+                          style={{ background: "#34d399" }}
+                        />
+
+                        {/* Logo Squircle */}
+                        <div className="w-[38px] h-[38px] bg-white dark:bg-zinc-800 rounded-[12px] flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative transition-transform group-hover:scale-105 duration-300 border border-gray-100 dark:border-zinc-700 mb-1.5">
+                          <img
+                            src={resolvePublicAssetUrl(offer.logoUrl)}
+                            alt=""
+                            className="w-full h-full object-contain p-1 relative z-10 bg-white dark:bg-zinc-800 rounded-[12px]"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center z-0">
+                            <span className="text-[10px] font-bold text-gray-400">
+                              {offer.name
+                                ? offer.name.slice(0, 3).toUpperCase()
+                                : "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Get Upto Amount */}
+                        <div className="flex flex-col z-20 items-center">
+                          {offer.maxCashback > 0 ? (
+                            <>
+                              <span className="text-[9px] font-bold text-gray-500 dark:text-white/60 mb-0.5">
+                                Get Upto
+                              </span>
+                              <span className="text-[20px] font-semibold text-emerald-700 dark:text-emerald-400 leading-none">
+                                {amountText}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[9px] font-bold text-gray-500 dark:text-white/60 mb-0.5">
+                                Assured
+                              </span>
+                              <span className="text-[16px] font-semibold text-emerald-700 dark:text-emerald-400 leading-none mt-1">
+                                Rewards
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Bottom Section */}
+                      <div className="w-full pt-1.5 pb-2.5 px-2.5 flex flex-col gap-1.5 items-center z-20 bg-white dark:bg-zinc-900 shrink-0">
+                        <span className="text-[10px] font-bold text-gray-600 dark:text-white/90 tracking-tight truncate w-full px-1">
+                          {offer.name}
                         </span>
-                        <span
-                          className="text-[9px] font-bold uppercase"
-                          style={{
-                            color: "rgba(255,255,255,0.6)",
-                            letterSpacing: "0.1em",
-                          }}
-                        >
-                          Exclusive Brand
-                        </span>
-                      </div>
-                      <div
-                        className="text-[18px] font-bold text-white tracking-tight leading-tight"
-                        style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
-                      >
-                        {b.name}
-                      </div>
-                      {b.about && (
-                        <p className="text-[9px] text-white/60 mt-1 line-clamp-1 leading-tight">
-                          {b.about}
-                        </p>
-                      )}
-                    </div>
-                    <div className="relative z-10 flex items-center justify-between mt-auto">
-                      <span
-                        className="text-[10px] font-bold px-3 py-1 rounded-full text-white truncate max-w-[90px]"
-                        style={{
-                          background: "rgba(255,255,255,0.15)",
-                          border: "1px solid rgba(255,255,255,0.15)",
-                          backdropFilter: "blur(4px)",
-                        }}
-                      >
-                        Explore
-                      </span>
-                      <div
-                        className="w-7 h-7 rounded-full bg-white flex items-center justify-center active:scale-90 transition-transform cursor-pointer"
-                        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                      >
-                        <ArrowRight size={13} className="text-gray-800" />
+
+                        <button className="w-full py-1.5 rounded-[12px] flex items-center justify-center gap-1 font-bold text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm bg-gray-900 text-white dark:bg-white dark:text-gray-900">
+                          <svg
+                            className="w-2.5 h-2.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M12 2L14.6 9.4L22 12L14.6 14.6L12 22L9.4 14.6L2 12L9.4 9.4L12 2Z"
+                              fill="currentColor"
+                            />
+                          </svg>
+                          Avail Now
+                        </button>
                       </div>
                     </div>
-                    <div
-                      className="offer-shine absolute inset-y-0 left-0 w-1/4 -translate-x-full"
-                      style={{
-                        background:
-                          "linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent)",
-                      }}
-                    />
                   </div>
                 );
               })
