@@ -128,7 +128,7 @@ const History = () => {
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Transactions
             </div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+            <div className="text-lg font-medium text-gray-900 dark:text-white mt-1">
               {summary.transactions}
             </div>
           </div>
