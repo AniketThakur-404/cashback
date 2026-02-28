@@ -803,7 +803,10 @@ export const downloadCampaignQrPdf = async (token, campaignId, params) => {
   });
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to download PDF");
+    const error = new Error(errorData.message || "Failed to download PDF");
+    error.status = response.status;
+    error.data = errorData;
+    throw error;
   }
   const blob = await response.blob();
   const contentDisposition = response.headers.get("content-disposition") || "";

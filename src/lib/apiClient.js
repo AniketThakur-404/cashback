@@ -1,11 +1,19 @@
-// API base URL can be overridden via VITE_API_BASE_URL; default uses backend in dev.
-const DEV_DEFAULT_API = "http://localhost:5000";
+// API base URL can be overridden via VITE_API_BASE_URL.
+// In dev, default to relative paths so Vite proxy handles /api.
+const DEV_DEFAULT_API = "";
 
 const normalizeBaseUrl = (raw) => {
   const trimmed = String(raw || "").trim();
   if (!trimmed) return "";
 
   const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
+  if (!withoutTrailingSlash) return "";
+
+  // Allow explicit relative prefixes (e.g. "/backend-api") only.
+  if (withoutTrailingSlash.startsWith("/")) {
+    return withoutTrailingSlash;
+  }
+
   try {
     const parsed = new URL(withoutTrailingSlash);
 
@@ -17,7 +25,16 @@ const normalizeBaseUrl = (raw) => {
     const normalizedPath = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname.replace(/\/+$/, "") : "";
     return `${parsed.origin}${normalizedPath}`;
   } catch {
-    return withoutTrailingSlash;
+    // Ignore malformed values like ":5000" or "http://:5000"
+    if (
+      /^:?\d+$/.test(withoutTrailingSlash) ||
+      withoutTrailingSlash.startsWith(":") ||
+      /^https?:\/\/:/.test(withoutTrailingSlash)
+    ) {
+      return "";
+    }
+    // Reject malformed values (example: "localhost:5000" without protocol).
+    return "";
   }
 };
 

@@ -1630,9 +1630,9 @@ const AdminDashboard = () => {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !adminInfo || adminInfo.role !== "admin") return;
     loadSectionData(token);
-  }, [token, activeSection, activeSubSection]);
+  }, [token, adminInfo, activeSection, activeSubSection]);
 
   useEffect(() => {
     if (!isSupportRoute) return;
