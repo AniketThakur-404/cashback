@@ -215,7 +215,10 @@ const Profile = () => {
         <div className="space-y-6">
           {/* Profile Summary Card */}
           <div className="bg-primary/5 dark:bg-primary/10 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden">
-            <div className="relative group">
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => setShowEditModal(true)}
+            >
               <div className="w-24 h-24 rounded-full bg-white dark:bg-zinc-900 shadow-xl flex items-center justify-center mb-3 overflow-hidden border-4 border-white dark:border-zinc-800">
                 {isUploading ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
@@ -230,10 +233,14 @@ const Profile = () => {
                     onError={() => setImgError(true)}
                   />
                 ) : (
-                  <span className="text-3xl font-bold text-gray-700 dark:text-gray-300">
+                  <span className="text-3xl font-medium text-gray-700 dark:text-gray-300">
                     {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
                   </span>
                 )}
+              </div>
+              {/* Edit overlay on hover */}
+              <div className="absolute inset-0 mb-3 rounded-full flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <Camera size={20} className="text-white" />
               </div>
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mt-1">
