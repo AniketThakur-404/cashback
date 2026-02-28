@@ -479,18 +479,6 @@ export const shareVendorInvoice = (token, invoiceId) =>
     token,
   });
 
-export const getVendorProductReports = (token, params) =>
-  apiRequest(`/api/vendor/product-reports${buildQueryString(params)}`, {
-    token,
-  });
-
-export const downloadVendorProductReport = (token, reportId) =>
-  downloadAuthedFile(
-    token,
-    `/api/vendor/product-reports/${encodeURIComponent(reportId)}/download`,
-    `product-report-${reportId}.txt`
-  );
-
 export const getAdminDashboard = (token) =>
   apiRequest("/api/admin/dashboard", {
     token,

@@ -8,6 +8,8 @@ import {
   Plus,
   Send,
   XCircle,
+  Mail,
+  Phone,
 } from "lucide-react";
 import {
   createVendorSupportTicket,
@@ -134,6 +136,28 @@ const VendorSupport = ({ token }) => {
         </button>
       </div>
 
+      {/* Admin Contact Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="mailto:support@assuredrewards.in" className="flex items-center gap-4 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 hover:border-gray-300 dark:hover:border-gray-600/50 transition-colors group">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 transition-colors">
+            <Mail className="w-5 h-5 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Email Admin Support</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">support@assuredrewards.in</p>
+          </div>
+        </a>
+        <a href="tel:+918368926325" className="flex items-center gap-4 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 hover:border-gray-300 dark:hover:border-gray-600/50 transition-colors group">
+          <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-100 dark:group-hover:bg-green-500/20 transition-colors">
+            <Phone className="w-5 h-5 text-green-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Call Admin Support</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">+91 83689 26325</p>
+          </div>
+        </a>
+      </div>
+
       {showForm && (
         <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -215,11 +239,10 @@ const VendorSupport = ({ token }) => {
             </div>
             {submitStatus && (
               <p
-                className={`text-sm ${
-                  submitStatus.includes("success")
+                className={`text-sm ${submitStatus.includes("success")
                     ? "text-green-500 dark:text-green-400"
                     : "text-red-500 dark:text-red-400"
-                }`}
+                  }`}
               >
                 {submitStatus}
               </p>

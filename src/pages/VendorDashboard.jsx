@@ -42,7 +42,6 @@ import {
   Phone,
   Users,
   HelpCircle,
-  TicketCheck,
   Image as ImageIcon,
   FileText,
   Save,
@@ -96,8 +95,6 @@ import {
   getVendorInvoices,
   downloadVendorInvoicePdf,
   shareVendorInvoice,
-  getVendorProductReports,
-  downloadVendorProductReport,
 } from "../lib/api";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import CampaignCard from "../components/vendor/CampaignCard";
@@ -367,7 +364,6 @@ const VendorDashboard = () => {
     "support",
     "locations",
     "billing",
-    "reports",
   ]);
   const normalizedSection =
     section === "qr-generation"
@@ -381,6 +377,10 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     if (section === "notifications") {
+      navigate("/vendor/overview", { replace: true });
+      return;
+    }
+    if (section === "reports" || section === "product-reports") {
       navigate("/vendor/overview", { replace: true });
     }
   }, [section, navigate]);
@@ -467,7 +467,6 @@ const VendorDashboard = () => {
   const [overviewLocationsError, setOverviewLocationsError] = useState("");
   const [customersData, setCustomersData] = useState([]);
   const [invoicesData, setInvoicesData] = useState([]);
-  const [reportsData, setReportsData] = useState([]);
   const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
   const [extraTabError, setExtraTabError] = useState("");
   const [clusterCityFilter, setClusterCityFilter] = useState(null);
@@ -2126,24 +2125,6 @@ const VendorDashboard = () => {
     }
   };
 
-  const loadReportsData = async (authToken = token) => {
-    if (!authToken) return;
-    setIsLoadingExtraTab(true);
-    setExtraTabError("");
-    try {
-      const data = await getVendorProductReports(
-        authToken,
-        buildExtraFilterParams(),
-      );
-      setReportsData(Array.isArray(data?.reports) ? data.reports : []);
-    } catch (err) {
-      if (handleVendorAccessError(err)) return;
-      setExtraTabError(err.message || "Unable to load product reports.");
-    } finally {
-      setIsLoadingExtraTab(false);
-    }
-  };
-
   const loadExtraTabData = async (authToken = token) => {
     if (!authToken) return;
     if (activeTab === "locations") {
@@ -2157,9 +2138,6 @@ const VendorDashboard = () => {
     if (activeTab === "billing") {
       await loadInvoicesData(authToken);
       return;
-    }
-    if (activeTab === "reports") {
-      await loadReportsData(authToken);
     }
   };
 
@@ -2492,8 +2470,7 @@ const VendorDashboard = () => {
     if (
       activeTab !== "locations" &&
       activeTab !== "customers" &&
-      activeTab !== "billing" &&
-      activeTab !== "reports"
+      activeTab !== "billing"
     ) {
       return;
     }
@@ -2747,7 +2724,6 @@ const VendorDashboard = () => {
     setLocationsData([]);
     setCustomersData([]);
     setInvoicesData([]);
-    setReportsData([]);
     setIsLoadingExtraTab(false);
     setExtraTabError("");
     setInvoiceShareStatus("");
@@ -5112,11 +5088,6 @@ const VendorDashboard = () => {
                             id: "brand",
                             label: "Settings",
                             icon: ShieldCheck,
-                          },
-                          {
-                            id: "reports",
-                            label: "Product Reports",
-                            icon: TicketCheck,
                           },
                           {
                             id: "support",
@@ -8754,98 +8725,6 @@ Quantity: ${invoiceData.quantity} QRs
                                           </a>
                                         )}
                                       </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === "reports" && (
-                      <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                              Product Reports
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => loadReportsData(token)}
-                              className={`${SECONDARY_BUTTON} rounded-lg inline-flex items-center gap-2`}
-                            >
-                              <RefreshCw size={14} />
-                              Refresh
-                            </button>
-                          </div>
-                          {extraTabError && (
-                            <p className="mt-3 text-xs text-rose-500">
-                              {extraTabError}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3">Title</th>
-                                <th className="px-4 py-3">Product</th>
-                                <th className="px-4 py-3">Customer</th>
-                                <th className="px-4 py-3">Created</th>
-                                <th className="px-4 py-3">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                              {isLoadingExtraTab ? (
-                                <tr>
-                                  <td
-                                    colSpan={5}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    Loading reports...
-                                  </td>
-                                </tr>
-                              ) : reportsData.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={5}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    No reports found.
-                                  </td>
-                                </tr>
-                              ) : (
-                                reportsData.map((report) => (
-                                  <tr key={report.id}>
-                                    <td className="px-4 py-3">
-                                      {report.title || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {report.Product?.name || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {report.User?.name || "-"}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(report.createdAt)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          downloadVendorProductReport(
-                                            token,
-                                            report.id,
-                                          )
-                                        }
-                                        className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center gap-1`}
-                                      >
-                                        <Download size={12} />
-                                        Download
-                                      </button>
                                     </td>
                                   </tr>
                                 ))
