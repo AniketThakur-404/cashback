@@ -1714,21 +1714,51 @@ const VendorDashboard = () => {
     authToken = token,
     filtersOverride = null,
   ) => {
-    const filters = filtersOverride || buildExtraFilterParams();
+    const allFilters = filtersOverride || buildExtraFilterParams();
+    const { city: filterCity, state: filterState, ...apiParams } = allFilters;
+
     try {
-      const data = await getVendorRedemptionsMap(authToken, filters);
+      const data = await getVendorRedemptionsMap(authToken, apiParams);
       let points = Array.isArray(data?.points) ? data.points : [];
       points = await reverseGeocodePoints(points);
+
+      if (filterCity || filterState) {
+        const cityLower = (filterCity || "").toLowerCase();
+        const stateLower = (filterState || "").toLowerCase();
+        points = points.filter((p) => {
+          const loc = [p.city, p.state]
+            .filter(Boolean)
+            .join(", ")
+            .toLowerCase();
+          if (cityLower && !loc.includes(cityLower)) return false;
+          if (stateLower && !loc.includes(stateLower)) return false;
+          return true;
+        });
+      }
       return points;
     } catch (err) {
       if (err?.status !== 404) throw err;
       const fallback = await getVendorRedemptions(authToken, {
-        ...filters,
+        ...apiParams,
         page: 1,
         limit: 200,
       });
       let points = buildLocationPointsFromRedemptions(fallback?.redemptions);
       points = await reverseGeocodePoints(points);
+
+      if (filterCity || filterState) {
+        const cityLower = (filterCity || "").toLowerCase();
+        const stateLower = (filterState || "").toLowerCase();
+        points = points.filter((p) => {
+          const loc = [p.city, p.state]
+            .filter(Boolean)
+            .join(", ")
+            .toLowerCase();
+          if (cityLower && !loc.includes(cityLower)) return false;
+          if (stateLower && !loc.includes(stateLower)) return false;
+          return true;
+        });
+      }
       return points;
     }
   };
