@@ -190,9 +190,12 @@ const Wallet = () => {
               {transactions.map((tx) => {
                 const isCredit = normalizeTxType(tx.type) === "CREDIT";
                 return (
-                  <div key={tx.id} className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  <div
+                    key={tx.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {tx.description ||
                           (isCredit ? "Cashback Received" : "Withdrawal")}
                       </span>
@@ -204,12 +207,12 @@ const Wallet = () => {
                           : "Yesterday"}
                       </span>
                     </div>
-                    <div
-                      className={`text-sm font-bold ${isCredit ? "text-primary" : "text-gray-900 dark:text-white"}`}
+                    <span
+                      className={`text-sm font-medium shrink-0 whitespace-nowrap ${isCredit ? "text-primary" : "text-gray-900 dark:text-white"}`}
                     >
                       {isCredit ? "+" : "-"} Rs{" "}
                       {Math.floor(Number(tx.amount || 0))}
-                    </div>
+                    </span>
                   </div>
                 );
               })}
