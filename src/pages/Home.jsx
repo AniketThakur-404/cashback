@@ -782,7 +782,7 @@ const Home = () => {
               />
             </div>
             <div className="ml-3.5 flex-1">
-              <h3 className="text-[14px] font-black text-zinc-950 dark:text-white leading-tight tracking-tight">
+              <h3 className="text-[14px] font-[500] text-zinc-950 dark:text-white leading-tight tracking-tight">
                 Product Report
               </h3>
               <p className="text-[10px] font-medium text-gray-500 mt-0.5">

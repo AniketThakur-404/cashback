@@ -99,7 +99,7 @@ const ProductCard = ({
           </div>
         )}
         <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-60" />
-        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/20 backdrop-blur-md border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/20 backdrop-blur-md border border-white/10 text-[12px] font-medium text-white uppercase tracking-wider shadow-sm">
           {item.category || "General"}
         </div>
       </div>
@@ -109,17 +109,17 @@ const ProductCard = ({
         {/* Brand & Title */}
         <div className="mb-1.5">
           {item.brand && (
-            <p className="text-[9px] font-bold uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
+            <p className="text-[14px] font-medium uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
               <Sparkles size={8} /> {item.brand}
             </p>
           )}
           <h3
-            className="text-[13px] sm:text-sm font-bold text-slate-900 dark:text-white leading-tight line-clamp-1"
+            className="text-[16px] font-medium text-slate-900 dark:text-white leading-tight line-clamp-1"
             title={item.name}
           >
             {item.name}
           </h3>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 leading-relaxed">
+          <p className="text-[14px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 leading-relaxed">
             {item.description || "Premium reward for loyal members."}
           </p>
         </div>
@@ -127,17 +127,17 @@ const ProductCard = ({
         {/* Price Tag */}
         <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-1.5 mt-auto">
           <div>
-            <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Required
             </p>
-            <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-0">
+            <div className="text-[16px] font-medium text-slate-900 dark:text-white mt-0">
               {formatPoints(amount)}
             </div>
           </div>
 
           {Number.isFinite(stockValue) && (
             <div
-              className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md border ${
+              className={`text-[12px] font-medium px-1.5 py-0.5 rounded-md border ${
                 stockValue < 5
                   ? "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800/30 dark:text-rose-400"
                   : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/30 dark:text-emerald-400"
@@ -152,7 +152,7 @@ const ProductCard = ({
           type="button"
           disabled={disableRedeem}
           onClick={() => onRedeem(item)}
-          className={`w-full mt-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center justify-center gap-1 transition-all active:scale-[0.98] ${buttonStyle}`}
+          className={`w-full mt-2 py-1.5 rounded-lg text-[14px] font-medium uppercase tracking-wide flex items-center justify-center gap-1 transition-all active:scale-[0.98] ${buttonStyle}`}
         >
           {actionLabel}
           {!disableRedeem && <ArrowRight size={12} />}
@@ -316,13 +316,13 @@ const Store = () => {
         <div className="relative z-10 space-y-5">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <p className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.18em] font-bold text-primary">
+              <p className="inline-flex items-center gap-1 text-[14px] uppercase tracking-[0.18em] font-medium text-primary">
                 <Sparkles size={12} /> Rewards Exchange
               </p>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+              <h1 className="text-2xl font-medium text-slate-900 dark:text-white mt-1">
                 Redeem Your Cashback
               </h1>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-[16px] font-medium text-slate-500 dark:text-slate-400 mt-1">
                 1 Point = INR 1
               </p>
             </div>
@@ -337,10 +337,10 @@ const Store = () => {
                 <Wallet size={20} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wide">
+                <p className="text-[14px] uppercase font-medium text-slate-400 dark:text-slate-500 tracking-wide">
                   Your Balance
                 </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                <p className="text-[16px] font-medium text-slate-900 dark:text-white">
                   {isAuthenticated
                     ? isWalletLoading
                       ? "..."
