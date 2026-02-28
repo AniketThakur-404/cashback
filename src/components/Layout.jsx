@@ -88,29 +88,27 @@ const Layout = ({ children }) => {
       {/* Mobile Container - limits width on desktop to look like a phone */}
       <div className="w-full max-w-md bg-white dark:bg-zinc-950 min-h-[100dvh] shadow-2xl relative flex flex-col transition-colors duration-300">
         {/* TOP HEADER */}
-        <header
-          className="bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe h-16 sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 transition-colors duration-300 flex items-center"
-        >
+        <header className="bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe h-16 sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 transition-colors duration-300 flex items-center">
           {isHome ? (
-            <div className="w-full h-full flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="h-full w-40 overflow-visible flex items-center">
+            <div className="w-full h-full flex items-center justify-between min-w-0">
+              <div className="flex items-center shrink-0">
+                <div className="h-full w-32 overflow-visible flex items-center">
                   <img
                     src={logoSrc}
                     alt="Assured Rewards"
-                    className="h-16 w-auto object-contain object-left scale-125 origin-left"
+                    className="h-14 w-auto object-contain object-left scale-110 origin-left"
                   />
                 </div>
               </div>
 
-              <div className="flex h-full items-center gap-3">
+              <div className="flex h-full items-center gap-2 shrink-0">
                 {/* ModeToggle removed */}
                 {/* Wallet Balance Pill */}
                 <div
                   onClick={() => navigate("/wallet")}
-                  className="bg-primary dark:bg-primary-strong text-white px-4 h-11 rounded-full inline-flex items-center justify-center gap-1.5 text-sm font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors"
+                  className="bg-primary dark:bg-primary-strong text-white px-3 h-10 rounded-full inline-flex items-center justify-center gap-1.5 text-xs font-medium shadow-md cursor-pointer hover:bg-primary/90 transition-colors whitespace-nowrap"
                 >
-                  <Wallet size={14} className="shrink-0" />
+                  <Wallet size={13} className="shrink-0" />
                   <span className="leading-none">
                     {authToken
                       ? isWalletLoading
