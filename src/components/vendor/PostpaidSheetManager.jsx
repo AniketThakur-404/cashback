@@ -7,11 +7,13 @@ import {
   RefreshCw,
   CheckSquare,
   Square,
+  Lock,
   Search,
   X,
 } from "lucide-react";
 import { assignSheetCashback } from "../../lib/api";
 import { toRoman } from "../../lib/vendorUtils";
+import { resolvePostpaidSheetSize } from "../../lib/postpaidSheet";
 
 const SHEET_OVERRIDES_STORAGE_KEY = "postpaid_sheet_overrides_v1";
 const SHEET_SELECTION_MODES = {
@@ -124,16 +126,20 @@ const PostpaidSheetManager = React.memo(
         }));
       }
 
-      const sheetCount = Math.ceil(totalQrs / 25);
+      const qrsPerSheet =
+        Number.parseInt(campaign?.qrsPerSheet, 10) > 0
+          ? Number.parseInt(campaign.qrsPerSheet, 10)
+          : resolvePostpaidSheetSize(totalQrs);
+      const sheetCount = Math.ceil(totalQrs / qrsPerSheet);
       return Array.from({ length: sheetCount }, (_, i) => ({
         index: i,
         label: toRoman(i + 1),
-        qrCount: Math.min(25, totalQrs - i * 25),
+        qrCount: Math.min(qrsPerSheet, totalQrs - i * qrsPerSheet),
         amount: normalizeAmount(
           Number.isFinite(sheetOverrides[i]) ? sheetOverrides[i] : 0,
         ),
       }));
-    }, [campaign.sheets, totalQrs, sheetOverrides]);
+    }, [campaign.sheets, campaign.qrsPerSheet, totalQrs, sheetOverrides]);
 
     useEffect(() => {
       if (!sheets.length) return;
@@ -180,8 +186,29 @@ const PostpaidSheetManager = React.memo(
       [sheets, effectiveSheetIndexes],
     );
 
+    const selectedUnlockedSheets = useMemo(
+      () =>
+        selectedSheets.filter((sheet) => normalizeAmount(sheet.amount || 0) <= 0),
+      [selectedSheets],
+    );
+
+    const selectedLockedSheets = useMemo(
+      () =>
+        selectedSheets.filter((sheet) => normalizeAmount(sheet.amount || 0) > 0),
+      [selectedSheets],
+    );
+
+    const unlockedSheetIndexes = useMemo(
+      () =>
+        sheets
+          .filter((sheet) => normalizeAmount(sheet.amount || 0) <= 0)
+          .map((sheet) => sheet.index),
+      [sheets],
+    );
+
     const allMultiSelected =
-      sheets.length > 0 && multiSheetIndexes.length === sheets.length;
+      unlockedSheetIndexes.length > 0 &&
+      unlockedSheetIndexes.every((idx) => multiSheetIndexes.includes(idx));
     const hasAnyMultiSelected = multiSheetIndexes.length > 0;
 
         const selectorLabel = useMemo(() => {
@@ -209,8 +236,13 @@ const PostpaidSheetManager = React.memo(
         setSheetIndex(fallbackIndex);
       }
       if (mode === SHEET_SELECTION_MODES.MULTIPLE) {
-        if (!multiSheetIndexes.length && Number.isFinite(sheetIndex)) {
-          setMultiSheetIndexes([sheetIndex]);
+        if (!multiSheetIndexes.length) {
+          const fallbackIndex =
+            unlockedSheetIndexes[0] ??
+            (Number.isFinite(sheetIndex) ? sheetIndex : null);
+          setMultiSheetIndexes(
+            Number.isFinite(fallbackIndex) ? [fallbackIndex] : [],
+          );
         }
       }
       if (mode === SHEET_SELECTION_MODES.ALL) {
@@ -220,15 +252,20 @@ const PostpaidSheetManager = React.memo(
 
     const handleToggleMultiSheet = (index) => {
       setMultiSheetIndexes((prev) => {
+        const targetSheet = sheets.find((sheet) => sheet.index === index);
+        const isLocked = normalizeAmount(targetSheet?.amount || 0) > 0;
         if (prev.includes(index)) {
           return prev.filter((value) => value !== index);
+        }
+        if (isLocked) {
+          return prev;
         }
         return [...prev, index].sort((a, b) => a - b);
       });
     };
 
     const handleToggleAllMultiSheets = () => {
-      setMultiSheetIndexes(sheets.map((sheet) => sheet.index));
+      setMultiSheetIndexes(unlockedSheetIndexes);
     };
 
     const handleClearMultiSheetSelection = () => {
@@ -249,9 +286,18 @@ const PostpaidSheetManager = React.memo(
       [selectedSheets],
     );
 
+    const selectedUnlockedQrCount = useMemo(
+      () =>
+        selectedUnlockedSheets.reduce(
+          (sum, sheet) => sum + (Number(sheet.qrCount) || 0),
+          0,
+        ),
+      [selectedUnlockedSheets],
+    );
+
     const enteredAmountNormalized = normalizeAmount(cashbackAmount || 0);
     const totalIncrementPreview = normalizeAmount(
-      enteredAmountNormalized * selectedQrCount,
+      enteredAmountNormalized * selectedUnlockedQrCount,
     );
 
     const handleAssign = async () => {
@@ -272,8 +318,9 @@ const PostpaidSheetManager = React.memo(
         .map((idx) => {
           const targetSheet = sheets.find((sheet) => sheet.index === idx);
           if (!targetSheet) return null;
-          const currentAmount = normalizeAmount(targetSheet.amount);
-          const targetAmount = Number((currentAmount + enteredAmount).toFixed(2));
+          const currentAmount = normalizeAmount(targetSheet.amount || 0);
+          if (currentAmount > 0) return null;
+          const targetAmount = Number(enteredAmount.toFixed(2));
           return {
             index: idx,
             label: targetSheet.label || toRoman(idx + 1),
@@ -283,7 +330,10 @@ const PostpaidSheetManager = React.memo(
         .filter(Boolean);
 
       if (!targets.length) {
-        toastError("Error", "No valid sheets selected.");
+        toastError(
+          "Error",
+          "Selected sheet is already recharged. Each sheet can be recharged only once.",
+        );
         return;
       }
 
@@ -298,7 +348,7 @@ const PostpaidSheetManager = React.memo(
           lastMessage = result?.message || lastMessage;
         }
 
-        success("Success", lastMessage || "Sheet cashback updated successfully.");
+        success("Success", lastMessage || "Sheet cashback assigned successfully.");
 
         setCashbackAmount("");
         setSheetOverrides((prev) => {
@@ -416,7 +466,7 @@ const PostpaidSheetManager = React.memo(
                         <button
                           type="button"
                           onClick={handleToggleAllMultiSheets}
-                          disabled={allMultiSelected}
+                          disabled={allMultiSelected || !unlockedSheetIndexes.length}
                           className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-semibold border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800/60 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <CheckSquare className="w-4 h-4 text-emerald-600" />
@@ -451,11 +501,20 @@ const PostpaidSheetManager = React.memo(
                     <div className="max-h-72 overflow-y-auto p-1">
                       {filteredSheets.length ? filteredSheets.map((sheet) => {
                         const isSelected = effectiveSheetIndexes.includes(sheet.index);
+                        const isLocked =
+                          normalizeAmount(sheet.amount || 0) > 0;
                         return (
                           <button
                             key={sheet.index}
                             type="button"
                             onClick={() => {
+                              if (isLocked) {
+                                if (selectionMode === SHEET_SELECTION_MODES.SINGLE) {
+                                  setSheetIndex(sheet.index);
+                                  setIsSelectorOpen(false);
+                                }
+                                return;
+                              }
                               if (selectionMode === SHEET_SELECTION_MODES.SINGLE) {
                                 setSheetIndex(sheet.index);
                                 setIsSelectorOpen(false);
@@ -474,11 +533,15 @@ const PostpaidSheetManager = React.memo(
                             className={`w-full px-2.5 py-2 rounded-lg text-left flex items-center justify-between gap-2 transition-colors ${
                               isSelected
                                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-                                : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800/60"
+                                : isLocked
+                                  ? "text-gray-500 dark:text-gray-400 bg-gray-50/60 dark:bg-zinc-800/40"
+                                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800/60"
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 min-w-0">
-                              {isSelected ? (
+                              {isLocked ? (
+                                <Lock className="w-4 h-4 shrink-0 text-amber-500" />
+                              ) : isSelected ? (
                                 <CheckSquare className="w-4 h-4 shrink-0 text-emerald-600" />
                               ) : (
                                 <Square className="w-4 h-4 shrink-0 text-gray-400" />
@@ -489,6 +552,7 @@ const PostpaidSheetManager = React.memo(
                             </span>
                             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 shrink-0">
                               INR {formatAmount(sheet.amount)}
+                              {isLocked ? " | Locked" : ""}
                             </span>
                           </button>
                         );
@@ -504,7 +568,7 @@ const PostpaidSheetManager = React.memo(
               <p className="text-[11px] text-gray-500 dark:text-gray-400 min-h-[16px]">
                 {selectionMode === SHEET_SELECTION_MODES.SINGLE
                   ? `Selected: Sheet ${selectedSheet?.label || toRoman(sheetIndex + 1)}`
-                  : `${effectiveSheetIndexes.length} sheet(s) selected | ${selectedQrCount} QRs`}
+                  : `${selectedUnlockedSheets.length} ready | ${selectedLockedSheets.length} locked | ${selectedQrCount} QRs`}
               </p>
             </div>
 
@@ -539,7 +603,7 @@ const PostpaidSheetManager = React.memo(
                 disabled={
                   assigningSheet === campaign.id ||
                   !cashbackAmount ||
-                  !effectiveSheetIndexes.length
+                  !selectedUnlockedSheets.length
                 }
                 className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
               >
@@ -549,13 +613,13 @@ const PostpaidSheetManager = React.memo(
                   <>
                     {selectionMode === SHEET_SELECTION_MODES.SINGLE
                       ? "Save Changes"
-                      : `Apply to ${effectiveSheetIndexes.length} Sheets`}
+                      : `Apply to ${selectedUnlockedSheets.length} Sheets`}
                     <CheckCircle2 className="w-4 h-4 transition-transform group-hover:scale-110" />
                   </>
                 )}
               </button>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 min-h-[32px]">
-                Applies to {effectiveSheetIndexes.length || 0} selected sheet(s).
+                Applies to {selectedUnlockedSheets.length || 0} unlocked sheet(s).
               </p>
             </div>
           </div>

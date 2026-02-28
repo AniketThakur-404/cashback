@@ -139,6 +139,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const VENDOR_TOKEN_KEY = "cashback_vendor_token";
+const CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD = 10000;
+const CAMPAIGN_QR_CHUNK_SIZE = 5000;
 // Redundant formatAmount removed
 
 const formatCompactAmount = (value) => {
@@ -1071,20 +1073,166 @@ const VendorDashboard = () => {
     }
   };
 
+  const getCampaignQrCountEstimate = (campaign) => {
+    if (!campaign?.id) return 0;
+    const stats =
+      campaignStatsMap[campaign.id] || campaignStatsMap[`title:${campaign.title}`];
+    const statsTotal = Number(stats?.totalQRsOrdered);
+    if (Number.isFinite(statsTotal) && statsTotal > 0) {
+      return Math.floor(statsTotal);
+    }
+
+    const sheetCount = Number(campaign?.sheetCount);
+    const qrsPerSheet = Number(campaign?.qrsPerSheet);
+    if (
+      Number.isFinite(sheetCount) &&
+      sheetCount > 0 &&
+      Number.isFinite(qrsPerSheet) &&
+      qrsPerSheet > 0
+    ) {
+      return Math.floor(sheetCount * qrsPerSheet);
+    }
+
+    if (Array.isArray(campaign?.allocations)) {
+      return campaign.allocations.reduce((sum, allocation) => {
+        const qty = Number.parseInt(allocation?.quantity, 10);
+        return sum + (Number.isFinite(qty) && qty > 0 ? qty : 0);
+      }, 0);
+    }
+
+    return 0;
+  };
+
+  const downloadCampaignPdfInChunks = async ({
+    campaignId,
+    totalQrs,
+    chunkSize = CAMPAIGN_QR_CHUNK_SIZE,
+  }) => {
+    const safeTotalQrs = Math.max(1, Number.parseInt(totalQrs, 10) || 1);
+    const safeChunkSize = Math.max(
+      200,
+      Number.parseInt(chunkSize, 10) || CAMPAIGN_QR_CHUNK_SIZE,
+    );
+    const totalParts = Math.max(1, Math.ceil(safeTotalQrs / safeChunkSize));
+
+    setDownloadProgress({
+      show: true,
+      progress: 5,
+      message: `Large campaign detected (${safeTotalQrs.toLocaleString()} QRs). Downloading ${totalParts} part${totalParts === 1 ? "" : "s"}...`,
+    });
+
+    for (let part = 1; part <= totalParts; part += 1) {
+      const offset = (part - 1) * safeChunkSize;
+      const baselineProgress = Math.min(
+        96,
+        Math.round(((part - 1) / totalParts) * 90) + 8,
+      );
+      setDownloadProgress({
+        show: true,
+        progress: baselineProgress,
+        message: `Downloading part ${part} of ${totalParts}...`,
+      });
+
+      await downloadCampaignQrPdf(token, campaignId, {
+        fast: 1,
+        skipLogo: 1,
+        offset,
+        limit: safeChunkSize,
+        part,
+        totalParts,
+      });
+
+      setDownloadProgress({
+        show: true,
+        progress: Math.min(97, Math.round((part / totalParts) * 97)),
+        message:
+          part === totalParts
+            ? "Finalizing download..."
+            : `Downloaded ${part}/${totalParts} parts...`,
+      });
+    }
+
+    setDownloadProgress({
+      show: true,
+      progress: 100,
+      message: "Download complete!",
+    });
+    setTimeout(() => {
+      setDownloadProgress({ show: false, progress: 0, message: "" });
+    }, 450);
+
+    return totalParts;
+  };
+
   const handleDownloadCampaignPdf = async (campaign) => {
     const campaignId = campaign?.id;
     if (!token || !campaignId) return;
     setIsDownloadingPdf(campaignId);
     const downloadParams = { fast: 1, skipLogo: 1 };
+    const estimatedQrs = getCampaignQrCountEstimate(campaign);
+    const shouldUseChunkedDownload =
+      estimatedQrs >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD;
 
     try {
-      await runDownloadWithProgress(
-        () => downloadCampaignQrPdf(token, campaignId, downloadParams),
-        "Preparing full campaign PDF...",
-      );
-      setStatusWithTimeout("Full campaign QR PDF downloaded successfully.");
+      if (shouldUseChunkedDownload) {
+        const totalParts = await downloadCampaignPdfInChunks({
+          campaignId,
+          totalQrs: estimatedQrs,
+        });
+        setStatusWithTimeout(
+          `Downloaded ${totalParts} PDF part${totalParts === 1 ? "" : "s"} for ${estimatedQrs.toLocaleString()} QRs.`,
+        );
+        info(
+          "Chunked Download Complete",
+          `${totalParts} file${totalParts === 1 ? "" : "s"} downloaded for this large campaign.`,
+        );
+      } else {
+        await runDownloadWithProgress(
+          () => downloadCampaignQrPdf(token, campaignId, downloadParams),
+          "Preparing full campaign PDF...",
+        );
+        setStatusWithTimeout("Full campaign QR PDF downloaded successfully.");
+      }
     } catch (err) {
       if (handleVendorAccessError(err)) return;
+      const backendChunkHint =
+        err?.status === 413 &&
+        (err?.data?.code === "CAMPAIGN_PDF_TOO_LARGE" ||
+          /chunked download/i.test(String(err?.message || "")));
+
+      if (backendChunkHint) {
+        try {
+          const hintedTotalQrs = Number(err?.data?.totalQrs);
+          const hintedChunkSize = Number(err?.data?.recommendedChunkSize);
+          const totalParts = await downloadCampaignPdfInChunks({
+            campaignId,
+            totalQrs:
+              Number.isFinite(hintedTotalQrs) && hintedTotalQrs > 0
+                ? hintedTotalQrs
+                : estimatedQrs || CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD,
+            chunkSize:
+              Number.isFinite(hintedChunkSize) && hintedChunkSize > 0
+                ? hintedChunkSize
+                : CAMPAIGN_QR_CHUNK_SIZE,
+          });
+          setStatusWithTimeout(
+            `Downloaded ${totalParts} PDF part${totalParts === 1 ? "" : "s"} in chunk mode.`,
+          );
+          info(
+            "Chunked Download Complete",
+            `${totalParts} file${totalParts === 1 ? "" : "s"} downloaded for this large campaign.`,
+          );
+          return;
+        } catch (chunkErr) {
+          if (handleVendorAccessError(chunkErr)) return;
+          const chunkErrorMsg =
+            chunkErr.message || "Failed to download campaign PDF in chunks.";
+          setStatusWithTimeout(chunkErrorMsg);
+          toastError("Download Failed", chunkErrorMsg);
+          return;
+        }
+      }
+
       setDownloadProgress({ show: false, progress: 0, message: "" });
       const errorMsg = err.message || "Failed to download PDF.";
       setStatusWithTimeout(errorMsg);
@@ -2898,8 +3046,13 @@ const VendorDashboard = () => {
               totalPrintCost += printAmount;
             }
           }
-          if (Array.isArray(result.qrs)) {
+          if (Array.isArray(result.qrs) && result.qrs.length > 0) {
             newHashes.push(...result.qrs.map((item) => item.uniqueHash));
+          } else if (
+            Array.isArray(result.sampleHashes) &&
+            result.sampleHashes.length > 0
+          ) {
+            newHashes.push(...result.sampleHashes);
           }
         } catch (err) {
           if (handleVendorAccessError(err)) {
