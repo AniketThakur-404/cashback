@@ -125,7 +125,9 @@ const History = () => {
             </div>
           </div>
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-gray-100 dark:border-zinc-800">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Txns</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Transactions
+            </div>
             <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
               {summary.transactions}
             </div>
