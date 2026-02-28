@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { BadgeCheck, ScanLine, Gift, QrCode } from "lucide-react";
+import { ScanLine, Gift, QrCode } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -9,62 +9,34 @@ const steps = [
   {
     icon: QrCode,
     label: "Look for QR",
-    sub: "Spot the Assured Rewards QR code on any premium partner product.",
+    sub: "Spot Assured Rewards QR on partner products.",
   },
   {
     icon: ScanLine,
     label: "Scratch & Scan",
-    sub: "Gently scratch the hidden area and scan with our app securely.",
+    sub: "Gently scratch the hidden area and scan.",
   },
   {
     icon: Gift,
     label: "Get Rewards",
-    sub: "Verify authentication and enjoy your wallet rewards instantly.",
+    sub: "Verify instantly and earn wallet rewards.",
   },
 ];
-
-// SVG dashed arrow pointing right
-const DashedArrow = () => (
-  <svg
-    width="38"
-    height="18"
-    viewBox="0 0 38 18"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-    className="shrink-0 mx-1"
-  >
-    <path
-      d="M2 9 Q10 9 18 9 Q26 9 34 9"
-      stroke="#059669"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeDasharray="3 4"
-    />
-    <path
-      d="M30 4.5 L36 9 L30 13.5"
-      stroke="#059669"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 const HowItWorks = () => {
   const containerRef = useRef(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".hiw-step-card", {
-        y: 18,
+      gsap.from(".hiw-step-item", {
+        x: -15,
         opacity: 0,
-        duration: 0.55,
-        stagger: 0.14,
-        ease: "power3.out",
+        duration: 0.5,
+        stagger: 0.15,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: containerRef.current,
-          start: "top 88%",
+          start: "top 90%",
         },
       });
     }, containerRef);
@@ -74,73 +46,45 @@ const HowItWorks = () => {
   return (
     <div
       ref={containerRef}
-      className="bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-black/5 dark:border-white/5"
-      style={{
-        boxShadow:
-          "0 4px 24px -6px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04)",
-      }}
+      className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5"
     >
-      {/* Title */}
-      <h2 className="text-center text-[17px] font-black text-zinc-900 dark:text-white tracking-tight mb-5">
-        How{" "}
-        <span
-          style={{
-            background: "linear-gradient(90deg,#059669,#0d9488)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Assured Rewards
-        </span>{" "}
-        Works?
-      </h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-[15px] font-bold text-zinc-900 dark:text-white">
+          How It Works
+        </h2>
+        <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/20 to-transparent"></div>
+      </div>
 
-      {/* Step row */}
-      <div className="flex items-start justify-between gap-0">
-        {steps.map((step, i) => {
-          const Icon = step.icon;
-          const isLast = i === steps.length - 1;
-          return (
-            <React.Fragment key={i}>
-              {/* Card */}
-              <div className="hiw-step-card flex flex-col items-center gap-2.5 flex-1 min-w-0">
-                {/* Icon box */}
-                <div
-                  className="w-[62px] h-[62px] rounded-[18px] flex items-center justify-center shrink-0"
-                  style={{
-                    background: "rgba(5,150,105,0.07)",
-                    border: "1.5px solid rgba(5,150,105,0.15)",
-                  }}
-                >
-                  <Icon
-                    size={26}
-                    style={{ color: "#059669" }}
-                    strokeWidth={1.7}
-                  />
+      <div className="relative pl-3">
+        {/* Connecting Line */}
+        <div className="absolute top-4 bottom-4 left-[23px] w-px border-l-2 border-dashed border-emerald-500/30 dark:border-emerald-500/20 z-0"></div>
+
+        <div className="space-y-4 relative z-10">
+          {steps.map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <div key={i} className="hiw-step-item flex items-start gap-4">
+                <div className="w-[22px] h-[22px] rounded-full bg-emerald-100 dark:bg-emerald-500/20 border-2 border-white dark:border-zinc-900 flex items-center justify-center shrink-0 mt-0.5 relative z-10 shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></div>
                 </div>
 
-                {/* Label */}
-                <div className="text-center px-1">
-                  <p className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 leading-snug">
-                    {step.label}
-                  </p>
-                  {step.sub && (
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5 font-medium">
+                <div className="flex items-start gap-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 flex-1 border border-zinc-100 dark:border-zinc-800 transition-colors hover:border-emerald-500/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100/80 dark:bg-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400">
+                    <Icon size={16} strokeWidth={2} />
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100">
+                      {step.label}
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
                       {step.sub}
                     </p>
-                  )}
+                  </div>
                 </div>
               </div>
-
-              {/* Dashed arrow between steps */}
-              {!isLast && (
-                <div className="flex items-center justify-center pt-[22px] shrink-0">
-                  <DashedArrow />
-                </div>
-              )}
-            </React.Fragment>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
