@@ -35,6 +35,7 @@ const Layout = ({ children }) => {
     if (location.pathname.startsWith("/product-report"))
       return "Product Reports";
     if (location.pathname.startsWith("/history")) return "History";
+    if (location.pathname.startsWith("/orders")) return "My Orders";
     return "Assured Rewards";
   })();
 
@@ -84,9 +85,9 @@ const Layout = ({ children }) => {
   }, [authToken, isHome]);
 
   return (
-    <div className="min-h-[100dvh] bg-gray-100 flex justify-center safe-area-x">
+    <div className="min-h-dvh bg-gray-100 flex justify-center safe-area-x">
       {/* Mobile Container - limits width on desktop to look like a phone */}
-      <div className="w-full max-w-md bg-white dark:bg-zinc-950 min-h-[100dvh] shadow-2xl relative flex flex-col transition-colors duration-300">
+      <div className="w-full max-w-md bg-white dark:bg-zinc-950 min-h-dvh shadow-2xl relative flex flex-col transition-colors duration-300">
         {/* TOP HEADER */}
         <header className="bg-white dark:bg-zinc-950/80 backdrop-blur-md px-4 pt-safe h-16 sticky top-0 z-50 shadow-sm dark:shadow-zinc-900 border-b border-transparent dark:border-zinc-800 transition-colors duration-300 flex items-center">
           {isHome ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import { QRCodeCanvas } from "qrcode.react";
@@ -724,6 +724,98 @@ const LineChartComponent = ({
             ))}
         </div>
       )}
+    </div>
+  );
+};
+
+const parseColors = (val) => {
+  const fromMatch = val.match(/from-\[?([^\]\s]+)\]?/);
+  const toMatch = val.match(/to-\[?([^\]\s]+)\]?/);
+
+  let from = fromMatch ? fromMatch[1] : "#3b82f6";
+  let to = toMatch ? toMatch[1] : "#4338ca";
+
+  if (!from.startsWith("#")) {
+    if (from === "blue-600") from = "#2563eb";
+    else if (from === "orange-600") from = "#ea580c";
+    else from = "#3b82f6";
+  }
+  if (!to.startsWith("#")) {
+    if (to === "indigo-900") to = "#312e81";
+    else if (to === "red-900") to = "#7f1d1d";
+    else to = "#4338ca";
+  }
+
+  return { from, to };
+};
+
+const GradientPicker = ({ value, onChange }) => {
+  const initialColors = useMemo(() => parseColors(value || ""), [value]);
+  const [localColors, setLocalColors] = useState(initialColors);
+  const debounceTimer = useRef(null);
+
+  // Sync with value if it changes externally
+  useEffect(() => {
+    setLocalColors(initialColors);
+  }, [initialColors]);
+
+  const handleColorChange = (type, color) => {
+    const newColors = { ...localColors, [type]: color };
+    setLocalColors(newColors);
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      onChange(`from-[${newColors.from}] to-[${newColors.to}]`);
+    }, 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-200 dark:border-white/10">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold text-slate-400 uppercase">
+            Start
+          </label>
+          <div className="relative w-8 h-8 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+            <input
+              type="color"
+              value={localColors.from}
+              onChange={(e) => handleColorChange("from", e.target.value)}
+              className="absolute inset-0 w-[150%] h-[150%] -translate-x-[25%] -translate-y-[25%] cursor-pointer border-0 p-0"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-bold text-slate-400 uppercase">
+            End
+          </label>
+          <div className="relative w-8 h-8 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+            <input
+              type="color"
+              value={localColors.to}
+              onChange={(e) => handleColorChange("to", e.target.value)}
+              className="absolute inset-0 w-[150%] h-[150%] -translate-x-[25%] -translate-y-[25%] cursor-pointer border-0 p-0"
+            />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col gap-1">
+          <label className="text-[10px] font-bold text-slate-400 uppercase">
+            Preview
+          </label>
+          <div
+            className="h-8 w-full rounded-md border border-slate-200 dark:border-white/10 shadow-inner"
+            style={{
+              background: `linear-gradient(to right, ${localColors.from}, ${localColors.to})`,
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 };
@@ -8431,6 +8523,12 @@ const AdminDashboard = () => {
                               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 Accent Gradient
                               </label>
+                              <GradientPicker
+                                value={banner?.accent || ""}
+                                onChange={(val) =>
+                                  handleBannerFieldChange(index, "accent", val)
+                                }
+                              />
                               <input
                                 type="text"
                                 value={banner?.accent || ""}
@@ -8442,7 +8540,7 @@ const AdminDashboard = () => {
                                   )
                                 }
                                 placeholder="from-blue-600 to-indigo-900"
-                                className={adminInputClass}
+                                className={`${adminInputClass} text-[10px] py-1 opacity-70`}
                               />
                             </div>
                             <div className="space-y-1.5">

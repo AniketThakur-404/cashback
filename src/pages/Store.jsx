@@ -1,6 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Gift, ShoppingBag, Sparkles, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Gift,
+  ShoppingBag,
+  Sparkles,
+  Wallet,
+  CheckCircle2,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getPublicStoreData,
   getWalletSummary,
@@ -31,6 +39,85 @@ const formatPoints = (value) => {
   const amount = Number(value);
   const normalized = Number.isFinite(amount) ? amount : 0;
   return `${POINTS_FORMATTER.format(normalized)} Points`;
+};
+
+const RedemptionSuccessModal = ({
+  product,
+  balance,
+  onClose,
+  onViewOrders,
+}) => {
+  if (!product) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[40px] overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-8 flex flex-col items-center text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{
+              type: "spring",
+              damping: 12,
+              stiffness: 200,
+              delay: 0.2,
+            }}
+            className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-6"
+          >
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </motion.div>
+
+          <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
+            Order Placed!
+          </h3>
+          <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-2 mb-6">
+            Successfully Redeemed
+          </p>
+
+          <div className="w-full p-4 rounded-3xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 mb-8 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm shrink-0">
+              <ShoppingBag size={24} className="text-emerald-600" />
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-sm font-black text-gray-900 dark:text-white truncate">
+                {product.name}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-0.5">
+                Balance: {balance.toFixed(2)} Pts
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full space-y-3">
+            <button
+              onClick={onViewOrders}
+              className="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              View My Orders
+            </button>
+            <button
+              onClick={onClose}
+              className="w-full py-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 font-black text-xs uppercase tracking-[0.2em] hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              Keep Shopping
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 const ProductCard = ({
@@ -84,7 +171,7 @@ const ProductCard = ({
   return (
     <article className="group flex flex-col h-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
       <div
-        className={`h-28 sm:h-40 relative overflow-hidden bg-gradient-to-br ${gradient}`}
+        className={`h-28 sm:h-40 relative overflow-hidden bg-linear-to-br ${gradient}`}
       >
         {imageSrc && !imgError ? (
           <img
@@ -104,40 +191,37 @@ const ProductCard = ({
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="flex-1 p-3 sm:p-4 flex flex-col">
-        {/* Brand & Title */}
-        <div className="mb-1.5">
+      <div className="flex-1 p-4 sm:p-5 flex flex-col">
+        <div className="mb-2">
           {item.brand && (
-            <p className="text-[14px] font-medium uppercase tracking-wider text-primary mb-0.5 flex items-center gap-1">
-              <Sparkles size={8} /> {item.brand}
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-1">
+              <Sparkles size={10} strokeWidth={3} /> {item.brand}
             </p>
           )}
           <h3
-            className="text-[16px] font-medium text-slate-900 dark:text-white leading-tight line-clamp-1"
+            className="text-[18px] font-black text-slate-900 dark:text-white leading-tight line-clamp-1"
             title={item.name}
           >
             {item.name}
           </h3>
-          <p className="text-[14px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 leading-relaxed">
+          <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-normal">
             {item.description || "Premium reward for loyal members."}
           </p>
         </div>
 
-        {/* Price Tag */}
-        <div className="flex items-end justify-between border-t border-slate-50 dark:border-white/5 pt-1.5 mt-auto">
-          <div>
-            <p className="text-[12px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="flex items-center justify-between pt-3 mt-auto border-t border-slate-100 dark:border-white/5">
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1">
               Required
-            </p>
-            <div className="text-[16px] font-medium text-slate-900 dark:text-white mt-0">
+            </span>
+            <div className="text-[15px] font-black text-slate-900 dark:text-white leading-none">
               {formatPoints(amount)}
             </div>
           </div>
 
           {Number.isFinite(stockValue) && (
             <div
-              className={`text-[12px] font-medium px-1.5 py-0.5 rounded-md border ${
+              className={`text-[10px] font-black px-2.5 py-1 rounded-full border shadow-sm ${
                 stockValue < 5
                   ? "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800/30 dark:text-rose-400"
                   : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/30 dark:text-emerald-400"
@@ -152,10 +236,10 @@ const ProductCard = ({
           type="button"
           disabled={disableRedeem}
           onClick={() => onRedeem(item)}
-          className={`w-full mt-2 py-1.5 rounded-lg text-[14px] font-medium uppercase tracking-wide flex items-center justify-center gap-1 transition-all active:scale-[0.98] ${buttonStyle}`}
+          className={`w-full mt-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all active:scale-[0.96] shadow-md ${buttonStyle}`}
         >
           {actionLabel}
-          {!disableRedeem && <ArrowRight size={12} />}
+          {!disableRedeem && <ArrowRight size={14} strokeWidth={3} />}
         </button>
       </div>
     </article>
@@ -176,8 +260,9 @@ const Store = () => {
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [walletError, setWalletError] = useState("");
   const [redeemingProductId, setRedeemingProductId] = useState("");
-  const [redeemStatus, setRedeemStatus] = useState("");
   const [redeemError, setRedeemError] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastRedeemedProduct, setLastRedeemedProduct] = useState(null);
 
   useEffect(() => {
     let live = true;
@@ -256,38 +341,35 @@ const Store = () => {
   const handleRedeemProduct = async (item) => {
     if (!isAuthenticated || !authToken) {
       setRedeemError("Sign in to redeem products.");
-      setRedeemStatus("");
       return;
     }
 
     const productId = String(item?.id || "").trim();
     if (!productId) {
       setRedeemError("Product is unavailable.");
-      setRedeemStatus("");
       return;
     }
 
     const amount = getItemAmount(item);
     if (amount <= 0) {
       setRedeemError("This product has invalid pricing.");
-      setRedeemStatus("");
       return;
     }
 
     if (walletBalance < amount) {
       setRedeemError("Insufficient wallet balance.");
-      setRedeemStatus("");
       return;
     }
 
     setRedeemingProductId(productId);
     setRedeemError("");
-    setRedeemStatus("");
     try {
       const data = await redeemStoreProduct(authToken, productId);
       const nextBalance = Number(data?.wallet?.balance);
       setWalletBalance(Number.isFinite(nextBalance) ? nextBalance : 0);
-      setRedeemStatus(data?.message || "Product redeemed successfully.");
+
+      setLastRedeemedProduct(item);
+      setShowSuccessModal(true);
 
       setStoreData((prev) => ({
         ...prev,
@@ -368,11 +450,6 @@ const Store = () => {
           {redeemError}
         </div>
       )}
-      {redeemStatus && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-          {redeemStatus}
-        </div>
-      )}
 
       {isLoading ? (
         <div className="mt-6 grid grid-cols-2 gap-3">
@@ -404,6 +481,17 @@ const Store = () => {
           ))}
         </div>
       )}
+
+      <AnimatePresence>
+        {showSuccessModal && (
+          <RedemptionSuccessModal
+            product={lastRedeemedProduct}
+            balance={walletBalance}
+            onClose={() => setShowSuccessModal(false)}
+            onViewOrders={() => navigate("/orders")}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -208,52 +208,60 @@ const History = () => {
                 </h3>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {transactions.length === 0 ? (
+                {transactions.filter(
+                  (tx) =>
+                    !tx.description?.toLowerCase().includes("store redeem"),
+                ).length === 0 ? (
                   <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
-                    No transactions found.
+                    No other transactions found.
                   </div>
                 ) : (
-                  transactions.map((tx) => {
-                    const isCredit =
-                      String(tx.type || "").toLowerCase() === "credit";
-                    return (
-                      <div
-                        key={tx.id}
-                        className="p-4 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                              isCredit ? "bg-emerald-100" : "bg-rose-100"
-                            }`}
-                          >
-                            {isCredit ? (
-                              <ArrowDownCircle className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <ArrowUpCircle className="w-4 h-4 text-rose-600" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white capitalize truncate">
-                              {(tx.category || "transaction").replace(
-                                /_/g,
-                                " ",
+                  transactions
+                    .filter(
+                      (tx) =>
+                        !tx.description?.toLowerCase().includes("store redeem"),
+                    )
+                    .map((tx) => {
+                      const isCredit =
+                        String(tx.type || "").toLowerCase() === "credit";
+                      return (
+                        <div
+                          key={tx.id}
+                          className="p-4 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                                isCredit ? "bg-emerald-100" : "bg-rose-100"
+                              }`}
+                            >
+                              {isCredit ? (
+                                <ArrowDownCircle className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <ArrowUpCircle className="w-4 h-4 text-rose-600" />
                               )}
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(tx.createdAt)} |{" "}
-                              {tx.status || "success"}
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-gray-900 dark:text-white capitalize truncate">
+                                {(tx.category || "transaction").replace(
+                                  /_/g,
+                                  " ",
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDate(tx.createdAt)} |{" "}
+                                {tx.status || "success"}
+                              </div>
                             </div>
                           </div>
+                          <span
+                            className={`text-sm font-medium shrink-0 whitespace-nowrap ${isCredit ? "text-emerald-600" : "text-rose-600"}`}
+                          >
+                            {isCredit ? "+" : "-"}INR {formatAmount(tx.amount)}
+                          </span>
                         </div>
-                        <span
-                          className={`text-sm font-medium shrink-0 whitespace-nowrap ${isCredit ? "text-emerald-600" : "text-rose-600"}`}
-                        >
-                          {isCredit ? "+" : "-"}INR {formatAmount(tx.amount)}
-                        </span>
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
             </div>
