@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { X, Calendar, MapPin, Search, ChevronLeft, ChevronRight, Hash, ShieldCheck, IndianRupee, Megaphone, User, Clock, QrCode } from "lucide-react";
 import { getVendorRedemptions } from "../../lib/api";
@@ -22,47 +22,41 @@ const formatTime = (value) => {
     return format(date, "h:mm a");
 };
 
+const normalizeRedemptionRow = (row) => {
+    const createdAt = row?.createdAt || row?.redeemedAt || null;
+    const amount = Number(row?.amount ?? row?.cashbackAmount ?? 0);
+    const qrHash = row?.qr?.hash || row?.uniqueHash || "";
+
+    return {
+        id: row?.id || `${createdAt || "scan"}-${qrHash || "qr"}`,
+        createdAt,
+        amount: Number.isFinite(amount) ? amount : 0,
+        campaign: row?.campaign || null,
+        qr: qrHash ? { hash: qrHash } : null,
+    };
+};
+
 const CustomerDetailsModal = ({ isOpen, onClose, customer, token }) => {
     const [scans, setScans] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
 
-    useEffect(() => {
-        if (isOpen && customer) {
-            loadScans(1);
-        } else {
-            setScans([]);
-        }
-    }, [isOpen, customer]);
-
-    const loadScans = async (page = 1) => {
-        if (!customer || !customer.userId) return;
+    const loadScans = useCallback(async (page = 1) => {
+        if (!customer?.userId && !customer?.mobile) return;
         setIsLoading(true);
         setError("");
         try {
-            // Using the existing endpoint, passing the user filter logic if updated in backend
-            // For now, we may need to fetch all and filter client-side if backend isn't updated yet,
-            // or pass it as a custom query param. Assume backend is updated to handle `userId`.
-            // Wait, standard `buildRedemptionEventWhere` might not handle `userId` from query directly.
-            // In the plan we said "Update buildRedemptionEventWhere to support a userId query parameter."
-            // If we didn't update the backend yet, we should do it or use `mobile` filter.
-            // Since we plan to update the backend or maybe we can pass `mobile: customer.mobile`.
             const params = { page, limit: pagination.limit };
-            if (customer.mobile) {
-                params.mobile = customer.mobile;
-            } else if (customer.userId) {
+            if (customer.userId) {
                 params.userId = customer.userId;
+            } else if (customer.mobile) {
+                params.mobile = customer.mobile;
             }
 
             const data = await getVendorRedemptions(token, params);
-            // In case backend doesn't filter perfectly by userId via mobile, we can double check.
-            let userScans = data.redemptions || [];
-
-            // Client side filter fallback just in case
-            if (customer.mobile && params.mobile) {
-                userScans = userScans.filter(s => s.customer?.phone === customer.mobile);
-            }
+            const rawRows = Array.isArray(data?.redemptions) ? data.redemptions : [];
+            const userScans = rawRows.map(normalizeRedemptionRow);
 
             setScans(userScans);
             setPagination(data.pagination || { page: 1, limit: 15, total: userScans.length, totalPages: 1 });
@@ -72,7 +66,15 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer, token }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [customer, pagination.limit, token]);
+
+    useEffect(() => {
+        if (isOpen && customer) {
+            loadScans(1);
+        } else {
+            setScans([]);
+        }
+    }, [isOpen, customer, loadScans]);
 
     if (!isOpen || !customer) return null;
 
