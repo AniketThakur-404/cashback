@@ -273,7 +273,7 @@ const Home = () => {
                 productsReported: s.productsReported || 0,
                 walletEarned: s.totalEarned || 0,
               };
-          } catch (_) {}
+          } catch (_) { }
         }
         if (live) setHomeData(data);
       } catch (_) {
