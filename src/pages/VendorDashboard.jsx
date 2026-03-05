@@ -3501,13 +3501,18 @@ const VendorDashboard = () => {
         allocations: normalizedAllocations,
       });
       setCampaignStatusWithTimeout("Campaign created.");
+      const nextCampaignPlanType =
+        campaignForm.planType ||
+        brandProfile.defaultPlanType ||
+        localStorage.getItem(VENDOR_PLAN_TYPE_KEY) ||
+        "prepaid";
       setCampaignForm({
         title: "",
         description: "",
         cashbackAmount: "",
         totalBudget: "",
         productId: "",
-        planType: "prepaid",
+        planType: nextCampaignPlanType,
         voucherType: "none",
         startDate: new Date().toISOString().slice(0, 10),
         endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
