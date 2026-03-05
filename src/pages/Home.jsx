@@ -13,6 +13,7 @@ import {
   Shield,
   QrCode,
   Package,
+  ShoppingBag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -89,6 +90,13 @@ const quickActions = [
     gradient: "linear-gradient(135deg,#ec4899,#e11d48)",
     shadow: "rgba(236,72,153,0.3)",
   },
+  {
+    to: "/orders",
+    icon: ShoppingBag,
+    label: "Orders",
+    gradient: "linear-gradient(135deg,#3b82f6,#2563eb)",
+    shadow: "rgba(59,130,246,0.3)",
+  },
 ];
 
 /* -- Hero Carousel -- */
@@ -140,93 +148,115 @@ const HeroCarousel = React.memo(({ items }) => {
         onDragEnd={handleDragEnd}
         style={{ touchAction: "pan-y" }}
       >
-        {banners.map((b, i) => (
-          <div key={i} className="relative flex-none w-full h-full">
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  b.gradient ||
-                  "linear-gradient(135deg,#14532d,#15803d,#059669)",
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 50%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.2), transparent 50%)",
-              }}
-            />
-            <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-black/20" />
+        {banners.map((b, i) => {
+          const bgValue = b.accent || b.gradient;
+          const isCssGradient = bgValue?.startsWith("linear-gradient");
+          const isTailwindGradient =
+            bgValue?.includes("from-") && bgValue?.includes("to-");
 
-            {/* Subtle noise/texture overlay for premium look */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
+          let inlineBg = {};
+          if (isCssGradient) {
+            inlineBg = { background: bgValue };
+          } else if (isTailwindGradient) {
+            const fromMatch = bgValue.match(/from-\[?([^\]\s]+)\]?/);
+            const toMatch = bgValue.match(/to-\[?([^\]\s]+)\]?/);
+            const from = fromMatch?.[1] || "";
+            const to = toMatch?.[1] || "";
+            if (from && to) {
+              inlineBg = {
+                background: `linear-gradient(135deg, ${from}, ${to})`,
+              };
+            }
+          } else {
+            inlineBg = {
+              background: "linear-gradient(135deg,#14532d,#15803d,#059669)",
+            };
+          }
 
-            <div className="relative z-10 h-full px-5 sm:px-8 py-5 sm:py-7 flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
-                <div
-                  className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-2.5 backdrop-blur-xl"
-                  style={{
-                    background: "rgba(255,255,255,0.12)",
-                    borderColor: "rgba(255,255,255,0.2)",
-                  }}
-                >
-                  <Zap size={10} className="text-yellow-400 fill-yellow-400" />
-                  <span
-                    className="text-[10px] font-bold text-white uppercase"
-                    style={{ letterSpacing: "0.2em" }}
-                  >
-                    Exclusive
-                  </span>
-                </div>
-                <h3
-                  className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.1] tracking-tight"
-                  style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
-                >
-                  {b.title}
-                </h3>
-                <p
-                  className="text-[12px] sm:text-[14px] mt-2 font-medium"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  {b.subtitle}
-                </p>
-                <Link
-                  to={b.link || "/brand-details"}
-                  className="self-start mt-4"
-                >
+          return (
+            <div key={i} className="relative flex-none w-full h-full">
+              <div className="absolute inset-0" style={inlineBg} />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 50%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.2), transparent 50%)",
+                }}
+              />
+              <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-black/20" />
+
+              {/* Subtle noise/texture overlay for premium look */}
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/felt.png')]" />
+
+              <div className="relative z-10 h-full px-5 sm:px-8 py-5 sm:py-7 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
                   <div
-                    className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-6 py-2.5 rounded-xl active:scale-[0.92] transition-all hover:pr-8 group"
-                    style={{ boxShadow: "0 15px 35px -5px rgba(0,0,0,0.4)" }}
+                    className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full border mb-2.5 backdrop-blur-xl"
+                    style={{
+                      background: "rgba(255,255,255,0.12)",
+                      borderColor: "rgba(255,255,255,0.2)",
+                    }}
                   >
-                    Explore{" "}
-                    <ArrowRight
-                      size={16}
-                      className="group-hover:translate-x-1 transition-transform"
+                    <Zap
+                      size={10}
+                      className="text-yellow-400 fill-yellow-400"
                     />
+                    <span
+                      className="text-[10px] font-bold text-white uppercase"
+                      style={{ letterSpacing: "0.2em" }}
+                    >
+                      Exclusive
+                    </span>
                   </div>
-                </Link>
-              </div>
-
-              <div className="flex shrink-0 items-center justify-center">
-                <div className="relative w-[110px] h-[110px] sm:w-[160px] sm:h-[160px] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl group">
-                  <FallbackImage
-                    src={resolvePublicAssetUrl(b.img)}
-                    alt="Offer"
-                    className="w-full h-full object-cover transition-opacity duration-700"
-                    fallback={
-                      <Sparkles
-                        className="w-full h-full p-8"
-                        style={{ color: "rgba(255,255,255,0.2)" }}
+                  <h3
+                    className="text-[22px] sm:text-[26px] font-bold text-white leading-[1.1] tracking-tight"
+                    style={{ textShadow: "0 8px 24px rgba(0,0,0,0.3)" }}
+                  >
+                    {b.title}
+                  </h3>
+                  <p
+                    className="text-[12px] sm:text-[14px] mt-2 font-medium"
+                    style={{ color: "rgba(255,255,255,0.85)" }}
+                  >
+                    {b.subtitle}
+                  </p>
+                  <Link
+                    to={b.link || "/brand-details"}
+                    className="self-start mt-4"
+                  >
+                    <div
+                      className="inline-flex items-center gap-2 bg-white text-gray-950 text-[13px] font-bold px-6 py-2.5 rounded-xl active:scale-[0.92] transition-all hover:pr-8 group"
+                      style={{ boxShadow: "0 15px 35px -5px rgba(0,0,0,0.4)" }}
+                    >
+                      Explore{" "}
+                      <ArrowRight
+                        size={16}
+                        className="group-hover:translate-x-1 transition-transform"
                       />
-                    }
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-white/10" />
+                    </div>
+                  </Link>
+                </div>
+
+                <div className="flex shrink-0 items-center justify-center">
+                  <div className="relative w-[110px] h-[110px] sm:w-[160px] sm:h-[160px] rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl group">
+                    <FallbackImage
+                      src={resolvePublicAssetUrl(b.img)}
+                      alt="Offer"
+                      className="w-full h-full object-cover transition-opacity duration-700"
+                      fallback={
+                        <Sparkles
+                          className="w-full h-full p-8"
+                          style={{ color: "rgba(255,255,255,0.2)" }}
+                        />
+                      }
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-white/10" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </motion.div>
 
       {/* Progress */}
@@ -271,7 +301,7 @@ const Home = () => {
               data.stats = {
                 productsOwned: s.productsOwned || 0,
                 productsReported: s.productsReported || 0,
-                walletEarned: s.totalEarned || 0,
+                walletEarned: s.balance ?? s.totalEarned ?? 0,
               };
           } catch (_) { }
         }
@@ -368,8 +398,10 @@ const Home = () => {
   const banners = homeData?.banners?.length ? homeData.banners : heroBanners;
   const stats = homeData?.stats || {};
   const topOffers = homeData?.topOffers || [];
-  const fmtCash = (v) =>
-    !v ? "₹0" : typeof v === "number" ? `₹${v.toFixed(0)}` : v;
+  const fmtCash = (v) => {
+    const num = Number(v);
+    return !Number.isFinite(num) ? "₹0" : `₹${num.toFixed(0)}`;
+  };
 
   const statItems = [
     {
@@ -493,7 +525,7 @@ const Home = () => {
         )}
 
         {/* --- 3 – QUICK ACTIONS --- */}
-        <div className="quick-actions grid grid-cols-3 gap-3">
+        <div className="quick-actions grid grid-cols-4 gap-3">
           {quickActions.map((item, i) => (
             <Link
               key={i}
@@ -591,6 +623,12 @@ const Home = () => {
                 Partner Brands
               </span>
             </div>
+            <Link
+              to="/brands"
+              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+            >
+              View All <ChevronRight size={14} />
+            </Link>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar -mx-4 px-4 snap-x">
             {isLoading ? (

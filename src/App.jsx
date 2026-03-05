@@ -18,6 +18,7 @@ import LiquidGlassDemo from "./pages/LiquidGlassDemo";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import Store from "./pages/Store";
+import Brands from "./pages/Brands";
 import AdminDashboard from "./pages/AdminDashboard";
 import LevelRewards from "./pages/LevelRewards";
 import BrandFAQs from "./pages/BrandFAQs";
@@ -50,6 +51,7 @@ import ContactUs from "./pages/ContactUs";
 import History from "./pages/History";
 import ProductReport from "./pages/ProductReport";
 import ReturnRefund from "./pages/ReturnRefund";
+import Orders from "./pages/Orders";
 
 function App() {
   const AppLayout = () => (
@@ -150,6 +152,8 @@ function App() {
               <Route path="/liquid-glass" element={<LiquidGlassDemo />} />
               <Route path="/help" element={<HelpSupport />} />
               <Route path="/history" element={<History />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/brands" element={<Brands />} />
               <Route path="/product-report" element={<ProductReport />} />
             </Route>
           </Routes>

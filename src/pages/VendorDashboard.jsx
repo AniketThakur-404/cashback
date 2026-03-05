@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { format } from "date-fns";
+import { format, differenceInDays, subDays, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
 import {
   Menu,
@@ -135,6 +135,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
+const VENDOR_PLAN_TYPE_KEY = "cashback_vendor_plan_type";
 const VENDOR_TOKEN_KEY = "cashback_vendor_token";
 const CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD = 10000;
 const CAMPAIGN_QR_CHUNK_SIZE = 5000;
@@ -527,7 +528,7 @@ const VendorDashboard = () => {
     logoUrl: "",
     website: "",
     qrPricePerUnit: "",
-    defaultPlanType: "prepaid",
+    defaultPlanType: localStorage.getItem(VENDOR_PLAN_TYPE_KEY) || "prepaid",
   });
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [registrationForm, setRegistrationForm] = useState({
@@ -628,13 +629,18 @@ const VendorDashboard = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [campaignStatsMap, setCampaignStatsMap] = useState({});
   const [overviewCampaignId, setOverviewCampaignId] = useState("all");
+  const [dateFilter, setDateFilter] = useState({
+    from: format(subDays(new Date(), 6), "yyyy-MM-dd"),
+    to: format(new Date(), "yyyy-MM-dd"),
+    preset: "1w",
+  });
   const [campaignForm, setCampaignForm] = useState({
     title: "",
     description: "",
     cashbackAmount: "",
     totalBudget: "",
     productId: "",
-    planType: "prepaid",
+    planType: localStorage.getItem(VENDOR_PLAN_TYPE_KEY) || "prepaid",
     voucherType: "none",
     startDate: new Date().toISOString().slice(0, 10),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
@@ -1075,7 +1081,8 @@ const VendorDashboard = () => {
   const getCampaignQrCountEstimate = (campaign) => {
     if (!campaign?.id) return 0;
     const stats =
-      campaignStatsMap[campaign.id] || campaignStatsMap[`title:${campaign.title}`];
+      campaignStatsMap[campaign.id] ||
+      campaignStatsMap[`title:${campaign.title}`];
     const statsTotal = Number(stats?.totalQRsOrdered);
     if (Number.isFinite(statsTotal) && statsTotal > 0) {
       return Math.floor(statsTotal);
@@ -2072,6 +2079,9 @@ const VendorDashboard = () => {
             : "",
         defaultPlanType: data.defaultPlanType || "prepaid",
       });
+      if (data.defaultPlanType) {
+        localStorage.setItem(VENDOR_PLAN_TYPE_KEY, data.defaultPlanType);
+      }
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err.status === 404) {
@@ -3913,16 +3923,140 @@ const VendorDashboard = () => {
         : overviewQrStatusCounts.redeemed;
 
   const overviewRedemptionSeries = useMemo(() => {
-    const days = 7;
-    const today = new Date();
+    // Use parseISO to avoid timezone shifts when parsing "yyyy-MM-dd"
+    const fromDate = parseISO(dateFilter.from);
+    const toDate = parseISO(dateFilter.to);
+    toDate.setHours(23, 59, 59, 999);
+
+    const diffDays = differenceInDays(toDate, fromDate);
     const buckets = [];
 
-    for (let i = days - 1; i >= 0; i -= 1) {
-      const date = new Date(today);
-      date.setHours(0, 0, 0, 0);
-      date.setDate(date.getDate() - i);
-      const key = format(date, "yyyy-MM-dd");
-      buckets.push({ key, name: format(date, "MMM d"), redemptions: 0 });
+    if (diffDays <= 1) {
+      // Hourly bucketing for 1-2 days
+      const totalHours = Math.max(
+        24,
+        Math.floor((toDate - fromDate) / (1000 * 60 * 60)),
+      );
+      for (let i = 0; i < totalHours; i++) {
+        const date = new Date(fromDate);
+        date.setHours(fromDate.getHours() + i, 0, 0, 0);
+        if (date > toDate) break;
+        const dateKey = format(date, "yyyy-MM-dd-HH");
+
+        // Show labels every 4 hours to avoid overlap
+        const shouldShow = i % 4 === 0;
+        let d = format(date, "HH:00");
+        let m = "";
+
+        // On the start of the day (00:00), show the date as the month row
+        if (date.getHours() === 0) {
+          m = format(date, "d MMM");
+        }
+
+        buckets.push({
+          key: dateKey,
+          dateKey,
+          name: shouldShow ? (m ? `${d} ${m}` : d) : "",
+          d: shouldShow ? d : "",
+          m: shouldShow ? m : "",
+          fullDate: format(date, "dd MMM yyyy, HH:00"),
+          redemptions: 0,
+        });
+      }
+    } else if (diffDays <= 100) {
+      // Daily bucketing for up to ~3 months
+      const isLongRange = diffDays > 30; // 1M, 3M ranges
+      const labelInterval = diffDays > 14 ? 4 : 1;
+
+      for (let i = 0; i <= diffDays; i++) {
+        const date = new Date(fromDate);
+        date.setDate(fromDate.getDate() + i);
+        if (date > toDate) break;
+
+        const isFirst = i === 0;
+        const isLast = i === diffDays;
+        const dayOfMonth = date.getDate();
+
+        const prevDate =
+          i > 0 ? new Date(fromDate.getTime() + (i - 1) * 86400000) : null;
+        const isYearChange =
+          prevDate && date.getFullYear() !== prevDate.getFullYear();
+        const isMonthChange =
+          prevDate && date.getMonth() !== prevDate.getMonth();
+
+        // Unique identifier for the axis to fix tooltip sync
+        const dateKey = format(date, "yyyy-MM-dd");
+
+        let d = format(date, "d");
+        let m = "";
+        let shouldShow = false;
+
+        if (isLongRange) {
+          // Special Request: Show 1 then 15 then 1 for long ranges
+          if (
+            isFirst ||
+            isLast ||
+            isYearChange ||
+            dayOfMonth === 1 ||
+            dayOfMonth === 15
+          ) {
+            shouldShow = true;
+            // Spacing Guards: avoid squashing at the edges
+            if (dayOfMonth === 1 || dayOfMonth === 15) {
+              if (i < 3 || diffDays - i < 3) shouldShow = false;
+            }
+          }
+        } else {
+          // Short ranges (1W): use interval
+          if (isFirst || isLast || isYearChange || i % labelInterval === 0) {
+            shouldShow = true;
+          }
+        }
+
+        if (shouldShow) {
+          if (isFirst || isLast || isYearChange) {
+            m = format(date, "MMM yyyy");
+          } else if (dayOfMonth === 1 || isMonthChange) {
+            m = format(date, "MMM");
+          }
+        }
+
+        const name = shouldShow ? (m ? `${d} ${m}` : d) : "";
+
+        buckets.push({
+          key: dateKey,
+          dateKey,
+          name,
+          d: shouldShow ? d : "",
+          m: shouldShow ? m : "",
+          fullDate: format(date, "dd MMM yyyy"),
+          redemptions: 0,
+        });
+      }
+    } else {
+      // Monthly bucketing for longer ranges
+      const startOfRange = new Date(
+        fromDate.getFullYear(),
+        fromDate.getMonth(),
+        1,
+      );
+      const endOfRange = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+
+      let current = new Date(startOfRange);
+      while (current <= endOfRange) {
+        const key = format(current, "yyyy-MM");
+        const dateKey = key;
+        buckets.push({
+          key,
+          dateKey,
+          name: format(current, "MMM yyyy"),
+          d: format(current, "MMM"),
+          m: format(current, "yyyy"),
+          fullDate: format(current, "MMMM yyyy"),
+          redemptions: 0,
+        });
+        current.setMonth(current.getMonth() + 1);
+      }
     }
 
     const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
@@ -3934,14 +4068,24 @@ const VendorDashboard = () => {
       if (!rawDate) return;
       const date = new Date(rawDate);
       if (Number.isNaN(date.getTime())) return;
-      const key = format(date, "yyyy-MM-dd");
+      if (date < fromDate || date > toDate) return;
+
+      let key;
+      if (diffDays <= 1) {
+        key = format(date, "yyyy-MM-dd-HH");
+      } else if (diffDays <= 100) {
+        key = format(date, "yyyy-MM-dd");
+      } else {
+        key = format(date, "yyyy-MM");
+      }
+
       const bucket = bucketMap.get(key);
       if (!bucket) return;
       bucket.redemptions += 1;
     });
 
     return buckets.map(({ key, ...rest }) => rest);
-  }, [overviewFilteredQrs]);
+  }, [overviewFilteredQrs, dateFilter]);
 
   const campaignPerformanceSeries = useMemo(() => {
     const statsValues = Object.values(campaignStatsMap).filter(
@@ -3978,7 +4122,7 @@ const VendorDashboard = () => {
     }
 
     // Single campaign selection
-    const selectedStats = campaignStatsMap[selectedQrCampaign];
+    const selectedStats = campaignStatsMap[overviewCampaignId];
     if (selectedStats) {
       return [
         {
@@ -4009,8 +4153,7 @@ const VendorDashboard = () => {
     campaignStatsMap,
     campaigns,
     isOverviewAll,
-    selectedQrCampaign,
-
+    overviewCampaignId,
     overviewCampaignLabel,
     overviewFilteredQrs,
   ]);
@@ -5200,6 +5343,8 @@ const VendorDashboard = () => {
                           redemptionSeries={overviewRedemptionSeries}
                           campaignSeries={campaignPerformanceSeries}
                           selectionLabel={overviewCampaignLabel}
+                          dateFilter={dateFilter}
+                          onDateFilterChange={setDateFilter}
                         />
 
                         <div className="grid grid-cols-1 xl:grid-cols-[1.75fr_1fr] gap-4">
@@ -5254,13 +5399,19 @@ const VendorDashboard = () => {
                                 <MapContainer
                                   center={locationMapCenter}
                                   zoom={5}
+                                  minZoom={3}
+                                  maxBounds={[
+                                    [-85, -180],
+                                    [85, 180],
+                                  ]}
+                                  maxBoundsViscosity={1.0}
+                                  worldCopyJump={true}
                                   scrollWheelZoom={false}
+                                  attributionControl={false}
                                   className="h-full w-full"
                                 >
-                                  <TileLayer
-                                    attribution="&copy; OpenStreetMap contributors"
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                  />
+                                  <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                  <TileLayer url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
                                   {overviewLocationPoints
                                     .slice(0, 120)
                                     .map((point, index) => (
@@ -5327,12 +5478,16 @@ const VendorDashboard = () => {
                                 overviewLocationClusters
                                   .slice(0, 8)
                                   .map((cluster, index) => (
-                                    <div
+                                    <button
+                                      type="button"
                                       key={`overview-cluster-${cluster.city}-${cluster.state}-${index}`}
-                                      className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3 flex items-center justify-between"
+                                      onClick={() =>
+                                        navigate("/vendor/locations")
+                                      }
+                                      className="w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3 flex items-center justify-between cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all group text-left"
                                     >
                                       <div className="min-w-0">
-                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
                                           {(cluster.city || "") +
                                             (cluster.city && cluster.state
                                               ? ", "
@@ -5343,10 +5498,16 @@ const VendorDashboard = () => {
                                           {cluster.totalScans} scans
                                         </div>
                                       </div>
-                                      <span className="text-[10px] font-bold text-gray-400">
-                                        #{index + 1}
-                                      </span>
-                                    </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-gray-400">
+                                          #{index + 1}
+                                        </span>
+                                        <ChevronRight
+                                          size={14}
+                                          className="text-gray-300 group-hover:text-emerald-500 transition-colors"
+                                        />
+                                      </div>
+                                    </button>
                                   ))
                               )}
                             </div>
@@ -6211,7 +6372,11 @@ const VendorDashboard = () => {
                                     </div>
                                   )}
                                   <div
-                                    className={`${campaignForm.planType === "postpaid" ? "col-span-10" : "col-span-4"} space-y-1`}
+                                    className={`${
+                                      campaignForm.planType === "postpaid"
+                                        ? "col-span-12"
+                                        : "col-span-4"
+                                    } space-y-1`}
                                   >
                                     <label className="text-[10px] uppercase tracking-wide text-gray-400">
                                       Number of QRs Required
@@ -6248,28 +6413,32 @@ const VendorDashboard = () => {
                                       />
                                     </div>
                                   )}
-                                  <div className="col-span-1 pb-1.5 flex justify-end">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleRemoveCampaignRow(row.id)
-                                      }
-                                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                      aria-label="Remove row"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-                                  </div>
+                                  {campaignForm.planType !== "postpaid" && (
+                                    <div className="col-span-1 pb-1.5 flex justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleRemoveCampaignRow(row.id)
+                                        }
+                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                        aria-label="Remove row"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
-                              <button
-                                type="button"
-                                onClick={handleAddCampaignRow}
-                                className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary text-xs font-semibold hover:bg-primary/20 hover:border-primary/60 transition-colors"
-                              >
-                                <Plus size={16} />
-                                Add another allocation
-                              </button>
+                              {campaignForm.planType !== "postpaid" && (
+                                <button
+                                  type="button"
+                                  onClick={handleAddCampaignRow}
+                                  className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary text-xs font-semibold hover:bg-primary/20 hover:border-primary/60 transition-colors"
+                                >
+                                  <Plus size={16} />
+                                  Add another allocation
+                                </button>
+                              )}
                             </div>
 
                             <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
@@ -8252,12 +8421,18 @@ Quantity: ${invoiceData.quantity} QRs
                                 <MapContainer
                                   center={locationMapCenter}
                                   zoom={5}
+                                  minZoom={3}
+                                  maxBounds={[
+                                    [-85, -180],
+                                    [85, 180],
+                                  ]}
+                                  maxBoundsViscosity={1.0}
+                                  worldCopyJump={true}
+                                  attributionControl={false}
                                   className="h-full w-full"
                                 >
-                                  <TileLayer
-                                    attribution="&copy; OpenStreetMap contributors"
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                  />
+                                  <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                  <TileLayer url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
                                   {locationsData
                                     .filter(
                                       (pt) =>
