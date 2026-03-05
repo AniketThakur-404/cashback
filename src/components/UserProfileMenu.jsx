@@ -4,15 +4,14 @@ import { useNavigate, useLocation } from "react-router-dom";
 import StarBorder from "./StarBorder";
 import { getMe } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
-import { AUTH_CHANGE_EVENT, AUTH_TOKEN_KEY, clearAuthToken } from "../lib/auth";
+import { AUTH_CHANGE_EVENT, clearAuthToken, getAuthToken } from "../lib/auth";
 
 const UserProfileMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef(null);
   const [token, setToken] = useState(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+    return getAuthToken() || null;
   });
   const [profile, setProfile] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +24,7 @@ const UserProfileMenu = () => {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const handleAuthChange = () => {
-      setToken(localStorage.getItem(AUTH_TOKEN_KEY));
+      setToken(getAuthToken() || null);
       setImgError(false);
     };
     window.addEventListener(AUTH_CHANGE_EVENT, handleAuthChange);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { scanQR } from '../lib/api';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { AUTH_TOKEN_KEY, storePostLoginRedirect } from '../lib/auth';
+import { getAuthToken, storePostLoginRedirect } from '../lib/auth';
 import { captureClientLocation } from '../lib/location';
 
 const QRScanPage = () => {
@@ -12,7 +12,7 @@ const QRScanPage = () => {
     const normalizedHash = (() => {
         try {
             return decodeURIComponent(String(hash || '')).trim();
-        } catch (_) {
+        } catch {
             return String(hash || '').trim();
         }
     })();
@@ -30,7 +30,7 @@ const QRScanPage = () => {
             }
 
             // Check if user is logged in
-            const token = localStorage.getItem(AUTH_TOKEN_KEY);
+            const token = getAuthToken();
             if (!token) {
                 // Redirect to wallet login with return URL
                 const returnUrl = `/scan/${encodeURIComponent(normalizedHash)}`;

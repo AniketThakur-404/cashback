@@ -3,19 +3,61 @@ import { useEffect, useState } from "react";
 export const AUTH_TOKEN_KEY = "cashback_auth_token";
 export const AUTH_CHANGE_EVENT = "cashback-auth-change";
 export const REDIRECT_AFTER_LOGIN_KEY = "cashback_redirect_after_login";
+const AUTH_TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 export const dispatchAuthChange = () => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 };
 
+const readCookie = (name) => {
+  if (typeof window === "undefined") return "";
+  const target = `${name}=`;
+  const cookieValue = document.cookie
+    .split(";")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(target));
+  if (!cookieValue) return "";
+  try {
+    return decodeURIComponent(cookieValue.slice(target.length));
+  } catch {
+    return cookieValue.slice(target.length);
+  }
+};
+
+const writeAuthCookie = (token) => {
+  if (typeof window === "undefined") return;
+  const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+  if (token) {
+    document.cookie = `${AUTH_TOKEN_KEY}=${encodeURIComponent(token)}; Max-Age=${AUTH_TOKEN_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${secureFlag}`;
+  } else {
+    document.cookie = `${AUTH_TOKEN_KEY}=; Max-Age=0; Path=/; SameSite=Lax${secureFlag}`;
+  }
+};
+
+export const getAuthToken = () => {
+  if (typeof window === "undefined") return "";
+  try {
+    const localToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
+    if (localToken) return localToken;
+  } catch {
+    // Some in-app "safe browsers" block localStorage; fall back to cookie.
+  }
+  return readCookie(AUTH_TOKEN_KEY) || "";
+};
+
 export const storeAuthToken = (token) => {
   if (typeof window === "undefined") return;
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-  } else {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
+  try {
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  } catch {
+    // Ignore localStorage failures and keep cookie-based auth as fallback.
   }
+  writeAuthCookie(token || "");
   dispatchAuthChange();
 };
 
@@ -41,15 +83,14 @@ export const popPostLoginRedirect = () => {
 
 export const useAuth = () => {
   const [authToken, setAuthToken] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem(AUTH_TOKEN_KEY) || "";
+    return getAuthToken();
   });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const syncAuthToken = () => {
-      setAuthToken(localStorage.getItem(AUTH_TOKEN_KEY) || "");
+      setAuthToken(getAuthToken());
     };
 
     window.addEventListener(AUTH_CHANGE_EVENT, syncAuthToken);

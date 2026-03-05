@@ -1,5 +1,5 @@
 import { apiRequest, buildApiUrl } from "./apiClient";
-import { AUTH_TOKEN_KEY } from "./auth";
+import { getAuthToken } from "./auth";
 
 const buildQueryString = (params = {}) => {
   const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== "");
@@ -10,8 +10,7 @@ const buildQueryString = (params = {}) => {
 
 const resolveAuthToken = (token) => {
   if (token) return token;
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(AUTH_TOKEN_KEY) || "";
+  return getAuthToken() || "";
 };
 
 const downloadAuthedFile = async (token, path, fallbackName) => {
@@ -29,13 +28,13 @@ const downloadAuthedFile = async (token, path, fallbackName) => {
 
   const blob = await response.blob();
   const contentDisposition = response.headers.get("content-disposition") || "";
-  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
   let derivedFileName = null;
   if (fileNameMatch?.[1]) {
     const rawFileName = fileNameMatch[1].replace(/"/g, "");
     try {
       derivedFileName = decodeURIComponent(rawFileName);
-    } catch (_) {
+    } catch {
       derivedFileName = rawFileName;
     }
   }
@@ -749,13 +748,13 @@ export const downloadVendorOrderPdf = async (token, orderId) => {
   }
   const blob = await response.blob();
   const contentDisposition = response.headers.get("content-disposition") || "";
-  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
   let derivedFileName = null;
   if (fileNameMatch?.[1]) {
     const rawFileName = fileNameMatch[1].replace(/"/g, "");
     try {
       derivedFileName = decodeURIComponent(rawFileName);
-    } catch (_) {
+    } catch {
       derivedFileName = rawFileName;
     }
   }
@@ -798,13 +797,13 @@ export const downloadCampaignQrPdf = async (token, campaignId, params) => {
   }
   const blob = await response.blob();
   const contentDisposition = response.headers.get("content-disposition") || "";
-  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+  const fileNameMatch = contentDisposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
   let derivedFileName = null;
   if (fileNameMatch?.[1]) {
     const rawFileName = fileNameMatch[1].replace(/"/g, "");
     try {
       derivedFileName = decodeURIComponent(rawFileName);
-    } catch (_) {
+    } catch {
       derivedFileName = rawFileName;
     }
   }

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { verifyPublicQr, scanQR } from "../lib/api";
-import { AUTH_TOKEN_KEY, storePostLoginRedirect } from "../lib/auth";
+import { getAuthToken, storePostLoginRedirect } from "../lib/auth";
 import {
   Loader2,
   ShieldCheck,
@@ -58,7 +58,7 @@ const RedeemQr = () => {
   }, [hash]);
 
   useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = getAuthToken();
     if (
       !token ||
       !shouldAutoClaim ||
@@ -122,7 +122,7 @@ const RedeemQr = () => {
   }, [hash, redeemStatus, redeeming, shouldAutoClaim, navigate, data?.isError]);
 
   const handleRedeem = async () => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const token = getAuthToken();
     if (!token) {
       storePostLoginRedirect(`/redeem/${hash}?claim=1`);
       navigate("/wallet");
@@ -300,7 +300,7 @@ const RedeemQr = () => {
                           year: "numeric",
                         },
                       );
-                    } catch (e) {
+                    } catch {
                       return data.endDate;
                     }
                   })()}

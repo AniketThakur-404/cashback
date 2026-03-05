@@ -8,7 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { getClaimPreview, getWalletSummary, redeemClaim } from "../lib/api";
-import { AUTH_TOKEN_KEY } from "../lib/auth";
+import { getAuthToken } from "../lib/auth";
 import WalletAuth from "../components/wallet/WalletAuth";
 import { captureClientLocation } from "../lib/location";
 
@@ -26,9 +26,7 @@ const Claim = () => {
     [searchParams],
   );
 
-  const [authToken, setAuthToken] = useState(() =>
-    localStorage.getItem(AUTH_TOKEN_KEY),
-  );
+  const [authToken, setAuthToken] = useState(() => getAuthToken());
   const [preview, setPreview] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(true);
   const [error, setError] = useState("");
@@ -115,11 +113,6 @@ const Claim = () => {
   const previewStatus = preview?.status || "unclaimed";
   const recentTransactions =
     walletSnapshot?.walletSummary?.recentTransactions || [];
-  const latestCredit = recentTransactions.find(
-    (tx) =>
-      String(tx.type || "").toUpperCase() === "CREDIT" &&
-      String(tx.category || "").toLowerCase() === "cashback_payout",
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
