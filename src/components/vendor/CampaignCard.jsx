@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Download, FileText, Eye, Trash2, Edit2 } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Eye,
+  Trash2,
+  Edit2,
+  LoaderCircle,
+  Archive,
+} from "lucide-react";
 import { useToast } from "../ui";
 import {
   updateVendorCampaign,
@@ -24,6 +32,10 @@ const CampaignCard = React.memo(
     onDelete,
     deletingCampaignId,
     isDownloadingPdf,
+    onStartBulkExport,
+    campaignExportJob,
+    isStartingBulkExportId,
+    onDownloadReadyExport,
     loadCampaigns,
     setSheetPaymentData,
   }) => {
@@ -97,6 +109,8 @@ const CampaignCard = React.memo(
       }
     };
 
+    const isBulkExportStarting = isStartingBulkExportId === campaign.id;
+
     return (
       <div className="rounded-2xl border border-gray-200/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -131,6 +145,28 @@ const CampaignCard = React.memo(
               <FileText size={14} />
               Download Invoice
             </button>
+            {typeof onStartBulkExport === "function" && (
+              campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued" ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+                  <LoaderCircle size={14} className="animate-spin" />
+                  {campaignExportJob.status === "queued" ? "Queued" : `Exporting ${campaignExportJob.progressPercent || 0}%`}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onStartBulkExport(campaign)}
+                  disabled={isBulkExportStarting}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
+                >
+                  {isBulkExportStarting ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    <Archive size={14} />
+                  )}
+                  {isBulkExportStarting ? "Starting..." : "Background Export"}
+                </button>
+              )
+            )}
             <button
               type="button"
               onClick={() => onViewDetails(campaign)}
@@ -267,12 +303,14 @@ const CampaignCard = React.memo(
           )}
         </div>
 
+
         {campaign.planType === "postpaid" && (
           <PostpaidSheetManager
             campaign={campaign}
             token={token}
             setSheetPaymentData={setSheetPaymentData}
             loadCampaigns={loadCampaigns}
+            onDownloadQr={onDownloadQr}
           />
         )}
 
@@ -293,6 +331,20 @@ const CampaignCard = React.memo(
           >
             <Eye size={14} />
           </button>
+          {typeof onStartBulkExport === "function" && (
+            <button
+              type="button"
+              onClick={() => onStartBulkExport(campaign)}
+              disabled={isBulkExportStarting || campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued"}
+              className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/20 transition-colors disabled:opacity-60"
+            >
+              {isBulkExportStarting || campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued" ? (
+                <LoaderCircle size={14} className="animate-spin" />
+              ) : (
+                <Archive size={14} />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onDelete(campaign)}

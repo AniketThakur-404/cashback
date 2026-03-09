@@ -13,6 +13,37 @@ const resolveAuthToken = (token) => {
   return getAuthToken() || "";
 };
 
+const isLikelyNetworkFetchError = (error) => {
+  if (!error || error?.status) return false;
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("networkerror") ||
+    message.includes("load failed")
+  );
+};
+
+const shouldTryMethodFallback = (error) => {
+  if (isLikelyNetworkFetchError(error)) return true;
+  const status = Number(error?.status);
+  return status === 404 || status === 405 || status === 501;
+};
+
+const requestWithMethodFallback = async (
+  primaryPath,
+  fallbackPath,
+  { token, method = "DELETE", fallbackMethod = "POST" } = {},
+) => {
+  try {
+    return await apiRequest(primaryPath, { method, token });
+  } catch (error) {
+    if (!shouldTryMethodFallback(error)) {
+      throw error;
+    }
+    return apiRequest(fallbackPath, { method: fallbackMethod, token });
+  }
+};
+
 const downloadAuthedFile = async (token, path, fallbackName) => {
   const authToken = resolveAuthToken(token);
   const url = buildApiUrl(path);
@@ -305,6 +336,48 @@ export const downloadVendorInventoryQrPdf = (token, params = {}) =>
     token,
     `/api/vendor/qrs/inventory/download${buildQueryString(params)}`,
     `vendor-inventory-qr-${Date.now()}.pdf`
+  );
+
+export const startVendorInventoryBulkQrExport = (token, payload = {}) =>
+  apiRequest("/api/vendor/qrs/inventory/export", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+
+export const getVendorBulkQrExportJobs = (token, params = {}) =>
+  apiRequest(`/api/vendor/qr-export/jobs${buildQueryString(params)}`, {
+    token,
+  });
+
+export const getVendorBulkQrExportJob = (token, jobId) =>
+  apiRequest(`/api/vendor/qr-export/jobs/${encodeURIComponent(jobId)}`, {
+    token,
+  });
+
+export const cancelVendorBulkExportJob = (token, jobId) => {
+  const encodedId = encodeURIComponent(jobId);
+  return requestWithMethodFallback(
+    `/api/vendor/qr-export/jobs/${encodedId}`,
+    `/api/vendor/qr-export/jobs/${encodedId}/cancel`,
+    { token, method: "DELETE", fallbackMethod: "POST" }
+  );
+};
+
+export const deleteVendorBulkExportJob = (token, jobId) => {
+  const encodedId = encodeURIComponent(jobId);
+  return requestWithMethodFallback(
+    `/api/vendor/qr-export/jobs/${encodedId}/delete`,
+    `/api/vendor/qr-export/jobs/${encodedId}/delete`,
+    { token, method: "DELETE", fallbackMethod: "POST" }
+  );
+};
+
+export const downloadVendorBulkQrExport = (token, jobId) =>
+  downloadAuthedFile(
+    token,
+    `/api/vendor/qr-export/jobs/${encodeURIComponent(jobId)}/download`,
+    `qr-export-${jobId}.zip`
   );
 
 export const getVendorQrs = (token, params) =>
@@ -702,10 +775,10 @@ export const updateAdminBrandDetails = (token, brandId, payload) =>
     body:
       payload && payload.defaultPlanType !== undefined
         ? {
-            ...payload,
-            // Backward-compatible alias for older backend handlers.
-            planType: payload.planType ?? payload.defaultPlanType,
-          }
+          ...payload,
+          // Backward-compatible alias for older backend handlers.
+          planType: payload.planType ?? payload.defaultPlanType,
+        }
         : payload,
   });
 
@@ -827,6 +900,13 @@ export const downloadCampaignQrPdf = async (token, campaignId, params) => {
     window.URL.revokeObjectURL(blobUrl);
   }, 2000);
 };
+
+export const startCampaignBulkQrExport = (token, campaignId, payload = {}) =>
+  apiRequest(`/api/vendor/campaigns/${encodeURIComponent(campaignId)}/export`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
 
 // --- Admin Order APIs ---
 export const getAdminOrders = (token, params) =>

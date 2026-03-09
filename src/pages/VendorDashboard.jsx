@@ -33,6 +33,7 @@ import {
   Edit2,
   Check,
   CheckCircle2,
+  Archive,
   Upload,
   Globe,
   Eye,
@@ -54,6 +55,11 @@ import {
   getVendorQrs,
   getVendorQrInventorySeries,
   downloadVendorInventoryQrPdf,
+  startVendorInventoryBulkQrExport,
+  getVendorBulkQrExportJobs,
+  cancelVendorBulkExportJob,
+  deleteVendorBulkExportJob,
+  downloadVendorBulkQrExport,
   getVendorWallet,
   getVendorTransactions,
   getVendorBrand,
@@ -70,7 +76,6 @@ import {
   uploadImage,
   loginWithEmail,
   createVendorCampaign,
-  updateVendorCampaign,
   deleteVendorCampaign,
   deleteVendorQrBatch,
   orderVendorQrs,
@@ -79,6 +84,7 @@ import {
   payVendorCampaign,
   downloadVendorOrderPdf,
   downloadCampaignQrPdf,
+  startCampaignBulkQrExport,
   assignSheetCashback,
   paySheetCashback,
   createPaymentOrder,
@@ -109,6 +115,7 @@ import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
 import VendorSupport from "../components/vendor/VendorSupport";
+import BulkExportQueue from "../components/vendor/BulkExportQueue";
 import CustomerDetailsModal from "../components/vendor/CustomerDetailsModal";
 import AdvancedFilters from "../components/vendor/AdvancedFilters";
 import ProductEditModal from "../components/ProductEditModal";
@@ -139,6 +146,9 @@ const VENDOR_PLAN_TYPE_KEY = "cashback_vendor_plan_type";
 const VENDOR_TOKEN_KEY = "cashback_vendor_token";
 const CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD = 10000;
 const CAMPAIGN_QR_CHUNK_SIZE = 5000;
+const BULK_EXPORT_JOB_POLL_MS = 10000;
+const BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY =
+  "vendor_bulk_export_downloaded_v1";
 // Redundant formatAmount removed
 
 const formatCompactAmount = (value) => {
@@ -157,6 +167,27 @@ const formatCompactAmount = (value) => {
     .replace(/(\.\d*[1-9])0+$/, "$1");
 
   return `${sign}${compactText}K`;
+};
+
+const readDownloadedBulkExportIds = () => {
+  try {
+    const raw = localStorage.getItem(BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY);
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+};
+
+const persistDownloadedBulkExportIds = (ids) => {
+  try {
+    localStorage.setItem(
+      BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY,
+      JSON.stringify(Array.from(ids).slice(-100)),
+    );
+  } catch {
+    // Ignore localStorage write issues.
+  }
 };
 
 // Redundant formatShortDate removed
@@ -204,6 +235,42 @@ const notificationTypeConfig = {
     badgeClass:
       "bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:text-primary dark:border-primary/30",
     label: "PDF Download",
+  },
+  "bulk-export-started": {
+    icon: Archive,
+    badgeClass:
+      "bg-cyan-500/10 text-cyan-700 border-cyan-500/20 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30",
+    label: "Bulk Export",
+  },
+  "bulk-export-ready": {
+    icon: Download,
+    badgeClass:
+      "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+    label: "Export Ready",
+  },
+  "bulk-export-failed": {
+    icon: Archive,
+    badgeClass:
+      "bg-rose-500/10 text-rose-700 border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30",
+    label: "Export Failed",
+  },
+  "campaign-activation-started": {
+    icon: QrCode,
+    badgeClass:
+      "bg-cyan-500/10 text-cyan-700 border-cyan-500/20 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30",
+    label: "QR Funding",
+  },
+  "campaign-activation-ready": {
+    icon: CheckCircle2,
+    badgeClass:
+      "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+    label: "QR Ready",
+  },
+  "campaign-activation-failed": {
+    icon: Ban,
+    badgeClass:
+      "bg-rose-500/10 text-rose-700 border-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30",
+    label: "QR Funding Failed",
   },
   default: {
     icon: Bell,
@@ -403,11 +470,23 @@ const VendorDashboard = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMarkingNotificationsRead, setIsMarkingNotificationsRead] =
     useState(false);
+  const [bulkExportJobs, setBulkExportJobs] = useState([]);
+  const [bulkExportJobsError, setBulkExportJobsError] = useState("");
+  const [isLoadingBulkExportJobs, setIsLoadingBulkExportJobs] =
+    useState(false);
+  const [startingBulkExportKey, setStartingBulkExportKey] = useState("");
+  const [downloadingBulkExportJobId, setDownloadingBulkExportJobId] =
+    useState("");
+  const [cancellingJobId, setCancellingJobId] = useState(null);
+  const [deletingExportJobId, setDeletingExportJobId] = useState(null);
   const lastNotificationCountRef = useRef(null);
+  const autoDownloadedBulkExportIdsRef = useRef(
+    new Set(readDownloadedBulkExportIds()),
+  );
   const lastAutoFilledCashbackRef = useRef(null);
   const notificationsDropdownRef = useRef(null);
   const notificationsTriggerRef = useRef(null);
-  const { info, error: toastError } = useToast();
+  const { info, success, error: toastError } = useToast();
 
   const [wallet, setWallet] = useState(null);
   const [walletError, setWalletError] = useState("");
@@ -664,6 +743,9 @@ const VendorDashboard = () => {
   const [isPayingCampaign, setIsPayingCampaign] = useState(false);
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
+  const [bulkExportPrompt, setBulkExportPrompt] = useState(null);
+  const [isConfirmingBulkExport, setIsConfirmingBulkExport] =
+    useState(false);
 
   const handleAddCampaignRow = () => {
     setCampaignRows((prev) => [
@@ -678,13 +760,13 @@ const VendorDashboard = () => {
       return remaining.length
         ? remaining
         : [
-            {
-              id: Date.now(),
-              cashbackAmount: "",
-              quantity: "",
-              totalBudget: "",
-            },
-          ];
+          {
+            id: Date.now(),
+            cashbackAmount: "",
+            quantity: "",
+            totalBudget: "",
+          },
+        ];
     });
   };
 
@@ -1109,10 +1191,25 @@ const VendorDashboard = () => {
     return 0;
   };
 
+  const getInventoryQrCountEstimate = (seriesCode = selectedQrSeries) => {
+    if (seriesCode) {
+      const selectedSeries = qrInventorySeries.find(
+        (series) => series.seriesCode === seriesCode,
+      );
+      return Number(selectedSeries?.availableCount) || 0;
+    }
+
+    return qrInventorySeries.reduce(
+      (sum, series) => sum + (Number(series?.availableCount) || 0),
+      0,
+    );
+  };
+
   const downloadCampaignPdfInChunks = async ({
     campaignId,
     totalQrs,
     chunkSize = CAMPAIGN_QR_CHUNK_SIZE,
+    baseParams = {},
   }) => {
     const safeTotalQrs = Math.max(1, Number.parseInt(totalQrs, 10) || 1);
     const safeChunkSize = Math.max(
@@ -1123,27 +1220,28 @@ const VendorDashboard = () => {
 
     setDownloadProgress({
       show: true,
-      progress: 5,
-      message: `Large campaign detected (${safeTotalQrs.toLocaleString()} QRs). Downloading ${totalParts} part${totalParts === 1 ? "" : "s"}...`,
+      progress: 8,
+      message: `Preparing ${totalParts} part${totalParts === 1 ? "" : "s"}...`,
     });
 
     for (let part = 1; part <= totalParts; part += 1) {
       const offset = (part - 1) * safeChunkSize;
-      const baselineProgress = Math.min(
-        96,
+      const limit = Math.min(safeChunkSize, safeTotalQrs - offset);
+      const baseProgress = Math.min(
+        94,
         Math.round(((part - 1) / totalParts) * 90) + 8,
       );
+
       setDownloadProgress({
         show: true,
-        progress: baselineProgress,
+        progress: baseProgress,
         message: `Downloading part ${part} of ${totalParts}...`,
       });
 
       await downloadCampaignQrPdf(token, campaignId, {
-        fast: 1,
-        skipLogo: 1,
+        ...baseParams,
         offset,
-        limit: safeChunkSize,
+        limit,
         part,
         totalParts,
       });
@@ -1165,32 +1263,49 @@ const VendorDashboard = () => {
     });
     setTimeout(() => {
       setDownloadProgress({ show: false, progress: 0, message: "" });
-    }, 450);
+    }, 500);
 
     return totalParts;
   };
 
-  const handleDownloadCampaignPdf = async (campaign) => {
+  const handleDownloadCampaignPdf = async (campaign, options = {}) => {
     const campaignId = campaign?.id;
     if (!token || !campaignId) return;
     setIsDownloadingPdf(campaignId);
-    const downloadParams = { fast: 1, skipLogo: 1 };
     const estimatedQrs = getCampaignQrCountEstimate(campaign);
-    const shouldUseChunkedDownload =
-      estimatedQrs >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD;
+    const parsedSheetIndex = Number.parseInt(options?.sheetIndex, 10);
+    const isSheetDownload = Number.isFinite(parsedSheetIndex) && parsedSheetIndex >= 0;
+    const downloadParams = {
+      fast: 1,
+      skipLogo: 1,
+      ...(isSheetDownload
+        ? {
+          sheetIndex: parsedSheetIndex,
+          qrsPerSheet:
+            Number.parseInt(campaign?.qrsPerSheet, 10) > 0
+              ? Number.parseInt(campaign.qrsPerSheet, 10)
+              : undefined,
+        }
+        : {}),
+    };
 
     try {
-      if (shouldUseChunkedDownload) {
+      if (isSheetDownload) {
+        await runDownloadWithProgress(
+          () => downloadCampaignQrPdf(token, campaignId, downloadParams),
+          `Preparing sheet ${parsedSheetIndex + 1} PDF...`,
+        );
+        setStatusWithTimeout(
+          `Sheet ${parsedSheetIndex + 1} QR PDF downloaded successfully.`,
+        );
+      } else if (estimatedQrs >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD) {
         const totalParts = await downloadCampaignPdfInChunks({
           campaignId,
           totalQrs: estimatedQrs,
+          baseParams: downloadParams,
         });
         setStatusWithTimeout(
           `Downloaded ${totalParts} PDF part${totalParts === 1 ? "" : "s"} for ${estimatedQrs.toLocaleString()} QRs.`,
-        );
-        info(
-          "Chunked Download Complete",
-          `${totalParts} file${totalParts === 1 ? "" : "s"} downloaded for this large campaign.`,
         );
       } else {
         await runDownloadWithProgress(
@@ -1210,29 +1325,29 @@ const VendorDashboard = () => {
         try {
           const hintedTotalQrs = Number(err?.data?.totalQrs);
           const hintedChunkSize = Number(err?.data?.recommendedChunkSize);
+          const fallbackTotalQrs =
+            Number.isFinite(hintedTotalQrs) && hintedTotalQrs > 0
+              ? hintedTotalQrs
+              : estimatedQrs || CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD;
+
           const totalParts = await downloadCampaignPdfInChunks({
             campaignId,
-            totalQrs:
-              Number.isFinite(hintedTotalQrs) && hintedTotalQrs > 0
-                ? hintedTotalQrs
-                : estimatedQrs || CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD,
+            totalQrs: fallbackTotalQrs,
             chunkSize:
               Number.isFinite(hintedChunkSize) && hintedChunkSize > 0
                 ? hintedChunkSize
                 : CAMPAIGN_QR_CHUNK_SIZE,
+            baseParams: downloadParams,
           });
+
           setStatusWithTimeout(
-            `Downloaded ${totalParts} PDF part${totalParts === 1 ? "" : "s"} in chunk mode.`,
-          );
-          info(
-            "Chunked Download Complete",
-            `${totalParts} file${totalParts === 1 ? "" : "s"} downloaded for this large campaign.`,
+            `Downloaded ${totalParts} PDF part${totalParts === 1 ? "" : "s"} successfully.`,
           );
           return;
         } catch (chunkErr) {
           if (handleVendorAccessError(chunkErr)) return;
           const chunkErrorMsg =
-            chunkErr.message || "Failed to download campaign PDF in chunks.";
+            chunkErr.message || "Failed to download campaign PDF in parts.";
           setStatusWithTimeout(chunkErrorMsg);
           toastError("Download Failed", chunkErrorMsg);
           return;
@@ -1252,8 +1367,16 @@ const VendorDashboard = () => {
     if (!token) return;
     const downloadKey = `inventory:${selectedQrSeries || "all"}`;
     setIsDownloadingPdf(downloadKey);
+    const selectedSeriesCount = getInventoryQrCountEstimate(
+      selectedQrSeries,
+    );
 
     try {
+      if (selectedSeriesCount >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD) {
+        await handleStartInventoryBulkExport();
+        return;
+      }
+
       await runDownloadWithProgress(
         () =>
           downloadVendorInventoryQrPdf(token, {
@@ -1275,8 +1398,300 @@ const VendorDashboard = () => {
     }
   };
 
+  const rememberBulkExportDownloaded = (jobId) => {
+    if (!jobId) return;
+    autoDownloadedBulkExportIdsRef.current.add(jobId);
+    persistDownloadedBulkExportIds(autoDownloadedBulkExportIdsRef.current);
+  };
+
+  const forgetBulkExportDownloaded = (jobId) => {
+    if (!jobId) return;
+    autoDownloadedBulkExportIdsRef.current.delete(jobId);
+    persistDownloadedBulkExportIds(autoDownloadedBulkExportIdsRef.current);
+  };
+
+  const handleDownloadBulkExportJob = async (
+    job,
+    { authToken = token, silent = false } = {},
+  ) => {
+    if (!authToken || !job?.id) return;
+
+    setDownloadingBulkExportJobId(job.id);
+    try {
+      await downloadVendorBulkQrExport(authToken, job.id);
+      rememberBulkExportDownloaded(job.id);
+
+      if (!silent) {
+        const label = job.scopeLabel || "QR export";
+        setStatusWithTimeout(`${label} downloaded successfully.`);
+        info("Bulk Export Downloaded", `${label} is now available offline.`);
+      }
+
+      await loadBulkExportJobs(authToken, {
+        silent: true,
+        allowAutoDownload: false,
+      });
+    } catch (err) {
+      forgetBulkExportDownloaded(job.id);
+      if (handleVendorAccessError(err)) return;
+      if (!silent) {
+        const errorMsg = err.message || "Failed to download bulk export.";
+        setStatusWithTimeout(errorMsg);
+        toastError("Download Failed", errorMsg);
+      }
+      throw err;
+    } finally {
+      setDownloadingBulkExportJobId("");
+    }
+  };
+
+  const loadBulkExportJobs = async (
+    authToken = token,
+    { silent = false, allowAutoDownload = true } = {},
+  ) => {
+    if (!authToken) return [];
+
+    if (!silent) {
+      setIsLoadingBulkExportJobs(true);
+      setBulkExportJobsError("");
+    }
+
+    try {
+      const data = await getVendorBulkQrExportJobs(authToken, { limit: 20 });
+      const items = Array.isArray(data?.jobs)
+        ? data.jobs
+        : Array.isArray(data)
+          ? data
+          : [];
+      setBulkExportJobs(items);
+
+      // A successful fetch clears any lingering error (even from silent polls).
+      setBulkExportJobsError("");
+
+      if (allowAutoDownload) {
+        const readyJob = items.find(
+          (job) =>
+            job?.isReady &&
+            job?.id &&
+            !autoDownloadedBulkExportIdsRef.current.has(job.id),
+        );
+
+        if (readyJob) {
+          try {
+            await handleDownloadBulkExportJob(readyJob, {
+              authToken,
+              silent: true,
+            });
+            info(
+              "Bulk Export Ready",
+              `${readyJob.scopeLabel || "QR export"} downloaded automatically.`,
+            );
+          } catch {
+            // Keep the job visible in the queue for manual retry.
+          }
+        }
+      }
+
+      return items;
+    } catch (err) {
+      if (handleVendorAccessError(err)) return [];
+      if (!silent) {
+        setBulkExportJobsError(err.message || "Unable to load export jobs.");
+        toastError(
+          "Export Queue Failed",
+          err.message || "Unable to load export jobs.",
+        );
+      }
+      return [];
+    } finally {
+      if (!silent) {
+        setIsLoadingBulkExportJobs(false);
+      }
+    }
+  };
+
+  const startCampaignBulkExportJob = async (campaign) => {
+    if (!token || !campaign?.id) return;
+
+    const exportKey = `campaign:${campaign.id}`;
+    setStartingBulkExportKey(exportKey);
+    try {
+      const payload =
+        campaign.planType === "postpaid" && Number(campaign.qrsPerSheet) > 0
+          ? { qrsPerSheet: Number(campaign.qrsPerSheet) }
+          : {};
+      const response = await startCampaignBulkQrExport(
+        token,
+        campaign.id,
+        payload,
+      );
+      const job = response?.job || response;
+      if (job?.id) {
+        setBulkExportJobs((prev) => [
+          job,
+          ...prev.filter((item) => item.id !== job.id),
+        ]);
+      }
+      setStatusWithTimeout("Background campaign export started.");
+      info(
+        "Background Export Started",
+        `${campaign.title} is being prepared in the background.`,
+      );
+      await loadBulkExportJobs(token, {
+        silent: true,
+        allowAutoDownload: false,
+      });
+    } catch (err) {
+      if (handleVendorAccessError(err)) throw err;
+      const errorMsg = err.message || "Failed to start campaign export.";
+      setStatusWithTimeout(errorMsg);
+      toastError("Export Failed", errorMsg);
+      throw err;
+    } finally {
+      setStartingBulkExportKey("");
+    }
+  };
+
+  const startInventoryBulkExportJob = async (seriesCode = selectedQrSeries) => {
+    if (!token) return;
+
+    const exportKey = `inventory:${seriesCode || "all"}`;
+    setStartingBulkExportKey(exportKey);
+    try {
+      const response = await startVendorInventoryBulkQrExport(token, {
+        seriesCode: seriesCode || undefined,
+      });
+      const job = response?.job || response;
+      if (job?.id) {
+        setBulkExportJobs((prev) => [
+          job,
+          ...prev.filter((item) => item.id !== job.id),
+        ]);
+      }
+      setStatusWithTimeout("Background inventory export started.");
+      info(
+        "Background Export Started",
+        seriesCode
+          ? `${seriesCode} inventory export is running in the background.`
+          : "Inventory export is running in the background.",
+      );
+      await loadBulkExportJobs(token, {
+        silent: true,
+        allowAutoDownload: false,
+      });
+    } catch (err) {
+      if (handleVendorAccessError(err)) throw err;
+      const errorMsg = err.message || "Failed to start inventory export.";
+      setStatusWithTimeout(errorMsg);
+      toastError("Export Failed", errorMsg);
+      throw err;
+    } finally {
+      setStartingBulkExportKey("");
+    }
+  };
+
+  const handleStartCampaignBulkExport = (campaign) => {
+    if (!campaign?.id) return;
+
+    const estimatedQrs = getCampaignQrCountEstimate(campaign);
+    setBulkExportPrompt({
+      kind: "campaign",
+      campaign,
+      title: "Start background QR export?",
+      message: `${estimatedQrs > 0
+        ? `${estimatedQrs.toLocaleString()} QR codes`
+        : "This campaign"
+        } will be queued and generated in the background. You can continue using the dashboard, and we will notify you when the file is ready to download.`,
+      confirmText: "Start Export",
+    });
+  };
+
+  const handleStartInventoryBulkExport = (
+    seriesCode = selectedQrSeries || null,
+  ) => {
+    const estimatedQrs = getInventoryQrCountEstimate(seriesCode);
+    const scopeLabel = seriesCode ? `series ${seriesCode}` : "all inventory";
+
+    setBulkExportPrompt({
+      kind: "inventory",
+      seriesCode,
+      title: "Start background inventory export?",
+      message: `${estimatedQrs > 0
+        ? `${estimatedQrs.toLocaleString()} inventory QR codes`
+        : "The selected inventory"
+        } from ${scopeLabel} will be packaged in the background. You can keep working while the export runs, and download will trigger when it is ready.`,
+      confirmText: "Start Export",
+    });
+  };
+
+  const handleCloseBulkExportPrompt = () => {
+    if (isConfirmingBulkExport) return;
+    setBulkExportPrompt(null);
+  };
+
+  const handleConfirmBulkExportPrompt = async () => {
+    if (!bulkExportPrompt) return;
+
+    setIsConfirmingBulkExport(true);
+    try {
+      if (bulkExportPrompt.kind === "campaign") {
+        await startCampaignBulkExportJob(bulkExportPrompt.campaign);
+      } else if (bulkExportPrompt.kind === "inventory") {
+        await startInventoryBulkExportJob(bulkExportPrompt.seriesCode);
+      }
+      setBulkExportPrompt(null);
+    } finally {
+      setIsConfirmingBulkExport(false);
+    }
+  };
+
+  const handleCancelExportJob = async (job) => {
+    if (!token || !job?.id) return;
+    if (!window.confirm("Are you sure you want to cancel this background export?")) return;
+
+    setCancellingJobId(job.id);
+    try {
+      await cancelVendorBulkExportJob(token, job.id);
+      success("Export Cancelled", "The background export was cancelled.");
+      await loadBulkExportJobs(token, { silent: true });
+    } catch (err) {
+      console.error("Cancel API Error:", err);
+      if (!handleVendorAccessError(err)) {
+        toastError(
+          "Failed to Cancel",
+          err.message || "Could not cancel the export."
+        );
+      }
+    } finally {
+      setCancellingJobId(null);
+    }
+  };
+
+  const handleDeleteExportJob = async (job) => {
+    if (!token || !job?.id) return;
+
+    setDeletingExportJobId(job.id);
+    try {
+      await deleteVendorBulkExportJob(token, job.id);
+    } catch (err) {
+      // 404 means job already gone — treat as success and remove from UI
+      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
+        console.error("Delete API Error:", err);
+        if (!handleVendorAccessError(err)) {
+          toastError("Failed to Delete", err.message || "Could not delete the export record.");
+          setDeletingExportJobId(null);
+          return;
+        }
+      }
+    }
+    // Remove from local list immediately, then refresh
+    setBulkExportJobs((prev) => prev.filter((j) => j.id !== job.id));
+    setDeletingExportJobId(null);
+  };
+
   const clearSession = (message) => {
     localStorage.removeItem(VENDOR_TOKEN_KEY);
+    localStorage.removeItem(BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY);
     setToken(null);
     setVendorInfo(null);
     setAuthStatus(message || "");
@@ -1284,6 +1699,14 @@ const VendorDashboard = () => {
     setNotificationsError("");
     setIsLoadingNotifications(false);
     setIsNotificationsOpen(false);
+    setBulkExportJobs([]);
+    setBulkExportJobsError("");
+    setIsLoadingBulkExportJobs(false);
+    setStartingBulkExportKey("");
+    setDownloadingBulkExportJobId("");
+    setBulkExportPrompt(null);
+    setIsConfirmingBulkExport(false);
+    autoDownloadedBulkExportIdsRef.current = new Set();
     lastNotificationCountRef.current = null;
     setLastBatchSummary(null);
     setDeletingBatchKey(null);
@@ -1468,6 +1891,24 @@ const VendorDashboard = () => {
 
   const handleNotificationClick = async (notification) => {
     await handleNotificationRead(notification);
+
+    if (
+      notification?.type === "bulk-export-ready" &&
+      notification?.metadata?.jobId
+    ) {
+      const matchingJob = bulkExportJobs.find(
+        (job) => job.id === notification.metadata.jobId,
+      ) || {
+        id: notification.metadata.jobId,
+        scopeLabel: notification.title || "QR export",
+      };
+      try {
+        await handleDownloadBulkExportJob(matchingJob);
+      } catch {
+        // Keep default navigation behavior if download fails.
+      }
+    }
+
     const metadataTab = notification?.metadata?.tab;
     let target = metadataTab ? `/vendor/${metadataTab}` : "/vendor/overview";
     switch (notification?.type) {
@@ -1481,6 +1922,12 @@ const VendorDashboard = () => {
         break;
       case "campaign-created":
       case "pdf-downloaded":
+      case "bulk-export-started":
+      case "bulk-export-ready":
+      case "bulk-export-failed":
+      case "campaign-activation-started":
+      case "campaign-activation-ready":
+      case "campaign-activation-failed":
         target = "/vendor/campaigns";
         break;
       default:
@@ -1555,7 +2002,7 @@ const VendorDashboard = () => {
 
     const expectedTotalRaw = Number(
       campaignStatsMap[campaignId]?.totalQRsOrdered ??
-        campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
+      campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
     );
     const expectedTotal = Number.isFinite(expectedTotalRaw)
       ? Math.max(0, expectedTotalRaw)
@@ -2136,6 +2583,32 @@ const VendorDashboard = () => {
     }
   };
 
+  const refreshCampaignPaymentState = (
+    authToken = token,
+    { includeQrs = true, includeOrders = false } = {},
+  ) => {
+    if (!authToken) return;
+
+    const tasks = [
+      loadWallet(authToken),
+      loadTransactions(authToken),
+      loadCampaigns(authToken),
+      loadCampaignStats(authToken),
+      loadQrInventorySeries(authToken),
+      loadNotifications(authToken),
+    ];
+
+    if (includeQrs) {
+      tasks.push(loadQrs(authToken, { page: 1, append: false }));
+    }
+
+    if (includeOrders) {
+      tasks.push(loadOrders(authToken, { page: 1, append: false }));
+    }
+
+    void Promise.allSettled(tasks);
+  };
+
   const loadProducts = async (authToken = token) => {
     if (!authToken) return;
     setIsLoadingProducts(true);
@@ -2365,6 +2838,15 @@ const VendorDashboard = () => {
     const interval = setInterval(() => {
       loadNotifications(token);
     }, 30000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    loadBulkExportJobs(token);
+    const interval = setInterval(() => {
+      loadBulkExportJobs(token, { silent: true });
+    }, BULK_EXPORT_JOB_POLL_MS);
     return () => clearInterval(interval);
   }, [token]);
 
@@ -2716,16 +3198,16 @@ const VendorDashboard = () => {
     const initialRows =
       campaign.allocations && campaign.allocations.length > 0
         ? campaign.allocations.map((a) => ({
-            ...a,
-            id: Date.now() + Math.random(),
-          }))
+          ...a,
+          id: Date.now() + Math.random(),
+        }))
         : [
-            {
-              id: Date.now(),
-              cashbackAmount: str(campaign.cashbackAmount),
-              quantity: "",
-            },
-          ];
+          {
+            id: Date.now(),
+            cashbackAmount: str(campaign.cashbackAmount),
+            quantity: "",
+          },
+        ];
 
     setPaymentForm({
       campaign,
@@ -2762,8 +3244,17 @@ const VendorDashboard = () => {
     setCampaignError("");
 
     try {
+      const resolvedVoucherType =
+        voucherType || campaign.voucherType || "none";
+      const paymentRows = validRows.map((r) => ({
+        cashbackAmount: parseNumericValue(r.cashbackAmount),
+        quantity: parseNumericValue(r.quantity),
+        totalBudget:
+          parseNumericValue(r.cashbackAmount) * parseNumericValue(r.quantity),
+      }));
+
       // Calculate total cost client-side
-      const voucherCost = VOUCHER_COST_MAP[voucherType] || 0;
+      const voucherCost = VOUCHER_COST_MAP[resolvedVoucherType] || 0;
 
       // Get base rates
       const qrBaseRate = parseNumericValue(brandProfile?.qrPricePerUnit, 1);
@@ -2784,7 +3275,7 @@ const VendorDashboard = () => {
       const currentBalance = parseNumericValue(
         wallet?.availableBalance,
         parseNumericValue(wallet?.balance, 0) -
-          parseNumericValue(wallet?.lockedBalance, 0),
+        parseNumericValue(wallet?.lockedBalance, 0),
       );
 
       if (currentBalance < totalCost) {
@@ -2795,32 +3286,18 @@ const VendorDashboard = () => {
         return;
       }
 
-      // 1. Update Campaign with new Allocations & Voucher Type
-      await updateVendorCampaign(token, campaign.id, {
-        voucherType,
-        allocations: validRows.map((r) => ({
-          cashbackAmount: parseNumericValue(r.cashbackAmount),
-          quantity: parseNumericValue(r.quantity),
-          totalBudget:
-            parseNumericValue(r.cashbackAmount) * parseNumericValue(r.quantity),
-        })),
+      await payVendorCampaign(token, campaign.id, {
+        voucherType: resolvedVoucherType,
+        allocations: paymentRows,
       });
-
-      // 2. Pay
-      await payVendorCampaign(token, campaign.id);
 
       setCampaignStatusWithTimeout("Campaign paid and activated!");
       setSelectedPendingCampaign(null);
       setShowPaymentModal(false);
       setCampaignTab("active");
-
-      await Promise.all([
-        loadWallet(),
-        loadTransactions(),
-        loadCampaigns(),
-        loadCampaignStats(),
-        loadQrs(token, { page: 1, append: false }),
-      ]);
+      refreshCampaignPaymentState(token, {
+        includeQrs: true,
+      });
 
       openSuccessModal(
         "Campaign Activated",
@@ -2921,15 +3398,10 @@ const VendorDashboard = () => {
           "Campaign is active and QRs are funded from selected series.",
         );
         setCampaignTab("active");
-        await Promise.all([
-          loadWallet(),
-          loadTransactions(),
-          loadCampaigns(),
-          loadQrs(),
-          loadQrInventorySeries(),
-          loadOrders(),
-          loadCampaignStats(),
-        ]);
+        refreshCampaignPaymentState(token, {
+          includeQrs: true,
+          includeOrders: true,
+        });
       } catch (err) {
         if (handleVendorAccessError(err)) return;
         setQrOrderError(err.message || "Unable to activate campaign.");
@@ -2966,11 +3438,11 @@ const VendorDashboard = () => {
       validRows.length > 0
         ? validRows
         : [
-            {
-              cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
-              quantity: 1,
-            },
-          ];
+          {
+            cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
+            quantity: 1,
+          },
+        ];
 
     if (rowsToUse.length === 0 || rowsToUse[0].cashbackAmount <= 0) {
       setQrOrderError(
@@ -3070,7 +3542,7 @@ const VendorDashboard = () => {
       } else {
         setQrOrderStatus(
           `Generated ${successes} QRs successfully.` +
-            (failures > 0 ? ` (${failures} batches failed)` : ""),
+          (failures > 0 ? ` (${failures} batches failed)` : ""),
         );
         if (successes > 0) {
           openSuccessModal(
@@ -3629,8 +4101,8 @@ const VendorDashboard = () => {
         sku: productForm.sku?.trim() || null,
         mrp:
           productForm.mrp === undefined ||
-          productForm.mrp === null ||
-          productForm.mrp === ""
+            productForm.mrp === null ||
+            productForm.mrp === ""
             ? null
             : Number(productForm.mrp),
         variant: productForm.variant.trim() || null,
@@ -3798,6 +4270,30 @@ const VendorDashboard = () => {
       ),
     [campaigns],
   );
+  const campaignBulkExportJobsMap = useMemo(() => {
+    const map = new Map();
+    bulkExportJobs.forEach((job) => {
+      if (
+        job?.type === "campaign_qr_pdf" &&
+        job?.campaignId &&
+        !map.has(job.campaignId)
+      ) {
+        map.set(job.campaignId, job);
+      }
+    });
+    return map;
+  }, [bulkExportJobs]);
+  const selectedInventoryBulkExportJob = useMemo(() => {
+    const selectedSeriesKey = selectedQrSeries || null;
+    return (
+      bulkExportJobs.find((job) => {
+        const jobSeries = job?.requestParams?.seriesCode || null;
+        return (
+          job?.type === "inventory_qr_pdf" && jobSeries === selectedSeriesKey
+        );
+      }) || null
+    );
+  }, [bulkExportJobs, selectedQrSeries]);
   const showQrGenerator = false;
   const showQrOrdersSection = false;
   const showOrderTracking = true;
@@ -4329,28 +4825,28 @@ const VendorDashboard = () => {
     const breakdownRows =
       breakdownType === "allocation"
         ? allocationGroups
-            .map((group) => {
-              const key = group.price.toFixed(2);
-              const qrGroup = priceGroupByKey.get(key);
-              const redeemed = Math.max(
-                0,
-                Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
-              );
-              return {
-                cashback: group.price,
-                quantity: group.quantity,
-                // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
-                active: Math.max(0, group.quantity - redeemed),
-                redeemed,
-              };
-            })
-            .sort((a, b) => b.cashback - a.cashback)
+          .map((group) => {
+            const key = group.price.toFixed(2);
+            const qrGroup = priceGroupByKey.get(key);
+            const redeemed = Math.max(
+              0,
+              Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
+            );
+            return {
+              cashback: group.price,
+              quantity: group.quantity,
+              // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
+              active: Math.max(0, group.quantity - redeemed),
+              redeemed,
+            };
+          })
+          .sort((a, b) => b.cashback - a.cashback)
         : priceGroups.map((group) => ({
-            cashback: group.price,
-            quantity: Number(group.quantity) || group.qrs?.length || 0,
-            active: group.activeCount,
-            redeemed: group.redeemedCount,
-          }));
+          cashback: group.price,
+          quantity: Number(group.quantity) || group.qrs?.length || 0,
+          active: group.activeCount,
+          redeemed: group.redeemedCount,
+        }));
 
     return {
       campaign,
@@ -4382,7 +4878,7 @@ const VendorDashboard = () => {
   const pendingWalletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-      parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.lockedBalance, 0),
   );
   const pendingCampaignShortfall = Math.max(
     pendingCampaignPayment.totalCost - pendingWalletBalance,
@@ -4406,7 +4902,7 @@ const VendorDashboard = () => {
   const walletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-      parseNumericValue(wallet?.lockedBalance, 0),
+    parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
   const isPostpaid = brandProfile?.defaultPlanType === "postpaid";
@@ -4778,11 +5274,10 @@ const VendorDashboard = () => {
                           />
                           <label
                             htmlFor="logo-upload"
-                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
-                              registrationForm.logoPreview
-                                ? "border-primary bg-white"
-                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                            }`}
+                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${registrationForm.logoPreview
+                              ? "border-primary bg-white"
+                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                              }`}
                           >
                             {registrationForm.logoPreview ? (
                               <img
@@ -5189,11 +5684,10 @@ const VendorDashboard = () => {
                             onClick={() =>
                               setIsNotificationsOpen((prev) => !prev)
                             }
-                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
-                              isNotificationsOpen
-                                ? "ring-2 ring-primary/30 border-primary/40"
-                                : ""
-                            }`}
+                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${isNotificationsOpen
+                              ? "ring-2 ring-primary/30 border-primary/40"
+                              : ""
+                              }`}
                             aria-label="Notifications"
                           >
                             <Bell size={18} />
@@ -5287,9 +5781,9 @@ const VendorDashboard = () => {
                                   {isOverviewAll
                                     ? qrStats.active
                                     : overviewSelectedQrTotal -
-                                      (isOverviewUnassigned
-                                        ? 0
-                                        : overviewSelectedQrRedeemed)}
+                                    (isOverviewUnassigned
+                                      ? 0
+                                      : overviewSelectedQrRedeemed)}
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   Active QRs
@@ -5305,10 +5799,10 @@ const VendorDashboard = () => {
                                 {isOverviewAll
                                   ? qrStats.active
                                   : Math.max(
-                                      0,
-                                      overviewSelectedQrTotal -
-                                        overviewSelectedQrRedeemed,
-                                    )}
+                                    0,
+                                    overviewSelectedQrTotal -
+                                    overviewSelectedQrRedeemed,
+                                  )}
                               </span>
                               <span className="text-gray-400">|</span>
                               <span>
@@ -5389,7 +5883,7 @@ const VendorDashboard = () => {
                               )}
 
                             {isLoadingOverviewLocations &&
-                            overviewLocationPoints.length === 0 ? (
+                              overviewLocationPoints.length === 0 ? (
                               <div className="h-[320px] rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex items-center justify-center text-sm text-gray-500">
                                 Loading map preview...
                               </div>
@@ -5827,7 +6321,7 @@ const VendorDashboard = () => {
                                       className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                       {brandLogoPreviewSrc &&
-                                      !imageLoadError ? (
+                                        !imageLoadError ? (
                                         <img
                                           src={brandLogoPreviewSrc}
                                           alt="Brand logo"
@@ -6377,11 +6871,10 @@ const VendorDashboard = () => {
                                     </div>
                                   )}
                                   <div
-                                    className={`${
-                                      campaignForm.planType === "postpaid"
-                                        ? "col-span-12"
-                                        : "col-span-4"
-                                    } space-y-1`}
+                                    className={`${campaignForm.planType === "postpaid"
+                                      ? "col-span-12"
+                                      : "col-span-4"
+                                      } space-y-1`}
                                   >
                                     <label className="text-[10px] uppercase tracking-wide text-gray-400">
                                       Number of QRs Required
@@ -6434,16 +6927,7 @@ const VendorDashboard = () => {
                                   )}
                                 </div>
                               ))}
-                              {campaignForm.planType !== "postpaid" && (
-                                <button
-                                  type="button"
-                                  onClick={handleAddCampaignRow}
-                                  className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-primary text-xs font-semibold hover:bg-primary/20 hover:border-primary/60 transition-colors"
-                                >
-                                  <Plus size={16} />
-                                  Add another allocation
-                                </button>
-                              )}
+
                             </div>
 
                             <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
@@ -6735,11 +7219,38 @@ const VendorDashboard = () => {
                                     className={SECONDARY_BUTTON}
                                   >
                                     {isDownloadingPdf ===
-                                    `inventory:${selectedQrSeries || "all"}`
+                                      `inventory:${selectedQrSeries || "all"}`
                                       ? "Downloading..."
                                       : selectedQrSeries
                                         ? `Download Prebuilt (${selectedQrSeries})`
                                         : "Download Prebuilt QRs"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      selectedInventoryBulkExportJob?.isReady
+                                        ? handleDownloadBulkExportJob(
+                                          selectedInventoryBulkExportJob,
+                                        )
+                                        : handleStartInventoryBulkExport()
+                                    }
+                                    disabled={
+                                      startingBulkExportKey ===
+                                      `inventory:${selectedQrSeries || "all"}` ||
+                                      downloadingBulkExportJobId ===
+                                      selectedInventoryBulkExportJob?.id
+                                    }
+                                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/15 disabled:opacity-60 transition-colors"
+                                  >
+                                    {startingBulkExportKey ===
+                                      `inventory:${selectedQrSeries || "all"}`
+                                      ? "Starting..."
+                                      : downloadingBulkExportJobId ===
+                                        selectedInventoryBulkExportJob?.id
+                                        ? "Downloading..."
+                                        : selectedInventoryBulkExportJob?.isReady
+                                          ? "Download Ready Export"
+                                          : "Start Background Export"}
                                   </button>
                                   <button
                                     type="button"
@@ -6762,6 +7273,25 @@ const VendorDashboard = () => {
                                         : "Generate QRs"}
                                   </button>
                                 </div>
+                                {selectedInventoryBulkExportJob && (
+                                  <div className="rounded-xl border border-gray-200/80 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2 text-[11px] text-gray-600 dark:text-gray-300">
+                                    <span className="font-semibold text-gray-900 dark:text-white">
+                                      Inventory export:
+                                    </span>{" "}
+                                    {selectedInventoryBulkExportJob.status ===
+                                      "completed"
+                                      ? "Ready to download"
+                                      : selectedInventoryBulkExportJob.status ===
+                                        "failed"
+                                        ? "Failed"
+                                        : `${selectedInventoryBulkExportJob.progressPercent || 0}% complete`}
+                                    {" | "}
+                                    {selectedInventoryBulkExportJob.totalQrs?.toLocaleString?.() ||
+                                      selectedInventoryBulkExportJob.totalQrs ||
+                                      0}{" "}
+                                    QRs
+                                  </div>
+                                )}
                                 {qrOrderStatus && (
                                   <div className="text-xs text-primary font-semibold">
                                     {qrOrderStatus}
@@ -6852,6 +7382,19 @@ Quantity: ${invoiceData.quantity} QRs
                               </div>
                             )}
 
+                            <BulkExportQueue
+                              jobs={bulkExportJobs}
+                              isLoading={isLoadingBulkExportJobs}
+                              error={bulkExportJobsError}
+                              onRefresh={() => loadBulkExportJobs(token)}
+                              onDownload={handleDownloadBulkExportJob}
+                              downloadingJobId={downloadingBulkExportJobId}
+                              onCancel={handleCancelExportJob}
+                              cancellingJobId={cancellingJobId}
+                              onDelete={handleDeleteExportJob}
+                              deletingJobId={deletingExportJobId}
+                            />
+
                             <div className="space-y-2">
                               {activeCampaigns.length === 0 ? (
                                 <div className="text-xs text-center text-gray-500 py-4 space-y-2">
@@ -6898,13 +7441,28 @@ Quantity: ${invoiceData.quantity} QRs
                                               campaignStats={
                                                 campaignStatsMap[campaign.id] ||
                                                 campaignStatsMap[
-                                                  `title:${campaign.title}`
+                                                `title:${campaign.title}`
                                                 ] ||
                                                 {}
                                               }
                                               token={token}
                                               onDownloadQr={
                                                 handleDownloadCampaignPdf
+                                              }
+                                              onStartBulkExport={
+                                                handleStartCampaignBulkExport
+                                              }
+                                              campaignExportJob={campaignBulkExportJobsMap.get(
+                                                campaign.id,
+                                              )}
+                                              isStartingBulkExportId={
+                                                startingBulkExportKey ===
+                                                  `campaign:${campaign.id}`
+                                                  ? campaign.id
+                                                  : ""
+                                              }
+                                              onDownloadReadyExport={
+                                                handleDownloadBulkExportJob
                                               }
                                               onViewDetails={
                                                 setSelectedActiveCampaign
@@ -7161,10 +7719,10 @@ Quantity: ${invoiceData.quantity} QRs
                                             Cashback Subtotal
                                             {selectedPendingCampaign?.planType ===
                                               "postpaid" && (
-                                              <div className="text-[10px] text-gray-400 font-normal">
-                                                Set later via sheet
-                                              </div>
-                                            )}
+                                                <div className="text-[10px] text-gray-400 font-normal">
+                                                  Set later via sheet
+                                                </div>
+                                              )}
                                           </td>
                                           <td className="px-4 py-3 text-center">
                                             {pendingCampaignPayment.totalQty}{" "}
@@ -7312,12 +7870,11 @@ Quantity: ${invoiceData.quantity} QRs
                                       isPayingCampaign ||
                                       !canPaySelectedPendingCampaign
                                     }
-                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
-                                      !canPaySelectedPendingCampaign &&
+                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${!canPaySelectedPendingCampaign &&
                                       !isPayingCampaign
-                                        ? "opacity-60 cursor-not-allowed"
-                                        : ""
-                                    }`}
+                                      ? "opacity-60 cursor-not-allowed"
+                                      : ""
+                                      }`}
                                   >
                                     {isPayingCampaign ? (
                                       <>Processing...</>
@@ -7438,16 +7995,16 @@ Quantity: ${invoiceData.quantity} QRs
                                         className="text-primary"
                                       />
                                       {activeCampaignDetails.breakdownType ===
-                                      "allocation"
+                                        "allocation"
                                         ? "Allocation Breakdown"
                                         : "QR Breakdown"}
                                     </span>
                                     {loadingCampaignBreakdownId ===
                                       activeCampaign?.id && (
-                                      <span className="text-[11px] font-medium text-gray-400">
-                                        Loading full data...
-                                      </span>
-                                    )}
+                                        <span className="text-[11px] font-medium text-gray-400">
+                                          Loading full data...
+                                        </span>
+                                      )}
                                   </h4>
                                   <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
                                     <table className="w-full text-left text-sm">
@@ -7876,11 +8433,10 @@ Quantity: ${invoiceData.quantity} QRs
                                   return (
                                     <tr
                                       key={product.id}
-                                      className={`${
-                                        idx % 2 === 0
-                                          ? "bg-gray-50 dark:bg-[#1a1a1a]"
-                                          : "bg-white dark:bg-[#0f0f0f]"
-                                      } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
+                                      className={`${idx % 2 === 0
+                                        ? "bg-gray-50 dark:bg-[#1a1a1a]"
+                                        : "bg-white dark:bg-[#0f0f0f]"
+                                        } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
                                     >
                                       <td className="px-4 py-4">
                                         {imageSrc && !hasImageError ? (
@@ -7937,11 +8493,10 @@ Quantity: ${invoiceData.quantity} QRs
                                       </td>
                                       <td className="px-4 py-4">
                                         <span
-                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                                            product.status === "active"
-                                              ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
-                                              : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                          }`}
+                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${product.status === "active"
+                                            ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
+                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                            }`}
                                         >
                                           {product.status || "active"}
                                         </span>
@@ -8553,7 +9108,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                 <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                                                   {(cluster.city || "") +
                                                     (cluster.city &&
-                                                    cluster.state
+                                                      cluster.state
                                                       ? ", "
                                                       : "") +
                                                     (cluster.state || "")}
@@ -8749,7 +9304,7 @@ Quantity: ${invoiceData.quantity} QRs
                                             } catch (error) {
                                               setInvoiceShareStatus(
                                                 error.message ||
-                                                  "Unable to generate share link.",
+                                                "Unable to generate share link.",
                                               );
                                             }
                                           }}
@@ -8901,11 +9456,10 @@ Quantity: ${invoiceData.quantity} QRs
                               key={item.id}
                               type="button"
                               onClick={() => handleNotificationClick(item)}
-                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
-                                item.isRead
-                                  ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                                  : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-                              }`}
+                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${item.isRead
+                                ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                                : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+                                }`}
                             >
                               <div className="flex items-start gap-3">
                                 <div
@@ -8930,11 +9484,10 @@ Quantity: ${invoiceData.quantity} QRs
                                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                                     )}
                                     <span
-                                      className={`text-[10px] font-semibold ${
-                                        item.isRead
-                                          ? "text-gray-400 dark:text-gray-500"
-                                          : "text-primary"
-                                      }`}
+                                      className={`text-[10px] font-semibold ${item.isRead
+                                        ? "text-gray-400 dark:text-gray-500"
+                                        : "text-primary"
+                                        }`}
                                     >
                                       {item.isRead ? "Read" : "New"}
                                     </span>
@@ -8949,6 +9502,21 @@ Quantity: ${invoiceData.quantity} QRs
                   </div>
                 </div>
               )}
+
+              <ConfirmModal
+                isOpen={!!bulkExportPrompt}
+                onClose={handleCloseBulkExportPrompt}
+                onConfirm={handleConfirmBulkExportPrompt}
+                title={bulkExportPrompt?.title || "Start background export?"}
+                message={
+                  bulkExportPrompt?.message ||
+                  "This export will continue in the background while you keep using the dashboard."
+                }
+                confirmText={bulkExportPrompt?.confirmText || "Start Export"}
+                cancelText="Not now"
+                type="info"
+                loading={isConfirmingBulkExport}
+              />
 
               {/* QR Preview Modal Start */}
               <ConfirmModal
@@ -8983,13 +9551,13 @@ Quantity: ${invoiceData.quantity} QRs
                     const finalPaidAmount = Number.isFinite(paidAmount)
                       ? paidAmount
                       : sheetPaymentData.totalCost ||
-                        sheetPaymentData.amount * sheetPaymentData.count;
+                      sheetPaymentData.amount * sheetPaymentData.count;
                     openSuccessModal(
                       "Payment Successful",
                       finalPaidAmount > 0
                         ? `Successfully paid Rs. ${finalPaidAmount.toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`
                         : paymentResult?.message ||
-                            `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
+                        `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
                     );
                     setSheetPaymentData(null);
                     await Promise.all([
@@ -9003,9 +9571,8 @@ Quantity: ${invoiceData.quantity} QRs
                 title="Confirm Sheet Payment"
                 message={
                   sheetPaymentData
-                    ? `You are about to pay for Sheet ${
-                        sheetPaymentData.sheetLabel
-                      } (${sheetPaymentData.count} QRs).
+                    ? `You are about to pay for Sheet ${sheetPaymentData.sheetLabel
+                    } (${sheetPaymentData.count} QRs).
 
 Breakdown:
 Cashback Deposit (No GST): Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
@@ -9111,7 +9678,7 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                     INR{" "}
                                     {formatAmount(
                                       parseNumericValue(row.cashbackAmount) *
-                                        parseNumericValue(row.quantity),
+                                      parseNumericValue(row.quantity),
                                     )}
                                   </td>
                                 </tr>
@@ -9171,10 +9738,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                         Cashback Subtotal
                                         {paymentForm.campaign?.planType ===
                                           "postpaid" && (
-                                          <div className="text-[10px] text-gray-400 font-normal">
-                                            Set later via sheet
-                                          </div>
-                                        )}
+                                            <div className="text-[10px] text-gray-400 font-normal">
+                                              Set later via sheet
+                                            </div>
+                                          )}
                                       </td>
                                       <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
                                         {totalQuantity} QRs
@@ -9248,18 +9815,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "digital_voucher",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "digital_voucher"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "digital_voucher"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "digital_voucher"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "digital_voucher"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Smartphone size={20} />
                             </div>
@@ -9288,18 +9853,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "printed_qr",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "printed_qr"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "printed_qr"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "printed_qr"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "printed_qr"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Printer size={20} />
                             </div>
@@ -9326,18 +9889,16 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                 voucherType: "none",
                               }))
                             }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
-                              paymentForm.voucherType === "none"
-                                ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                                : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
-                            }`}
+                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "none"
+                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                              }`}
                           >
                             <div
-                              className={`p-2 rounded-lg mb-3 ${
-                                paymentForm.voucherType === "none"
-                                  ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                  : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                              }`}
+                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "none"
+                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
                             >
                               <Ban size={20} />
                             </div>
@@ -9400,10 +9961,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                   parseNumericValue(
                                     wallet?.availableBalance,
                                     parseNumericValue(wallet?.balance, 0) -
-                                      parseNumericValue(
-                                        wallet?.lockedBalance,
-                                        0,
-                                      ),
+                                    parseNumericValue(
+                                      wallet?.lockedBalance,
+                                      0,
+                                    ),
                                   ),
                                 )}
                               </span>
