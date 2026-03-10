@@ -852,7 +852,7 @@ export const downloadVendorOrderPdf = async (token, orderId) => {
   }, 2000);
 };
 
-export const downloadCampaignQrPdf = async (token, campaignId, params) => {
+export const fetchCampaignQrPdfBlob = async (token, campaignId, params) => {
   const url = buildApiUrl(
     `/api/vendor/campaigns/${campaignId}/download${buildQueryString(params)}`,
   );
@@ -881,6 +881,15 @@ export const downloadCampaignQrPdf = async (token, campaignId, params) => {
     }
   }
   const fileName = derivedFileName || `QR_Campaign_${campaignId.slice(-8)}.pdf`;
+  return { blob, fileName };
+};
+
+export const downloadCampaignQrPdf = async (token, campaignId, params) => {
+  const { blob, fileName } = await fetchCampaignQrPdfBlob(
+    token,
+    campaignId,
+    params,
+  );
   const blobUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.style.display = "none";

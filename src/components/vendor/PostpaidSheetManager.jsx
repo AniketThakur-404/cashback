@@ -203,15 +203,14 @@ const AllocationBlock = ({
                     type="button"
                     onClick={async (e) => {
                       e.stopPropagation();
+                      if (!selectedIndexes.length) return;
                       if (selectedIndexes.length === 1) {
                         await onDownloadSheet(selectedIndexes[0]);
-                      } else if (selectedIndexes.length > 1) {
-                        for (const idx of selectedIndexes) {
-                          // Keep each download in direct user flow to avoid browser blocking.
-                          // eslint-disable-next-line no-await-in-loop
-                          await onDownloadSheet(idx);
-                        }
+                        return;
                       }
+                      await onDownloadSheet(
+                        [...selectedIndexes].sort((a, b) => a - b),
+                      );
                     }}
                     disabled={!selectedIndexes.length}
                     title="Download Selected Sheets"
@@ -551,7 +550,14 @@ const PostpaidSheetManager = React.memo(
                 }
                 onDelete={() => handleRemoveAllocation(a.id)}
                 isOnlyOne={allocations.length === 1}
-                onDownloadSheet={typeof onDownloadQr === "function" ? (sheetIndex) => onDownloadQr(campaign, { sheetIndex }) : undefined}
+                onDownloadSheet={
+                  typeof onDownloadQr === "function"
+                    ? (sheetSelection) =>
+                      Array.isArray(sheetSelection)
+                        ? onDownloadQr(campaign, { sheetIndexes: sheetSelection })
+                        : onDownloadQr(campaign, { sheetIndex: sheetSelection })
+                    : undefined
+                }
               />
             ))}
           </div>

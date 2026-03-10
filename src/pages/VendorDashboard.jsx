@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { format, differenceInDays, subDays, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
+import { PDFDocument } from "pdf-lib";
 import {
   Menu,
   X,
@@ -84,6 +85,7 @@ import {
   payVendorCampaign,
   downloadVendorOrderPdf,
   downloadCampaignQrPdf,
+  fetchCampaignQrPdfBlob,
   startCampaignBulkQrExport,
   assignSheetCashback,
   paySheetCashback,
@@ -188,6 +190,26 @@ const persistDownloadedBulkExportIds = (ids) => {
   } catch {
     // Ignore localStorage write issues.
   }
+};
+
+const triggerBlobDownload = (blob, fileName) => {
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = blobUrl;
+  link.download = fileName;
+  link.target = "_blank";
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  window.setTimeout(() => {
+    link.click();
+  }, 0);
+  window.setTimeout(() => {
+    link.remove();
+  }, 300);
+  window.setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 2000);
 };
 
 // Redundant formatShortDate removed
@@ -1268,35 +1290,146 @@ const VendorDashboard = () => {
     return totalParts;
   };
 
+  const downloadSelectedCampaignSheetsPdf = async ({
+    campaignId,
+    sheetIndexes,
+    qrsPerSheet,
+  }) => {
+    const normalizedSheetIndexes = Array.from(
+      new Set(
+        (Array.isArray(sheetIndexes) ? sheetIndexes : [])
+          .map((value) => Number.parseInt(value, 10))
+          .filter((value) => Number.isFinite(value) && value >= 0),
+      ),
+    ).sort((a, b) => a - b);
+
+    if (!normalizedSheetIndexes.length) return 0;
+
+    const totalSheets = normalizedSheetIndexes.length;
+    setDownloadProgress({
+      show: true,
+      progress: 8,
+      message: `Preparing ${totalSheets} selected sheet${totalSheets === 1 ? "" : "s"}...`,
+    });
+
+    const mergedPdf = await PDFDocument.create();
+
+    for (let index = 0; index < totalSheets; index += 1) {
+      const sheetIndex = normalizedSheetIndexes[index];
+      const position = index + 1;
+
+      setDownloadProgress({
+        show: true,
+        progress: Math.min(88, Math.round((index / totalSheets) * 80) + 10),
+        message: `Downloading sheet ${sheetIndex + 1} (${position}/${totalSheets})...`,
+      });
+
+      const { blob } = await fetchCampaignQrPdfBlob(token, campaignId, {
+        fast: 1,
+        skipLogo: 1,
+        sheetIndex,
+        qrsPerSheet,
+      });
+      const sourcePdf = await PDFDocument.load(await blob.arrayBuffer());
+      const copiedPages = await mergedPdf.copyPages(
+        sourcePdf,
+        sourcePdf.getPageIndices(),
+      );
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
+
+      setDownloadProgress({
+        show: true,
+        progress: Math.min(94, Math.round((position / totalSheets) * 94)),
+        message:
+          position === totalSheets
+            ? "Finalizing merged PDF..."
+            : `Merged ${position}/${totalSheets} sheets...`,
+      });
+    }
+
+    const mergedPdfBytes = await mergedPdf.save();
+    const mergedBlob = new Blob([mergedPdfBytes], {
+      type: "application/pdf",
+    });
+    const firstSheetLabel = normalizedSheetIndexes[0] + 1;
+    const lastSheetLabel =
+      normalizedSheetIndexes[normalizedSheetIndexes.length - 1] + 1;
+    const sheetLabel =
+      totalSheets <= 3
+        ? normalizedSheetIndexes
+          .map((sheetIndex) => sheetIndex + 1)
+          .join("-")
+        : `${firstSheetLabel}-to-${lastSheetLabel}_${totalSheets}-sheets`;
+    const mergedFileName = `QR_Campaign_${campaignId.slice(-8)}_Sheets_${sheetLabel}_${Date.now()}.pdf`;
+    triggerBlobDownload(mergedBlob, mergedFileName);
+
+    setDownloadProgress({
+      show: true,
+      progress: 100,
+      message: "Download complete!",
+    });
+    setTimeout(() => {
+      setDownloadProgress({ show: false, progress: 0, message: "" });
+    }, 500);
+
+    return totalSheets;
+  };
+
   const handleDownloadCampaignPdf = async (campaign, options = {}) => {
     const campaignId = campaign?.id;
     if (!token || !campaignId) return;
     setIsDownloadingPdf(campaignId);
     const estimatedQrs = getCampaignQrCountEstimate(campaign);
-    const parsedSheetIndex = Number.parseInt(options?.sheetIndex, 10);
-    const isSheetDownload = Number.isFinite(parsedSheetIndex) && parsedSheetIndex >= 0;
+    const parsedSheetIndexes = Array.isArray(options?.sheetIndexes)
+      ? options.sheetIndexes
+        .map((value) => Number.parseInt(value, 10))
+        .filter((value) => Number.isFinite(value) && value >= 0)
+      : [];
+    const uniqueSheetIndexes = Array.from(new Set(parsedSheetIndexes)).sort(
+      (a, b) => a - b,
+    );
+    const parsedSingleSheetIndex = Number.parseInt(options?.sheetIndex, 10);
+    const resolvedSheetIndex =
+      uniqueSheetIndexes.length === 1
+        ? uniqueSheetIndexes[0]
+        : Number.isFinite(parsedSingleSheetIndex) && parsedSingleSheetIndex >= 0
+          ? parsedSingleSheetIndex
+          : null;
+    const isMultiSheetDownload = uniqueSheetIndexes.length > 1;
+    const isSheetDownload =
+      Number.isFinite(resolvedSheetIndex) && resolvedSheetIndex >= 0;
+    const resolvedQrsPerSheet =
+      Number.parseInt(campaign?.qrsPerSheet, 10) > 0
+        ? Number.parseInt(campaign.qrsPerSheet, 10)
+        : undefined;
     const downloadParams = {
       fast: 1,
       skipLogo: 1,
       ...(isSheetDownload
         ? {
-          sheetIndex: parsedSheetIndex,
-          qrsPerSheet:
-            Number.parseInt(campaign?.qrsPerSheet, 10) > 0
-              ? Number.parseInt(campaign.qrsPerSheet, 10)
-              : undefined,
+          sheetIndex: resolvedSheetIndex,
+          qrsPerSheet: resolvedQrsPerSheet,
         }
         : {}),
     };
 
     try {
-      if (isSheetDownload) {
+      if (isMultiSheetDownload) {
+        const mergedCount = await downloadSelectedCampaignSheetsPdf({
+          campaignId,
+          sheetIndexes: uniqueSheetIndexes,
+          qrsPerSheet: resolvedQrsPerSheet,
+        });
+        setStatusWithTimeout(
+          `Merged ${mergedCount} selected sheets into one PDF successfully.`,
+        );
+      } else if (isSheetDownload) {
         await runDownloadWithProgress(
           () => downloadCampaignQrPdf(token, campaignId, downloadParams),
-          `Preparing sheet ${parsedSheetIndex + 1} PDF...`,
+          `Preparing sheet ${resolvedSheetIndex + 1} PDF...`,
         );
         setStatusWithTimeout(
-          `Sheet ${parsedSheetIndex + 1} QR PDF downloaded successfully.`,
+          `Sheet ${resolvedSheetIndex + 1} QR PDF downloaded successfully.`,
         );
       } else if (estimatedQrs >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD) {
         const totalParts = await downloadCampaignPdfInChunks({
@@ -1317,6 +1450,7 @@ const VendorDashboard = () => {
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       const backendChunkHint =
+        !isMultiSheetDownload &&
         err?.status === 413 &&
         (err?.data?.code === "CAMPAIGN_PDF_TOO_LARGE" ||
           /chunked download/i.test(String(err?.message || "")));
