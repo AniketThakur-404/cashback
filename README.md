@@ -1,16 +1,94 @@
-# React + Vite
+# Assured Rewards Webapp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository contains:
 
-Currently, two official plugins are available:
+- Frontend: React + Vite app at the repo root (`src/`, `public/`).
+- Backend: Express + Prisma API in `cashback backend/cashback`.
+- Deployment helpers: `scripts/deploy-frontend.ps1` and `scripts/deploy-backend.ps1`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Repository Structure
 
-## React Compiler
+```text
+e:\webapp
+|- src/                         # Frontend source
+|- public/                      # Frontend public assets
+|- scripts/                     # Deployment and utility scripts
+|- cashback backend/cashback/   # Backend API (Express + Prisma)
+|- DEPLOYMENT_VPS.md            # VPS deployment runbook
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js and npm installed on local machine and VPS.
+- PostgreSQL available for backend.
+- PM2 installed on VPS for backend process management.
+- Nginx installed on VPS for frontend hosting/reverse proxy.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Environment Variables
+
+### Frontend (`.env.local` / `.env.production`)
+
+Use `.env.example` as a base:
+
+```env
+VITE_API_BASE_URL=https://your-backend-domain.example
+VITE_QR_BASE_URL=https://your-frontend-domain.example
+VITE_RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxx
+```
+
+### Backend (`cashback backend/cashback/.env`)
+
+Use `cashback backend/cashback/.env.example` as a base. Required keys include:
+
+- `PORT`
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `FRONTEND_URL`
+- `PUBLIC_APP_URL`
+- `QR_BASE_URL`
+
+## Local Development
+
+### 1) Start backend
+
+```bash
+cd "cashback backend/cashback"
+npm install
+npx prisma migrate deploy
+npx prisma generate
+npm run dev
+```
+
+Backend default port is `5000`.
+
+### 2) Start frontend (new terminal)
+
+```bash
+cd e:\webapp
+npm install
+npm run dev
+```
+
+Vite dev server proxies `/api` to `http://localhost:5000` (see `vite.config.js`).
+
+## Production Build (frontend)
+
+```bash
+npm run build
+```
+
+Build output is generated in `dist/`.
+
+## VPS Deployment
+
+Use the deployment runbook:
+
+- [DEPLOYMENT_VPS.md](./DEPLOYMENT_VPS.md)
+
+It includes:
+
+- Manual step-by-step frontend and backend deployment.
+- PowerShell script-based deploy commands.
+- PM2 and Nginx verification checklist.
