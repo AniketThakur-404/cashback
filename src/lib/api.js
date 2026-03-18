@@ -517,7 +517,7 @@ export const getVendorRedemptionsMap = (token, params) =>
   });
 
 export const getVendorSummaryAnalytics = (token, params) =>
-  apiRequest(`/api/vendor/analytics/summary${buildQueryString(params)}`, {
+  apiRequest(`/api/vendor/reports/summary${buildQueryString(params)}`, {
     token,
   });
 
