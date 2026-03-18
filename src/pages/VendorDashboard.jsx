@@ -541,6 +541,10 @@ const VendorDashboard = () => {
   const [overviewLocationsError, setOverviewLocationsError] = useState("");
   const [customersData, setCustomersData] = useState([]);
   const [invoicesData, setInvoicesData] = useState([]);
+  const [recentRedemptions, setRecentRedemptions] = useState([]);
+  const [isLoadingRecentRedemptions, setIsLoadingRecentRedemptions] =
+    useState(false);
+  const [recentRedemptionsError, setRecentRedemptionsError] = useState("");
   const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
   const [extraTabError, setExtraTabError] = useState("");
   const [clusterCityFilter, setClusterCityFilter] = useState(null);
@@ -2755,21 +2759,148 @@ const VendorDashboard = () => {
     }
   };
 
+  const loadRecentRedemptions = async (authToken = token, params = {}) => {
+    if (!authToken) return;
+    setIsLoadingRecentRedemptions(true);
+    setRecentRedemptionsError("");
+
+    const requestParams = {
+      page: 1,
+      limit: 10,
+      type: "redeem_success",
+      campaignId:
+        overviewCampaignId === "all" || overviewCampaignId === "unassigned"
+          ? undefined
+          : overviewCampaignId,
+      ...params,
+    };
+
+    try {
+      const data = await getVendorRedemptions(authToken, requestParams);
+      setRecentRedemptions(
+        Array.isArray(data?.redemptions) ? data.redemptions : [],
+      );
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setRecentRedemptions([]);
+      setRecentRedemptionsError(
+        err.message || "Unable to load recent redemptions.",
+      );
+    } finally {
+      setIsLoadingRecentRedemptions(false);
+    }
+  };
+
+  const buildTrendFromRedemptions = (redemptions = [], from, to) => {
+    const fromDate = from ? parseISO(from) : null;
+    const toDate = to ? parseISO(to) : null;
+
+    if (toDate && !Number.isNaN(toDate.getTime())) {
+      toDate.setHours(23, 59, 59, 999);
+    }
+
+    const trendMap = new Map();
+
+    redemptions.forEach((redemption) => {
+      const rawDate =
+        redemption?.createdAt ||
+        redemption?.capturedAt ||
+        redemption?.redeemedAt;
+      if (!rawDate) return;
+
+      const date = new Date(rawDate);
+      if (Number.isNaN(date.getTime())) return;
+      if (fromDate && !Number.isNaN(fromDate.getTime()) && date < fromDate) {
+        return;
+      }
+      if (toDate && !Number.isNaN(toDate.getTime()) && date > toDate) {
+        return;
+      }
+
+      const key = format(date, "yyyy-MM-dd");
+      trendMap.set(key, (trendMap.get(key) || 0) + 1);
+    });
+
+    return Array.from(trendMap.entries())
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+      .map(([date, count]) => ({ date, count }));
+  };
+
+  const fetchRedemptionTrendFallback = async (
+    authToken = token,
+    params = {},
+  ) => {
+    const collected = [];
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const response = await getVendorRedemptions(authToken, {
+        ...params,
+        type: "redeem_success",
+        page,
+        limit: 200,
+      });
+
+      const pageItems = Array.isArray(response?.redemptions)
+        ? response.redemptions
+        : [];
+      collected.push(...pageItems);
+
+      const nextTotalPages = Number(response?.pagination?.totalPages) || 1;
+      totalPages = Math.min(nextTotalPages, 50);
+      if (!pageItems.length) break;
+      page += 1;
+    } while (page <= totalPages);
+
+    return buildTrendFromRedemptions(
+      collected,
+      params.from || params.dateFrom,
+      params.to || params.dateTo,
+    );
+  };
+
   const loadRedemptionTrend = async (authToken = token, params = {}) => {
     if (!authToken) return;
     setIsLoadingRedemptionTrend(true);
     setRedemptionTrendError("");
+    const requestParams = {
+      campaignId: overviewCampaignId === "all" ? undefined : overviewCampaignId,
+      from: dateFilter.from,
+      to: dateFilter.to,
+      ...params,
+    };
     try {
-      const data = await getVendorSummaryAnalytics(authToken, {
-        campaignId: overviewCampaignId === "all" ? undefined : overviewCampaignId,
-        from: dateFilter.from,
-        to: dateFilter.to,
-        ...params,
-      });
-      setRedemptionTrend(Array.isArray(data?.trend) ? data.trend : []);
+      const data = await getVendorSummaryAnalytics(authToken, requestParams);
+      const apiTrend = Array.isArray(data?.trend) ? data.trend : [];
+
+      if (apiTrend.length > 0) {
+        setRedemptionTrend(apiTrend);
+        return;
+      }
+
+      const fallbackTrend = await fetchRedemptionTrendFallback(
+        authToken,
+        requestParams,
+      );
+      setRedemptionTrend(fallbackTrend);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      setRedemptionTrendError(err.message || "Failed to load trend data.");
+      try {
+        const fallbackTrend = await fetchRedemptionTrendFallback(
+          authToken,
+          requestParams,
+        );
+        setRedemptionTrend(fallbackTrend);
+        if (fallbackTrend.length === 0) {
+          setRedemptionTrendError(err.message || "Failed to load trend data.");
+        }
+      } catch (fallbackErr) {
+        setRedemptionTrend([]);
+        setRedemptionTrendError(
+          fallbackErr.message || err.message || "Failed to load trend data.",
+        );
+      }
     } finally {
       setIsLoadingRedemptionTrend(false);
     }
@@ -2787,6 +2918,7 @@ const VendorDashboard = () => {
       loadCampaigns(authToken),
       loadCampaignStats(authToken),
       loadRedemptionTrend(authToken),
+      loadRecentRedemptions(authToken),
       loadQrInventorySeries(authToken),
       loadNotifications(authToken),
     ];
@@ -3008,6 +3140,7 @@ const VendorDashboard = () => {
         loadBrandProfile(token),
         loadCampaigns(token),
         loadCampaignStats(token),
+        loadRecentRedemptions(token),
         loadProducts(token),
       ]);
     };
@@ -4624,6 +4757,11 @@ const VendorDashboard = () => {
       loadRedemptionTrend(token);
     }
   }, [token, overviewCampaignId, dateFilter.from, dateFilter.to]);
+
+  useEffect(() => {
+    if (!token || activeTab !== "overview") return;
+    loadRecentRedemptions(token);
+  }, [token, activeTab, overviewCampaignId]);
 
   const overviewQrStatusCounts = useMemo(() => {
     const counts = {
@@ -6348,10 +6486,15 @@ const VendorDashboard = () => {
                             </button>
                           </div>
 
-                          {qrs.filter(
-                            (q) =>
-                              q.status === "redeemed" || q.status === "claimed",
-                          ).length === 0 ? (
+                          {isLoadingRecentRedemptions ? (
+                            <div className="text-center py-8 text-gray-500 text-sm">
+                              Loading recent redemptions...
+                            </div>
+                          ) : recentRedemptionsError ? (
+                            <div className="text-center py-8 text-red-500 text-sm">
+                              {recentRedemptionsError}
+                            </div>
+                          ) : recentRedemptions.length === 0 ? (
                             <div className="text-center py-8 text-gray-500 text-sm">
                               No redemptions yet. Share your QR codes to get
                               started!
@@ -6372,44 +6515,43 @@ const VendorDashboard = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-800">
-                                  {qrs
-                                    .filter(
-                                      (q) =>
-                                        q.status === "redeemed" ||
-                                        q.status === "claimed",
-                                    )
-                                    .sort(
-                                      (a, b) =>
-                                        new Date(b.updatedAt || b.createdAt) -
-                                        new Date(a.updatedAt || a.createdAt),
-                                    )
-                                    .slice(0, 10)
-                                    .map((qr) => (
+                                  {recentRedemptions.map((redemption) => (
                                       <tr
-                                        key={qr.id}
+                                        key={redemption.id}
                                         className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                                       >
                                         <td className="px-4 py-3">
                                           <div className="font-medium text-gray-900 dark:text-white">
-                                            Today
+                                            {redemption?.createdAt
+                                              ? format(
+                                                  new Date(redemption.createdAt),
+                                                  "dd MMM yyyy",
+                                                )
+                                              : "-"}
                                           </div>
                                           <div className="text-[10px] text-gray-500">
-                                            {format(new Date(), "h:mm a")}
-                                            {/* Using current time as placeholder since API might not return update time yet */}
+                                            {redemption?.createdAt
+                                              ? format(
+                                                  new Date(redemption.createdAt),
+                                                  "h:mm a",
+                                                )
+                                              : "-"}
                                           </div>
                                         </td>
                                         <td className="px-4 py-3">
                                           <div className="truncate max-w-[150px] text-gray-900 dark:text-white">
-                                            {qr.Campaign?.title ||
+                                            {redemption?.campaign?.title ||
                                               "Unknown Campaign"}
                                           </div>
                                         </td>
                                         <td className="px-4 py-3 font-bold text-primary">
                                           {"\u20B9"}
-                                          {formatAmount(getGeneratedPrice(qr))}
+                                          {formatAmount(redemption?.amount || 0)}
                                         </td>
                                         <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
-                                          {qr.uniqueHash.substring(0, 8)}...
+                                          {redemption?.qr?.hash
+                                            ? `${redemption.qr.hash.slice(0, 8)}...`
+                                            : "-"}
                                         </td>
                                       </tr>
                                     ))}

@@ -45,8 +45,8 @@ const VendorRedemptions = ({ token }) => {
         try {
             const params = { page, limit: pagination.limit };
             if (filters.campaignId) params.campaignId = filters.campaignId;
-            if (filters.startDate) params.startDate = filters.startDate;
-            if (filters.endDate) params.endDate = filters.endDate;
+            if (filters.startDate) params.dateFrom = filters.startDate;
+            if (filters.endDate) params.dateTo = filters.endDate;
 
             const data = await getVendorRedemptions(token, params);
             setRedemptions(data.redemptions || []);
