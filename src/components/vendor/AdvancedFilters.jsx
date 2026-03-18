@@ -31,15 +31,14 @@ const AdvancedFilters = ({
         filters.dateFrom ||
         filters.dateTo ||
         filters.campaignId ||
-        filters.city ||
-        filters.state ||
+        filters.location ||
         filters.mobile ||
         filters.productId;
 
     const activeFilterCount = [
         filters.dateFrom || filters.dateTo,
         filters.campaignId,
-        filters.city || filters.state,
+        filters.location,
         filters.mobile,
         filters.productId,
     ].filter(Boolean).length;
@@ -50,8 +49,7 @@ const AdvancedFilters = ({
             dateFrom: "",
             dateTo: "",
             campaignId: "",
-            city: "",
-            state: "",
+            location: "",
             mobile: "",
             productId: "",
         }));
@@ -97,15 +95,15 @@ const AdvancedFilters = ({
                     </div>
                 )}
 
-                {/* City Quick Input */}
+                {/* Location Quick Input */}
                 <div className="relative flex-1 min-w-[150px] max-w-xs">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Filter by city..."
-                        value={filters.city}
+                        placeholder="Filter by location..."
+                        value={filters.location}
                         onChange={(e) =>
-                            setFilters((prev) => ({ ...prev, city: e.target.value }))
+                            setFilters((prev) => ({ ...prev, location: e.target.value }))
                         }
                         onKeyDown={handleKeyDown}
                         className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-[#0f0f0f] border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all outline-none"
@@ -256,7 +254,7 @@ const AdvancedFilters = ({
                                         <option value="">All Products</option>
                                         {products.map((p) => (
                                             <option key={p.id} value={p.id}>
-                                                {p.title}
+                                                {p.name || p.title || p.id}
                                             </option>
                                         ))}
                                     </select>
@@ -265,18 +263,18 @@ const AdvancedFilters = ({
                             </div>
                         )}
 
-                        {/* State */}
+                        {/* Location */}
                         <div>
                             <label className={labelClass}>
                                 <MapPin className="w-3 h-3" />
-                                State
+                                Location
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter state..."
-                                value={filters.state}
+                                placeholder="Area, city or state..."
+                                value={filters.location}
                                 onChange={(e) =>
-                                    setFilters((prev) => ({ ...prev, state: e.target.value }))
+                                    setFilters((prev) => ({ ...prev, location: e.target.value }))
                                 }
                                 onKeyDown={handleKeyDown}
                                 className={inputClass}
@@ -303,23 +301,6 @@ const AdvancedFilters = ({
                             </div>
                         )}
 
-                        {/* City */}
-                        <div>
-                            <label className={labelClass}>
-                                <MapPin className="w-3 h-3" />
-                                City
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Enter city..."
-                                value={filters.city}
-                                onChange={(e) =>
-                                    setFilters((prev) => ({ ...prev, city: e.target.value }))
-                                }
-                                onKeyDown={handleKeyDown}
-                                className={inputClass}
-                            />
-                        </div>
                     </div>
 
                     {/* Active Filters Summary */}
@@ -351,25 +332,17 @@ const AdvancedFilters = ({
                             )}
                             {filters.productId && (
                                 <FilterChip
-                                    label={`Product: ${products.find((p) => p.id === filters.productId)?.title || filters.productId}`}
+                                    label={`Product: ${products.find((p) => p.id === filters.productId)?.name || products.find((p) => p.id === filters.productId)?.title || filters.productId}`}
                                     onClear={() =>
                                         setFilters((prev) => ({ ...prev, productId: "" }))
                                     }
                                 />
                             )}
-                            {filters.city && (
+                            {filters.location && (
                                 <FilterChip
-                                    label={`City: ${filters.city}`}
+                                    label={`Location: ${filters.location}`}
                                     onClear={() =>
-                                        setFilters((prev) => ({ ...prev, city: "" }))
-                                    }
-                                />
-                            )}
-                            {filters.state && (
-                                <FilterChip
-                                    label={`State: ${filters.state}`}
-                                    onClear={() =>
-                                        setFilters((prev) => ({ ...prev, state: "" }))
+                                        setFilters((prev) => ({ ...prev, location: "" }))
                                     }
                                 />
                             )}

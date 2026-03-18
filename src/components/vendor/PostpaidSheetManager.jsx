@@ -1,21 +1,16 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useToast } from "../ui";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  QrCode,
-  ChevronDown,
   CheckCircle2,
-  RefreshCw,
-  CheckSquare,
-  Square,
-  CircleOff,
   Download,
-  Trash2,
+  Pencil,
+  Plus,
+  QrCode,
+  RefreshCw,
+  X,
 } from "lucide-react";
-import { assignSheetCashback } from "../../lib/api";
-import { toRoman } from "../../lib/vendorUtils";
-import { resolvePostpaidSheetSize } from "../../lib/postpaidSheet";
-
-const SHEET_OVERRIDES_STORAGE_KEY = "postpaid_sheet_overrides_v1";
+import { useToast } from "../ui";
+import { updatePostpaidCampaignBatches } from "../../lib/api";
+import { ConfirmModal } from "../ui/ConfirmModal";
 
 const normalizeAmount = (value) => {
   const numeric = Number.parseFloat(value);
@@ -25,597 +20,559 @@ const normalizeAmount = (value) => {
 
 const formatAmount = (value) => normalizeAmount(value).toFixed(2);
 
-const readStoredOverrides = (campaignId) => {
-  if (!campaignId || typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(SHEET_OVERRIDES_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    const campaignMap = parsed?.[campaignId];
-    return campaignMap && typeof campaignMap === "object" ? campaignMap : {};
-  } catch {
-    return {};
-  }
+const parseQuantity = (value) => {
+  const numeric = Number.parseInt(value, 10);
+  if (!Number.isFinite(numeric) || numeric <= 0) return 0;
+  return numeric;
 };
 
-const writeStoredOverrides = (campaignId, nextMap) => {
-  if (!campaignId || typeof window === "undefined") return;
-  try {
-    const raw = window.localStorage.getItem(SHEET_OVERRIDES_STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    const next = parsed && typeof parsed === "object" ? parsed : {};
-    next[campaignId] = nextMap;
-    window.localStorage.setItem(
-      SHEET_OVERRIDES_STORAGE_KEY,
-      JSON.stringify(next),
-    );
-  } catch {
-    // Ignore storage failures and keep in-memory behavior.
+const createBatchRow = (overrides = {}) => ({
+  id: Math.random().toString(36).slice(2, 10),
+  quantity: "",
+  amount: "",
+  isPersisted: false,
+  ...overrides,
+});
+
+const formatBatchRange = (start, quantity) => {
+  if (!Number.isFinite(start) || start < 0 || !Number.isFinite(quantity) || quantity <= 0) {
+    return "No QRs selected";
   }
+
+  const rangeStart = start + 1;
+  const rangeEnd = start + quantity;
+  return rangeStart === rangeEnd
+    ? `QR ${rangeStart}`
+    : `QRs ${rangeStart}-${rangeEnd}`;
 };
 
-const AllocationBlock = ({
-  sheets,
-  selectableSheetIndexes,
-  selectedIndexes,
-  onSelectionChange,
-  amount,
-  onAmountChange,
-  onDelete,
-  isOnlyOne,
-  allSelectedAcrossBlocks,
-  onDownloadSheet,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [rangeFrom, setRangeFrom] = useState("");
-  const [rangeTo, setRangeTo] = useState("");
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
-  }, []);
-
-  const label = useMemo(() => {
-    if (!selectedIndexes.length) return "Select sheet(s)";
-    if (selectedIndexes.length === 1) {
-      const s = sheets.find((item) => item.index === selectedIndexes[0]);
-      return `Sheet ${s?.label || toRoman(selectedIndexes[0] + 1)} (${s?.qrCount} QRs)`;
-    }
-    return `${selectedIndexes.length} Sheets selected`;
-  }, [selectedIndexes, sheets]);
-
-  const availableSheetIndexes = useMemo(
-    () =>
-      selectableSheetIndexes.filter(
-        (idx) =>
-          selectedIndexes.includes(idx) || !allSelectedAcrossBlocks.includes(idx),
-      ),
-    [selectableSheetIndexes, selectedIndexes, allSelectedAcrossBlocks],
+const serializeBatchRows = (rows) =>
+  JSON.stringify(
+    rows
+      .filter((row) => row.quantityValue > 0 && normalizeAmount(row.amount) > 0)
+      .map((row) => ({
+        id: row.id,
+        quantity: row.quantityValue,
+        cashbackAmount: normalizeAmount(row.amount),
+      })),
   );
 
-  const allSelected =
-    availableSheetIndexes.length > 0 &&
-    availableSheetIndexes.every((idx) => selectedIndexes.includes(idx));
-
-  const handleApplyRange = () => {
-    const from = Math.max(1, parseInt(rangeFrom, 10) || 1);
-    const to = Math.min(sheets.length, parseInt(rangeTo, 10) || sheets.length);
-    if (from > to) return;
-    const rangeIndexes = [];
-    for (let i = from - 1; i < to; i++) {
-      if (availableSheetIndexes.includes(i)) {
-        rangeIndexes.push(i);
-      }
-    }
-    onSelectionChange(rangeIndexes.sort((a, b) => a - b));
-  };
+const BatchCard = ({
+  batch,
+  canRemove,
+  canDownload,
+  isSaving,
+  remainingForRow,
+  onChange,
+  onDelete,
+  onDownload,
+}) => {
+  const dirtyLabel = batch.isPersisted && batch.isDirty ? "Edited" : null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start p-4 rounded-xl bg-gray-50/50 dark:bg-zinc-800/20 border border-gray-100 dark:border-zinc-800/60 relative group animate-in fade-in slide-in-from-top-2 duration-300">
-      {!isOnlyOne && (
-        <button
-          onClick={onDelete}
-          className="absolute -right-2 -top-2 p-1.5 rounded-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 text-gray-400 hover:text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      )}
-
-      {/* Sheet Selector */}
-      <div className="sm:col-span-6 space-y-2">
-        <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block pl-1">
-          Target Sheets
-        </label>
-        <div ref={ref} className="relative">
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center justify-between gap-3"
-          >
-            <span className="truncate">{label}</span>
-            <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {isOpen && (
-            <div className="absolute z-120 mt-2 w-full rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl overflow-hidden animate-in zoom-in-95 duration-100">
-              {/* Range selection */}
-              <div className="p-2.5 border-b border-gray-100 dark:border-zinc-800">
-                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Select Range</div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max={sheets.length}
-                    value={rangeFrom}
-                    onChange={(e) => setRangeFrom(e.target.value)}
-                    placeholder="From"
-                    className="w-20 h-8 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50/70 dark:bg-zinc-900/60 px-2.5 text-xs text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500/10 text-center"
-                  />
-                  <span className="text-xs text-gray-400">to</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={sheets.length}
-                    value={rangeTo}
-                    onChange={(e) => setRangeTo(e.target.value)}
-                    placeholder="To"
-                    className="w-20 h-8 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50/70 dark:bg-zinc-900/60 px-2.5 text-xs text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-emerald-500/10 text-center"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyRange}
-                    className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-full px-3 py-2 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSelectionChange(availableSheetIndexes)}
-                    disabled={allSelected || !availableSheetIndexes.length}
-                    className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-semibold border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50"
-                  >
-                    <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
-                    Select all
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSelectionChange([])}
-                    disabled={!selectedIndexes.length}
-                    className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-semibold border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50"
-                  >
-                    <Square className="w-3.5 h-3.5 text-gray-400" />
-                    Unselect all
-                  </button>
-                </div>
-                {typeof onDownloadSheet === "function" && (
-                  <button
-                    type="button"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!selectedIndexes.length) return;
-                      if (selectedIndexes.length === 1) {
-                        await onDownloadSheet(selectedIndexes[0]);
-                        return;
-                      }
-                      await onDownloadSheet(
-                        [...selectedIndexes].sort((a, b) => a - b),
-                      );
-                    }}
-                    disabled={!selectedIndexes.length}
-                    title="Download Selected Sheets"
-                    className="p-1.5 rounded-md text-gray-500 hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
+    <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-emerald-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
+              <QrCode className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-black text-gray-900 dark:text-gray-100">
+                  Batch {batch.batchNumber}
+                </p>
+                {batch.isPersisted && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Saved
+                  </span>
+                )}
+                {dirtyLabel && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                    <Pencil className="h-3 w-3" />
+                    {dirtyLabel}
+                  </span>
                 )}
               </div>
-
-              <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
-                {sheets.map((s) => {
-                  const isSelectedLocally = selectedIndexes.includes(s.index);
-                  const isSelectedElsewhere =
-                    !isSelectedLocally &&
-                    allSelectedAcrossBlocks.includes(s.index);
-                  const qrCount = Number(s.qrCount) || 0;
-                  const updatableCount = Number.isFinite(Number(s.updatableCount))
-                    ? Number(s.updatableCount)
-                    : qrCount;
-                  const redeemedCount = Number.isFinite(Number(s.redeemedCount))
-                    ? Number(s.redeemedCount)
-                    : 0;
-                  const isFullyRedeemed = qrCount > 0 && updatableCount <= 0 && redeemedCount >= qrCount;
-                  return (
-                    <div
-                      key={s.index}
-                      className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between gap-2 transition-colors ${isSelectedLocally
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-                        : isSelectedElsewhere
-                          ? "opacity-50 grayscale"
-                          : isFullyRedeemed
-                            ? "bg-amber-50/70 dark:bg-amber-900/15"
-                            : "hover:bg-gray-50 dark:hover:bg-zinc-800"
-                        }`}
-                    >
-                      <button
-                        type="button"
-                        disabled={isSelectedElsewhere}
-                        onClick={() => {
-                          const next = isSelectedLocally
-                            ? selectedIndexes.filter((i) => i !== s.index)
-                            : [...selectedIndexes, s.index].sort((a, b) => a - b);
-                          onSelectionChange(next);
-                        }}
-                        className="flex items-center gap-2 min-w-0 flex-1 text-left"
-                      >
-                        {isFullyRedeemed ? (
-                          <CircleOff className="w-4 h-3.5 text-amber-500 shrink-0" />
-                        ) : isSelectedLocally ? (
-                          <CheckSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        ) : (
-                          <Square className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        )}
-                        <span className="truncate text-sm font-medium">
-                          Sheet {s.label} ({s.qrCount} QRs)
-                        </span>
-                      </button>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-bold text-gray-400">
-                          {isSelectedElsewhere
-                            ? "In other group"
-                            : isFullyRedeemed
-                              ? "All redeemed"
-                              : `INR ${formatAmount(s.amount)}`}
-                        </span>
-                        {typeof onDownloadSheet === "function" && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDownloadSheet(s.index);
-                            }}
-                            title={`Download Sheet ${s.label} QRs`}
-                            className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                Recharge block for {formatBatchRange(batch.start, batch.quantityValue)}
+              </p>
             </div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                QR Range
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-gray-900 dark:text-gray-100">
+                {formatBatchRange(batch.start, batch.quantityValue)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Quantity
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-gray-900 dark:text-gray-100">
+                {batch.quantityValue || 0} QRs
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Cashback
+              </p>
+              <p className="mt-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                INR {formatAmount(batch.amount)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 self-start">
+          {canDownload && typeof onDownload === "function" && (
+            <button
+              type="button"
+              onClick={onDownload}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-colors hover:bg-emerald-700"
+            >
+              <Download className="h-3 w-3" />
+              Download
+            </button>
+          )}
+          {canRemove && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={isSaving}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/20 dark:bg-zinc-950 dark:hover:bg-red-500/10"
+              title="Remove batch"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
       </div>
 
-      {/* Amount Input */}
-      <div className="sm:col-span-6 space-y-2">
-        <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block pl-1">
-          Cashback (INR)
-        </label>
-        <div className="relative">
+      <div className="mt-4 grid gap-4 rounded-xl bg-gray-50/50 p-4 dark:bg-zinc-950/30 sm:grid-cols-2">
+        <label className="space-y-1.5">
+          <span className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            QR Quantity
+          </span>
           <input
             type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => onAmountChange(e.target.value)}
-            className="w-full h-11 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 text-sm font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all placeholder:font-normal"
+            min="1"
+            max={Math.max(remainingForRow, 0)}
+            inputMode="numeric"
+            value={batch.quantity}
+            onChange={(event) =>
+              onChange(batch.id, "quantity", event.target.value.replace(/[^\d]/g, ""))
+            }
+            placeholder={`Max ${remainingForRow}`}
+            disabled={isSaving}
+            className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-100 dark:disabled:bg-zinc-800"
           />
-        </div>
+        </label>
+
+        <label className="space-y-1.5">
+          <span className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            Cashback (INR)
+          </span>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₹</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={batch.amount}
+              onChange={(event) => onChange(batch.id, "amount", event.target.value)}
+              placeholder="0.00"
+              disabled={isSaving}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-8 pr-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-100 dark:disabled:bg-zinc-800"
+            />
+          </div>
+        </label>
       </div>
     </div>
   );
 };
 
 const PostpaidSheetManager = React.memo(
-  ({ campaign, token, loadCampaigns, onDownloadQr }) => {
+  ({ campaign, totalQrs: totalQrsProp, token, loadCampaigns, onDownloadQr }) => {
     const { success, error: toastError } = useToast();
-    const [assigningSheet, setAssigningSheet] = useState(null);
-    const [allocations, setAllocations] = useState([]);
-    const [sheetOverrides, setSheetOverrides] = useState({});
+    const [batchRows, setBatchRows] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [batchPendingDelete, setBatchPendingDelete] = useState(null);
+
+    const normalizedAllocations = useMemo(() => {
+      if (!Array.isArray(campaign?.allocations)) return [];
+      return campaign.allocations
+        .map((allocation) => ({
+          ...allocation,
+          quantity: parseQuantity(allocation?.quantity),
+          cashbackAmount: normalizeAmount(allocation?.cashbackAmount),
+        }))
+        .filter((allocation) => allocation.quantity > 0);
+    }, [campaign?.allocations]);
+
+    const totalQrs = useMemo(
+      () => totalQrsProp || campaign?.totalQrCount || 0,
+      [totalQrsProp, campaign?.totalQrCount],
+    );
+
+    const persistedBatches = useMemo(
+      () =>
+        normalizedAllocations
+          .filter((allocation) => allocation.cashbackAmount > 0)
+          .map((allocation) => ({
+            id: allocation.id || Math.random().toString(36).slice(2, 10),
+            quantity: String(allocation.quantity),
+            amount: formatAmount(allocation.cashbackAmount),
+            isPersisted: true,
+          })),
+      [normalizedAllocations],
+    );
 
     useEffect(() => {
-      setSheetOverrides(readStoredOverrides(campaign.id));
-      setAllocations([
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          amount: "",
-          selectedIndexes: [],
-        },
-      ]);
-    }, [campaign.id]);
+      const initialRows = persistedBatches.length
+        ? persistedBatches
+        : [createBatchRow()];
 
-    const totalQrs = useMemo(() => {
-      if (!campaign.allocations) return 0;
-      return campaign.allocations.reduce(
-        (sum, acc) => sum + (acc.quantity || 0),
-        0,
+      setBatchRows(initialRows);
+    }, [campaign?.id, persistedBatches]);
+
+    const getRowViews = (rows) => {
+      let cursor = 0;
+
+      const serverMap = new Map(
+        persistedBatches.map((batch) => [
+          batch.id,
+          {
+            quantity: parseQuantity(batch.quantity),
+            amount: normalizeAmount(batch.amount),
+          },
+        ]),
       );
-    }, [campaign.allocations]);
 
-    const sheets = useMemo(() => {
-      if (campaign.sheets && campaign.sheets.length > 0) {
-        return campaign.sheets.map((s) => ({
-          ...s,
-          qrCount: s.count,
-          amount: normalizeAmount(
-            Number.isFinite(sheetOverrides[s.index])
-              ? sheetOverrides[s.index]
-              : s.amount,
-          ),
-        }));
-      }
-      const qrsPerSheet =
-        Number.parseInt(campaign?.qrsPerSheet, 10) > 0
-          ? Number.parseInt(campaign.qrsPerSheet, 10)
-          : resolvePostpaidSheetSize(totalQrs);
-      const sheetCount = Math.ceil(totalQrs / qrsPerSheet);
-      return Array.from({ length: sheetCount }, (_, i) => ({
-        index: i,
-        label: toRoman(i + 1),
-        qrCount: Math.min(qrsPerSheet, totalQrs - i * qrsPerSheet),
-        amount: normalizeAmount(
-          Number.isFinite(sheetOverrides[i]) ? sheetOverrides[i] : 0,
+      return rows.map((row, index) => {
+        const quantityValue = parseQuantity(row.quantity);
+        const amountValue = normalizeAmount(row.amount);
+        const start = cursor;
+        if (quantityValue > 0) {
+          cursor += quantityValue;
+        }
+
+        const persistedSnapshot = serverMap.get(row.id);
+        const isDirty = Boolean(
+          row.isPersisted &&
+            persistedSnapshot &&
+            (persistedSnapshot.quantity !== quantityValue ||
+              persistedSnapshot.amount !== amountValue),
+        );
+
+        return {
+          ...row,
+          batchNumber: index + 1,
+          quantityValue,
+          amountValue,
+          start,
+          isDirty,
+        };
+      });
+    };
+
+    const rowViews = useMemo(
+      () => getRowViews(batchRows),
+      [batchRows, persistedBatches],
+    );
+
+    const savedSignature = useMemo(() => {
+      let cursor = 0;
+      const normalizedRows = persistedBatches.map((row) => {
+        const quantityValue = parseQuantity(row.quantity);
+        const next = {
+          id: row.id,
+          quantityValue,
+          amount: row.amount,
+          start: cursor,
+        };
+        cursor += quantityValue;
+        return next;
+      });
+
+      return serializeBatchRows(normalizedRows);
+    }, [persistedBatches]);
+
+    const currentSignature = useMemo(() => serializeBatchRows(rowViews), [rowViews]);
+    const hasUnsavedChanges = currentSignature !== savedSignature;
+
+    const totalAssignedPreview = useMemo(
+      () => rowViews.reduce((sum, row) => sum + row.quantityValue, 0),
+      [rowViews],
+    );
+
+    const remainingQty = Math.max(0, totalQrs - totalAssignedPreview);
+
+    const totalIncrementPreview = useMemo(
+      () =>
+        rowViews.reduce(
+          (sum, row) => sum + row.quantityValue * normalizeAmount(row.amount),
+          0,
         ),
-      }));
-    }, [campaign.sheets, campaign.qrsPerSheet, totalQrs, sheetOverrides]);
-
-    const selectableSheetIndexes = useMemo(
-      () => sheets.map((s) => s.index),
-      [sheets],
+      [rowViews],
     );
 
-    const handleAddAllocation = () => {
-      setAllocations([
-        ...allocations,
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          amount: "",
-          selectedIndexes: [],
-        },
-      ]);
-    };
-
-    const handleRemoveAllocation = (id) => {
-      if (allocations.length > 1) {
-        setAllocations(allocations.filter((a) => a.id !== id));
-      }
-    };
-
-    const handleUpdateAllocation = (id, updates) => {
-      setAllocations(
-        allocations.map((a) => (a.id === id ? { ...a, ...updates } : a)),
+    const handleChangeRow = (id, field, value) => {
+      setBatchRows((prev) =>
+        prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
       );
     };
 
-    const totalIncrementPreview = useMemo(() => {
-      return allocations.reduce((sum, a) => {
-        const amt = normalizeAmount(a.amount);
-        const qrCount = sheets
-          .filter((s) => a.selectedIndexes.includes(s.index))
-          .reduce((q, s) => {
-            const updatableCount = Number.isFinite(Number(s.updatableCount))
-              ? Number(s.updatableCount)
-              : Number(s.qrCount || 0);
-            return q + Math.max(0, updatableCount);
-          }, 0);
-        return sum + amt * qrCount;
-      }, 0);
-    }, [allocations, sheets]);
+    const getNextRowsAfterDelete = (rows, id) => {
+      const nextRows = rows.filter((row) => row.id !== id);
+      return nextRows.length > 0 ? nextRows : [createBatchRow()];
+    };
 
-    const selectedCount = useMemo(
-      () => new Set(allocations.flatMap((a) => a.selectedIndexes)).size,
-      [allocations],
-    );
+    const handleAddRow = () => {
+      if (remainingQty <= 0) return;
+      setBatchRows((prev) => [...prev, createBatchRow()]);
+    };
 
-    const handleAssign = async () => {
-      if (assigningSheet) return;
+    const persistBatchRows = async (
+      rows,
+      {
+        allowEmpty = false,
+        successTitle = "Batches updated",
+        successMessage,
+      } = {},
+    ) => {
+      if (isSaving) return;
 
-      const validAllocations = allocations.filter(
-        (a) => a.selectedIndexes.length > 0 && normalizeAmount(a.amount) > 0,
-      );
+      const nextRowViews = getRowViews(rows);
+      const hasPartialInput = nextRowViews.some((row) => {
+        const hasQuantity = row.quantity !== "";
+        const hasAmount = row.amount !== "";
+        return hasQuantity !== hasAmount;
+      });
 
-      if (!validAllocations.length) {
+      if (hasPartialInput) {
         toastError(
-          "Error",
-          "Please select sheets and specify amount for at least one allocation.",
+          "Incomplete batch",
+          "Enter both quantity and cashback amount for each batch row.",
         );
         return;
       }
 
-      // Check for overlaps
-      const allSelected = [];
-      for (const a of validAllocations) {
-        for (const idx of a.selectedIndexes) {
-          if (allSelected.includes(idx)) {
-            toastError(
-              "Error",
-              `Sheet ${toRoman(idx + 1)} is selected in multiple allocations.`,
-            );
-            return;
-          }
-          allSelected.push(idx);
-        }
+      const positiveRows = nextRowViews.filter(
+        (row) => row.quantityValue > 0 && row.amountValue > 0,
+      );
+
+      if (!positiveRows.length && !allowEmpty) {
+        toastError("No batch added", "Add at least one valid batch before saving.");
+        return;
       }
 
-      setAssigningSheet(campaign.id);
+      const assignedQty = nextRowViews.reduce(
+        (sum, row) => sum + row.quantityValue,
+        0,
+      );
+
+      if (assignedQty > totalQrs) {
+        toastError(
+          "Quantity exceeded",
+          `Batch quantity exceeds campaign inventory. Only ${totalQrs} QRs are available.`,
+        );
+        return;
+      }
+
+      setIsSaving(true);
       try {
-        let totalUpdated = 0;
-        let totalRedeemedUnchanged = 0;
-        const noChangeMessages = [];
-        const nextOverrides = { ...sheetOverrides };
+        const response = await updatePostpaidCampaignBatches(
+          token,
+          campaign.id,
+          positiveRows.map((row) => ({
+            id: row.id,
+            quantity: row.quantityValue,
+            cashbackAmount: row.amountValue,
+          })),
+        );
 
-        for (const a of validAllocations) {
-          const targetAmount = normalizeAmount(a.amount);
-          for (const idx of a.selectedIndexes) {
-            const result = await assignSheetCashback(token, campaign.id, {
-              sheetIndex: idx,
-              cashbackAmount: targetAmount,
-            });
-            const updatedCount = Number(result?.updated_qr_count ?? result?.updated ?? 0);
-            const redeemedUnchanged = Number(result?.unchanged_redeemed_count ?? 0);
-
-            totalUpdated += Math.max(0, updatedCount);
-            totalRedeemedUnchanged += Math.max(0, redeemedUnchanged);
-
-            if (updatedCount > 0) {
-              nextOverrides[idx] = targetAmount;
-            } else if (result?.message) {
-              noChangeMessages.push(result.message);
-            }
-          }
-        }
-
-        if (totalUpdated > 0) {
-          success(
-            "Success",
-            `Updated ${totalUpdated} QR(s). Redeemed unchanged: ${totalRedeemedUnchanged}.`,
-          );
-        } else {
-          toastError(
-            "No changes",
-            noChangeMessages[0] ||
-            "Selected sheets had no updatable QR codes.",
-          );
-        }
-
-        setSheetOverrides(nextOverrides);
-        writeStoredOverrides(campaign.id, nextOverrides);
-        setAllocations([
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            amount: "",
-            selectedIndexes: [],
-          },
-        ]);
+        success(
+          successTitle,
+          successMessage ||
+            response?.message ||
+            (positiveRows.length
+              ? "Postpaid batches updated successfully."
+              : "Postpaid batches cleared successfully."),
+        );
+        setBatchRows(rows);
+        setBatchPendingDelete(null);
         await loadCampaigns(token);
-      } catch (err) {
-        toastError("Error", err.message || "Failed to update sheets.");
+        return true;
+      } catch (error) {
+        toastError("Save failed", error.message || "Failed to update postpaid batches.");
+        return false;
       } finally {
-        setAssigningSheet(null);
+        setIsSaving(false);
       }
     };
 
-    const allSelectedAcrossBlocks = useMemo(
-      () => allocations.flatMap((a) => a.selectedIndexes),
-      [allocations],
-    );
-    if (sheets.length === 0) return null;
+    const handleApply = async () => {
+      await persistBatchRows(batchRows);
+    };
+
+    const handleConfirmDelete = async () => {
+      if (!batchPendingDelete) return;
+
+      const nextRows = getNextRowsAfterDelete(batchRows, batchPendingDelete.id);
+
+      if (!batchPendingDelete.isPersisted) {
+        setBatchRows(nextRows);
+        setBatchPendingDelete(null);
+        return;
+      }
+
+      await persistBatchRows(nextRows, {
+        allowEmpty: true,
+        successTitle: "Batch removed",
+        successMessage: `Batch ${batchPendingDelete.batchNumber} removed successfully.`,
+      });
+    };
+
+    if (totalQrs <= 0) return null;
 
     return (
-      <div className="mt-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm transition-all hover:shadow-md">
-        <div className="px-5 py-3 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/30">
+      <div className="mt-4 rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/30">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-emerald-100/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <QrCode className="w-3.5 h-3.5" />
+            <div className="rounded-lg bg-emerald-100/50 p-1.5 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <QrCode className="h-3.5 w-3.5" />
             </div>
-            <span className="text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-              Assign Cashback by Sheet
-            </span>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+                Assign Cashback by Batch
+              </p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                Edit quantity and cashback directly. Saving rewrites the batch values.
+              </p>
+            </div>
           </div>
-          <div className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-zinc-700">
-            {sheets.length} Sheets
+          <div className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400">
+            {remainingQty} QR{remainingQty === 1 ? "" : "s"} remaining
           </div>
         </div>
 
-        <div className="p-5 space-y-6">
-          <div className="space-y-4">
-            {allocations.map((a) => (
-              <AllocationBlock
-                key={a.id}
-                sheets={sheets}
-                selectableSheetIndexes={selectableSheetIndexes}
-                selectedIndexes={a.selectedIndexes}
-                allSelectedAcrossBlocks={allSelectedAcrossBlocks}
-                onSelectionChange={(next) =>
-                  handleUpdateAllocation(a.id, { selectedIndexes: next })
-                }
-                amount={a.amount}
-                onAmountChange={(val) =>
-                  handleUpdateAllocation(a.id, { amount: val })
-                }
-                onDelete={() => handleRemoveAllocation(a.id)}
-                isOnlyOne={allocations.length === 1}
-                onDownloadSheet={
-                  typeof onDownloadQr === "function"
-                    ? (sheetSelection) =>
-                      Array.isArray(sheetSelection)
-                        ? onDownloadQr(campaign, { sheetIndexes: sheetSelection })
-                        : onDownloadQr(campaign, { sheetIndex: sheetSelection })
-                    : undefined
-                }
-              />
-            ))}
+        <div className="space-y-6 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              Recharge Batches
+            </p>
+            <div className="text-right text-[10px] text-gray-500 dark:text-gray-400">
+              <div>
+                {totalAssignedPreview} / {totalQrs} QRs assigned
+              </div>
+              {hasUnsavedChanges && (
+                <div className="font-bold text-amber-600 dark:text-amber-300">
+                  Unsaved changes
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-6 pt-2 border-t border-gray-50 dark:border-zinc-800/50">
+          <div className="space-y-4">
+            {rowViews.map((row, index) => {
+              const reservedBefore = rowViews
+                .slice(0, index)
+                .reduce((sum, item) => sum + item.quantityValue, 0);
+              const remainingForRow = Math.max(0, totalQrs - reservedBefore);
 
+              return (
+                <BatchCard
+                  key={row.id}
+                  batch={row}
+                  canRemove={rowViews.length > 1}
+                  canDownload={
+                    row.isPersisted &&
+                    !hasUnsavedChanges &&
+                    row.quantityValue > 0 &&
+                    typeof onDownloadQr === "function"
+                  }
+                  isSaving={isSaving}
+                  remainingForRow={remainingForRow}
+                  onChange={handleChangeRow}
+                  onDelete={() => setBatchPendingDelete(row)}
+                  onDownload={() =>
+                    onDownloadQr(campaign, {
+                      offset: row.start,
+                      limit: row.quantityValue,
+                      onlyRecharged: true,
+                      statusLabel: `Batch ${row.batchNumber}`,
+                    })
+                  }
+                />
+              );
+            })}
+          </div>
 
-            <div className="flex items-center gap-8">
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
-                  Est. Total Increment
-                </p>
-                <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                  INR {formatAmount(totalIncrementPreview)}
-                </p>
-              </div>
-
+          {remainingQty > 0 && (
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={handleAssign}
-                disabled={assigningSheet === campaign.id || selectedCount === 0}
-                className="h-12 px-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
+                onClick={handleAddRow}
+                disabled={isSaving}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/30 py-4 text-[11px] font-black uppercase tracking-widest text-gray-500 transition-all hover:border-emerald-300 hover:bg-emerald-50/30 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-gray-500 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400"
               >
-                {assigningSheet === campaign.id ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    Apply All Allocations
-                    <CheckCircle2 className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  </>
-                )}
+                <Plus className="h-4 w-4" />
+                Add Another Batch
               </button>
             </div>
-          </div>
+          )}
 
+          <div className="flex flex-col items-end gap-4 border-t border-gray-100 pt-4 dark:border-zinc-800">
+            <div className="text-right">
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Total Cashback
+              </p>
+              <p className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                INR {formatAmount(totalIncrementPreview)}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={isSaving || !hasUnsavedChanges}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Save Changes
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+        <ConfirmModal
+          isOpen={!!batchPendingDelete}
+          onClose={() => setBatchPendingDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Remove batch?"
+          message={
+            batchPendingDelete
+              ? `Remove Batch ${batchPendingDelete.batchNumber}? This will update the saved batch layout immediately.`
+              : ""
           }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
-          }
-          .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #3f3f46;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #10b981;
-          }
-        `,
-          }}
+          confirmText="Remove"
+          cancelText="Keep"
+          type="danger"
+          loading={isSaving}
         />
       </div>
     );

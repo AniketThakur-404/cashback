@@ -380,7 +380,7 @@ const VendorAnalytics = ({
                   content={<CustomBarTooltip />}
                   cursor={{ fill: "rgba(99,102,241,0.06)", radius: 8 }}
                 />
-                <Legend content={<CustomLegend />} />
+                {/* <Legend content={<CustomLegend />} /> */}
                 <Bar
                   dataKey="sent"
                   name="Total"

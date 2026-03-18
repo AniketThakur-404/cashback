@@ -38,6 +38,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiRequest } from "../lib/apiClient";
 import { uploadImage } from "../lib/api";
 import { cn } from "../lib/utils";
+import { useToast } from "../components/ui";
 
 // ============================================================================
 // CONSTANTS & OPTIONS
@@ -284,6 +285,7 @@ const ActionButton = ({ onClick, disabled, loading, children }) => (
 
 const BrandRegistration = () => {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess } = useToast();
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
   // Always start at Step 0 (Account)
@@ -427,7 +429,7 @@ const BrandRegistration = () => {
         if (!formData.city.trim()) return "City is required.";
         if (!formData.state.trim()) return "State is required.";
         if (!formData.pincode.trim()) return "Pincode is required.";
-        if (!formData.gstNumber.trim()) return "GST number is required.";
+        // GST number is now optional
         return "";
       default:
         return "";
@@ -438,6 +440,7 @@ const BrandRegistration = () => {
     const validationError = validateStep(currentStep);
     if (validationError) {
       setError(validationError);
+      toastError("Validation Error", validationError);
       return;
     }
     if (currentStep < 5) {
@@ -459,6 +462,7 @@ const BrandRegistration = () => {
     const validationError = validateStep(currentStep);
     if (validationError && currentStep !== 5) {
       setError(validationError);
+      toastError("Validation Error", validationError);
       return;
     }
 
@@ -555,10 +559,12 @@ const BrandRegistration = () => {
 
       // Success
       // alert("Welcome! Your brand has been registered.");
-      navigate("/vendor"); // Redirect to Dashboard
+      navigate("/vendor-dashboard"); // Redirect to Dashboard
     } catch (err) {
       console.error("Submission error:", err);
-      setError(err.message || "Failed to process request. Please try again.");
+      const msg = err.message || "Failed to process request. Please try again.";
+      setError(msg);
+      toastError("Submission Failed", msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -586,7 +592,7 @@ const BrandRegistration = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Prepaid Plan */}
+        {/* Instant Plan */}
         <button
           type="button"
           onClick={() => handleFieldChange("planType", "prepaid")}
@@ -605,7 +611,11 @@ const BrandRegistration = () => {
           <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-4">
             <Banknote className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Prepaid Plan</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-1">Instant Plan</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-gray-400 line-through">₹25,000</span>
+            <span className="text-lg font-bold text-emerald-600">FREE</span>
+          </div>
           <p className="text-gray-500 text-sm mb-6 grow">
             Pay upfront, get full control. Lock your cashback budget before
             launching campaigns.
@@ -626,7 +636,7 @@ const BrandRegistration = () => {
           </div>
         </button>
 
-        {/* Postpaid Plan */}
+        {/* Flow Plan */}
         <button
           type="button"
           onClick={() => handleFieldChange("planType", "postpaid")}
@@ -645,9 +655,11 @@ const BrandRegistration = () => {
           <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4">
             <CreditCard className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
-            Postpaid Plan
-          </h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-1">Flow Plan</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-gray-400 line-through">₹50,000</span>
+            <span className="text-lg font-bold text-emerald-600">₹20,000</span>
+          </div>
           <p className="text-gray-500 text-sm mb-6 grow">
             Pay as you go. No upfront budget lock — pay only when QR codes are
             redeemed.
@@ -1106,12 +1118,12 @@ const BrandRegistration = () => {
         <div className="space-y-2">
           <Label className="text-base text-gray-900">Street Address</Label>
           <div className="relative">
-            <div className="absolute left-4 top-4 text-gray-400">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
               <MapPin className="w-5 h-5" />
             </div>
-            <Textarea
+            <Input
               placeholder="e.g. 123 Main St, Suite 100"
-              className="pl-12 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all min-h-[100px]"
+              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
               value={formData.address}
               onChange={(e) => handleFieldChange("address", e.target.value)}
             />
@@ -1359,18 +1371,6 @@ const BrandRegistration = () => {
             </motion.div>
           </AnimatePresence>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm flex items-center gap-3 w-full shadow-sm"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            {error}
-          </motion.div>
-        )}
       </div>
 
       {/* Bottom Action Bar */}

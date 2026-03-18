@@ -37,7 +37,6 @@ const CampaignCard = React.memo(
     isStartingBulkExportId,
     onDownloadReadyExport,
     loadCampaigns,
-    setSheetPaymentData,
   }) => {
     const { success, error: toastError } = useToast();
     const [editingDates, setEditingDates] = useState(false);
@@ -69,12 +68,21 @@ const CampaignCard = React.memo(
 
     const statsTotal = Number(campaignStats.totalQRsOrdered);
     const statsRedeemed = Number(campaignStats.totalUsersJoined);
+    const fundedPostpaidQty = Array.isArray(campaign.allocations)
+      ? campaign.allocations.reduce((sum, allocation) => {
+          const quantity = Number.parseInt(allocation?.quantity, 10) || 0;
+          const cashbackAmount = parseNumericValue(allocation?.cashbackAmount, 0);
+          return cashbackAmount > 0 ? sum + quantity : sum;
+        }, 0)
+      : 0;
 
     const totalCount = Number.isFinite(statsTotal)
       ? Math.max(statsTotal, totalQty)
       : totalQty;
     const redeemedCount = Number.isFinite(statsRedeemed) ? statsRedeemed : 0;
-    const activeCount = Math.max(0, totalCount - redeemedCount);
+    const activeBase =
+      campaign.planType === "postpaid" ? fundedPostpaidQty : totalCount;
+    const activeCount = Math.max(0, activeBase - redeemedCount);
 
     const handleSaveDates = async () => {
       try {
@@ -128,25 +136,17 @@ const CampaignCard = React.memo(
             </div>
           </div>
           <div className="hidden sm:flex flex-wrap items-center gap-2 justify-end">
-            <button
-              type="button"
-              onClick={() => onDownloadQr(campaign)}
-              disabled={isDownloadingPdf === campaign.id}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
-            >
-              <Download size={14} />
-              Download QR Code
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadInvoice}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold cursor-pointer"
-            >
-              <FileText size={14} />
-              Download Invoice
-            </button>
-            {typeof onStartBulkExport === "function" && (
-              campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued" ? (
+            {typeof onStartBulkExport === "function" ? (
+              campaignExportJob?.isReady || campaignExportJob?.status === "completed" ? (
+                <button
+                  type="button"
+                  onClick={() => onDownloadReadyExport && onDownloadReadyExport(campaignExportJob)}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-semibold cursor-pointer"
+                >
+                  <Download size={14} />
+                  Download Export
+                </button>
+              ) : (campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued") ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-semibold">
                   <LoaderCircle size={14} className="animate-spin" />
                   {campaignExportJob.status === "queued" ? "Queued" : `Exporting ${campaignExportJob.progressPercent || 0}%`}
@@ -156,17 +156,36 @@ const CampaignCard = React.memo(
                   type="button"
                   onClick={() => onStartBulkExport(campaign)}
                   disabled={isBulkExportStarting}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
                 >
                   {isBulkExportStarting ? (
                     <LoaderCircle size={14} className="animate-spin" />
                   ) : (
-                    <Archive size={14} />
+                    <Download size={14} />
                   )}
-                  {isBulkExportStarting ? "Starting..." : "Background Export"}
+                  {isBulkExportStarting ? "Starting..." : "Download QR Code"}
                 </button>
               )
+            ) : (
+              <button
+                type="button"
+                onClick={() => onDownloadQr(campaign)}
+                disabled={isDownloadingPdf === campaign.id}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
+              >
+                <Download size={14} />
+                Download QR Code
+              </button>
             )}
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold cursor-pointer"
+            >
+              <FileText size={14} />
+              Download Invoice
+            </button>
+
             <button
               type="button"
               onClick={() => onViewDetails(campaign)}
@@ -307,8 +326,8 @@ const CampaignCard = React.memo(
         {campaign.planType === "postpaid" && (
           <PostpaidSheetManager
             campaign={campaign}
+            totalQrs={totalCount}
             token={token}
-            setSheetPaymentData={setSheetPaymentData}
             loadCampaigns={loadCampaigns}
             onDownloadQr={onDownloadQr}
           />

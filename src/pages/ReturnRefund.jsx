@@ -160,22 +160,22 @@ const ReturnRefund = () => {
 
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              6. Prepaid and Postpaid Plan Policy
+              6. Instant and Flow Plan Policy
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              Assured Rewards offers two operational models for vendors: Prepaid
-              Plan and Postpaid Plan. The terms applicable to each plan are
-              outlined below.
+              Assured Rewards offers two operational models for vendors: Instant
+              Plan and Flow Plan. The terms applicable to each plan are outlined
+              below.
               <br />
               <br />
-              <strong>Prepaid Plan</strong>
+              <strong>Instant Plan</strong>
               <br />
-              Under the Prepaid Plan, vendors are required to make advance
+              Under the Instant Plan, vendors are required to make advance
               payment before QR-based cashback generation or related services
               are activated. Cashback credits and services are processed only
               against the available prepaid balance.
               <br />
-              All prepaid amounts once credited to the vendor wallet are
+              All instant plan amounts once credited to the vendor wallet are
               non-refundable. Vendors are responsible for ensuring accurate
               usage and monitoring their wallet balance before initiating
               cashback generation. Unused prepaid balances may remain available
@@ -183,27 +183,27 @@ const ReturnRefund = () => {
               cash withdrawal unless explicitly approved by Assured Rewards.
               <br />
               <br />
-              <strong>Postpaid Plan</strong>
+              <strong>Flow Plan</strong>
               <br />
-              Under the Postpaid Plan, vendors are permitted to generate
-              QR-based cashback and related services first, and payment must be
-              made thereafter based on actual usage.
+              Under the Flow Plan, vendors are permitted to generate QR-based
+              cashback and related services first, and payment must be made
+              thereafter based on actual usage.
               <br />
-              Vendors enrolled in the Postpaid Plan are obligated to settle all
+              Vendors enrolled in the Flow Plan are obligated to settle all
               outstanding dues within the specified billing cycle. Failure to
               make timely payments may result in suspension of services,
               restriction of QR generation, or permanent termination of access
               to the Platform.
               <br />
-              Amounts payable under the Postpaid Plan are non-refundable once
+              Amounts payable under the Flow Plan are non-refundable once
               cashback has been generated or services have been utilized.
               <br />
               <br />
               <strong>QR Generation Technology Fee</strong>
               <br />
               A QR generation technology fee shall be applicable under both
-              Prepaid and Postpaid Plans as per the prevailing commercial norms
-              of Assured Rewards.
+              Instant and Flow Plans as per the prevailing commercial norms of
+              Assured Rewards.
               <br />
               This fee covers technology infrastructure, system processing,
               validation mechanisms, and platform maintenance associated with QR

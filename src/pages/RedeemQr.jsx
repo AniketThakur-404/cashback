@@ -182,7 +182,7 @@ const RedeemQr = () => {
   useEffect(() => {
     if (redeemStatus?.success && data?.productId) {
       const timer = setTimeout(() => {
-        navigate(`/product-info/${data.productId}`);
+        navigate("/wallet");
       }, 2500);
       return () => clearTimeout(timer);
     }

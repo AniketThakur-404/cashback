@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { format, differenceInDays, subDays, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
@@ -87,8 +87,6 @@ import {
   downloadCampaignQrPdf,
   fetchCampaignQrPdfBlob,
   startCampaignBulkQrExport,
-  assignSheetCashback,
-  paySheetCashback,
   createPaymentOrder,
   verifyPayment,
   getUserNotifications,
@@ -98,6 +96,7 @@ import {
   resetPasswordWithOtp,
   getVendorRedemptions,
   getVendorRedemptionsMap,
+  getVendorSummaryAnalytics,
   getVendorCustomers,
   exportVendorCustomers,
   getVendorInvoices,
@@ -117,11 +116,11 @@ import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
 import VendorSupport from "../components/vendor/VendorSupport";
-import BulkExportQueue from "../components/vendor/BulkExportQueue";
 import CustomerDetailsModal from "../components/vendor/CustomerDetailsModal";
 import AdvancedFilters from "../components/vendor/AdvancedFilters";
 import ProductEditModal from "../components/ProductEditModal";
 import StarBorder from "../components/StarBorder";
+import { WelcomeModal } from "../components/vendor/WelcomeModal";
 
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { useToast } from "../components/ui";
@@ -149,8 +148,6 @@ const VENDOR_TOKEN_KEY = "cashback_vendor_token";
 const CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD = 10000;
 const CAMPAIGN_QR_CHUNK_SIZE = 5000;
 const BULK_EXPORT_JOB_POLL_MS = 10000;
-const BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY =
-  "vendor_bulk_export_downloaded_v1";
 // Redundant formatAmount removed
 
 const formatCompactAmount = (value) => {
@@ -169,27 +166,6 @@ const formatCompactAmount = (value) => {
     .replace(/(\.\d*[1-9])0+$/, "$1");
 
   return `${sign}${compactText}K`;
-};
-
-const readDownloadedBulkExportIds = () => {
-  try {
-    const raw = localStorage.getItem(BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY);
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-  } catch {
-    return [];
-  }
-};
-
-const persistDownloadedBulkExportIds = (ids) => {
-  try {
-    localStorage.setItem(
-      BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY,
-      JSON.stringify(Array.from(ids).slice(-100)),
-    );
-  } catch {
-    // Ignore localStorage write issues.
-  }
 };
 
 const triggerBlobDownload = (blob, fileName) => {
@@ -441,6 +417,7 @@ const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
 const VendorDashboard = () => {
   const { section } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Map URL section to internal state identifiers if necessary, or use directly
   // 'overview', 'brand', 'campaigns', 'products', 'wallet', 'scan'
@@ -494,17 +471,13 @@ const VendorDashboard = () => {
     useState(false);
   const [bulkExportJobs, setBulkExportJobs] = useState([]);
   const [bulkExportJobsError, setBulkExportJobsError] = useState("");
-  const [isLoadingBulkExportJobs, setIsLoadingBulkExportJobs] =
-    useState(false);
+  const [isLoadingBulkExportJobs, setIsLoadingBulkExportJobs] = useState(false);
   const [startingBulkExportKey, setStartingBulkExportKey] = useState("");
   const [downloadingBulkExportJobId, setDownloadingBulkExportJobId] =
     useState("");
   const [cancellingJobId, setCancellingJobId] = useState(null);
   const [deletingExportJobId, setDeletingExportJobId] = useState(null);
   const lastNotificationCountRef = useRef(null);
-  const autoDownloadedBulkExportIdsRef = useRef(
-    new Set(readDownloadedBulkExportIds()),
-  );
   const lastAutoFilledCashbackRef = useRef(null);
   const notificationsDropdownRef = useRef(null);
   const notificationsTriggerRef = useRef(null);
@@ -557,8 +530,7 @@ const VendorDashboard = () => {
     dateFrom: "",
     dateTo: "",
     campaignId: "",
-    city: "",
-    state: "",
+    location: "",
     mobile: "",
     productId: "",
     invoiceNo: "",
@@ -618,6 +590,10 @@ const VendorDashboard = () => {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [redemptionTrend, setRedemptionTrend] = useState([]);
+  const [isLoadingRedemptionTrend, setIsLoadingRedemptionTrend] = useState(false);
+  const [redemptionTrendError, setRedemptionTrendError] = useState("");
   const [otpStatus, setOtpStatus] = useState("");
   const [otpError, setOtpError] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
@@ -632,6 +608,7 @@ const VendorDashboard = () => {
     defaultPlanType: localStorage.getItem(VENDOR_PLAN_TYPE_KEY) || "prepaid",
   });
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [registrationForm, setRegistrationForm] = useState({
     businessName: "",
     contactName: "",
@@ -742,14 +719,13 @@ const VendorDashboard = () => {
     totalBudget: "",
     productId: "",
     planType: localStorage.getItem(VENDOR_PLAN_TYPE_KEY) || "prepaid",
-    voucherType: "none",
+    voucherType: "digital_voucher",
+    voucherDesignUrl: "assured_gift_card_placeholder.png",
     startDate: new Date().toISOString().slice(0, 10),
     endDate: new Date(new Date().setMonth(new Date().getMonth() + 3))
       .toISOString()
       .slice(0, 10),
   });
-  // Redundant states removed
-  const [sheetPaymentData, setSheetPaymentData] = useState(null);
   const [campaignStatus, setCampaignStatus] = useState("");
   const [campaignError, setCampaignError] = useState("");
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
@@ -757,6 +733,12 @@ const VendorDashboard = () => {
     { id: Date.now(), cashbackAmount: "", quantity: "", totalBudget: "" },
   ]);
   const [campaignTab, setCampaignTab] = useState("create"); // 'create', 'pending', 'active'
+
+  useEffect(() => {
+    if (location.state?.campaignTab) {
+      setCampaignTab(location.state.campaignTab);
+    }
+  }, [location.state]);
   const [selectedPendingCampaign, setSelectedPendingCampaign] = useState(null);
   const [selectedActiveCampaign, setSelectedActiveCampaign] = useState(null);
   const [campaignQrBreakdownMap, setCampaignQrBreakdownMap] = useState({});
@@ -766,8 +748,7 @@ const VendorDashboard = () => {
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
   const [bulkExportPrompt, setBulkExportPrompt] = useState(null);
-  const [isConfirmingBulkExport, setIsConfirmingBulkExport] =
-    useState(false);
+  const [isConfirmingBulkExport, setIsConfirmingBulkExport] = useState(false);
 
   const handleAddCampaignRow = () => {
     setCampaignRows((prev) => [
@@ -782,13 +763,13 @@ const VendorDashboard = () => {
       return remaining.length
         ? remaining
         : [
-          {
-            id: Date.now(),
-            cashbackAmount: "",
-            quantity: "",
-            totalBudget: "",
-          },
-        ];
+            {
+              id: Date.now(),
+              cashbackAmount: "",
+              quantity: "",
+              totalBudget: "",
+            },
+          ];
     });
   };
 
@@ -1294,6 +1275,9 @@ const VendorDashboard = () => {
     campaignId,
     sheetIndexes,
     qrsPerSheet,
+    onlyRecharged,
+    exactAmount,
+    qrQuantity,
   }) => {
     const normalizedSheetIndexes = Array.from(
       new Set(
@@ -1306,6 +1290,8 @@ const VendorDashboard = () => {
     if (!normalizedSheetIndexes.length) return 0;
 
     const totalSheets = normalizedSheetIndexes.length;
+    let remainingToLimit = qrQuantity && qrQuantity > 0 ? qrQuantity : Infinity;
+
     setDownloadProgress({
       show: true,
       progress: 8,
@@ -1314,7 +1300,11 @@ const VendorDashboard = () => {
 
     const mergedPdf = await PDFDocument.create();
 
+    let successfulSheets = 0;
+
     for (let index = 0; index < totalSheets; index += 1) {
+      if (remainingToLimit <= 0) break;
+
       const sheetIndex = normalizedSheetIndexes[index];
       const position = index + 1;
 
@@ -1324,18 +1314,34 @@ const VendorDashboard = () => {
         message: `Downloading sheet ${sheetIndex + 1} (${position}/${totalSheets})...`,
       });
 
-      const { blob } = await fetchCampaignQrPdfBlob(token, campaignId, {
-        fast: 1,
-        skipLogo: 1,
-        sheetIndex,
-        qrsPerSheet,
-      });
-      const sourcePdf = await PDFDocument.load(await blob.arrayBuffer());
-      const copiedPages = await mergedPdf.copyPages(
-        sourcePdf,
-        sourcePdf.getPageIndices(),
-      );
-      copiedPages.forEach((page) => mergedPdf.addPage(page));
+      try {
+        const sheetLimit = Math.min(remainingToLimit, qrsPerSheet || 25);
+        const { blob } = await fetchCampaignQrPdfBlob(token, campaignId, {
+          fast: 1,
+          skipLogo: 1,
+          sheetIndex,
+          qrsPerSheet,
+          limit: sheetLimit,
+          ...(onlyRecharged ? { onlyRecharged: 1 } : {}),
+          ...(exactAmount ? { exactAmount } : {}),
+        });
+        const sourcePdf = await PDFDocument.load(await blob.arrayBuffer());
+        const copiedPages = await mergedPdf.copyPages(
+          sourcePdf,
+          sourcePdf.getPageIndices(),
+        );
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+        successfulSheets += 1;
+        
+        // Use a safe estimate if the response header doesn't specify count
+        remainingToLimit -= sheetLimit;
+      } catch (err) {
+        if (err?.status === 400 && err?.message?.toLowerCase().includes("no qr codes found")) {
+          console.warn(`Skipped empty sheet ${sheetIndex + 1}`);
+        } else {
+          throw err;
+        }
+      }
 
       setDownloadProgress({
         show: true,
@@ -1347,6 +1353,10 @@ const VendorDashboard = () => {
       });
     }
 
+    if (successfulSheets === 0) {
+      throw new Error("No matching QR codes found on the selected sheets.");
+    }
+
     const mergedPdfBytes = await mergedPdf.save();
     const mergedBlob = new Blob([mergedPdfBytes], {
       type: "application/pdf",
@@ -1356,9 +1366,7 @@ const VendorDashboard = () => {
       normalizedSheetIndexes[normalizedSheetIndexes.length - 1] + 1;
     const sheetLabel =
       totalSheets <= 3
-        ? normalizedSheetIndexes
-          .map((sheetIndex) => sheetIndex + 1)
-          .join("-")
+        ? normalizedSheetIndexes.map((sheetIndex) => sheetIndex + 1).join("-")
         : `${firstSheetLabel}-to-${lastSheetLabel}_${totalSheets}-sheets`;
     const mergedFileName = `QR_Campaign_${campaignId.slice(-8)}_Sheets_${sheetLabel}_${Date.now()}.pdf`;
     triggerBlobDownload(mergedBlob, mergedFileName);
@@ -1382,8 +1390,8 @@ const VendorDashboard = () => {
     const estimatedQrs = getCampaignQrCountEstimate(campaign);
     const parsedSheetIndexes = Array.isArray(options?.sheetIndexes)
       ? options.sheetIndexes
-        .map((value) => Number.parseInt(value, 10))
-        .filter((value) => Number.isFinite(value) && value >= 0)
+          .map((value) => Number.parseInt(value, 10))
+          .filter((value) => Number.isFinite(value) && value >= 0)
       : [];
     const uniqueSheetIndexes = Array.from(new Set(parsedSheetIndexes)).sort(
       (a, b) => a - b,
@@ -1398,6 +1406,20 @@ const VendorDashboard = () => {
     const isMultiSheetDownload = uniqueSheetIndexes.length > 1;
     const isSheetDownload =
       Number.isFinite(resolvedSheetIndex) && resolvedSheetIndex >= 0;
+    const parsedOffset = Number.parseInt(options?.offset, 10);
+    const resolvedOffset =
+      Number.isFinite(parsedOffset) && parsedOffset >= 0 ? parsedOffset : null;
+    const parsedLimit = Number.parseInt(
+      options?.limit ?? options?.qrQuantity,
+      10,
+    );
+    const resolvedLimit =
+      Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+    const isRangeDownload =
+      !isMultiSheetDownload &&
+      !isSheetDownload &&
+      resolvedOffset !== null &&
+      resolvedLimit !== null;
     const resolvedQrsPerSheet =
       Number.parseInt(campaign?.qrsPerSheet, 10) > 0
         ? Number.parseInt(campaign.qrsPerSheet, 10)
@@ -1405,11 +1427,15 @@ const VendorDashboard = () => {
     const downloadParams = {
       fast: 1,
       skipLogo: 1,
+      ...(options?.onlyRecharged ? { onlyRecharged: 1 } : {}),
+      ...(options?.exactAmount ? { exactAmount: options.exactAmount } : {}),
+      ...(resolvedOffset !== null ? { offset: resolvedOffset } : {}),
+      ...(resolvedLimit !== null ? { limit: resolvedLimit } : {}),
       ...(isSheetDownload
         ? {
-          sheetIndex: resolvedSheetIndex,
-          qrsPerSheet: resolvedQrsPerSheet,
-        }
+            sheetIndex: resolvedSheetIndex,
+            qrsPerSheet: resolvedQrsPerSheet,
+          }
         : {}),
     };
 
@@ -1419,6 +1445,8 @@ const VendorDashboard = () => {
           campaignId,
           sheetIndexes: uniqueSheetIndexes,
           qrsPerSheet: resolvedQrsPerSheet,
+          onlyRecharged: !!options?.onlyRecharged,
+          exactAmount: options?.exactAmount,
         });
         setStatusWithTimeout(
           `Merged ${mergedCount} selected sheets into one PDF successfully.`,
@@ -1431,6 +1459,13 @@ const VendorDashboard = () => {
         setStatusWithTimeout(
           `Sheet ${resolvedSheetIndex + 1} QR PDF downloaded successfully.`,
         );
+      } else if (isRangeDownload) {
+        const scopeLabel = options?.statusLabel || "Selected batch";
+        await runDownloadWithProgress(
+          () => downloadCampaignQrPdf(token, campaignId, downloadParams),
+          `Preparing ${scopeLabel.toLowerCase()} PDF...`,
+        );
+        setStatusWithTimeout(`${scopeLabel} QR PDF downloaded successfully.`);
       } else if (estimatedQrs >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD) {
         const totalParts = await downloadCampaignPdfInChunks({
           campaignId,
@@ -1501,9 +1536,7 @@ const VendorDashboard = () => {
     if (!token) return;
     const downloadKey = `inventory:${selectedQrSeries || "all"}`;
     setIsDownloadingPdf(downloadKey);
-    const selectedSeriesCount = getInventoryQrCountEstimate(
-      selectedQrSeries,
-    );
+    const selectedSeriesCount = getInventoryQrCountEstimate(selectedQrSeries);
 
     try {
       if (selectedSeriesCount >= CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD) {
@@ -1532,18 +1565,6 @@ const VendorDashboard = () => {
     }
   };
 
-  const rememberBulkExportDownloaded = (jobId) => {
-    if (!jobId) return;
-    autoDownloadedBulkExportIdsRef.current.add(jobId);
-    persistDownloadedBulkExportIds(autoDownloadedBulkExportIdsRef.current);
-  };
-
-  const forgetBulkExportDownloaded = (jobId) => {
-    if (!jobId) return;
-    autoDownloadedBulkExportIdsRef.current.delete(jobId);
-    persistDownloadedBulkExportIds(autoDownloadedBulkExportIdsRef.current);
-  };
-
   const handleDownloadBulkExportJob = async (
     job,
     { authToken = token, silent = false } = {},
@@ -1553,7 +1574,6 @@ const VendorDashboard = () => {
     setDownloadingBulkExportJobId(job.id);
     try {
       await downloadVendorBulkQrExport(authToken, job.id);
-      rememberBulkExportDownloaded(job.id);
 
       if (!silent) {
         const label = job.scopeLabel || "QR export";
@@ -1563,10 +1583,8 @@ const VendorDashboard = () => {
 
       await loadBulkExportJobs(authToken, {
         silent: true,
-        allowAutoDownload: false,
       });
     } catch (err) {
-      forgetBulkExportDownloaded(job.id);
       if (handleVendorAccessError(err)) return;
       if (!silent) {
         const errorMsg = err.message || "Failed to download bulk export.";
@@ -1581,7 +1599,7 @@ const VendorDashboard = () => {
 
   const loadBulkExportJobs = async (
     authToken = token,
-    { silent = false, allowAutoDownload = true } = {},
+    { silent = false } = {},
   ) => {
     if (!authToken) return [];
 
@@ -1601,30 +1619,6 @@ const VendorDashboard = () => {
 
       // A successful fetch clears any lingering error (even from silent polls).
       setBulkExportJobsError("");
-
-      if (allowAutoDownload) {
-        const readyJob = items.find(
-          (job) =>
-            job?.isReady &&
-            job?.id &&
-            !autoDownloadedBulkExportIdsRef.current.has(job.id),
-        );
-
-        if (readyJob) {
-          try {
-            await handleDownloadBulkExportJob(readyJob, {
-              authToken,
-              silent: true,
-            });
-            info(
-              "Bulk Export Ready",
-              `${readyJob.scopeLabel || "QR export"} downloaded automatically.`,
-            );
-          } catch {
-            // Keep the job visible in the queue for manual retry.
-          }
-        }
-      }
 
       return items;
     } catch (err) {
@@ -1673,9 +1667,13 @@ const VendorDashboard = () => {
       );
       await loadBulkExportJobs(token, {
         silent: true,
-        allowAutoDownload: false,
       });
     } catch (err) {
+      if (err?.status === 404 || err?.status === 501) {
+        setBulkExportPrompt(null);
+        await handleDownloadCampaignPdf(campaign);
+        return;
+      }
       if (handleVendorAccessError(err)) throw err;
       const errorMsg = err.message || "Failed to start campaign export.";
       setStatusWithTimeout(errorMsg);
@@ -1711,9 +1709,13 @@ const VendorDashboard = () => {
       );
       await loadBulkExportJobs(token, {
         silent: true,
-        allowAutoDownload: false,
       });
     } catch (err) {
+      if (err?.status === 404 || err?.status === 501) {
+        setBulkExportPrompt(null);
+        await handleDownloadInventoryPdf();
+        return;
+      }
       if (handleVendorAccessError(err)) throw err;
       const errorMsg = err.message || "Failed to start inventory export.";
       setStatusWithTimeout(errorMsg);
@@ -1732,10 +1734,11 @@ const VendorDashboard = () => {
       kind: "campaign",
       campaign,
       title: "Start background QR export?",
-      message: `${estimatedQrs > 0
-        ? `${estimatedQrs.toLocaleString()} QR codes`
-        : "This campaign"
-        } will be queued and generated in the background. You can continue using the dashboard, and we will notify you when the file is ready to download.`,
+      message: `${
+        estimatedQrs > 0
+          ? `${estimatedQrs.toLocaleString()} QR codes`
+          : "This campaign"
+      } will be queued and generated in the background. You can continue using the dashboard, and we will notify you when the file is ready to download.`,
       confirmText: "Start Export",
     });
   };
@@ -1750,10 +1753,11 @@ const VendorDashboard = () => {
       kind: "inventory",
       seriesCode,
       title: "Start background inventory export?",
-      message: `${estimatedQrs > 0
-        ? `${estimatedQrs.toLocaleString()} inventory QR codes`
-        : "The selected inventory"
-        } from ${scopeLabel} will be packaged in the background. You can keep working while the export runs, and download will trigger when it is ready.`,
+      message: `${
+        estimatedQrs > 0
+          ? `${estimatedQrs.toLocaleString()} inventory QR codes`
+          : "The selected inventory"
+      } from ${scopeLabel} will be packaged in the background. You can keep working while the export runs, and download will trigger when it is ready.`,
       confirmText: "Start Export",
     });
   };
@@ -1781,7 +1785,10 @@ const VendorDashboard = () => {
 
   const handleCancelExportJob = async (job) => {
     if (!token || !job?.id) return;
-    if (!window.confirm("Are you sure you want to cancel this background export?")) return;
+    if (
+      !window.confirm("Are you sure you want to cancel this background export?")
+    )
+      return;
 
     setCancellingJobId(job.id);
     try {
@@ -1793,7 +1800,7 @@ const VendorDashboard = () => {
       if (!handleVendorAccessError(err)) {
         toastError(
           "Failed to Cancel",
-          err.message || "Could not cancel the export."
+          err.message || "Could not cancel the export.",
         );
       }
     } finally {
@@ -1809,10 +1816,16 @@ const VendorDashboard = () => {
       await deleteVendorBulkExportJob(token, job.id);
     } catch (err) {
       // 404 means job already gone — treat as success and remove from UI
-      if (!err?.message?.includes('404') && !err?.message?.includes('not found')) {
+      if (
+        !err?.message?.includes("404") &&
+        !err?.message?.includes("not found")
+      ) {
         console.error("Delete API Error:", err);
         if (!handleVendorAccessError(err)) {
-          toastError("Failed to Delete", err.message || "Could not delete the export record.");
+          toastError(
+            "Failed to Delete",
+            err.message || "Could not delete the export record.",
+          );
           setDeletingExportJobId(null);
           return;
         }
@@ -1825,7 +1838,6 @@ const VendorDashboard = () => {
 
   const clearSession = (message) => {
     localStorage.removeItem(VENDOR_TOKEN_KEY);
-    localStorage.removeItem(BULK_EXPORT_AUTO_DOWNLOAD_STORAGE_KEY);
     setToken(null);
     setVendorInfo(null);
     setAuthStatus(message || "");
@@ -1840,7 +1852,6 @@ const VendorDashboard = () => {
     setDownloadingBulkExportJobId("");
     setBulkExportPrompt(null);
     setIsConfirmingBulkExport(false);
-    autoDownloadedBulkExportIdsRef.current = new Set();
     lastNotificationCountRef.current = null;
     setLastBatchSummary(null);
     setDeletingBatchKey(null);
@@ -2136,7 +2147,7 @@ const VendorDashboard = () => {
 
     const expectedTotalRaw = Number(
       campaignStatsMap[campaignId]?.totalQRsOrdered ??
-      campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
+        campaignStatsMap[`title:${campaign?.title}`]?.totalQRsOrdered,
     );
     const expectedTotal = Number.isFinite(expectedTotalRaw)
       ? Math.max(0, expectedTotalRaw)
@@ -2300,8 +2311,7 @@ const VendorDashboard = () => {
     if (dashboardFilters.dateTo) params.dateTo = dashboardFilters.dateTo;
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
-    if (dashboardFilters.city) params.city = dashboardFilters.city.trim();
-    if (dashboardFilters.state) params.state = dashboardFilters.state.trim();
+    if (dashboardFilters.location) params.location = dashboardFilters.location.trim();
     if (dashboardFilters.productId)
       params.productId = dashboardFilters.productId;
     if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
@@ -2385,13 +2395,17 @@ const VendorDashboard = () => {
   };
 
   const reverseGeocodePoints = async (points) => {
-    const needGeocode = points.filter(
-      (pt) =>
-        !pt.city &&
-        !pt.state &&
-        Number.isFinite(Number(pt.lat)) &&
-        Number.isFinite(Number(pt.lng)),
-    );
+    const needGeocode = points.filter((pt) => {
+      if (
+        !Number.isFinite(Number(pt.lat)) ||
+        !Number.isFinite(Number(pt.lng))
+      ) {
+        return false;
+      }
+      // Geocode if city is empty, '-', or just a single word (like "Delhi")
+      const loc = pt.city || "";
+      return !loc || loc === "-" || !loc.includes(",");
+    });
     if (needGeocode.length === 0) return points;
 
     // Deduplicate by rounded coords to minimise API calls
@@ -2407,22 +2421,47 @@ const VendorDashboard = () => {
     for (const [key, pt] of entries) {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${pt.lat}&lon=${pt.lng}&format=json&zoom=10&accept-language=en`,
+          `https://nominatim.openstreetmap.org/reverse?lat=${pt.lat}&lon=${pt.lng}&format=json&zoom=18&accept-language=en`,
           { headers: { "User-Agent": "AssuredRewards/1.0" } },
         );
         if (res.ok) {
           const data = await res.json();
           const addr = data?.address || {};
-          const city =
-            addr.city ||
-            addr.town ||
-            addr.village ||
-            addr.suburb ||
-            addr.county ||
+          const landmark =
+            addr.amenity ||
+            addr.building ||
+            addr.shop ||
+            addr.office ||
+            addr.leisure ||
             "";
+          const road = addr.road || "";
+          let area = addr.suburb || addr.neighbourhood || "";
+          area = area.replace(/\s+Tehsil/gi, "");
+          const district = addr.city_district || addr.district || "";
+          const city = addr.city || addr.town || addr.village || "";
           const state = addr.state || "";
           const pincode = addr.postcode || "";
-          resolved.set(key, { city, state, pincode });
+
+          const displayParts = [landmark, road, area, district, city, state]
+            .filter(Boolean)
+            .map((s) => s.trim());
+
+          const uniqueParts = [];
+          displayParts.forEach((p) => {
+            if (
+              uniqueParts.length === 0 ||
+              uniqueParts[uniqueParts.length - 1] !== p
+            ) {
+              uniqueParts.push(p);
+            }
+          });
+
+          const dbCityParts = [landmark, road, area, district, city]
+            .filter(Boolean)
+            .map((s) => s.trim());
+          const dbCity = dbCityParts.join(", ");
+
+          resolved.set(key, { city: dbCity, state: state, pincode });
         }
       } catch {
         // silently skip failed geocodes
@@ -2430,7 +2469,6 @@ const VendorDashboard = () => {
     }
 
     return points.map((pt) => {
-      if (pt.city || pt.state) return pt;
       const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
       const geo = resolved.get(key);
       if (geo) {
@@ -2595,14 +2633,14 @@ const VendorDashboard = () => {
   const handleClusterClick = (cluster) => {
     const city = cluster.city || "";
     if (!city) return;
-    setDashboardFilters((prev) => ({ ...prev, city, mobile: "" }));
+    setDashboardFilters((prev) => ({ ...prev, location: city, mobile: "" }));
     setClusterCityFilter(city);
     navigate("/vendor/customers");
   };
 
   const handleClearClusterFilter = () => {
     setClusterCityFilter(null);
-    setDashboardFilters((prev) => ({ ...prev, city: "" }));
+    setDashboardFilters((prev) => ({ ...prev, location: "" }));
     loadCustomersData(token);
   };
 
@@ -2717,6 +2755,26 @@ const VendorDashboard = () => {
     }
   };
 
+  const loadRedemptionTrend = async (authToken = token, params = {}) => {
+    if (!authToken) return;
+    setIsLoadingRedemptionTrend(true);
+    setRedemptionTrendError("");
+    try {
+      const data = await getVendorSummaryAnalytics(authToken, {
+        campaignId: overviewCampaignId === "all" ? undefined : overviewCampaignId,
+        from: dateFilter.from,
+        to: dateFilter.to,
+        ...params,
+      });
+      setRedemptionTrend(Array.isArray(data?.trend) ? data.trend : []);
+    } catch (err) {
+      if (handleVendorAccessError(err)) return;
+      setRedemptionTrendError(err.message || "Failed to load trend data.");
+    } finally {
+      setIsLoadingRedemptionTrend(false);
+    }
+  };
+
   const refreshCampaignPaymentState = (
     authToken = token,
     { includeQrs = true, includeOrders = false } = {},
@@ -2728,6 +2786,7 @@ const VendorDashboard = () => {
       loadTransactions(authToken),
       loadCampaigns(authToken),
       loadCampaignStats(authToken),
+      loadRedemptionTrend(authToken),
       loadQrInventorySeries(authToken),
       loadNotifications(authToken),
     ];
@@ -2925,6 +2984,16 @@ const VendorDashboard = () => {
   };
 
   useEffect(() => {
+    if (vendorInfo?.id && Array.isArray(campaigns)) {
+      const storageKey = `hasSeenWelcome_${vendorInfo.id}`;
+      const hasSeen = localStorage.getItem(storageKey);
+      if (!hasSeen && campaigns.length === 0) {
+        setShowWelcomeModal(true);
+      }
+    }
+  }, [vendorInfo, campaigns]);
+
+  useEffect(() => {
     if (!token) return;
     const initializeVendorData = async () => {
       await loadVendor(token);
@@ -2981,6 +3050,15 @@ const VendorDashboard = () => {
     const interval = setInterval(() => {
       loadBulkExportJobs(token, { silent: true });
     }, BULK_EXPORT_JOB_POLL_MS);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  // Dashboard Auto-Refresh Polling
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(() => {
+      refreshCampaignPaymentState(token, { includeQrs: true, includeOrders: true });
+    }, 30000);
     return () => clearInterval(interval);
   }, [token]);
 
@@ -3099,6 +3177,14 @@ const VendorDashboard = () => {
   // Scroll to top on route/tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+
+    // Auto-fill wallet recharge if redirected with a shortfall
+    if (activeTab === "wallet" && lastAutoFilledCashbackRef.current !== null) {
+      const shortfall = lastAutoFilledCashbackRef.current;
+      if (typeof shortfall === "number" && shortfall > 0) {
+        setRechargeAmount(String(Math.ceil(shortfall)));
+      }
+    }
   }, [activeTab]);
 
   // Load customer data when switching to Customer Summary sub-tab
@@ -3322,7 +3408,12 @@ const VendorDashboard = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     campaign: null,
-    voucherType: null,
+    voucherType: "digital_voucher",
+    voucherDesignUrl: "assured_gift_card_placeholder.png",
+    voucherHeading: "THANK YOU FOR SHOPPING WITH US.",
+    voucherSubtext:
+      "Scan the QR code below and receive your assured cashback reward.",
+    voucherExtraText: "",
     rows: [],
   });
 
@@ -3332,20 +3423,25 @@ const VendorDashboard = () => {
     const initialRows =
       campaign.allocations && campaign.allocations.length > 0
         ? campaign.allocations.map((a) => ({
-          ...a,
-          id: Date.now() + Math.random(),
-        }))
+            ...a,
+            id: Date.now() + Math.random(),
+          }))
         : [
-          {
-            id: Date.now(),
-            cashbackAmount: str(campaign.cashbackAmount),
-            quantity: "",
-          },
-        ];
+            {
+              id: Date.now(),
+              cashbackAmount: String(campaign.cashbackAmount ?? ""),
+              quantity: "",
+            },
+          ];
 
     setPaymentForm({
       campaign,
-      voucherType: null,
+      voucherType: "digital_voucher",
+      voucherDesignUrl: "assured_gift_card_placeholder.png",
+      voucherHeading: "THANK YOU FOR SHOPPING WITH US.",
+      voucherSubtext:
+        "Scan the QR code below and receive your assured cashback reward.",
+      voucherExtraText: "",
       rows: initialRows,
     });
     setCampaignError("");
@@ -3378,8 +3474,7 @@ const VendorDashboard = () => {
     setCampaignError("");
 
     try {
-      const resolvedVoucherType =
-        voucherType || campaign.voucherType || "none";
+      const resolvedVoucherType = voucherType || campaign.voucherType || "none";
       const paymentRows = validRows.map((r) => ({
         cashbackAmount: parseNumericValue(r.cashbackAmount),
         quantity: parseNumericValue(r.quantity),
@@ -3409,20 +3504,34 @@ const VendorDashboard = () => {
       const currentBalance = parseNumericValue(
         wallet?.availableBalance,
         parseNumericValue(wallet?.balance, 0) -
-        parseNumericValue(wallet?.lockedBalance, 0),
+          parseNumericValue(wallet?.lockedBalance, 0),
       );
 
       if (currentBalance < totalCost) {
         const shortfall = Math.max(totalCost - currentBalance, 0);
-        setCampaignError(
-          `Insufficient wallet balance. Add INR ${shortfall.toFixed(2)} in Wallet before activating this campaign.`,
-        );
+        // Pre-fill the top-up amount
+        lastAutoFilledCashbackRef.current = shortfall;
+        // Close modal and redirect to wallet
+        setShowPaymentModal(false);
+        setCampaignError("");
+        setIsPayingCampaign(false);
+        navigate("/vendor/wallet");
+        setTimeout(() => {
+          info(
+            "Insufficient Balance",
+            `Please add INR ${formatAmount(shortfall)} to your wallet to activate this campaign.`,
+          );
+        }, 300);
         return;
       }
 
       await payVendorCampaign(token, campaign.id, {
         voucherType: resolvedVoucherType,
         allocations: paymentRows,
+        voucherDesignUrl: paymentForm.voucherDesignUrl,
+        voucherHeading: paymentForm.voucherHeading,
+        voucherSubtext: paymentForm.voucherSubtext,
+        voucherExtraText: paymentForm.voucherExtraText,
       });
 
       setCampaignStatusWithTimeout("Campaign paid and activated!");
@@ -3572,11 +3681,11 @@ const VendorDashboard = () => {
       validRows.length > 0
         ? validRows
         : [
-          {
-            cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
-            quantity: 1,
-          },
-        ];
+            {
+              cashbackAmount: parseNumericValue(campaign.cashbackAmount, 0),
+              quantity: 1,
+            },
+          ];
 
     if (rowsToUse.length === 0 || rowsToUse[0].cashbackAmount <= 0) {
       setQrOrderError(
@@ -3676,7 +3785,7 @@ const VendorDashboard = () => {
       } else {
         setQrOrderStatus(
           `Generated ${successes} QRs successfully.` +
-          (failures > 0 ? ` (${failures} batches failed)` : ""),
+            (failures > 0 ? ` (${failures} batches failed)` : ""),
         );
         if (successes > 0) {
           openSuccessModal(
@@ -3953,10 +4062,6 @@ const VendorDashboard = () => {
       setCampaignError("Please select a product before creating a campaign.");
       return;
     }
-    if (!campaignForm.description.trim()) {
-      setCampaignError("Short campaign summary is required.");
-      return;
-    }
 
     const isPostpaid = campaignForm.planType === "postpaid";
 
@@ -4090,11 +4195,12 @@ const VendorDashboard = () => {
 
       const result = await createVendorCampaign(token, {
         brandId: effectiveBrandId,
-        productId: campaignForm.productId || undefined,
+        productId: campaignForm.productId,
         title: campaignForm.title.trim(),
         description: campaignForm.description.trim() || undefined,
         planType: campaignForm.planType,
         voucherType: campaignForm.voucherType,
+        voucherDesignUrl: campaignForm.voucherDesignUrl,
         cashbackAmount: isPostpaid
           ? null
           : cashbackValue > 0
@@ -4235,8 +4341,8 @@ const VendorDashboard = () => {
         sku: productForm.sku?.trim() || null,
         mrp:
           productForm.mrp === undefined ||
-            productForm.mrp === null ||
-            productForm.mrp === ""
+          productForm.mrp === null ||
+          productForm.mrp === ""
             ? null
             : Number(productForm.mrp),
         variant: productForm.variant.trim() || null,
@@ -4323,9 +4429,11 @@ const VendorDashboard = () => {
 
     let campaignTotalSent = 0;
     let campaignTotalRedeemed = 0;
+    let campaignTotalRecharged = 0;
     let selectedActive = 0;
     let selectedRedeemed = 0;
     let selectedTotal = 0;
+    let selectedRecharged = 0;
 
     // Deduplicate stats by campaign name to avoid double-counting
     const seenNames = {};
@@ -4340,13 +4448,38 @@ const VendorDashboard = () => {
           seenNames[name] = true;
           campaignTotalSent += sent;
           campaignTotalRedeemed += redeemed;
+
+          // Find campaign to get allocations for recharged count
+          const camp = campaigns.find((c) => String(c.id) === String(s.id));
+          if (camp?.planType === "postpaid" && Array.isArray(camp.allocations)) {
+            const recharged = camp.allocations.reduce((sum, allocation) => {
+              const qty = Number.parseInt(allocation?.quantity, 10) || 0;
+              const cb = Number.parseFloat(allocation?.cashbackAmount) || 0;
+              return cb > 0 ? sum + qty : sum;
+            }, 0);
+            campaignTotalRecharged += recharged;
+          } else {
+            // For prepaid, all sent are recharged
+            campaignTotalRecharged += sent;
+          }
         }
       }
 
-      if (!isOverviewAll && s.id === selectedQrCampaign) {
+      if (!isOverviewAll && String(s.id) === String(overviewCampaignId)) {
         selectedTotal = sent;
         selectedRedeemed = redeemed;
         selectedActive = Math.max(0, sent - redeemed);
+
+        const camp = campaigns.find((c) => String(c.id) === String(s.id));
+        if (camp?.planType === "postpaid" && Array.isArray(camp.allocations)) {
+          selectedRecharged = camp.allocations.reduce((sum, allocation) => {
+            const qty = Number.parseInt(allocation?.quantity, 10) || 0;
+            const cb = Number.parseFloat(allocation?.cashbackAmount) || 0;
+            return cb > 0 ? sum + qty : sum;
+          }, 0);
+        } else {
+          selectedRecharged = sent;
+        }
       }
     });
 
@@ -4360,23 +4493,23 @@ const VendorDashboard = () => {
       return {
         total: selectedTotal,
         redeemed: selectedRedeemed,
-        active: selectedActive,
+        active: Math.max(0, selectedRecharged - selectedRedeemed),
+        recharged: selectedRecharged,
         inventory: 0,
         campaignManagedTotal: selectedTotal,
-        pendingTotal: 0, // Pending doesn't apply to a specific active campaign selection
+        pendingTotal: 0,
       };
     }
 
     // "All campaigns" View
-    // In this view, "total" card usually shows the absolute DB total (including inventory)
-    // but the "Active QRs" card should show campaign-managed QRs.
     const dbTotal = Number.isFinite(qrTotal) ? qrTotal : qrs.length;
     const campaignManagedTotal = campaignTotalSent + pendingTotal;
 
     return {
       total: dbTotal,
       redeemed: campaignTotalRedeemed,
-      active: campaignTotalSent - campaignTotalRedeemed,
+      active: Math.max(0, campaignTotalRecharged - campaignTotalRedeemed),
+      recharged: campaignTotalRecharged,
       inventory: Math.max(0, dbTotal - campaignTotalSent),
       campaignManagedTotal,
       pendingTotal,
@@ -4385,7 +4518,7 @@ const VendorDashboard = () => {
     campaignStatsMap,
     campaigns,
     isOverviewAll,
-    selectedQrCampaign,
+    overviewCampaignId,
     qrTotal,
     qrs.length,
     pendingCampaigns,
@@ -4485,6 +4618,12 @@ const VendorDashboard = () => {
       setOverviewCampaignId("all");
     }
   }, [overviewCampaignId, overviewCampaignOptions]);
+
+  useEffect(() => {
+    if (token) {
+      loadRedemptionTrend(token);
+    }
+  }, [token, overviewCampaignId, dateFilter.from, dateFilter.to]);
 
   const overviewQrStatusCounts = useMemo(() => {
     const counts = {
@@ -4696,31 +4835,52 @@ const VendorDashboard = () => {
 
     const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
 
-    overviewFilteredQrs.forEach((qr) => {
-      const status = String(qr.status || "").toLowerCase();
-      if (status !== "redeemed" && status !== "claimed") return;
-      const rawDate = qr.updatedAt || qr.createdAt;
-      if (!rawDate) return;
-      const date = new Date(rawDate);
-      if (Number.isNaN(date.getTime())) return;
-      if (date < fromDate || date > toDate) return;
+    if (diffDays > 1 && redemptionTrend.length > 0) {
+      // Use authoritative backend trend data for daily/monthly buckets
+      redemptionTrend.forEach((item) => {
+        const date = parseISO(item.date);
+        if (Number.isNaN(date.getTime())) return;
 
-      let key;
-      if (diffDays <= 1) {
-        key = format(date, "yyyy-MM-dd-HH");
-      } else if (diffDays <= 100) {
-        key = format(date, "yyyy-MM-dd");
-      } else {
-        key = format(date, "yyyy-MM");
-      }
+        let key;
+        if (diffDays <= 100) {
+          key = item.date; // YYYY-MM-DD
+        } else {
+          key = format(date, "yyyy-MM");
+        }
 
-      const bucket = bucketMap.get(key);
-      if (!bucket) return;
-      bucket.redemptions += 1;
-    });
+        const bucket = bucketMap.get(key);
+        if (bucket) {
+          bucket.redemptions += Number(item.count) || 0;
+        }
+      });
+    } else {
+      // Fallback to local data for hourly or if trend not yet loaded
+      overviewFilteredQrs.forEach((qr) => {
+        const status = String(qr.status || "").toLowerCase();
+        if (status !== "redeemed" && status !== "claimed") return;
+        const rawDate = qr.updatedAt || qr.createdAt;
+        if (!rawDate) return;
+        const date = new Date(rawDate);
+        if (Number.isNaN(date.getTime())) return;
+        if (date < fromDate || date > toDate) return;
+
+        let key;
+        if (diffDays <= 1) {
+          key = format(date, "yyyy-MM-dd-HH");
+        } else if (diffDays <= 100) {
+          key = format(date, "yyyy-MM-dd");
+        } else {
+          key = format(date, "yyyy-MM");
+        }
+
+        const bucket = bucketMap.get(key);
+        if (!bucket) return;
+        bucket.redemptions += 1;
+      });
+    }
 
     return buckets.map(({ key, ...rest }) => rest);
-  }, [overviewFilteredQrs, dateFilter]);
+  }, [overviewFilteredQrs, dateFilter, redemptionTrend]);
 
   const campaignPerformanceSeries = useMemo(() => {
     const statsValues = Object.values(campaignStatsMap).filter(
@@ -4915,6 +5075,16 @@ const VendorDashboard = () => {
       null;
     const statsTotal = Number(campaignStats?.totalQRsOrdered);
     const statsRedeemed = Number(campaignStats?.totalUsersJoined);
+    const fundedPostpaidQty = Array.isArray(campaign.allocations)
+      ? campaign.allocations.reduce((sum, allocation) => {
+          const quantity = Number.parseInt(allocation?.quantity, 10) || 0;
+          const cashbackAmount = parseNumericValue(
+            allocation?.cashbackAmount,
+            0,
+          );
+          return cashbackAmount > 0 ? sum + quantity : sum;
+        }, 0)
+      : 0;
     const fallbackTotal = Number(stats?.stats?.total);
     const fallbackRedeemed = Number(stats?.stats?.redeemed);
     const totalCount = Number.isFinite(statsTotal)
@@ -4927,7 +5097,9 @@ const VendorDashboard = () => {
       : Number.isFinite(fallbackRedeemed)
         ? fallbackRedeemed
         : 0;
-    const activeCount = Math.max(0, totalCount - redeemedCount);
+    const activeBase =
+      campaign.planType === "postpaid" ? fundedPostpaidQty : totalCount;
+    const activeCount = Math.max(0, activeBase - redeemedCount);
     const campaignQrBreakdown = campaignQrBreakdownMap[campaign.id];
     const fetchedPriceGroups = campaignQrBreakdown?.priceGroups || [];
     const priceGroups = fetchedPriceGroups.length
@@ -4959,28 +5131,28 @@ const VendorDashboard = () => {
     const breakdownRows =
       breakdownType === "allocation"
         ? allocationGroups
-          .map((group) => {
-            const key = group.price.toFixed(2);
-            const qrGroup = priceGroupByKey.get(key);
-            const redeemed = Math.max(
-              0,
-              Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
-            );
-            return {
-              cashback: group.price,
-              quantity: group.quantity,
-              // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
-              active: Math.max(0, group.quantity - redeemed),
-              redeemed,
-            };
-          })
-          .sort((a, b) => b.cashback - a.cashback)
+            .map((group) => {
+              const key = group.price.toFixed(2);
+              const qrGroup = priceGroupByKey.get(key);
+              const redeemed = Math.max(
+                0,
+                Math.min(group.quantity, Number(qrGroup?.redeemedCount) || 0),
+              );
+              return {
+                cashback: group.price,
+                quantity: group.quantity,
+                // Treat "active" as not-yet-redeemed campaign quantity for full visibility.
+                active: Math.max(0, group.quantity - redeemed),
+                redeemed,
+              };
+            })
+            .sort((a, b) => b.cashback - a.cashback)
         : priceGroups.map((group) => ({
-          cashback: group.price,
-          quantity: Number(group.quantity) || group.qrs?.length || 0,
-          active: group.activeCount,
-          redeemed: group.redeemedCount,
-        }));
+            cashback: group.price,
+            quantity: Number(group.quantity) || group.qrs?.length || 0,
+            active: group.activeCount,
+            redeemed: group.redeemedCount,
+          }));
 
     return {
       campaign,
@@ -5012,7 +5184,7 @@ const VendorDashboard = () => {
   const pendingWalletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-    parseNumericValue(wallet?.lockedBalance, 0),
+      parseNumericValue(wallet?.lockedBalance, 0),
   );
   const pendingCampaignShortfall = Math.max(
     pendingCampaignPayment.totalCost - pendingWalletBalance,
@@ -5036,7 +5208,7 @@ const VendorDashboard = () => {
   const walletBalance = parseNumericValue(
     wallet?.availableBalance,
     parseNumericValue(wallet?.balance, 0) -
-    parseNumericValue(wallet?.lockedBalance, 0),
+      parseNumericValue(wallet?.lockedBalance, 0),
   );
   const lockedBalance = parseNumericValue(wallet?.lockedBalance, 0);
   const isPostpaid = brandProfile?.defaultPlanType === "postpaid";
@@ -5408,10 +5580,11 @@ const VendorDashboard = () => {
                           />
                           <label
                             htmlFor="logo-upload"
-                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${registrationForm.logoPreview
-                              ? "border-primary bg-white"
-                              : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                              }`}
+                            className={`w-28 h-28 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all cursor-pointer overflow-hidden ${
+                              registrationForm.logoPreview
+                                ? "border-primary bg-white"
+                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                            }`}
                           >
                             {registrationForm.logoPreview ? (
                               <img
@@ -5818,10 +5991,11 @@ const VendorDashboard = () => {
                             onClick={() =>
                               setIsNotificationsOpen((prev) => !prev)
                             }
-                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${isNotificationsOpen
-                              ? "ring-2 ring-primary/30 border-primary/40"
-                              : ""
-                              }`}
+                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
+                              isNotificationsOpen
+                                ? "ring-2 ring-primary/30 border-primary/40"
+                                : ""
+                            }`}
                             aria-label="Notifications"
                           >
                             <Bell size={18} />
@@ -5859,7 +6033,10 @@ const VendorDashboard = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                           {/* Wallet Balance Card */}
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                          <div 
+                            onClick={() => navigate("/vendor/wallet")}
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <div className="overflow-hidden">
                                 <div
@@ -5885,7 +6062,10 @@ const VendorDashboard = () => {
                             </div>
                           </div>
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                          <div 
+                            onClick={() => navigate("/vendor/campaigns")}
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <div className="overflow-hidden">
                                 <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
@@ -5908,16 +6088,19 @@ const VendorDashboard = () => {
                             </div>
                           </div>
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                          <div 
+                            onClick={() => navigate("/vendor/campaigns", { state: { campaignTab: "active" } })}
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <div className="overflow-hidden">
                                 <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
                                   {isOverviewAll
                                     ? qrStats.active
-                                    : overviewSelectedQrTotal -
-                                    (isOverviewUnassigned
-                                      ? 0
-                                      : overviewSelectedQrRedeemed)}
+                                    : Math.max(
+                                        0,
+                                        qrStats.active
+                                      )}
                                 </div>
                                 <div className="text-xs text-gray-500">
                                   Active QRs
@@ -5930,13 +6113,7 @@ const VendorDashboard = () => {
                             <div className="flex items-center gap-1 text-xs text-gray-500">
                               <span>
                                 Selected:{" "}
-                                {isOverviewAll
-                                  ? qrStats.active
-                                  : Math.max(
-                                    0,
-                                    overviewSelectedQrTotal -
-                                    overviewSelectedQrRedeemed,
-                                  )}
+                                {qrStats.recharged}
                               </span>
                               <span className="text-gray-400">|</span>
                               <span>
@@ -5948,7 +6125,10 @@ const VendorDashboard = () => {
                             </div>
                           </div>
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none">
+                          <div 
+                            onClick={() => navigate("/vendor/customers")}
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <div className="overflow-hidden">
                                 <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
@@ -6017,7 +6197,7 @@ const VendorDashboard = () => {
                               )}
 
                             {isLoadingOverviewLocations &&
-                              overviewLocationPoints.length === 0 ? (
+                            overviewLocationPoints.length === 0 ? (
                               <div className="h-[320px] rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex items-center justify-center text-sm text-gray-500">
                                 Loading map preview...
                               </div>
@@ -6455,7 +6635,7 @@ const VendorDashboard = () => {
                                       className={`relative block h-32 w-32 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary dark:hover:border-primary cursor-pointer transition-all bg-white dark:bg-black ${isUploadingBrandLogo ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
                                       {brandLogoPreviewSrc &&
-                                        !imageLoadError ? (
+                                      !imageLoadError ? (
                                         <img
                                           src={brandLogoPreviewSrc}
                                           alt="Brand logo"
@@ -6947,6 +7127,7 @@ const VendorDashboard = () => {
                               <select
                                 value={campaignForm.productId}
                                 onChange={handleCampaignChange("productId")}
+                                required
                                 className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                               >
                                 <option value="">Select Product...</option>
@@ -6968,7 +7149,7 @@ const VendorDashboard = () => {
                                 rows="2"
                                 value={campaignForm.description}
                                 onChange={handleCampaignChange("description")}
-                                placeholder="Short campaign summary"
+                                placeholder="Short campaign summary (Optional)"
                                 className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                               />
                             </div>
@@ -7005,10 +7186,11 @@ const VendorDashboard = () => {
                                     </div>
                                   )}
                                   <div
-                                    className={`${campaignForm.planType === "postpaid"
-                                      ? "col-span-12"
-                                      : "col-span-4"
-                                      } space-y-1`}
+                                    className={`${
+                                      campaignForm.planType === "postpaid"
+                                        ? "col-span-6"
+                                        : "col-span-4"
+                                    } space-y-1`}
                                   >
                                     <label className="text-[10px] uppercase tracking-wide text-gray-400">
                                       Number of QRs Required
@@ -7029,56 +7211,65 @@ const VendorDashboard = () => {
                                       className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
                                     />
                                   </div>
-                                  {campaignForm.planType !== "postpaid" && (
-                                    <div className="col-span-4 space-y-1">
+
+                                  {campaignForm.planType === "postpaid" && (
+                                    <div className="col-span-6 space-y-1">
                                       <label className="text-[10px] uppercase tracking-wide text-gray-400">
-                                        Total ({"\u20B9"})
+                                        Total QRs
                                       </label>
-                                      <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={formatAllocationTotal(row)}
-                                        readOnly
-                                        placeholder="Total"
-                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
-                                      />
+                                      <div className="w-full rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/40 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 font-medium">
+                                        {row.quantity || 0} QRs
+                                      </div>
                                     </div>
                                   )}
+
                                   {campaignForm.planType !== "postpaid" && (
-                                    <div className="col-span-1 pb-1.5 flex justify-end">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleRemoveCampaignRow(row.id)
-                                        }
-                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                        aria-label="Remove row"
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
+                                    <>
+                                      <div className="col-span-4 space-y-1">
+                                        <label className="text-[10px] uppercase tracking-wide text-gray-400">
+                                          Total ({"\u20B9"})
+                                        </label>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={formatAllocationTotal(row)}
+                                          readOnly
+                                          placeholder="Total"
+                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+                                        />
+                                      </div>
+                                      <div className="col-span-1 pb-1.5 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleRemoveCampaignRow(row.id)
+                                          }
+                                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                          aria-label="Remove row"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </>
                                   )}
                                 </div>
                               ))}
-
                             </div>
 
-                            <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {campaignForm.planType === "postpaid"
-                                  ? `${campaignAllocationSummary.quantity} QRs`
-                                  : `Subtotal (${campaignAllocationSummary.quantity} QRs)`}
-                              </span>
-                              {campaignForm.planType !== "postpaid" && (
+                            {campaignForm.planType !== "postpaid" && (
+                              <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Subtotal ({campaignAllocationSummary.quantity} QRs)
+                                </span>
                                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                                   {"\u20B9"}
                                   {formatAmount(
                                     campaignAllocationSummary.subtotal,
                                   )}
                                 </span>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1.5">
@@ -7157,8 +7348,8 @@ const VendorDashboard = () => {
                                     Campaign QR Funding
                                   </div>
                                   <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                                    Prebuilt QRs {"->"} Download sheet {"->"}
-                                    Fund/recharge selected quantity
+                                    Prebuilt QRs {"->"} Create recharge batches
+                                    {" ->"} Fund selected quantity
                                   </div>
                                 </div>
 
@@ -7183,14 +7374,14 @@ const VendorDashboard = () => {
                                       <span className="font-semibold text-gray-900 dark:text-white">
                                         Step 3:
                                       </span>{" "}
-                                      Download prebuilt QR sheet
+                                      Create recharge batches
                                     </div>
                                     <div className="rounded-lg bg-white/70 dark:bg-zinc-900/70 px-2.5 py-2">
                                       <span className="font-semibold text-gray-900 dark:text-white">
                                         Step 4:
                                       </span>{" "}
-                                      Generate QRs to lock cashback and make
-                                      them redeemable
+                                      Apply the batch recharge to make them
+                                      redeemable
                                     </div>
                                   </div>
                                 </div>
@@ -7353,7 +7544,7 @@ const VendorDashboard = () => {
                                     className={SECONDARY_BUTTON}
                                   >
                                     {isDownloadingPdf ===
-                                      `inventory:${selectedQrSeries || "all"}`
+                                    `inventory:${selectedQrSeries || "all"}`
                                       ? "Downloading..."
                                       : selectedQrSeries
                                         ? `Download Prebuilt (${selectedQrSeries})`
@@ -7364,23 +7555,23 @@ const VendorDashboard = () => {
                                     onClick={() =>
                                       selectedInventoryBulkExportJob?.isReady
                                         ? handleDownloadBulkExportJob(
-                                          selectedInventoryBulkExportJob,
-                                        )
+                                            selectedInventoryBulkExportJob,
+                                          )
                                         : handleStartInventoryBulkExport()
                                     }
                                     disabled={
                                       startingBulkExportKey ===
-                                      `inventory:${selectedQrSeries || "all"}` ||
+                                        `inventory:${selectedQrSeries || "all"}` ||
                                       downloadingBulkExportJobId ===
-                                      selectedInventoryBulkExportJob?.id
+                                        selectedInventoryBulkExportJob?.id
                                     }
                                     className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/25 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/15 disabled:opacity-60 transition-colors"
                                   >
                                     {startingBulkExportKey ===
-                                      `inventory:${selectedQrSeries || "all"}`
+                                    `inventory:${selectedQrSeries || "all"}`
                                       ? "Starting..."
                                       : downloadingBulkExportJobId ===
-                                        selectedInventoryBulkExportJob?.id
+                                          selectedInventoryBulkExportJob?.id
                                         ? "Downloading..."
                                         : selectedInventoryBulkExportJob?.isReady
                                           ? "Download Ready Export"
@@ -7413,10 +7604,10 @@ const VendorDashboard = () => {
                                       Inventory export:
                                     </span>{" "}
                                     {selectedInventoryBulkExportJob.status ===
-                                      "completed"
+                                    "completed"
                                       ? "Ready to download"
                                       : selectedInventoryBulkExportJob.status ===
-                                        "failed"
+                                          "failed"
                                         ? "Failed"
                                         : `${selectedInventoryBulkExportJob.progressPercent || 0}% complete`}
                                     {" | "}
@@ -7516,19 +7707,6 @@ Quantity: ${invoiceData.quantity} QRs
                               </div>
                             )}
 
-                            <BulkExportQueue
-                              jobs={bulkExportJobs}
-                              isLoading={isLoadingBulkExportJobs}
-                              error={bulkExportJobsError}
-                              onRefresh={() => loadBulkExportJobs(token)}
-                              onDownload={handleDownloadBulkExportJob}
-                              downloadingJobId={downloadingBulkExportJobId}
-                              onCancel={handleCancelExportJob}
-                              cancellingJobId={cancellingJobId}
-                              onDelete={handleDeleteExportJob}
-                              deletingJobId={deletingExportJobId}
-                            />
-
                             <div className="space-y-2">
                               {activeCampaigns.length === 0 ? (
                                 <div className="text-xs text-center text-gray-500 py-4 space-y-2">
@@ -7575,7 +7753,7 @@ Quantity: ${invoiceData.quantity} QRs
                                               campaignStats={
                                                 campaignStatsMap[campaign.id] ||
                                                 campaignStatsMap[
-                                                `title:${campaign.title}`
+                                                  `title:${campaign.title}`
                                                 ] ||
                                                 {}
                                               }
@@ -7591,7 +7769,7 @@ Quantity: ${invoiceData.quantity} QRs
                                               )}
                                               isStartingBulkExportId={
                                                 startingBulkExportKey ===
-                                                  `campaign:${campaign.id}`
+                                                `campaign:${campaign.id}`
                                                   ? campaign.id
                                                   : ""
                                               }
@@ -7608,10 +7786,7 @@ Quantity: ${invoiceData.quantity} QRs
                                               isDownloadingPdf={
                                                 isDownloadingPdf
                                               }
-                                              loadCampaigns={loadCampaigns}
-                                              setSheetPaymentData={
-                                                setSheetPaymentData
-                                              }
+                                              loadCampaigns={(t) => refreshCampaignPaymentState(t || token)}
                                             />
                                           ))}
                                         </div>
@@ -7687,17 +7862,20 @@ Quantity: ${invoiceData.quantity} QRs
                                             <div key={groupKey} className="p-4">
                                               <div className="flex items-center">
                                                 <div className="flex items-center gap-4">
-                                                  <div>
-                                                    <div className="text-xs text-gray-500">
-                                                      Cashback Amount
+                                                  {!(
+                                                    campaign.planType === "postpaid" &&
+                                                    group.price === 0
+                                                  ) && (
+                                                    <div>
+                                                      <div className="text-xs text-gray-500">
+                                                        Cashback Amount
+                                                      </div>
+                                                      <div className="text-lg font-bold text-primary">
+                                                        {"\u20B9"}
+                                                        {formatAmount(group.price)}
+                                                      </div>
                                                     </div>
-                                                    <div className="text-lg font-bold text-primary">
-                                                      {"\u20B9"}
-                                                      {formatAmount(
-                                                        group.price,
-                                                      )}
-                                                    </div>
-                                                  </div>
+                                                  )}
                                                   <div>
                                                     <div className="text-xs text-gray-500">
                                                       Quantity
@@ -7715,12 +7893,28 @@ Quantity: ${invoiceData.quantity} QRs
                                     </div>
 
                                     <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
-                                      <span>
-                                        Total: {totalQty} QR
-                                        {totalQty !== 1 ? "s" : ""} - Budget{" "}
-                                        {"\u20B9"}
-                                        {formatAmount(totalBudget)}
-                                      </span>
+                                      <div className="flex flex-col gap-0.5">
+                                        <span>
+                                          Total: {totalQty} QR
+                                          {totalQty !== 1 ? "s" : ""}
+                                          {!(
+                                            campaign.planType === "postpaid" &&
+                                            totalBudget === 0
+                                          ) && (
+                                            <>
+                                              {" "}
+                                              - Budget {"\u20B9"}
+                                              {formatAmount(totalBudget)}
+                                            </>
+                                          )}
+                                        </span>
+                                        {campaign.planType === "postpaid" &&
+                                          totalBudget === 0 && (
+                                            <span className="text-[10px] text-amber-600 font-medium italic">
+                                              Cashback amount yet to be decided
+                                            </span>
+                                          )}
+                                      </div>
                                       <div className="flex flex-wrap items-center gap-3 text-xs">
                                         <button
                                           type="button"
@@ -7825,50 +8019,56 @@ Quantity: ${invoiceData.quantity} QRs
                                         {(
                                           selectedPendingCampaign.allocations ||
                                           []
-                                        ).map((alloc, idx) => (
-                                          <tr
-                                            key={idx}
-                                            className="bg-white dark:bg-zinc-900"
-                                          >
-                                            <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                              INR{" "}
-                                              {formatAmount(
-                                                alloc.cashbackAmount,
-                                              )}
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
-                                              {alloc.quantity}
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                              INR{" "}
-                                              {formatAmount(alloc.totalBudget)}
-                                            </td>
-                                          </tr>
-                                        ))}
+                                        )
+                                          .filter(
+                                            (alloc) =>
+                                              selectedPendingCampaign?.planType !==
+                                                "postpaid" ||
+                                              alloc.cashbackAmount > 0,
+                                          )
+                                          .map((alloc, idx) => (
+                                            <tr
+                                              key={idx}
+                                              className="bg-white dark:bg-zinc-900"
+                                            >
+                                              <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                                INR{" "}
+                                                {formatAmount(
+                                                  alloc.cashbackAmount,
+                                                )}
+                                              </td>
+                                              <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300">
+                                                {alloc.quantity}
+                                              </td>
+                                              <td className="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                                INR{" "}
+                                                {formatAmount(
+                                                  alloc.totalBudget,
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ))}
                                       </tbody>
                                       <tfoot className="bg-gray-50 dark:bg-zinc-800/30 text-gray-900 dark:text-white">
-                                        {/* Subtotal row – always shown */}
-                                        <tr className="font-semibold border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                          <td className="px-4 py-3">
-                                            Cashback Subtotal
-                                            {selectedPendingCampaign?.planType ===
-                                              "postpaid" && (
-                                                <div className="text-[10px] text-gray-400 font-normal">
-                                                  Set later via sheet
-                                                </div>
+                                        {/* Subtotal row */}
+                                        {selectedPendingCampaign?.planType !==
+                                          "postpaid" && (
+                                          <tr className="font-semibold border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                            <td className="px-4 py-3">
+                                              Cashback Subtotal
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                              {pendingCampaignPayment.totalQty}{" "}
+                                              QRs
+                                            </td>
+                                            <td className="px-4 py-3 text-right">
+                                              INR{" "}
+                                              {formatAmount(
+                                                pendingCampaignPayment.baseBudget,
                                               )}
-                                          </td>
-                                          <td className="px-4 py-3 text-center">
-                                            {pendingCampaignPayment.totalQty}{" "}
-                                            QRs
-                                          </td>
-                                          <td className="px-4 py-3 text-right">
-                                            INR{" "}
-                                            {formatAmount(
-                                              pendingCampaignPayment.baseBudget,
-                                            )}
-                                          </td>
-                                        </tr>
+                                            </td>
+                                          </tr>
+                                        )}
                                         {/* Fee breakdown */}
                                         {(() => {
                                           const qrBaseRate = parseNumericValue(
@@ -7892,13 +8092,27 @@ Quantity: ${invoiceData.quantity} QRs
                                             CAMPAIGN_FEE_GST_RATE;
                                           return (
                                             <>
-                                              <tr className="text-xs text-gray-500 font-normal">
+                                              <tr
+                                                className={
+                                                  selectedPendingCampaign?.planType ===
+                                                  "postpaid"
+                                                    ? "text-sm text-gray-800 dark:text-gray-200"
+                                                    : "text-xs text-gray-500 font-normal"
+                                                }
+                                              >
                                                 <td
                                                   className="px-4 pt-3 pb-1"
                                                   colSpan="2"
                                                 >
                                                   QR Generation Fees (Excl. GST)
-                                                  <div className="text-[10px] text-gray-400">
+                                                  <div
+                                                    className={
+                                                      selectedPendingCampaign?.planType ===
+                                                      "postpaid"
+                                                        ? "text-xs text-gray-600 dark:text-gray-400"
+                                                        : "text-[10px] text-gray-400"
+                                                    }
+                                                  >
                                                     INR{" "}
                                                     {formatAmount(qrBaseRate)}
                                                     /QR ×{" "}
@@ -7915,13 +8129,27 @@ Quantity: ${invoiceData.quantity} QRs
                                                 </td>
                                               </tr>
                                               {voucherFeePerQr > 0 && (
-                                                <tr className="text-xs text-gray-500 font-normal">
+                                                <tr
+                                                  className={
+                                                    selectedPendingCampaign?.planType ===
+                                                    "postpaid"
+                                                      ? "text-sm text-gray-800 dark:text-gray-200"
+                                                      : "text-xs text-gray-500 font-normal"
+                                                  }
+                                                >
                                                   <td
                                                     className="px-4 py-1"
                                                     colSpan="2"
                                                   >
                                                     Voucher Fees (Excl. GST)
-                                                    <div className="text-[10px] text-gray-400">
+                                                    <div
+                                                      className={
+                                                        selectedPendingCampaign?.planType ===
+                                                        "postpaid"
+                                                          ? "text-xs text-gray-600 dark:text-gray-400"
+                                                          : "text-[10px] text-gray-400"
+                                                      }
+                                                    >
                                                       INR{" "}
                                                       {formatAmount(
                                                         voucherFeePerQr,
@@ -7940,7 +8168,14 @@ Quantity: ${invoiceData.quantity} QRs
                                                   </td>
                                                 </tr>
                                               )}
-                                              <tr className="text-xs text-gray-500 font-normal border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                              <tr
+                                                className={
+                                                  selectedPendingCampaign?.planType ===
+                                                  "postpaid"
+                                                    ? "text-sm text-gray-800 dark:text-gray-200 border-b border-dashed border-gray-200 dark:border-zinc-700 font-semibold"
+                                                    : "text-xs text-gray-500 font-normal border-b border-dashed border-gray-200 dark:border-zinc-700"
+                                                }
+                                              >
                                                 <td
                                                   className="px-4 pt-1 pb-3"
                                                   colSpan="2"
@@ -8004,11 +8239,12 @@ Quantity: ${invoiceData.quantity} QRs
                                       isPayingCampaign ||
                                       !canPaySelectedPendingCampaign
                                     }
-                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${!canPaySelectedPendingCampaign &&
+                                    className={`flex-1 ${PRIMARY_BUTTON} flex items-center justify-center gap-2 ${
+                                      !canPaySelectedPendingCampaign &&
                                       !isPayingCampaign
-                                      ? "opacity-60 cursor-not-allowed"
-                                      : ""
-                                      }`}
+                                        ? "opacity-60 cursor-not-allowed"
+                                        : ""
+                                    }`}
                                   >
                                     {isPayingCampaign ? (
                                       <>Processing...</>
@@ -8129,16 +8365,16 @@ Quantity: ${invoiceData.quantity} QRs
                                         className="text-primary"
                                       />
                                       {activeCampaignDetails.breakdownType ===
-                                        "allocation"
+                                      "allocation"
                                         ? "Allocation Breakdown"
                                         : "QR Breakdown"}
                                     </span>
                                     {loadingCampaignBreakdownId ===
                                       activeCampaign?.id && (
-                                        <span className="text-[11px] font-medium text-gray-400">
-                                          Loading full data...
-                                        </span>
-                                      )}
+                                      <span className="text-[11px] font-medium text-gray-400">
+                                        Loading full data...
+                                      </span>
+                                    )}
                                   </h4>
                                   <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
                                     <table className="w-full text-left text-sm">
@@ -8567,10 +8803,11 @@ Quantity: ${invoiceData.quantity} QRs
                                   return (
                                     <tr
                                       key={product.id}
-                                      className={`${idx % 2 === 0
-                                        ? "bg-gray-50 dark:bg-[#1a1a1a]"
-                                        : "bg-white dark:bg-[#0f0f0f]"
-                                        } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
+                                      className={`${
+                                        idx % 2 === 0
+                                          ? "bg-gray-50 dark:bg-[#1a1a1a]"
+                                          : "bg-white dark:bg-[#0f0f0f]"
+                                      } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
                                     >
                                       <td className="px-4 py-4">
                                         {imageSrc && !hasImageError ? (
@@ -8627,10 +8864,11 @@ Quantity: ${invoiceData.quantity} QRs
                                       </td>
                                       <td className="px-4 py-4">
                                         <span
-                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${product.status === "active"
-                                            ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
-                                            : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                            }`}
+                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                                            product.status === "active"
+                                              ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
+                                              : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                          }`}
                                         >
                                           {product.status || "active"}
                                         </span>
@@ -8928,7 +9166,7 @@ Quantity: ${invoiceData.quantity} QRs
                                   setClusterCityFilter(null);
                                   setDashboardFilters((prev) => ({
                                     ...prev,
-                                    city: "",
+                                    location: "",
                                   }));
                                   navigate("/vendor/locations");
                                 }}
@@ -9111,7 +9349,7 @@ Quantity: ${invoiceData.quantity} QRs
                         ) : (
                           <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
                             <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
-                              <div className="h-[520px]">
+                              <div className="h-[520px] z-0">
                                 <MapContainer
                                   center={locationMapCenter}
                                   zoom={5}
@@ -9242,7 +9480,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                 <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
                                                   {(cluster.city || "") +
                                                     (cluster.city &&
-                                                      cluster.state
+                                                    cluster.state
                                                       ? ", "
                                                       : "") +
                                                     (cluster.state || "")}
@@ -9438,7 +9676,7 @@ Quantity: ${invoiceData.quantity} QRs
                                             } catch (error) {
                                               setInvoiceShareStatus(
                                                 error.message ||
-                                                "Unable to generate share link.",
+                                                  "Unable to generate share link.",
                                               );
                                             }
                                           }}
@@ -9590,10 +9828,11 @@ Quantity: ${invoiceData.quantity} QRs
                               key={item.id}
                               type="button"
                               onClick={() => handleNotificationClick(item)}
-                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${item.isRead
-                                ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                                : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-                                }`}
+                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
+                                item.isRead
+                                  ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                                  : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+                              }`}
                             >
                               <div className="flex items-start gap-3">
                                 <div
@@ -9618,10 +9857,11 @@ Quantity: ${invoiceData.quantity} QRs
                                       <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                                     )}
                                     <span
-                                      className={`text-[10px] font-semibold ${item.isRead
-                                        ? "text-gray-400 dark:text-gray-500"
-                                        : "text-primary"
-                                        }`}
+                                      className={`text-[10px] font-semibold ${
+                                        item.isRead
+                                          ? "text-gray-400 dark:text-gray-500"
+                                          : "text-primary"
+                                      }`}
                                     >
                                       {item.isRead ? "Read" : "New"}
                                     </span>
@@ -9665,62 +9905,6 @@ Quantity: ${invoiceData.quantity} QRs
                 type="success"
                 showCancel={false}
               />
-
-              {/* Sheet Payment Confirmation Modal */}
-              <ConfirmModal
-                isOpen={!!sheetPaymentData}
-                onClose={() => setSheetPaymentData(null)}
-                onConfirm={async () => {
-                  if (!sheetPaymentData) return;
-                  try {
-                    const paymentResult = await paySheetCashback(
-                      token,
-                      sheetPaymentData.campaignId,
-                      {
-                        sheetIndex: sheetPaymentData.sheetIndex,
-                        cashbackAmount: sheetPaymentData.amount,
-                      },
-                    );
-                    const paidAmount = Number(paymentResult?.totalPaid);
-                    const finalPaidAmount = Number.isFinite(paidAmount)
-                      ? paidAmount
-                      : sheetPaymentData.totalCost ||
-                      sheetPaymentData.amount * sheetPaymentData.count;
-                    openSuccessModal(
-                      "Payment Successful",
-                      finalPaidAmount > 0
-                        ? `Successfully paid Rs. ${finalPaidAmount.toFixed(2)} for Sheet ${sheetPaymentData.sheetLabel}`
-                        : paymentResult?.message ||
-                        `No additional payment required for Sheet ${sheetPaymentData.sheetLabel}`,
-                    );
-                    setSheetPaymentData(null);
-                    await Promise.all([
-                      loadWallet(token),
-                      loadCampaigns(token),
-                    ]);
-                  } catch (err) {
-                    setStatusWithTimeout(err.message || "Payment failed");
-                  }
-                }}
-                title="Confirm Sheet Payment"
-                message={
-                  sheetPaymentData
-                    ? `You are about to pay for Sheet ${sheetPaymentData.sheetLabel
-                    } (${sheetPaymentData.count} QRs).
-
-Breakdown:
-Cashback Deposit (No GST): Rs. ${sheetPaymentData.breakdown?.cashback.toFixed(2)}
-
-Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
-                    : ""
-                }
-                confirmText={`Pay Rs. ${sheetPaymentData?.totalCost.toFixed(
-                  2,
-                )}`}
-                type="info"
-                showCancel={true}
-              />
-
               <ConfirmModal
                 isOpen={!!campaignToDelete}
                 onClose={() => {
@@ -9797,26 +9981,33 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                              {paymentForm.rows.map((row) => (
-                                <tr key={row.id}>
-                                  <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">
-                                    INR{" "}
-                                    {formatAmount(
-                                      parseNumericValue(row.cashbackAmount),
-                                    )}
-                                  </td>
-                                  <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                    {row.quantity}
-                                  </td>
-                                  <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                    INR{" "}
-                                    {formatAmount(
-                                      parseNumericValue(row.cashbackAmount) *
-                                      parseNumericValue(row.quantity),
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
+                              {paymentForm.rows
+                                .filter(
+                                  (row) =>
+                                    paymentForm.campaign?.planType !==
+                                      "postpaid" ||
+                                    parseNumericValue(row.cashbackAmount) > 0,
+                                )
+                                .map((row) => (
+                                  <tr key={row.id}>
+                                    <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">
+                                      INR{" "}
+                                      {formatAmount(
+                                        parseNumericValue(row.cashbackAmount),
+                                      )}
+                                    </td>
+                                    <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                      {row.quantity}
+                                    </td>
+                                    <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                      INR{" "}
+                                      {formatAmount(
+                                        parseNumericValue(row.cashbackAmount) *
+                                          parseNumericValue(row.quantity),
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
 
                               {/* Padding row for separation */}
                               <tr>
@@ -9866,33 +10057,44 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 
                                 return (
                                   <>
-                                    {/* Cashback Subtotal – always shown */}
-                                    <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
-                                      <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
-                                        Cashback Subtotal
-                                        {paymentForm.campaign?.planType ===
-                                          "postpaid" && (
-                                            <div className="text-[10px] text-gray-400 font-normal">
-                                              Set later via sheet
-                                            </div>
-                                          )}
-                                      </td>
-                                      <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
-                                        {totalQuantity} QRs
-                                      </td>
-                                      <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
-                                        INR {formatAmount(totalBudget)}
-                                      </td>
-                                    </tr>
+                                    {/* Cashback Subtotal */}
+                                    {paymentForm.campaign?.planType !==
+                                      "postpaid" && (
+                                      <tr className="border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                                          Cashback Subtotal
+                                        </td>
+                                        <td className="px-5 py-3 text-center text-gray-600 dark:text-gray-400">
+                                          {totalQuantity} QRs
+                                        </td>
+                                        <td className="px-5 py-3 text-right font-medium text-gray-900 dark:text-white">
+                                          INR {formatAmount(totalBudget)}
+                                        </td>
+                                      </tr>
+                                    )}
 
                                     {/* Fees Section */}
-                                    <tr className="text-xs text-gray-500">
+                                    <tr
+                                      className={
+                                        paymentForm.campaign?.planType ===
+                                        "postpaid"
+                                          ? "text-sm text-gray-800 dark:text-gray-200"
+                                          : "text-xs text-gray-500"
+                                      }
+                                    >
                                       <td
                                         className="px-5 pt-3 pb-1"
                                         colSpan="2"
                                       >
                                         QR Generation Fees (Excl. GST)
-                                        <div className="text-[10px] text-gray-400">
+                                        <div
+                                          className={
+                                            paymentForm.campaign?.planType ===
+                                            "postpaid"
+                                              ? "text-xs text-gray-600 dark:text-gray-400"
+                                              : "text-[10px] text-gray-400"
+                                          }
+                                        >
                                           INR {formatAmount(qrBaseRate)}/QR ×{" "}
                                           {totalQuantity}
                                         </div>
@@ -9902,10 +10104,24 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                       </td>
                                     </tr>
                                     {voucherBaseRate > 0 && (
-                                      <tr className="text-xs text-gray-500">
+                                      <tr
+                                        className={
+                                          paymentForm.campaign?.planType ===
+                                          "postpaid"
+                                            ? "text-sm text-gray-800 dark:text-gray-200"
+                                            : "text-xs text-gray-500"
+                                        }
+                                      >
                                         <td className="px-5 py-1" colSpan="2">
                                           Voucher Fees (Excl. GST)
-                                          <div className="text-[10px] text-gray-400">
+                                          <div
+                                            className={
+                                              paymentForm.campaign?.planType ===
+                                              "postpaid"
+                                                ? "text-xs text-gray-600 dark:text-gray-400"
+                                                : "text-[10px] text-gray-400"
+                                            }
+                                          >
                                             INR {formatAmount(voucherBaseRate)}
                                             /QR × {totalQuantity}
                                           </div>
@@ -9916,7 +10132,14 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                         </td>
                                       </tr>
                                     )}
-                                    <tr className="text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700">
+                                    <tr
+                                      className={
+                                        paymentForm.campaign?.planType ===
+                                        "postpaid"
+                                          ? "text-sm text-gray-800 dark:text-gray-200 border-b border-dashed border-gray-200 dark:border-zinc-700"
+                                          : "text-xs text-gray-500 border-b border-dashed border-gray-200 dark:border-zinc-700"
+                                      }
+                                    >
                                       <td
                                         className="px-5 pt-1 pb-3"
                                         colSpan="2"
@@ -9942,114 +10165,151 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           {/* Digital Voucher */}
-                          <button
-                            onClick={() =>
-                              setPaymentForm((prev) => ({
-                                ...prev,
-                                voucherType: "digital_voucher",
-                              }))
-                            }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "digital_voucher"
-                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                          <div className="relative group">
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "digital_voucher",
+                                }))
+                              }
+                              className={`w-full flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "digital_voucher"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
                               }`}
-                          >
-                            <div
-                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "digital_voucher"
-                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
                             >
-                              <Smartphone size={20} />
-                            </div>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                              Digital Voucher
-                            </span>
-                            <span className="text-[10px] text-gray-500 leading-tight">
-                              INR{" "}
-                              {(VOUCHER_COST_MAP.digital_voucher || 0).toFixed(
-                                2,
-                              )}{" "}
-                              / QR
-                            </span>
-                            {paymentForm.voucherType === "digital_voucher" && (
-                              <div className="absolute top-3 right-3 text-emerald-500">
-                                <Check size={16} strokeWidth={3} />
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "digital_voucher"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Smartphone size={20} />
                               </div>
-                            )}
-                          </button>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                Digital Voucher
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                INR{" "}
+                                {(
+                                  VOUCHER_COST_MAP.digital_voucher || 0
+                                ).toFixed(2)}{" "}
+                                / QR
+                              </span>
+                              {paymentForm.voucherType ===
+                                "digital_voucher" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                              Digital Voucher card design is custom made to
+                              match your brand style.
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          </div>
 
                           {/* Printed QR */}
-                          <button
-                            onClick={() =>
-                              setPaymentForm((prev) => ({
-                                ...prev,
-                                voucherType: "printed_qr",
-                              }))
-                            }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "printed_qr"
-                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                          <div className="relative group">
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "printed_qr",
+                                }))
+                              }
+                              className={`w-full flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "printed_qr"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
                               }`}
-                          >
-                            <div
-                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "printed_qr"
-                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
                             >
-                              <Printer size={20} />
-                            </div>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                              Printed QR
-                            </span>
-                            <span className="text-[10px] text-gray-500 leading-tight">
-                              INR{" "}
-                              {(VOUCHER_COST_MAP.printed_qr || 0).toFixed(2)} /
-                              QR
-                            </span>
-                            {paymentForm.voucherType === "printed_qr" && (
-                              <div className="absolute top-3 right-3 text-emerald-500">
-                                <Check size={16} strokeWidth={3} />
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "printed_qr"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Printer size={20} />
                               </div>
-                            )}
-                          </button>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                Printed QR
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                INR{" "}
+                                {(VOUCHER_COST_MAP.printed_qr || 0).toFixed(2)}{" "}
+                                / QR
+                              </span>
+                              {paymentForm.voucherType === "printed_qr" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                              Assured Rewards assists you with high-quality
+                              physical prints of your vouchers.
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          </div>
 
                           {/* No Voucher */}
-                          <button
-                            onClick={() =>
-                              setPaymentForm((prev) => ({
-                                ...prev,
-                                voucherType: "none",
-                              }))
-                            }
-                            className={`relative group flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${paymentForm.voucherType === "none"
-                              ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
-                              : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
+                          <div className="relative group">
+                            <button
+                              onClick={() =>
+                                setPaymentForm((prev) => ({
+                                  ...prev,
+                                  voucherType: "none",
+                                }))
+                              }
+                              className={`w-full flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left ${
+                                paymentForm.voucherType === "none"
+                                  ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10"
+                                  : "border-gray-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-900/50 bg-white dark:bg-zinc-900"
                               }`}
-                          >
-                            <div
-                              className={`p-2 rounded-lg mb-3 ${paymentForm.voucherType === "none"
-                                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
-                                }`}
                             >
-                              <Ban size={20} />
-                            </div>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
-                              No Voucher
-                            </span>
-                            <span className="text-[10px] text-gray-500 leading-tight">
-                              Just QRs
-                            </span>
-                            {paymentForm.voucherType === "none" && (
-                              <div className="absolute top-3 right-3 text-emerald-500">
-                                <Check size={16} strokeWidth={3} />
+                              <div
+                                className={`p-2 rounded-lg mb-3 ${
+                                  paymentForm.voucherType === "none"
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                                }`}
+                              >
+                                <Ban size={20} />
                               </div>
-                            )}
-                          </button>
+                              <span className="text-sm font-bold text-gray-900 dark:text-white block mb-1">
+                                No Voucher
+                              </span>
+                              <span className="text-[10px] text-gray-500 leading-tight">
+                                Just QRs
+                              </span>
+                              {paymentForm.voucherType === "none" && (
+                                <div className="absolute top-3 right-3 text-emerald-500">
+                                  <Check size={16} strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                              Only provides a raw PDF sheet containing your QR
+                              codes without any voucher designs.
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Digital Voucher Design Selector */}
+                      {paymentForm.voucherType === "digital_voucher" && (
+                        <div className="space-y-4 pt-5 pb-2 border-t border-gray-100 dark:border-zinc-800 animate-in fade-in slide-in-from-top-4 duration-500">
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 italic">
+                            Digital voucher styling uses the campaign defaults.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Verification & Final Total (Green Box) */}
                       {(() => {
@@ -10095,10 +10355,10 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
                                   parseNumericValue(
                                     wallet?.availableBalance,
                                     parseNumericValue(wallet?.balance, 0) -
-                                    parseNumericValue(
-                                      wallet?.lockedBalance,
-                                      0,
-                                    ),
+                                      parseNumericValue(
+                                        wallet?.lockedBalance,
+                                        0,
+                                      ),
                                   ),
                                 )}
                               </span>
@@ -10163,7 +10423,7 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
 
               {/* Global Toast Notification */}
               {qrActionStatus && (
-                <div className="fixed bottom-4 right-4 z-[100] animate-bounce-in">
+                <div className="fixed bottom-4 right-4 z-100 animate-bounce-in">
                   <div className="rounded-lg bg-gray-900/90 text-white px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm border border-white/10 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     {qrActionStatus}
@@ -10182,6 +10442,31 @@ Total Deductible: Rs. ${sheetPaymentData.totalCost.toFixed(2)}`
           }}
           customer={selectedCustomerModal}
           token={token}
+        />
+
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={() => {
+            setShowWelcomeModal(false);
+            if (vendorInfo?.id) {
+              localStorage.setItem(`hasSeenWelcome_${vendorInfo.id}`, "true");
+            }
+          }}
+          onCreateCampaign={() => {
+            setShowWelcomeModal(false);
+            if (vendorInfo?.id) {
+              localStorage.setItem(`hasSeenWelcome_${vendorInfo.id}`, "true");
+            }
+            navigate("/vendor/campaigns", {
+              state: { campaignTab: "create" },
+            });
+          }}
+          brandName={
+            brandProfile?.name ||
+            accountProfile?.name ||
+            vendorInfo?.businessName ||
+            ""
+          }
         />
       </div>
     </>

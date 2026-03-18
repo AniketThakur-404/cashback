@@ -70,7 +70,20 @@ const downloadAuthedFile = async (token, path, fallbackName) => {
     }
   }
 
-  const fileName = derivedFileName || fallbackName;
+  let fileName = derivedFileName;
+  if (!fileName) {
+    const contentType = response.headers.get("content-type");
+    let ext = "";
+    if (contentType) {
+      if (contentType.includes("application/zip")) ext = ".zip";
+      else if (contentType.includes("application/pdf")) ext = ".pdf";
+      else if (contentType.includes("text/csv")) ext = ".csv";
+    }
+    fileName = fallbackName;
+    if (ext && !fileName.endsWith(ext)) {
+      fileName = fileName.replace(/\.[^/.]+$/, "") + ext;
+    }
+  }
   const blobUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.style.display = "none";
@@ -937,11 +950,18 @@ export const payVendorCampaign = (token, campaignId, payload = undefined) =>
     body: payload,
   });
 
-export const assignSheetCashback = (token, campaignId, { sheetIndex, cashbackAmount }) =>
+export const assignSheetCashback = (token, campaignId, { sheetIndex, cashbackAmount, limit, batchId }) =>
   apiRequest(`/api/vendor/campaigns/${campaignId}/sheet-cashback`, {
     method: "PUT",
     token,
-    body: { sheetIndex, cashbackAmount },
+    body: { sheetIndex, cashbackAmount, limit, batchId },
+  });
+
+export const updatePostpaidCampaignBatches = (token, campaignId, batches) =>
+  apiRequest(`/api/vendor/campaigns/${campaignId}/postpaid-batches`, {
+    method: "PUT",
+    token,
+    body: { batches },
   });
 
 export const paySheetCashback = (token, campaignId, { sheetIndex, cashbackAmount }) =>
@@ -1016,4 +1036,110 @@ export const deleteVendorProduct = (token, productId) =>
 export const getUserHomeStats = (token) =>
   apiRequest("/api/user/home-stats", {
     token,
+  });
+
+
+
+
+export const getPublicCatalog = (params = {}) =>
+  apiRequest(`/api/public/products${buildQueryString(params)}`);
+
+
+
+
+
+
+export const getStoreData = () =>
+  apiRequest("/api/public/store");
+
+export const getFAQs = () =>
+  apiRequest("/api/public/faqs");
+
+export const getStaticPage = (slug) =>
+  apiRequest(`/api/public/content/${slug}`);
+
+export const getPublicCoupons = (params = {}) =>
+  apiRequest(`/api/public/coupons${buildQueryString(params)}`);
+
+export const getPublicCouponDetails = (id) =>
+  apiRequest(`/api/public/coupons/${id}`);
+
+export const getSharedInvoice = (token) =>
+  apiRequest(`/api/public/invoices/shared/${token}`);
+
+// --- RESTORED USER APIS ---
+
+export const getAvailableOffers = (token, params = {}) =>
+  apiRequest(`/api/user/offers${buildQueryString(params)}`, { token });
+
+
+export const deleteUserAccount = (token) =>
+  apiRequest("/api/user/account", {
+    method: "DELETE",
+    token,
+  });
+
+export const getWithdrawalHistory = (token) =>
+  apiRequest("/api/user/withdrawals", { token });
+
+// --- RESTORED ADMIN APIS ---
+export const getAdminProducts = (token, params = {}) =>
+  apiRequest(`/api/admin/products${buildQueryString(params)}`, { token });
+
+export const createAdminProduct = (token, payload) =>
+  apiRequest("/api/admin/products", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+
+export const getAdminProduct = (token, id) =>
+  apiRequest(`/api/admin/products/${id}`, { token });
+
+export const updateAdminProduct = (token, id, payload) =>
+  apiRequest(`/api/admin/products/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+
+export const deleteAdminProduct = (token, id) =>
+  apiRequest(`/api/admin/products/${id}`, {
+    method: "DELETE",
+    token,
+  });
+
+export const getAdminCoupons = (token, params = {}) =>
+  apiRequest(`/api/admin/coupons${buildQueryString(params)}`, { token });
+
+export const createAdminCoupon = (token, payload) =>
+  apiRequest("/api/admin/coupons", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+
+export const getAdminCoupon = (token, id) =>
+  apiRequest(`/api/admin/coupons/${id}`, { token });
+
+export const updateAdminCoupon = (token, id, payload) =>
+  apiRequest(`/api/admin/coupons/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+
+export const deleteAdminCoupon = (token, id) =>
+  apiRequest(`/api/admin/coupons/${id}`, {
+    method: "DELETE",
+    token,
+  });
+
+
+
+export const sendAdminNotification = (token, payload) =>
+  apiRequest("/api/admin/notifications", {
+    method: "POST",
+    token,
+    body: payload,
   });

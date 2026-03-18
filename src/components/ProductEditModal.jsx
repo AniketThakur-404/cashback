@@ -149,6 +149,8 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
     if (!formData.category.trim()) newErrors.category = "Category is required";
     if (!formData.mrp || Number(formData.mrp) <= 0)
       newErrors.mrp = "Valid MRP is required";
+    if (!formData.imageUrl && !imageFile)
+      newErrors.image = "Product image is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -282,7 +284,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Pack Size
+                  Pack Size <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <div className="flex rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden focus-within:ring-2 focus-within:ring-[#059669]/20 transition-all">
                   <input
@@ -314,7 +316,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Warranty
+                  Warranty <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <div className="flex rounded-xl border border-gray-200 dark:border-zinc-700 overflow-hidden focus-within:ring-2 focus-within:ring-[#059669]/20 transition-all">
                   <input
@@ -348,7 +350,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
             {/* Image Upload */}
             <div className="space-y-3 pt-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Product Image
+                Product Image *
               </label>
               <div className="flex items-center gap-4">
                 {imagePreview ? (
@@ -402,7 +404,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
             {/* Description */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Description
+                Description <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <textarea
                 value={formData.description}

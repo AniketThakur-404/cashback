@@ -3660,7 +3660,7 @@ const AdminDashboard = () => {
     if (!qrBatchSearchTerm) return qrBatchSummary;
     return qrBatchSummary.filter((batch) => {
       const haystack =
-        `${batch.campaignTitle} ${batch.brandName} ${batch.vendorLabel}`.toLowerCase();
+        `${batch.campaignTitle} ${batch.brandName} - {batch.vendorLabel}`.toLowerCase();
       return haystack.includes(qrBatchSearchTerm);
     });
   }, [qrBatchSummary, qrBatchSearchTerm]);
@@ -4514,18 +4514,18 @@ const AdminDashboard = () => {
                   <div className="flex items-center gap-4 text-xs font-medium">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
-                      Credits
+                      Money In
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-rose-500" />{" "}
-                      Debits
+                      Money Out
                     </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
                     <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                      Credits
+                      Money In (Recharges)
                     </div>
                     <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">
                       ₹{formatAmount(transactionTotals.credit)}
@@ -4538,7 +4538,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
                     <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                      Debits
+                      Money Out (Payouts)
                     </div>
                     <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-2">
                       ₹{formatAmount(transactionTotals.debit)}
@@ -4883,7 +4883,7 @@ const AdminDashboard = () => {
                           Revenue Breakdown
                         </h3>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                          Credits vs Debits · Last {analyticsRange}d
+                          Money In vs Money Out · Last {analyticsRange}d
                         </p>
                       </div>
                     </div>
@@ -4891,13 +4891,13 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                          Credits
+                          Money In
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                          Debits
+                          Money Out
                         </span>
                       </div>
                     </div>
@@ -4906,7 +4906,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-emerald-50/60 dark:bg-emerald-500/5 rounded-lg px-3 py-2.5 border border-emerald-100 dark:border-emerald-500/10">
                       <div className="text-[10px] font-bold text-emerald-600/60 dark:text-emerald-400/50 uppercase tracking-wider">
-                        Total Credits
+                        Total Money In
                       </div>
                       <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                         ₹{formatAmount(transactionTotals.credit)}
@@ -4914,7 +4914,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="bg-rose-50/60 dark:bg-rose-500/5 rounded-lg px-3 py-2.5 border border-rose-100 dark:border-rose-500/10">
                       <div className="text-[10px] font-bold text-rose-600/60 dark:text-rose-400/50 uppercase tracking-wider">
-                        Total Debits
+                        Total Money Out
                       </div>
                       <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5">
                         ₹{formatAmount(transactionTotals.debit)}
@@ -6192,7 +6192,7 @@ const AdminDashboard = () => {
                                   {batch.campaignTitle}
                                 </div>
                                 <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                  {batch.brandName} � {batch.vendorLabel}
+                                  {batch.brandName} - {batch.vendorLabel}
                                 </div>
                               </td>
                               <td className="py-2.5 px-3 text-right text-slate-900 dark:text-white/70">
@@ -7280,7 +7280,7 @@ const AdminDashboard = () => {
 
           {/* Vendors Management Section */}
           {shouldRenderVendorsSection && (
-            <section id="vendors" className="space-y-6 mt-12">
+            <section id="vendors" className="space-y-6 mt-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">

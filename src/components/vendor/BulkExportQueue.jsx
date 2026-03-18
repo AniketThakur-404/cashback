@@ -7,7 +7,9 @@ import {
   LoaderCircle,
   RefreshCw,
   TriangleAlert,
+  Trash2,
 } from "lucide-react";
+import { useConfirmModal } from "../ui/ConfirmModal";
 
 const formatTimestamp = (value) => {
   if (!value) return "-";
@@ -93,6 +95,7 @@ function BulkExportQueue({
   onDelete,
   deletingJobId,
 }) {
+  const { confirm, ConfirmModal } = useConfirmModal();
   const [, setTick] = useState(0);
   const hasActiveJobs = jobs.some(
     (j) => j.status === "processing" || j.status === "queued",
@@ -118,10 +121,7 @@ function BulkExportQueue({
           onClick={onRefresh}
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-800 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors"
         >
-          <RefreshCw
-            size={14}
-            className={isLoading ? "animate-spin" : ""}
-          />
+          <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
@@ -156,7 +156,9 @@ function BulkExportQueue({
                     >
                       <Icon
                         size={18}
-                        className={job.status === "processing" ? "animate-spin" : ""}
+                        className={
+                          job.status === "processing" ? "animate-spin" : ""
+                        }
                       />
                     </div>
                     <div className="min-w-0">
@@ -164,9 +166,12 @@ function BulkExportQueue({
                         {job.scopeLabel || "QR Export"}
                       </div>
                       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {job.totalQrs?.toLocaleString?.() || job.totalQrs || 0} QRs
+                        {job.totalQrs?.toLocaleString?.() || job.totalQrs || 0}{" "}
+                        QRs
                         {" | "}
-                        {job.partCount > 1 ? `${job.partCount} parts` : "Single file"}
+                        {job.partCount > 1
+                          ? `${job.partCount} parts`
+                          : "Single file"}
                         {" | "}
                         {formatTimestamp(job.createdAt)}
                       </div>
@@ -188,13 +193,18 @@ function BulkExportQueue({
                         ) : (
                           <Download size={14} />
                         )}
-                        {downloadingJobId === job.id ? "Downloading..." : "Download"}
+                        {downloadingJobId === job.id
+                          ? "Downloading..."
+                          : "Download"}
                       </button>
                     )}
-                    {(job.status === "processing" || job.status === "queued") && (
+                    {(job.status === "processing" ||
+                      job.status === "queued") && (
                       <button
                         type="button"
-                        onClick={() => typeof onCancel === 'function' && onCancel(job)}
+                        onClick={() =>
+                          typeof onCancel === "function" && onCancel(job)
+                        }
                         disabled={cancellingJobId === job.id}
                         className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-60 transition-colors"
                       >
@@ -205,18 +215,31 @@ function BulkExportQueue({
                         )}
                       </button>
                     )}
-                    {(job.status === "completed" || job.status === "failed") && (
+                    {(job.status === "completed" ||
+                      job.status === "failed") && (
                       <button
                         type="button"
-                        onClick={() => typeof onDelete === 'function' && onDelete(job)}
+                        onClick={async () => {
+                          if (typeof onDelete !== "function") return;
+                          const isConfirmed = await confirm({
+                            title: "Remove from Queue",
+                            message:
+                              "Are you sure you want to remove this export from the queue?",
+                            confirmText: "Remove",
+                            type: "danger",
+                          });
+                          if (isConfirmed) {
+                            onDelete(job);
+                          }
+                        }}
                         disabled={deletingJobId === job.id}
-                        className="inline-flex items-center justify-center rounded-lg border border-gray-200 dark:border-zinc-800 p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition-colors"
+                        className="inline-flex items-center justify-center rounded-lg border border-rose-200/60 bg-rose-50 p-2 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 transition-colors"
                         title="Remove from queue"
                       >
                         {deletingJobId === job.id ? (
                           <LoaderCircle size={16} className="animate-spin" />
                         ) : (
-                          <Archive size={16} />
+                          <Trash2 size={16} />
                         )}
                       </button>
                     )}
@@ -226,37 +249,45 @@ function BulkExportQueue({
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
                     <span>
-                      {job.processedQrs?.toLocaleString?.() || job.processedQrs || 0}
+                      {job.processedQrs?.toLocaleString?.() ||
+                        job.processedQrs ||
+                        0}
                       {" / "}
                       {job.totalQrs?.toLocaleString?.() || job.totalQrs || 0}
                     </span>
                     <span className="flex items-center gap-2">
-                      {(job.status === "processing" || job.status === "queued") && (
+                      {(job.status === "processing" ||
+                        job.status === "queued") && (
                         <span className="font-mono text-primary dark:text-primary">
-                          ⏱ {formatElapsed(job.startedAt || job.createdAt) || "—"}
+                          ⏱{" "}
+                          {formatElapsed(job.startedAt || job.createdAt) || "—"}
                         </span>
                       )}
-                      {(job.status === "completed" || job.status === "failed") && (
+                      {(job.status === "completed" ||
+                        job.status === "failed") &&
                         (() => {
-                          const dur = formatDuration(job.startedAt || job.createdAt, job.completedAt);
+                          const dur = formatDuration(
+                            job.startedAt || job.createdAt,
+                            job.completedAt,
+                          );
                           return dur ? (
                             <span className="font-mono text-gray-500 dark:text-gray-400">
                               ⏱ took {dur}
                             </span>
                           ) : null;
-                        })()
-                      )}
+                        })()}
                       <span>{progress}%</span>
                     </span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-800">
                     <div
-                      className={`h-full rounded-full ${job.status === "failed"
-                        ? "bg-rose-500"
-                        : job.status === "completed"
-                          ? "bg-emerald-500"
-                          : "bg-primary"
-                        }`}
+                      className={`h-full rounded-full ${
+                        job.status === "failed"
+                          ? "bg-rose-500"
+                          : job.status === "completed"
+                            ? "bg-emerald-500"
+                            : "bg-primary"
+                      }`}
                       style={{ width: `${Math.max(6, progress || 0)}%` }}
                     />
                   </div>
@@ -272,6 +303,7 @@ function BulkExportQueue({
           })
         )}
       </div>
+      <ConfirmModal />
     </div>
   );
 }
