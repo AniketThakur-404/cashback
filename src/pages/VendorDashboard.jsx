@@ -5097,6 +5097,41 @@ const VendorDashboard = () => {
       .slice(0, 12);
   }, [qrs]);
 
+  const fallbackRecentRedemptions = useMemo(() => {
+    return [...overviewFilteredQrs]
+      .filter((qr) => {
+        const status = String(qr?.status || "").toLowerCase();
+        return status === "redeemed" || status === "claimed";
+      })
+      .sort(
+        (a, b) =>
+          new Date(b?.redeemedAt || b?.updatedAt || b?.createdAt || 0) -
+          new Date(a?.redeemedAt || a?.updatedAt || a?.createdAt || 0),
+      )
+      .slice(0, 10)
+      .map((qr) => ({
+        id: `qr-${qr?.id || qr?.uniqueHash || "unknown"}`,
+        createdAt: qr?.redeemedAt || qr?.updatedAt || qr?.createdAt || null,
+        amount: parseNumericValue(
+          qr?.cashbackAmount,
+          parseNumericValue(qr?.Campaign?.cashbackAmount, 0),
+        ),
+        campaign: qr?.Campaign
+          ? {
+              id: qr.Campaign.id,
+              title: qr.Campaign.title,
+            }
+          : null,
+        qr: {
+          id: qr?.id || null,
+          hash: qr?.uniqueHash || qr?.hash || "-",
+        },
+      }));
+  }, [overviewFilteredQrs]);
+
+  const displayedRecentRedemptions =
+    recentRedemptions.length > 0 ? recentRedemptions : fallbackRecentRedemptions;
+
   const qrGallery = useMemo(() => {
     return [...qrs].sort(
       (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
@@ -6494,7 +6529,7 @@ const VendorDashboard = () => {
                             <div className="text-center py-8 text-red-500 text-sm">
                               {recentRedemptionsError}
                             </div>
-                          ) : recentRedemptions.length === 0 ? (
+                          ) : displayedRecentRedemptions.length === 0 ? (
                             <div className="text-center py-8 text-gray-500 text-sm">
                               No redemptions yet. Share your QR codes to get
                               started!
@@ -6515,7 +6550,7 @@ const VendorDashboard = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-800">
-                                  {recentRedemptions.map((redemption) => (
+                                  {displayedRecentRedemptions.map((redemption) => (
                                       <tr
                                         key={redemption.id}
                                         className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
