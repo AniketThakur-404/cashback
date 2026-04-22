@@ -30,6 +30,7 @@ const createBatchRow = (overrides = {}) => ({
   id: Math.random().toString(36).slice(2, 10),
   quantity: "",
   amount: "",
+  redeemedQrs: 0,
   isPersisted: false,
   ...overrides,
 });
@@ -100,35 +101,9 @@ const BatchCard = ({
               </p>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                QR Range
-              </p>
-              <p className="mt-0.5 text-xs font-bold text-gray-900 dark:text-gray-100">
-                {formatBatchRange(batch.start, batch.quantityValue)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                Quantity
-              </p>
-              <p className="mt-0.5 text-xs font-bold text-gray-900 dark:text-gray-100">
-                {batch.quantityValue || 0} QRs
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-2.5 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/60">
-              <p className="text-[9px] font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                Cashback
-              </p>
-              <p className="mt-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                INR {formatAmount(batch.amount)}
-              </p>
-            </div>
-          </div>
         </div>
 
-        <div className="flex items-center gap-1.5 self-start">
+        <div className="flex items-center gap-1.5 shrink-0 self-start">
           {canDownload && typeof onDownload === "function" && (
             <button
               type="button"
@@ -153,7 +128,42 @@ const BatchCard = ({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 rounded-xl bg-gray-50/50 p-4 dark:bg-zinc-950/30 sm:grid-cols-2">
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            QR Range
+          </p>
+          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+            {formatBatchRange(batch.start, batch.quantityValue)}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Quantity
+          </p>
+          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+            {batch.quantityValue || 0} QRs
+          </p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500/90 dark:text-amber-500/80">
+            Redeemed
+          </p>
+          <p className="mt-0.5 text-sm font-bold text-amber-500 dark:text-amber-400">
+            {batch.redeemedQrs || 0}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Cashback
+          </p>
+          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+            INR {formatAmount(batch.amount)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-4 rounded-xl bg-gray-50/50 p-4 dark:bg-zinc-950/30 sm:grid-cols-2">
         <label className="space-y-1.5">
           <span className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
             QR Quantity
@@ -228,6 +238,7 @@ const PostpaidSheetManager = React.memo(
             id: allocation.id || Math.random().toString(36).slice(2, 10),
             quantity: String(allocation.quantity),
             amount: formatAmount(allocation.cashbackAmount),
+            redeemedQrs: allocation.redeemedQrs || allocation.redeemedCount || 0,
             isPersisted: true,
           })),
       [normalizedAllocations],

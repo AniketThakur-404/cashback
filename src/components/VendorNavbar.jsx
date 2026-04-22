@@ -40,7 +40,7 @@ const Button = ({
 const VendorNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const logoSrc = "/light theme incentify logo.png";
+  const logoSrc = "/logo.png";
   const APP_NAME = "Assured Rewards";
 
   const isLandingPage =
@@ -61,18 +61,29 @@ const VendorNavbar = () => {
 
   return (
     <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
         <div
           className="flex items-center cursor-pointer"
           onClick={() => navigate("/vendor")}
         >
-          <img
-            src={logoSrc}
-            alt={APP_NAME}
-            className="h-15 w-auto object-contain"
-          />
+          <div className="flex items-center gap-3">
+            <img
+              src={logoSrc}
+              alt={APP_NAME}
+              className="h-12 w-auto object-contain pt-1"
+            />
+            <span className="text-2xl font-black text-gray-900 tracking-tight font-admin-heading">
+              Assured<span className="text-emerald-600">Rewards</span>
+            </span>
+          </div>
         </div>
         <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
+          <button
+            onClick={() => scrollToSection("how-it-works")}
+            className="hover:text-emerald-600 transition-colors"
+          >
+            Solutions
+          </button>
           <button
             onClick={() => scrollToSection("features")}
             className="hover:text-emerald-600 transition-colors"
@@ -80,10 +91,10 @@ const VendorNavbar = () => {
             Features
           </button>
           <button
-            onClick={() => scrollToSection("how-it-works")}
+            onClick={() => scrollToSection("resources")}
             className="hover:text-emerald-600 transition-colors"
           >
-            How It Works
+            Resources
           </button>
           <button
             onClick={() => scrollToSection("pricing")}

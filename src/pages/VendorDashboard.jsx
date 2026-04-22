@@ -278,6 +278,71 @@ const notificationTypeConfig = {
   },
 };
 
+const getToastTypeByNotification = (type) => {
+  const successTypes = [
+    "qr-redeemed",
+    "wallet-recharge",
+    "bulk-export-ready",
+    "campaign-activation-ready",
+  ];
+  const errorTypes = ["bulk-export-failed", "campaign-activation-failed"];
+  const warningTypes = ["wallet-debit", "wallet-adjustment"];
+
+  if (successTypes.includes(type)) return "success";
+  if (errorTypes.includes(type)) return "error";
+  if (warningTypes.includes(type)) return "warning";
+  return "info";
+};
+
+const NotificationItem = React.memo(({ item, onClick, getMeta, formatDate }) => {
+  const meta = getMeta(item);
+  const Icon = meta.icon;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(item)}
+      className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
+        item.isRead
+          ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+          : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
+        >
+          <Icon size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+              {item.title || meta.label}
+            </div>
+            <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              {formatDate(item.createdAt)}
+            </div>
+          </div>
+          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+            {item.message || "No details available."}
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            {!item.isRead && (
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
+            <span
+              className={`text-[10px] font-semibold ${
+                item.isRead ? "text-gray-400 dark:text-gray-500" : "text-primary"
+              }`}
+            >
+              {item.isRead ? "Read" : "New"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+});
+
 const getNotificationMeta = (notification) => {
   if (!notification?.type) return notificationTypeConfig.default;
   return (
@@ -1950,10 +2015,15 @@ const VendorDashboard = () => {
         list.length > lastNotificationCountRef.current
       ) {
         const diff = list.length - lastNotificationCountRef.current;
-        info(
-          "New Notification",
-          `${diff} new ${diff === 1 ? "notification" : "notifications"} received.`,
-        );
+        const newest = list[0];
+        const toastType = getToastTypeByNotification(newest.type);
+        const toastTitle = diff === 1 ? newest.title : "New Notifications";
+        const toastMsg = diff === 1 ? newest.message : `${newest.title} (and ${diff - 1} more)`;
+        
+        if (toastType === "success") success(toastTitle, toastMsg);
+        else if (toastType === "error") toastError(toastTitle, toastMsg);
+        else if (toastType === "warning") info(toastTitle, toastMsg);
+        else info(toastTitle, toastMsg);
       }
       lastNotificationCountRef.current = list.length;
     } catch (err) {
@@ -2016,9 +2086,11 @@ const VendorDashboard = () => {
             successIds.has(item.id) ? { ...item, isRead: true } : item,
           ),
         );
-        info(
-          "Notifications Updated",
-          `${successIds.size} notification${successIds.size === 1 ? "" : "s"} marked as read.`,
+        success(
+          "Inbox Cleared",
+          `Successfully marked ${successIds.size} ${
+            successIds.size === 1 ? "notification" : "notifications"
+          } as read.`,
         );
       }
 
@@ -9917,142 +9989,121 @@ Quantity: ${invoiceData.quantity} QRs
                 </div>
               </div>
 
-              {isNotificationsOpen && (
-                <div className="fixed inset-0 z-50">
-                  <button
-                    type="button"
-                    aria-label="Close notifications"
-                    onClick={() => setIsNotificationsOpen(false)}
-                    className="absolute inset-0 z-40 bg-black/10 dark:bg-black/40 backdrop-blur-[1px]"
-                  />
-                  <div
-                    ref={notificationsDropdownRef}
-                    className="absolute z-50 right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-colors duration-200 flex flex-col"
-                  >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
-                      <div className="flex items-center gap-2">
-                        <Bell size={16} className="text-primary" />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Notifications
+              {/* Persistent Notification Panel for instant-open performance */}
+              <div
+                className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out ${
+                  isNotificationsOpen
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <button
+                  type="button"
+                  aria-label="Close notifications"
+                  onClick={() => setIsNotificationsOpen(false)}
+                  className="absolute inset-0 z-40 bg-black/10 dark:bg-black/40 backdrop-blur-[1px]"
+                />
+                <div
+                  ref={notificationsDropdownRef}
+                  className={`absolute z-50 right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out flex flex-col ${
+                    isNotificationsOpen
+                      ? "translate-y-0 scale-100"
+                      : "translate-y-4 scale-95"
+                  }`}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2">
+                      <Bell size={16} className="text-primary" />
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Notifications
+                      </span>
+                      {notificationUnreadCount > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {notificationUnreadCount} new
                         </span>
-                        {notificationUnreadCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                            {notificationUnreadCount} new
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => loadNotifications(token)}
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
-                          title="Refresh notifications"
-                        >
-                          <RefreshCw
-                            className={`w-3.5 h-3.5 ${isLoadingNotifications ? "animate-spin" : ""}`}
-                          />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleMarkAllNotificationsRead}
-                          disabled={
-                            isMarkingNotificationsRead ||
-                            isLoadingNotifications ||
-                            notificationUnreadCount === 0
-                          }
-                          className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          <Check size={12} />
-                          {isMarkingNotificationsRead
-                            ? "Marking..."
-                            : "Mark all read"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsNotificationsOpen(false)}
-                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
-                          title="Close notifications"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    {notificationsError && (
-                      <div className="px-4 py-2.5 text-xs text-primary dark:text-primary bg-primary/5 dark:bg-primary/10 border-b border-primary/20 dark:border-primary/30">
-                        {notificationsError}
-                      </div>
-                    )}
-                    <div
-                      className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-3 pr-2 space-y-2 custom-scrollbar touch-pan-y"
-                      style={{ WebkitOverflowScrolling: "touch" }}
-                      onWheel={(event) => event.stopPropagation()}
-                      onTouchMove={(event) => event.stopPropagation()}
-                    >
-                      {isLoadingNotifications ? (
-                        <div className="text-xs text-gray-400 text-center py-6">
-                          Loading notifications...
-                        </div>
-                      ) : notifications.length === 0 ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
-                          No notifications yet.
-                        </div>
-                      ) : (
-                        notifications.map((item) => {
-                          const meta = getNotificationMeta(item);
-                          const Icon = meta.icon;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleNotificationClick(item)}
-                              className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
-                                item.isRead
-                                  ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                                  : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div
-                                  className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
-                                >
-                                  <Icon size={18} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-                                      {item.title || meta.label}
-                                    </div>
-                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                      {formatDate(item.createdAt)}
-                                    </div>
-                                  </div>
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                    {item.message || "No details available."}
-                                  </div>
-                                  <div className="mt-2 flex items-center gap-1.5">
-                                    {!item.isRead && (
-                                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                                    )}
-                                    <span
-                                      className={`text-[10px] font-semibold ${
-                                        item.isRead
-                                          ? "text-gray-400 dark:text-gray-500"
-                                          : "text-primary"
-                                      }`}
-                                    >
-                                      {item.isRead ? "Read" : "New"}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })
                       )}
                     </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => loadNotifications(token)}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                        title="Refresh notifications"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${
+                            isLoadingNotifications ? "animate-spin" : ""
+                          }`}
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleMarkAllNotificationsRead}
+                        disabled={
+                          isMarkingNotificationsRead ||
+                          isLoadingNotifications ||
+                          notificationUnreadCount === 0
+                        }
+                        className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Check size={12} />
+                        {isMarkingNotificationsRead
+                          ? "Marking..."
+                          : "Mark all read"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                        title="Close notifications"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  {notificationsError && (
+                    <div className="px-4 py-2.5 text-xs text-primary dark:text-primary bg-primary/5 dark:bg-primary/10 border-b border-primary/20 dark:border-primary/30">
+                      {notificationsError}
+                    </div>
+                  )}
+                  <div
+                    className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-3 pr-2 space-y-2 custom-scrollbar touch-pan-y"
+                    style={{ WebkitOverflowScrolling: "touch" }}
+                    onWheel={(event) => event.stopPropagation()}
+                    onTouchMove={(event) => event.stopPropagation()}
+                  >
+                    {isLoadingNotifications && notifications.length === 0 ? (
+                      <div className="text-xs text-gray-400 text-center py-6">
+                        Loading notifications...
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-6">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      <>
+                        {notifications.slice(0, 30).map((item) => (
+                          <NotificationItem
+                            key={item.id}
+                            item={item}
+                            onClick={handleNotificationClick}
+                            getMeta={getNotificationMeta}
+                            formatDate={formatDate}
+                          />
+                        ))}
+                        {notifications.length > 30 && (
+                          <button
+                            onClick={() => navigate("/vendor/notifications")}
+                            className="w-full py-2.5 text-xs font-medium text-primary hover:text-primary-focus hover:bg-primary/5 rounded-xl transition-colors border border-dashed border-primary/20 mt-2"
+                          >
+                            View All Notifications ({notifications.length})
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
 
               <ConfirmModal
                 isOpen={!!bulkExportPrompt}

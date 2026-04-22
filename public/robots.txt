@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Private and Admin Areas
+Disallow: /admin/
+Disallow: /vendor-dashboard/
+Disallow: /vendor-panel/
+Disallow: /vendor-signup
+
+# QR Scanning Flow
+Disallow: /scan/
+Disallow: /redeem/
+
+# User Account and Sensitive Data
+Disallow: /profile/
+Disallow: /wallet/
+Disallow: /payout/
+Disallow: /history
+Disallow: /orders
+Disallow: /transaction-history
+
+Sitemap: https://assuredrewards.in/sitemap.xml
