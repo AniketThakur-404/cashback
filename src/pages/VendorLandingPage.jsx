@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import VendorNavbar from "../components/VendorNavbar";
+import whyCashbackHero from "../assets/why-cashback-hero.png";
 const ScrollContent = () => {
   const [idx, setIdx] = React.useState(0);
 
@@ -1252,7 +1253,7 @@ const VendorLandingPage = () => {
                   className="relative z-10 w-full h-full flex items-center justify-center perspective-1000"
                 >
                   <img 
-                    src="/src/assets/why-cashback-hero.png" 
+                    src={whyCashbackHero} 
                     alt="Why Cashback Works" 
                     className="w-full h-auto max-h-[110%] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-1000"
                   />
