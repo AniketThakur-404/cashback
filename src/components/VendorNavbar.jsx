@@ -60,8 +60,8 @@ const VendorNavbar = () => {
   };
 
   return (
-    <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
+    <nav className="border-b border-gray-100 bg-white/60 backdrop-blur-xl sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <div
           className="flex items-center cursor-pointer"
           onClick={() => navigate("/vendor")}
@@ -70,46 +70,59 @@ const VendorNavbar = () => {
             <img
               src={logoSrc}
               alt={APP_NAME}
-              className="h-12 w-auto object-contain pt-1"
+              className="h-10 w-auto object-contain"
             />
-            <span className="text-2xl font-black text-gray-900 tracking-tight font-admin-heading">
+            <span className="text-xl font-extrabold text-slate-900 tracking-tighter font-admin-heading">
               Assured<span className="text-emerald-600">Rewards</span>
             </span>
+
           </div>
         </div>
-        <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
+
+        <div className="hidden md:flex items-center gap-9 text-[14px] font-semibold text-slate-600/90">
           <button
             onClick={() => scrollToSection("how-it-works")}
-            className="hover:text-emerald-600 transition-colors"
+            className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Solutions
           </button>
           <button
             onClick={() => scrollToSection("features")}
-            className="hover:text-emerald-600 transition-colors"
+            className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Features
           </button>
           <button
             onClick={() => scrollToSection("resources")}
-            className="hover:text-emerald-600 transition-colors"
+            className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Resources
           </button>
           <button
             onClick={() => scrollToSection("pricing")}
-            className="hover:text-emerald-600 transition-colors"
+            className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Pricing
           </button>
         </div>
-        <Button
-          variant="outline"
-          className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-transparent"
-          onClick={() => navigate("/vendor-dashboard")}
-        >
-          Login
-        </Button>
+
+
+
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => navigate("/vendor-dashboard")}
+            className="hidden sm:block text-[15px] font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+          >
+            Login
+          </button>
+          <Button
+            className="!bg-slate-900 !text-white !rounded-full !px-6 !py-2 !h-10 !text-sm !font-semibold hover:!bg-black shadow-lg shadow-slate-900/10 transition-all hover:scale-105 active:scale-95"
+            onClick={() => navigate("/brand-registration")}
+          >
+            Get Started
+          </Button>
+        </div>
+
       </div>
     </nav>
   );
