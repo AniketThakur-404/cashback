@@ -103,6 +103,7 @@ import {
   updateAdminSystemSettings,
   getAdminSupportTickets,
   replyAdminSupportTicket,
+  deleteAdminUser,
 } from "../lib/api";
 import { getApiBaseUrl } from "../lib/apiClient";
 
@@ -2769,6 +2770,47 @@ const AdminDashboard = () => {
 
   const closeAccountModal = () => {
     setIsAccountModalOpen(false);
+  };
+
+  const handleVendorDelete = async (vendor) => {
+    if (!token) {
+      alert("Admin session expired. Please refresh.");
+      return;
+    }
+
+    // Try multiple possible paths for the User ID
+    const userId = vendor.userId || vendor.User?.id || vendor.id;
+
+    if (!userId) {
+      alert("Could not identify the user associated with this vendor.");
+      return;
+    }
+
+    const displayName =
+      vendor.Brand?.name || vendor.businessName || vendor.User?.name || "Vendor";
+
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete the account for "${displayName}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setVendorActionStatus("Processing deletion...");
+    setVendorActionError("");
+
+    try {
+      await deleteAdminUser(token, userId);
+      setVendorActionStatus("Vendor account deleted successfully.");
+      // Force refresh vendors list
+      if (typeof loadVendors === "function") {
+        loadVendors(token);
+      }
+    } catch (err) {
+      const errMsg = err.message || "Failed to delete account.";
+      setVendorActionError(errMsg);
+    }
   };
 
   useEffect(() => {
@@ -7684,19 +7726,29 @@ const AdminDashboard = () => {
                               </td>
 
                               <td className="py-4 px-6 align-top text-right">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleAccountView({
-                                      vendorId: vendor.id,
-                                      brandId: vendor.Brand?.id,
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow dark:shadow-white/5 active:scale-95"
-                                >
-                                  Manage
-                                  <ArrowRight size={12} />
-                                </button>
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleAccountView({
+                                        vendorId: vendor.id,
+                                        brandId: vendor.Brand?.id,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow dark:shadow-white/5 active:scale-95"
+                                  >
+                                    Manage
+                                    <ArrowRight size={12} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleVendorDelete(vendor)}
+                                    className="p-2 rounded-lg bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors border border-red-100 dark:border-red-900/20 active:scale-90"
+                                    title="Delete Account"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );

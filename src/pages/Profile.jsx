@@ -17,9 +17,11 @@ import {
   Shield,
   FileQuestion,
   RefreshCw,
+  AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { getMe, updateUserProfile, uploadUserAvatar } from "../lib/api";
+import { getMe, updateUserProfile, uploadUserAvatar, deleteUserAccount } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
 import { AUTH_TOKEN_KEY, clearAuthToken, useAuth } from "../lib/auth";
 import { useToast } from "../components/ui/ToastContext";
@@ -35,6 +37,8 @@ const Profile = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [imgError, setImgError] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [profile, setProfile] = useState({
     name: "",
@@ -137,6 +141,19 @@ const Profile = () => {
   const handleLogout = () => {
     clearAuthToken();
     navigate("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setError("");
+    try {
+      await deleteUserAccount(token);
+      info("Account Deleted", "Your account has been successfully deactivated.");
+      handleLogout();
+    } catch (err) {
+      setError(err.message || "Failed to delete account");
+      setIsDeleting(false);
+    }
   };
 
   if (!token) return null;
@@ -325,12 +342,17 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Logout Section */}
           <div className="bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-zinc-800">
             <MenuButton
               icon={LogOut}
               label="Logout"
               onClick={handleLogout}
+              isDestructive
+            />
+            <MenuButton
+              icon={Trash2}
+              label="Delete Account"
+              onClick={() => setShowDeleteConfirm(true)}
               isDestructive
             />
           </div>
@@ -491,6 +513,51 @@ const Profile = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-red-100 dark:border-red-900/20 w-full max-w-sm">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                  <AlertTriangle className="text-red-500 w-8 h-8" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Delete Account?</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    This action is permanent. You will lose access to your wallet, rewards, and transaction history.
+                  </p>
+                </div>
+
+                <div className="flex flex-col w-full gap-3 pt-2">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                    className="w-full py-4 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Trash2 size={18} />
+                        <span>Confirm Deletion</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setIsDeleting(false);
+                    }}
+                    disabled={isDeleting}
+                    className="w-full py-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  >
+                    Keep My Account
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

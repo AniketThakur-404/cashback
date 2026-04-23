@@ -586,6 +586,12 @@ export const updateAdminUserStatus = (token, userId, status) =>
     body: { status },
   });
 
+export const deleteAdminUser = (token, userId) =>
+  apiRequest(`/api/admin/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    token,
+  });
+
 export const getAdminUserOverview = (token, userId) =>
   apiRequest(`/api/admin/users/${encodeURIComponent(userId)}/overview`, {
     token,

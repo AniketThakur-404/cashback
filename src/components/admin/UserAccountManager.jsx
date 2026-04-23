@@ -9,11 +9,13 @@ import {
   Bell,
   Save,
   Info,
+  Trash2,
 } from "lucide-react";
 import {
   getAdminUserOverview,
   updateAdminUserDetails,
   updateAdminUserStatus,
+  deleteAdminUser,
 } from "../../lib/api";
 
 const fmtAmt = (v) => {
@@ -145,6 +147,19 @@ const UserAccountManager = ({ user, token, onClose, onUpdate }) => {
     }
   };
 
+  const deleteUser = async () => {
+    if (!current?.id || !token) return;
+    if (!window.confirm("Are you sure you want to delete this user? This will deactivate their account.")) return;
+    try {
+      await deleteAdminUser(token, current.id);
+      setMsg({ type: "success", text: "User account deactivated successfully." });
+      if (onUpdate) onUpdate();
+      setTimeout(onClose, 2000);
+    } catch (e) {
+      setMsg({ type: "error", text: e.message || "Failed to delete user." });
+    }
+  };
+
   if (!current) return null;
 
   const badge =
@@ -190,14 +205,20 @@ const UserAccountManager = ({ user, token, onClose, onUpdate }) => {
             ))}
           </div>
 
-          <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 space-y-2">
-            <div className="text-xs text-slate-500">Status: {current.status}</div>
-            <div className="grid grid-cols-3 gap-1">
-              <button onClick={() => updateStatus("active")} className="text-[10px] rounded bg-emerald-100 text-emerald-700 py-1">Active</button>
-              <button onClick={() => updateStatus("inactive")} className="text-[10px] rounded bg-amber-100 text-amber-700 py-1">Inactive</button>
-              <button onClick={() => updateStatus("blocked")} className="text-[10px] rounded bg-rose-100 text-rose-700 py-1">Blocked</button>
+            <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 space-y-2">
+              <div className="text-xs text-slate-500">Status: {current.status}</div>
+              <div className="grid grid-cols-3 gap-1">
+                <button onClick={() => updateStatus("active")} className="text-[10px] rounded bg-emerald-100 text-emerald-700 py-1">Active</button>
+                <button onClick={() => updateStatus("inactive")} className="text-[10px] rounded bg-amber-100 text-amber-700 py-1">Inactive</button>
+                <button onClick={() => updateStatus("blocked")} className="text-[10px] rounded bg-rose-100 text-rose-700 py-1">Blocked</button>
+              </div>
+              <button
+                onClick={deleteUser}
+                className="w-full mt-2 text-[10px] rounded bg-red-50 text-red-600 border border-red-100 py-1.5 hover:bg-red-100 transition-colors font-medium flex items-center justify-center gap-1"
+              >
+                <Trash2 size={12} /> Delete Account
+              </button>
             </div>
-          </div>
         </aside>
 
         <section className="flex-1 p-4 overflow-y-auto">
