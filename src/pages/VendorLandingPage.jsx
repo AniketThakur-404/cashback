@@ -690,6 +690,7 @@ const VendorLandingPage = () => {
                     <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
                       {[...brandImages, ...brandImages, ...brandImages].map(
                         (num, idx) => {
+                          const isWhiteLogo = [5, 6, 10, 11].includes(num);
                           return (
                             <div
                               key={idx}
@@ -697,11 +698,19 @@ const VendorLandingPage = () => {
                             >
                               <img
                                 src={`/brand/${num}.jpeg`}
-                                alt={`Brand Logo ${num}`}
-                                className="w-64 h-32 object-contain opacity-100"
+                                alt={`Brand ${num}`}
+                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                                 onError={(e) => {
-                                  if (e.target.src.includes("/brand/")) {
+                                  const currentSrc = e.target.src;
+                                  // Fallback logic: /brand/*.jpeg -> /*.jpeg -> /brand/*.avif -> /*.avif -> /logo.png
+                                  if (currentSrc.includes("/brand/") && currentSrc.includes(".jpeg")) {
                                     e.target.src = `/${num}.jpeg`;
+                                  } else if (currentSrc.includes(".jpeg") && !currentSrc.includes("/brand/")) {
+                                    e.target.src = `/brand/${num}.avif`;
+                                  } else if (currentSrc.includes("/brand/") && currentSrc.includes(".avif")) {
+                                    e.target.src = `/${num}.avif`;
+                                  } else if (currentSrc.includes(".avif") && !currentSrc.includes("/brand/")) {
+                                    e.target.src = "/logo.png";
                                   }
                                 }}
                               />
