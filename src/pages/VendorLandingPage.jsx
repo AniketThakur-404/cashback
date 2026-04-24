@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import VendorNavbar from "../components/VendorNavbar";
-import whyCashbackHero from "../assets/why-cashback-hero.png";
+// import whyCashbackHero from "../assets/why-cashback-hero.png";
 const ScrollContent = () => {
   const [idx, setIdx] = React.useState(0);
 
@@ -59,7 +59,6 @@ const ScrollContent = () => {
       <div className="relative w-full flex flex-col items-center justify-center overflow-hidden">
         {/* Connection Line from Top */}
         <div className="h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line mb-4" />
-
 
         <div className="relative max-w-4xl mx-auto w-full flex items-center justify-center pt-4 min-h-[300px]">
           {/* The Arc SVG */}
@@ -210,6 +209,11 @@ const VendorLandingPage = () => {
     "Auto Spare Parts",
     "Aromatics Industry",
   ];
+
+  const brandImages = Array.from(
+    { length: 12 },
+    (_, i) => `/brand/${i + 1}.avif`,
+  );
 
   const benefits = [
     {
@@ -642,7 +646,7 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Improved Marquee Section */}
-      <section className="py-12 bg-white relative overflow-hidden border-b border-slate-100">
+      <section className="py-12 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -662,7 +666,6 @@ const VendorLandingPage = () => {
             </p>
           </motion.div>
         </div>
-
 
         <div className="relative">
           {/* Refined Gradient Overlays */}
@@ -687,20 +690,25 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-6 px-6 py-4">
-                {[...logos]
-                  .reverse()
-                  .concat([...logos].reverse())
-                  .map((logo, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
-                    >
-                      <span className="text-sm font-black text-slate-400 uppercase tracking-widest group-hover/tag:text-emerald-600 transition-colors">
-                        {logo}
-                      </span>
-                    </div>
-                  ))}
+              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-1 py-1">
+                {[...brandImages, ...brandImages, ...brandImages].map(
+                  (img, idx) => {
+                    const isWhiteLogo = ["/5.", "/6.", "/10.", "/11."].some(
+                      (n) => img.includes(n),
+                    );
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-center min-w-[280px] transition-all duration-500"
+                      >
+                        <div
+                          className={`w-64 h-32 bg-contain bg-center bg-no-repeat transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-70" : ""}`}
+                          style={{ backgroundImage: `url(${img})` }}
+                        />
+                      </div>
+                    );
+                  },
+                )}
               </div>
             </div>
           </div>
@@ -720,7 +728,7 @@ const VendorLandingPage = () => {
                 className="text-4xl md:text-6xl font-medium text-slate-900 tracking-tight leading-[1.1]"
               >
                 Still struggling to get <br />
-                <span className="text-slate-400 font-normal italic">
+                <span className="text-emerald-600 font-normal italic">
                   repeat customers?
                 </span>
               </motion.h2>
@@ -861,12 +869,12 @@ const VendorLandingPage = () => {
                       {[1, 2, 3, 4].map((i) => (
                         <div
                           key={i}
-                          className="w-10 h-10 rounded-full border-[2px] border-white/50 overflow-hidden bg-slate-200 shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer"
+                          className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
                         >
                           <img
-                            src={`https://i.pravatar.cc/150?u=${i + 25}`}
-                            alt="user"
-                            className="w-full h-full object-cover"
+                            src={brandImages[i - 1]}
+                            alt="Brand Logo"
+                            className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
                           />
                         </div>
                       ))}
@@ -1033,7 +1041,10 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Improved Impact Section */}
-      <section id="resources" className="py-32 bg-white relative overflow-hidden">
+      <section
+        id="resources"
+        className="py-32 bg-white relative overflow-hidden"
+      >
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px]" />
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px]" />
@@ -1098,7 +1109,10 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Improved Versatile Solutions Section */}
-      <section id="features" className="py-32 bg-white relative overflow-hidden">
+      <section
+        id="features"
+        className="py-32 bg-white relative overflow-hidden"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="mb-24 max-w-4xl text-center md:text-left">
             <motion.div
@@ -1181,20 +1195,19 @@ const VendorLandingPage = () => {
                   </div>
                 </div>
               </motion.div>
-
             ))}
           </div>
         </div>
       </section>
 
       {/* Why Cashback Works Section */}
-              {/* Redesigned Why Cashback Works Section (White Aesthetic) */}
-      <section className="py-12 bg-white relative overflow-hidden">
+      {/* Redesigned Why Cashback Works Section (White Aesthetic) */}
+      <section className="py-24 bg-white relative overflow-hidden">
         {/* Subtle Embossed Grid Background */}
         <div className="absolute inset-0 z-0 opacity-40 pointer-events-none grid grid-cols-6 md:grid-cols-12 gap-4 p-4">
           {Array.from({ length: 48 }).map((_, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="aspect-square rounded-[2rem] border-slate-100 border-2 shadow-[inset_4px_4px_8px_rgba(0,0,0,0.02),inset_-4px_-4px_8px_rgba(255,255,255,0.8)]"
             />
           ))}
@@ -1220,7 +1233,7 @@ const VendorLandingPage = () => {
                 {[
                   "Instant rewards create immediate excitement",
                   "Customers remember value, not just products",
-                  "Rewards build habit, and habit drives repeat business"
+                  "Rewards build habit, and habit drives repeat business",
                 ].map((text, i) => (
                   <motion.div
                     key={i}
@@ -1243,7 +1256,6 @@ const VendorLandingPage = () => {
 
             {/* Right Content: Premium Image Asset */}
             <div className="relative h-[450px] flex items-center justify-center">
-
               <div className="relative w-full max-w-2xl h-full flex items-center justify-center">
                 <motion.div
                   initial={{ opacity: 0, y: 40, scale: 0.9, rotateX: 20 }}
@@ -1252,15 +1264,12 @@ const VendorLandingPage = () => {
                   transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
                   className="relative z-10 w-full h-full flex items-center justify-center perspective-1000"
                 >
-                  <img 
-                    src={whyCashbackHero} 
-                    alt="Why Cashback Works" 
-                    className="w-full h-auto max-h-[110%] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-1000"
+                  <img
+                    src="/Gif.gif"
+                    alt="Why Cashback Works"
+                    className="h-[650px] min-w-[300px] w-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-1000 z-10"
                   />
                 </motion.div>
-                
-                {/* Decorative Glow behind image */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
               </div>
             </div>
           </div>
@@ -1270,13 +1279,13 @@ const VendorLandingPage = () => {
       {/* Improved Testimonial Section */}
       <section className="py-32 bg-slate-50/50 relative overflow-hidden border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center text-center">
-            <svg
-              className="w-16 h-16 opacity-20"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H16.017C15.4647 8 15.017 8.44772 15.017 9V12C15.017 12.5523 14.5693 13 14.017 13H13.017V21H14.017ZM6.017 21L6.017 18C6.017 16.8954 6.91243 16 8.017 16H11.017C11.5693 16 12.017 15.5523 12.017 15V9C12.017 8.44772 11.5693 8 11.017 8H8.017C7.46472 8 7.017 8.44772 7.017 9V12C7.017 12.5523 6.56929 13 6.017 13H5.017V21H6.017Z" />
-            </svg>
+          <svg
+            className="w-16 h-16 opacity-20"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H16.017C15.4647 8 15.017 8.44772 15.017 9V12C15.017 12.5523 14.5693 13 14.017 13H13.017V21H14.017ZM6.017 21L6.017 18C6.017 16.8954 6.91243 16 8.017 16H11.017C11.5693 16 12.017 15.5523 12.017 15V9C12.017 8.44772 11.5693 8 11.017 8H8.017C7.46472 8 7.017 8.44772 7.017 9V12C7.017 12.5523 6.56929 13 6.017 13H5.017V21H6.017Z" />
+          </svg>
 
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -1316,7 +1325,7 @@ const VendorLandingPage = () => {
             <div className="relative z-10 space-y-12">
               <h2 className="text-5xl md:text-8xl font-black text-white tracking-tight leading-[0.95] font-admin-heading">
                 Ready to Grow Your <br />
-                <span className="text-emerald-100/40">Business?</span>
+                <span className="text-gray-800">Business?</span>
               </h2>
               <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed">
                 Join 500+ businesses already using cashback rewards to increase
