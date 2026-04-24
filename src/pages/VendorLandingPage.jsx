@@ -690,26 +690,27 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-1 py-1">
-                {[...brandImages, ...brandImages, ...brandImages].map(
-                  (img, idx) => {
-                    const isWhiteLogo = ["/5.", "/6.", "/10.", "/11."].some(
-                      (n) => img.includes(n),
-                    );
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-center min-w-[280px] transition-all duration-500"
-                      >
-                        <div
-                          className={`w-64 h-32 bg-contain bg-center bg-no-repeat transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-70" : ""}`}
-                          style={{ backgroundImage: `url(${img})` }}
-                        />
-                      </div>
-                    );
-                  },
-                )}
-              </div>
+                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-8 py-6">
+                      {[...brandImages, ...brandImages, ...brandImages].map(
+                        (img, idx) => {
+                          const isWhiteLogo = ["/5.", "/6.", "/10.", "/11."].some(
+                            (n) => img.includes(n),
+                          );
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-center min-w-[280px] transition-all duration-500"
+                            >
+                              <img
+                                src={img}
+                                alt="Brand Logo"
+                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-70" : ""}`}
+                              />
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
             </div>
           </div>
         </div>
