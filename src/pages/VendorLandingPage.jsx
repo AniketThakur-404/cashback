@@ -697,20 +697,16 @@ const VendorLandingPage = () => {
                               className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
-                                src={`/brand/${num}.jpeg`}
+                                src={`/${num}.jpeg`}
                                 alt={`Brand ${num}`}
                                 className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                                 onError={(e) => {
                                   const currentSrc = e.target.src;
-                                  // Fallback logic: /brand/*.jpeg -> /*.jpeg -> /brand/*.avif -> /*.avif -> /logo.png
-                                  if (currentSrc.includes("/brand/") && currentSrc.includes(".jpeg")) {
-                                    e.target.src = `/${num}.jpeg`;
-                                  } else if (currentSrc.includes(".jpeg") && !currentSrc.includes("/brand/")) {
-                                    e.target.src = `/brand/${num}.avif`;
-                                  } else if (currentSrc.includes("/brand/") && currentSrc.includes(".avif")) {
+                                  if (currentSrc.includes(".jpeg")) {
                                     e.target.src = `/${num}.avif`;
-                                  } else if (currentSrc.includes(".avif") && !currentSrc.includes("/brand/")) {
-                                    e.target.src = "/logo.png";
+                                  } else if (currentSrc.includes(".avif")) {
+                                    // If everything fails, try the brand folder just in case
+                                    e.target.src = `/brand/${num}.jpeg`;
                                   }
                                 }}
                               />
