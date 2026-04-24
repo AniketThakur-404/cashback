@@ -687,31 +687,36 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
-                {[...brandImages, ...brandImages, ...brandImages].map(
-                  (num, idx) => {
-                    const isWhiteLogo = [5, 6, 10, 11].includes(num);
-                    return (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-center min-w-[280px]"
-                      >
-                        <img
-                          src={`/${num}.jpeg`}
-                          alt={`Brand ${num}`}
-                          className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
-                          onError={(e) => {
-                            const currentSrc = e.target.src;
-                            if (!currentSrc.includes("/brand/")) {
-                              e.target.src = `/brand/${num}.jpeg`;
-                            }
-                          }}
-                        />
-                      </div>
-                    );
-                  },
-                )}
-              </div>
+                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
+                      {[...brandImages, ...brandImages, ...brandImages].map(
+                        (num, idx) => {
+                          const isWhiteLogo = [5, 6, 10, 11].includes(num);
+                          const baseUrl = window.location.origin;
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-center min-w-[280px]"
+                            >
+                              <img
+                                src={`${baseUrl}/${num}.jpeg`}
+                                alt={`Brand ${num}`}
+                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                                onError={(e) => {
+                                  const currentSrc = e.target.src;
+                                  if (currentSrc.endsWith(".jpeg")) {
+                                    e.target.src = `${baseUrl}/${num}.jpg`;
+                                  } else if (currentSrc.endsWith(".jpg")) {
+                                    e.target.src = `${baseUrl}/brand/${num}.jpeg`;
+                                  } else if (currentSrc.includes("/brand/")) {
+                                    e.target.src = `${baseUrl}/${num}.avif`;
+                                  }
+                                }}
+                              />
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
             </div>
           </div>
         </div>
