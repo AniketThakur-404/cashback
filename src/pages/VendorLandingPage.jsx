@@ -676,7 +676,7 @@ const VendorLandingPage = () => {
                 {[...logos, ...logos].map((logo, idx) => (
                   <div
                     key={idx}
-                    className="flex-shrink-0 flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
+                    className="flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
                   >
                     <span className="text-sm font-black text-slate-400 uppercase tracking-widest group-hover/tag:text-emerald-600 transition-colors">
                       {logo}
@@ -687,34 +687,28 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
-                      {[...brandImages, ...brandImages, ...brandImages].map(
-                        (num, idx) => {
-                          const isWhiteLogo = [5, 6, 10, 11].includes(num);
-                          return (
-                            <div
-                              key={idx}
-                              className="flex-shrink-0 flex items-center justify-center min-w-[280px]"
-                            >
-                              <img
-                                src={`/${num}.jpeg`}
-                                alt={`Brand ${num}`}
-                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
-                                onError={(e) => {
-                                  const currentSrc = e.target.src;
-                                  if (currentSrc.includes(".jpeg")) {
-                                    e.target.src = `/brand/${num}.jpeg`;
-                                  } else {
-                                    // Professional fallback: show the main logo if brand logo is missing
-                                    e.target.src = "/logo.png";
-                                  }
-                                }}
-                              />
-                            </div>
-                          );
-                        },
-                      )}
-                    </div>
+              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
+                {[...brandImages, ...brandImages, ...brandImages].map(
+                  (num, idx) => {
+                    const isWhiteLogo = [5, 6, 10, 11].includes(num);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-center min-w-[280px]"
+                      >
+                        <img
+                          src={`/brand/${num}.webp`}
+                          alt={`Brand ${num}`}
+                          className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                          onError={(e) => {
+                            e.target.src = "/logo.png";
+                          }}
+                        />
+                      </div>
+                    );
+                  },
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -877,13 +871,11 @@ const VendorLandingPage = () => {
                           className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
                         >
                           <img
-                            src={`/brand/${i}.jpeg`}
+                            src={`/brand/${i}.webp`}
                             alt="Brand Logo"
                             className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
                             onError={(e) => {
-                              if (e.target.src.includes("/brand/")) {
-                                e.target.src = `/${i}.jpeg`;
-                              }
+                              e.target.src = "/logo.png";
                             }}
                           />
                         </div>
