@@ -676,7 +676,7 @@ const VendorLandingPage = () => {
                 {[...logos, ...logos].map((logo, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
+                    className="flex-shrink-0 flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
                   >
                     <span className="text-sm font-black text-slate-400 uppercase tracking-widest group-hover/tag:text-emerald-600 transition-colors">
                       {logo}
@@ -694,7 +694,7 @@ const VendorLandingPage = () => {
                           return (
                             <div
                               key={idx}
-                              className="flex items-center justify-center min-w-[280px]"
+                              className="flex-shrink-0 flex items-center justify-center min-w-[280px]"
                             >
                               <img
                                 src={`/${num}.jpeg`}

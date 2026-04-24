@@ -262,7 +262,7 @@ body.modal-open .app-dock {
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 30s linear infinite;
+  animation: marquee 60s linear infinite;
 }
 
 .animate-marquee:hover {
@@ -272,7 +272,7 @@ body.modal-open .app-dock {
 .animate-marquee-reverse {
   display: flex;
   width: max-content;
-  animation: marquee 30s linear infinite reverse;
+  animation: marquee 80s linear infinite reverse;
 }
 
 .animate-marquee-reverse:hover {
