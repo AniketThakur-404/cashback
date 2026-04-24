@@ -691,23 +691,22 @@ const VendorLandingPage = () => {
                       {[...brandImages, ...brandImages, ...brandImages].map(
                         (num, idx) => {
                           const isWhiteLogo = [5, 6, 10, 11].includes(num);
-                          // Diagnostic: Use logo.png for the first 3 slots to confirm pathing works
-                          const primarySrc = (idx < 3) ? "/logo.png" : `/${num}.jpeg?v=1`;
                           return (
                             <div
                               key={idx}
                               className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
-                                src={primarySrc}
+                                src={`/${num}.jpeg`}
                                 alt={`Brand ${num}`}
                                 className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                                 onError={(e) => {
                                   const currentSrc = e.target.src;
                                   if (currentSrc.includes(".jpeg")) {
-                                    e.target.src = `/${num}.avif`;
-                                  } else if (currentSrc.includes(".avif")) {
                                     e.target.src = `/brand/${num}.jpeg`;
+                                  } else {
+                                    // Professional fallback: show the main logo if brand logo is missing
+                                    e.target.src = "/logo.png";
                                   }
                                 }}
                               />
