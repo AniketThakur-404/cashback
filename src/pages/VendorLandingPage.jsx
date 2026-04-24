@@ -690,21 +690,21 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-8 py-6">
+                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8">
                       {[...brandImages, ...brandImages, ...brandImages].map(
                         (img, idx) => {
-                          const isWhiteLogo = ["/5.", "/6.", "/10.", "/11."].some(
-                            (n) => img.includes(n),
-                          );
+                          const logoNum = img.match(/(\d+)\.avif/)?.[1];
+                          const isWhiteLogo = ["5", "6", "10", "11"].includes(logoNum);
                           return (
                             <div
                               key={idx}
-                              className="flex items-center justify-center min-w-[280px] transition-all duration-500"
+                              className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
                                 src={img}
-                                alt="Brand Logo"
-                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-70" : ""}`}
+                                alt={`Brand ${logoNum}`}
+                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                                onError={(e) => { e.target.src = `/brand/${logoNum}.png`; }}
                               />
                             </div>
                           );
