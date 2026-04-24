@@ -702,13 +702,8 @@ const VendorLandingPage = () => {
                           className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                           onError={(e) => {
                             const currentSrc = e.target.src;
-                            // If brand/ path fails, try root path
                             if (currentSrc.includes("brand/")) {
                               e.target.src = `${num}.webp`;
-                            } 
-                            // If root path fails, fallback to logo
-                            else if (!currentSrc.includes("logo.png")) {
-                              e.target.src = "logo.png";
                             }
                           }}
                         />
@@ -886,8 +881,6 @@ const VendorLandingPage = () => {
                               const currentSrc = e.target.src;
                               if (currentSrc.includes("brand/")) {
                                 e.target.src = `${i}.webp`;
-                              } else if (!currentSrc.includes("logo.png")) {
-                                e.target.src = "logo.png";
                               }
                             }}
                           />
