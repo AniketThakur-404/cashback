@@ -690,7 +690,6 @@ const VendorLandingPage = () => {
                     <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
                       {[...brandImages, ...brandImages, ...brandImages].map(
                         (num, idx) => {
-                          const isWhiteLogo = [5, 6, 10, 11].includes(num);
                           return (
                             <div
                               key={idx}
@@ -698,14 +697,11 @@ const VendorLandingPage = () => {
                             >
                               <img
                                 src={`/brand/${num}.avif`}
-                                alt={`Brand ${num}`}
-                                className={`w-64 h-32 object-contain transition-all duration-500 border-2 border-transparent ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                                alt={`Brand Logo ${num}`}
+                                className="w-64 h-32 object-contain opacity-100"
                                 onError={(e) => {
-                                  const currentSrc = e.target.src;
-                                  if (currentSrc.includes("/brand/")) {
+                                  if (e.target.src.includes("/brand/")) {
                                     e.target.src = `/${num}.avif`;
-                                  } else if (currentSrc.startsWith(window.location.origin + "/")) {
-                                    e.target.src = `${num}.avif`;
                                   }
                                 }}
                               />
