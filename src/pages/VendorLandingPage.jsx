@@ -697,11 +697,19 @@ const VendorLandingPage = () => {
                         className="flex items-center justify-center min-w-[280px]"
                       >
                         <img
-                          src={`/brand/${num}.webp`}
+                          src={`brand/${num}.webp`}
                           alt={`Brand ${num}`}
                           className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                           onError={(e) => {
-                            e.target.src = "/logo.png";
+                            const currentSrc = e.target.src;
+                            // If brand/ path fails, try root path
+                            if (currentSrc.includes("brand/")) {
+                              e.target.src = `${num}.webp`;
+                            } 
+                            // If root path fails, fallback to logo
+                            else if (!currentSrc.includes("logo.png")) {
+                              e.target.src = "logo.png";
+                            }
                           }}
                         />
                       </div>
@@ -871,11 +879,16 @@ const VendorLandingPage = () => {
                           className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
                         >
                           <img
-                            src={`/brand/${i}.webp`}
+                            src={`brand/${i}.webp`}
                             alt="Brand Logo"
                             className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
                             onError={(e) => {
-                              e.target.src = "/logo.png";
+                              const currentSrc = e.target.src;
+                              if (currentSrc.includes("brand/")) {
+                                e.target.src = `${i}.webp`;
+                              } else if (!currentSrc.includes("logo.png")) {
+                                e.target.src = "logo.png";
+                              }
                             }}
                           />
                         </div>
