@@ -696,12 +696,12 @@ const VendorLandingPage = () => {
                               className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
-                                src={`/brand/${num}.avif`}
+                                src={`/brand/${num}.jpeg`}
                                 alt={`Brand Logo ${num}`}
                                 className="w-64 h-32 object-contain opacity-100"
                                 onError={(e) => {
                                   if (e.target.src.includes("/brand/")) {
-                                    e.target.src = `/${num}.avif`;
+                                    e.target.src = `/${num}.jpeg`;
                                   }
                                 }}
                               />
@@ -872,12 +872,12 @@ const VendorLandingPage = () => {
                           className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
                         >
                           <img
-                            src={`/brand/${i}.avif`}
+                            src={`/brand/${i}.jpeg`}
                             alt="Brand Logo"
                             className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
                             onError={(e) => {
                               if (e.target.src.includes("/brand/")) {
-                                e.target.src = `/${i}.avif`;
+                                e.target.src = `/${i}.jpeg`;
                               }
                             }}
                           />
