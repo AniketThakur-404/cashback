@@ -691,19 +691,21 @@ const VendorLandingPage = () => {
                       {[...brandImages, ...brandImages, ...brandImages].map(
                         (num, idx) => {
                           const isWhiteLogo = [5, 6, 10, 11].includes(num);
-                          const primarySrc = `/brand/${num}.avif`;
                           return (
                             <div
                               key={idx}
                               className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
-                                src={primarySrc}
+                                src={`/brand/${num}.avif`}
                                 alt={`Brand ${num}`}
-                                className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                                className={`w-64 h-32 object-contain transition-all duration-500 border-2 border-transparent ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                                 onError={(e) => {
-                                  if (e.target.src.includes("/brand/")) {
+                                  const currentSrc = e.target.src;
+                                  if (currentSrc.includes("/brand/")) {
                                     e.target.src = `/${num}.avif`;
+                                  } else if (currentSrc.startsWith(window.location.origin + "/")) {
+                                    e.target.src = `${num}.avif`;
                                   }
                                 }}
                               />
