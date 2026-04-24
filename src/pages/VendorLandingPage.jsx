@@ -210,10 +210,7 @@ const VendorLandingPage = () => {
     "Aromatics Industry",
   ];
 
-  const brandImages = Array.from(
-    { length: 12 },
-    (_, i) => `/brand/${i + 1}.avif`,
-  );
+  const brandImages = Array.from({ length: 12 }, (_, i) => i + 1);
 
   const benefits = [
     {
@@ -690,21 +687,25 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8">
+                    <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
                       {[...brandImages, ...brandImages, ...brandImages].map(
-                        (img, idx) => {
-                          const logoNum = img.match(/(\d+)\.avif/)?.[1];
-                          const isWhiteLogo = ["5", "6", "10", "11"].includes(logoNum);
+                        (num, idx) => {
+                          const isWhiteLogo = [5, 6, 10, 11].includes(num);
+                          const primarySrc = `/brand/${num}.avif`;
                           return (
                             <div
                               key={idx}
                               className="flex items-center justify-center min-w-[280px]"
                             >
                               <img
-                                src={img}
-                                alt={`Brand ${logoNum}`}
+                                src={primarySrc}
+                                alt={`Brand ${num}`}
                                 className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
-                                onError={(e) => { e.target.src = `/brand/${logoNum}.png`; }}
+                                onError={(e) => {
+                                  if (e.target.src.includes("/brand/")) {
+                                    e.target.src = `/${num}.avif`;
+                                  }
+                                }}
                               />
                             </div>
                           );
@@ -873,9 +874,14 @@ const VendorLandingPage = () => {
                           className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
                         >
                           <img
-                            src={brandImages[i - 1]}
+                            src={`/brand/${i}.avif`}
                             alt="Brand Logo"
                             className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
+                            onError={(e) => {
+                              if (e.target.src.includes("/brand/")) {
+                                e.target.src = `/${i}.avif`;
+                              }
+                            }}
                           />
                         </div>
                       ))}
