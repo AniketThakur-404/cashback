@@ -297,6 +297,13 @@ const BrandRegistration = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Email verification state
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [emailOtp, setEmailOtp] = useState("");
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+
   // Username validation state
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState(null); // 'available' or 'taken'
@@ -341,6 +348,11 @@ const BrandRegistration = () => {
     if (field === "username") {
       setUsernameStatus(null);
     }
+    if (field === "email") {
+      setIsEmailVerified(false);
+      setShowOtpInput(false);
+      setEmailOtp("");
+    }
   };
 
   const checkUsernameAvailability = async (username) => {
@@ -356,6 +368,53 @@ const BrandRegistration = () => {
       console.error("Username check failed", err);
     } finally {
       setIsCheckingUsername(false);
+    }
+  };
+
+  const sendEmailVerification = async () => {
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      setError("Please enter a valid email address first.");
+      return;
+    }
+    setIsSendingOtp(true);
+    setError("");
+    try {
+      await apiRequest("/api/auth/send-email-verification-otp", {
+        method: "POST",
+        body: { email: formData.email, name: formData.contactName },
+      });
+      setShowOtpInput(true);
+      toastSuccess("OTP Sent", "Please check your email for the verification code.");
+    } catch (err) {
+      console.error("Failed to send OTP", err);
+      setError(err.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const verifyEmailOtp = async () => {
+    if (!emailOtp || emailOtp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+    setIsVerifyingOtp(true);
+    setError("");
+    try {
+      await apiRequest("/api/auth/verify-email-verification-otp", {
+        method: "POST",
+        body: { email: formData.email, otp: emailOtp },
+      });
+      setIsEmailVerified(true);
+      setShowOtpInput(false);
+      toastSuccess("Email Verified", "Your email has been successfully verified.");
+    } catch (err) {
+      console.error("Failed to verify OTP", err);
+      const errorMsg = err.message || "Invalid or expired OTP.";
+      setError(errorMsg);
+      toastError("Verification Failed", errorMsg);
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -394,6 +453,7 @@ const BrandRegistration = () => {
         if (!formData.phoneNumber.trim()) return "Phone number is required.";
         if (!formData.email.trim() || !formData.email.includes("@"))
           return "Valid email is required.";
+        if (!isEmailVerified) return "Please verify your email address before continuing.";
         if (!formData.username.trim()) return "Username is required.";
         if (usernameStatus === "taken") return "Username is already taken.";
         // Password is only required for new users (not logged in)
@@ -687,36 +747,10 @@ const BrandRegistration = () => {
   const renderAccountStep = () => (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <StepHeader
-        title={isLoggedIn ? "Verify Account" : "Create Account"}
-        subtitle={
-          isLoggedIn
-            ? "You're logged in. Continue with your account or start fresh."
-            : "First, let's create your vendor access."
-        }
+        title="Create Account"
+        subtitle="First, let's create your vendor access."
       />
 
-      {isLoggedIn && (
-        <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-primary/20 shadow-sm">
-              <User className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-gray-900 font-medium">Currently logged in</p>
-              <p className="text-gray-500 text-sm">
-                You can continue with this account or create a new one
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleStartFresh}
-            className="text-sm text-primary hover:text-primary/80 font-medium underline underline-offset-4"
-          >
-            Register New Account
-          </button>
-        </div>
-      )}
       <div className="space-y-4">
         <div className="space-y-2">
           <Label className="text-base text-gray-900">Username</Label>
@@ -835,28 +869,87 @@ const BrandRegistration = () => {
         </div>
         <div className="space-y-2">
           <Label className="text-base text-gray-900">Work Email</Label>
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <Mail className="w-5 h-5" />
+          <div className="relative flex gap-2">
+            <div className="relative flex-1">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                <Mail className="w-5 h-5" />
+              </div>
+              <Input
+                type="email"
+                placeholder="name@company.com"
+                className={cn(
+                  "pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all",
+                  isEmailVerified && "border-green-500 bg-green-50/30"
+                )}
+                value={formData.email}
+                onChange={(e) => handleFieldChange("email", e.target.value)}
+                disabled={isEmailVerified || isSendingOtp}
+              />
+              {isEmailVerified && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
+                  <Check className="w-5 h-5" />
+                </div>
+              )}
             </div>
-            <Input
-              type="email"
-              placeholder="name@company.com"
-              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
-              value={formData.email}
-              onChange={(e) => handleFieldChange("email", e.target.value)}
-            />
+            {!isEmailVerified && (
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0 h-14 px-6 border-primary text-primary hover:bg-primary/5"
+                onClick={sendEmailVerification}
+                disabled={!formData.email || isSendingOtp}
+              >
+                {isSendingOtp ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : showOtpInput ? (
+                  "Resend"
+                ) : (
+                  "Verify"
+                )}
+              </Button>
+            )}
           </div>
+          {showOtpInput && !isEmailVerified && (
+            <div className="flex flex-col gap-2 mt-2 animate-in fade-in slide-in-from-top-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter 6-digit OTP"
+                  className="h-14 bg-gray-50 text-center tracking-widest text-lg"
+                  maxLength={6}
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ""))}
+                  disabled={isVerifyingOtp}
+                />
+                <Button
+                  type="button"
+                  className="shrink-0 h-14 px-8"
+                  onClick={verifyEmailOtp}
+                  disabled={emailOtp.length !== 6 || isVerifyingOtp}
+                >
+                  {isVerifyingOtp ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    "Confirm"
+                  )}
+                </Button>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={sendEmailVerification}
+                  disabled={isSendingOtp}
+                  className="text-sm text-primary hover:text-primary/80 font-medium disabled:opacity-50"
+                >
+                  Resend OTP
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-base text-gray-900">
-              Password{" "}
-              {isLoggedIn && (
-                <span className="text-gray-400 text-sm font-normal">
-                  (optional)
-                </span>
-              )}
+              Password
             </Label>
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
