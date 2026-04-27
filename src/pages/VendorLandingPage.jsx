@@ -326,318 +326,97 @@ const VendorLandingPage = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col items-center text-center">
-            {/* Top Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100/50 text-emerald-600 text-xs font-extrabold uppercase tracking-[0.15em] mb-10 shadow-sm backdrop-blur-sm"
-            >
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              NEWLY LAUNCHED PLATFORM
-            </motion.div>
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+            {/* Left Column: Content */}
+            <div className="flex flex-col items-start text-left">
 
-            {/* Main Heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-6xl md:text-7xl lg:text-8xl font-black text-slate-900 leading-[1.02] tracking-tight mb-8 font-admin-heading"
-            >
-              Grow Your Business <br className="hidden md:block" />
-              <span className="text-emerald-600">
-                with Every Customer Visit
-              </span>
-            </motion.h1>
-
-            {/* Subheading */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-xl md:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
-            >
-              Launch your own customer loyalty program with QR-based cashback
-              rewards. Scale your business effortlessly — without apps, cards,
-              or complicated systems.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-24"
-            >
-              <Button
-                size="xl"
-                className="bg-slate-900 hover:bg-black text-white px-12 h-16 rounded-2xl text-lg font-bold shadow-2xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group"
-                onClick={() => navigate("/brand-registration")}
+              {/* Main Heading */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-8 font-admin-heading"
               >
-                Start Free
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                size="xl"
-                variant="outline"
-                className="bg-white/40 backdrop-blur-md border-slate-200 text-slate-700 px-12 h-16 rounded-2xl text-lg font-bold hover:bg-white/60 transition-all"
-              >
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-[10px] mr-3">
-                  ▶
+                Grow Your <br />
+                Business <br />
+                <span className="text-emerald-600">
+                  with Every <br />
+                  Customer Visit
                 </span>
-                Watch Demo
-              </Button>
-            </motion.div>
+              </motion.h1>
 
-            {/* Visual Dashboard Mockup */}
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-5xl mx-auto"
-            >
-              {/* Glass Container */}
-              <div className="relative z-20 bg-white/30 backdrop-blur-3xl rounded-[3rem] border border-white/50 p-8 md:p-12 shadow-[0_40px_120px_-20px_rgba(0,0,0,0.1)]">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-left">
-                  {/* Metric 1 */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                        Total Rewards
-                      </p>
-                      <Activity className="w-4 h-4 text-emerald-500/50" />
-                    </div>
-                    <h3 className="text-5xl font-black text-slate-900 tracking-tighter">
-                      {isRupee ? "₹48.2k" : "$580"}
-                    </h3>
-                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs bg-emerald-50 w-fit px-2 py-1 rounded-lg">
-                      <TrendingUp className="w-3 h-3" /> +12.4%
-                    </div>
-                    <div className="h-16 w-full pt-4 opacity-50">
-                      <svg
-                        className="w-full h-full text-emerald-500"
-                        viewBox="0 0 100 40"
-                      >
-                        <path
-                          d="M0 35 Q 20 10, 40 25 T 80 5 T 100 20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Metric 2 */}
-                  <div className="space-y-3 md:border-l md:border-slate-200/50 md:pl-12">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                        Active Users
-                      </p>
-                      <PieChart className="w-4 h-4 text-blue-500/50" />
-                    </div>
-                    <h3 className="text-5xl font-black text-slate-900 tracking-tighter">
-                      1,284
-                    </h3>
-                    <div className="flex items-center gap-2 text-blue-600 font-bold text-xs bg-blue-50 w-fit px-2 py-1 rounded-lg">
-                      <TrendingUp className="w-3 h-3" /> +8.2%
-                    </div>
-                    <div className="h-16 w-full pt-4 opacity-50">
-                      <svg
-                        className="w-full h-full text-blue-500"
-                        viewBox="0 0 100 40"
-                      >
-                        <path
-                          d="M0 30 Q 30 35, 50 15 T 80 25 T 100 10"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Metric 3 */}
-                  <div className="space-y-3 md:border-l md:border-slate-200/50 md:pl-12">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                        Repeat Rate
-                      </p>
-                      <BarChart2 className="w-4 h-4 text-purple-500/50" />
-                    </div>
-                    <h3 className="text-5xl font-black text-slate-900 tracking-tighter">
-                      42%
-                    </h3>
-                    <div className="flex items-center gap-2 text-purple-600 font-bold text-xs bg-purple-50 w-fit px-2 py-1 rounded-lg">
-                      <TrendingUp className="w-3 h-3" /> +15.0%
-                    </div>
-                    <div className="h-16 w-full pt-4 opacity-50">
-                      <svg
-                        className="w-full h-full text-purple-500"
-                        viewBox="0 0 100 40"
-                      >
-                        <path
-                          d="M0 38 Q 25 30, 50 35 T 75 10 T 100 5"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Decorative Elements */}
-              {/* Avg Spend Card */}
-              <motion.div
-                animate={{ y: [0, -12, 0], x: [0, 5, 0] }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute -left-44 bottom-12 z-30 hidden lg:block"
+              {/* Subheading */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-lg md:text-xl text-slate-500 max-w-xl mb-12 leading-relaxed font-medium"
               >
-                <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 w-52">
-                  <p className="text-[10px] font-black text-slate-400 mb-5 uppercase tracking-widest">
-                    Average Spend
-                  </p>
-                  <div className="flex items-end gap-2.5 h-16">
-                    <div className="w-3.5 bg-emerald-50 rounded-t-lg h-8" />
-                    <div className="w-3.5 bg-emerald-100 rounded-t-lg h-12" />
-                    <div className="w-3.5 bg-emerald-300 rounded-t-lg h-10" />
-                    <div className="w-3.5 bg-emerald-500 rounded-t-lg h-20" />
-                    <div className="w-3.5 bg-emerald-600 rounded-t-lg h-14" />
-                  </div>
-                  <div className="mt-5 flex justify-between text-[9px] text-slate-400 font-black tracking-tighter">
-                    <span>JAN</span>
-                    <span>JUN</span>
-                  </div>
-                </div>
+                Launch your own customer loyalty program with QR-based cashback
+                rewards. Scale your business effortlessly — without apps, cards,
+                or complicated systems.
+              </motion.p>
+
+              {/* CTA Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-col sm:flex-row items-center justify-start gap-5 mb-12"
+              >
+                <Button
+                  size="xl"
+                  className="bg-slate-900 hover:bg-black text-white px-10 h-14 rounded-xl text-base font-bold shadow-2xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group"
+                  onClick={() => navigate("/brand-registration")}
+                >
+                  Start Free
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button
+                  size="xl"
+                  variant="outline"
+                  className="bg-white/40 backdrop-blur-md border-slate-200 text-slate-700 px-10 h-14 rounded-xl text-base font-bold hover:bg-white/60 transition-all"
+                >
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-[10px] mr-3">
+                    ▶
+                  </span>
+                  Watch Demo
+                </Button>
               </motion.div>
 
-              {/* Wallet Badge */}
+              {/* Trusted Details */}
               <motion.div
-                animate={{ y: [0, 15, 0] }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5,
-                }}
-                className="absolute -left-8 -top-8 z-30 hidden lg:block"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, delay: 0.6 }}
+                className="flex flex-wrap items-center justify-start gap-8 text-xs text-slate-400 font-bold uppercase tracking-widest"
               >
-                <div className="w-16 h-16 bg-emerald-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/40 text-white border-4 border-white">
-                  <Wallet className="w-8 h-8" />
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  No credit card required
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  14 day free trial
                 </div>
               </motion.div>
+            </div>
 
-              {/* Live Balance Card */}
+            {/* Right Column: Premium Image Asset */}
+            <div className="relative hidden lg:flex justify-center lg:justify-end items-center h-full pl-8">
               <motion.div
-                animate={{ y: [0, -20, 0] }}
-                transition={{
-                  duration: 7,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1,
-                }}
-                className="absolute -right-24 top-20 z-30 hidden lg:block"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="relative z-10 w-full max-w-[90%] flex items-center justify-center"
               >
-                <div className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-7 shadow-2xl border border-white/50 w-64 text-left">
-                  <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white mb-5 shadow-xl shadow-blue-500/30">
-                    <CreditCard className="w-6 h-6" />
-                  </div>
-                  <p className="text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest">
-                    Total Balance
-                  </p>
-                  <p className="text-2xl font-black text-slate-900">
-                    {isRupee ? "₹" : "$"}*,***.50
-                  </p>
-                </div>
+                <img
+                  src="/Gif.gif"
+                  alt="Dashboard Animation"
+                  className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)] rounded-2xl bg-white p-2"
+                />
               </motion.div>
-
-              {/* Currency Pill (Compact) */}
-              <motion.div
-                animate={{ y: [0, 12, 0] }}
-                whileHover={{ scale: 1.02 }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1.5,
-                }}
-                className="absolute -right-8 -bottom-8 z-30 hidden md:block"
-              >
-                <div className="bg-white rounded-full pl-1.5 pr-6 py-1.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08)] border border-slate-100 flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-[9px] font-black text-slate-400 border border-slate-50 shadow-inner">
-                    {isRupee ? "IN" : "US"}
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest mb-1">
-                        Currency
-                      </span>
-                      <div className="flex items-center gap-2.5">
-                        <button
-                          onClick={() => setIsRupee(false)}
-                          className={`text-[9px] font-black transition-all ${!isRupee ? "text-slate-900" : "text-slate-300 hover:text-slate-400"}`}
-                        >
-                          USD
-                        </button>
-                        <span className="w-0.5 h-0.5 rounded-full bg-slate-200" />
-                        <button
-                          onClick={() => setIsRupee(true)}
-                          className={`text-[9px] font-black transition-all ${isRupee ? "text-slate-900" : "text-slate-300 hover:text-slate-400"}`}
-                        >
-                          INR
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="h-6 w-[1px] bg-slate-100 mx-1" />
-
-                    <div className="flex flex-col items-start">
-                      <span className="text-[7px] font-black text-slate-300 uppercase tracking-widest mb-0.5">
-                        Rate
-                      </span>
-                      <AnimatePresence mode="wait">
-                        <motion.span
-                          key={isRupee ? "INR_VAL" : "USD_VAL"}
-                          initial={{ opacity: 0, y: 3 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -3 }}
-                          className="text-sm font-black text-slate-900 tracking-tight"
-                        >
-                          {isRupee ? "₹72.50" : "0.87"}
-                        </motion.span>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Trusted Details */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 1.2 }}
-              className="mt-20 flex flex-wrap items-center justify-center gap-10 text-sm text-slate-400 font-bold uppercase tracking-widest"
-            >
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                No credit card required
-              </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                14 day free trial
-              </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -717,183 +496,108 @@ const VendorLandingPage = () => {
         </div>
       </section>
 
-      {/* Improved Problem/Solution Section (SaaS style with new content) */}
-      <section className="pt-16 pb-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Large Heading / Quote Style */}
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-12">
-            <div className="space-y-4 max-w-4xl">
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-4xl md:text-6xl font-medium text-slate-900 tracking-tight leading-[1.1]"
-              >
-                Still struggling to get <br />
-                <span className="text-emerald-600 font-normal italic">
-                  repeat customers?
-                </span>
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed max-w-2xl"
-              >
-                Here’s a <span className="text-emerald-600">smarter way</span>{" "}
-                to retain customers and grow your business.
-              </motion.p>
-            </div>
-
+      {/* Problem/Solution Section - Clean 2-col design */}
+      <section className="py-20 md:py-28 bg-white relative overflow-hidden">
+        {/* Subtle grid background */}
+        <div
+          className="absolute inset-0 opacity-[0.025] pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, #0f172a 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Left: Problem */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="text-right hidden md:block pb-1"
+              transition={{ duration: 0.6 }}
+              className="space-y-10"
             >
-              <p className="text-xs font-black text-slate-900 mb-0.5">
-                Assured Rewards
-              </p>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                Growth Operating System
-              </p>
-            </motion.div>
-          </div>
-
-          {/* The Card Grid */}
-          <div className="grid lg:grid-cols-12 gap-6">
-            {/* Problem Column (L: 3 cols) */}
-            <div className="lg:col-span-3 flex flex-col justify-center space-y-10 lg:pr-8">
-              {[
-                {
-                  t: "The Retention Gap",
-                  d: "Customers visit once and don't return, leaving money on the table.",
-                },
-                {
-                  t: "Margin Pressure",
-                  d: "Discounts reduce margins but don't build loyalty or lasting value.",
-                },
-                {
-                  t: "Data Blindness",
-                  d: "Hard to track which customers are coming back and why.",
-                },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="space-y-3"
-                >
-                  <h4 className="text-sm font-bold text-slate-900">{item.t}</h4>
-                  <p className="text-[13px] font-medium text-slate-400 leading-relaxed">
-                    {item.d}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Metric Card (M: 4 cols) - Track customer activity */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="lg:col-span-4 bg-slate-50/50 rounded-[3rem] p-8 lg:p-10 flex flex-col justify-between min-h-[340px] relative group"
-            >
-              <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-              <div className="space-y-1.5 relative z-10">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] leading-loose">
-                  Real-time Insights
-                </p>
-                <p className="text-[12px] font-medium text-slate-400 leading-relaxed">
-                  Track customer activity and repeat visits in real time with
-                  our intelligent analytics dashboard.
-                </p>
+              <div className="space-y-4">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight">
+                  Still struggling to get{" "}
+                  <span className="block">repeat customers?</span>
+                </h2>
               </div>
-              <div className="space-y-4 relative z-10">
-                <h3 className="text-6xl font-medium text-slate-900 tracking-tighter leading-none">
-                  500+
-                </h3>
-                <div className="flex items-center gap-2.5 text-emerald-600 text-[10px] font-black uppercase tracking-widest">
-                  <TrendingUp className="w-4 h-4" /> Verified Growth Rate
-                </div>
-              </div>
-            </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="lg:col-span-5 relative group overflow-hidden rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.06)]"
-            >
-              {/* Background Layers */}
-              <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 to-emerald-500/10 z-0 group-hover:scale-110 transition-transform duration-1000" />
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-overlay opacity-40 group-hover:opacity-60 transition-opacity duration-700" />
-
-              <div className="relative z-10 p-8 lg:p-10 h-full flex flex-col justify-between bg-white/40 backdrop-blur-3xl border-none min-h-[340px]">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1.5">
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                      Instant Rewards
-                    </p>
-                    <h3 className="text-3xl font-medium text-slate-900 tracking-tighter">
-                      ₹3,12,918.50
-                    </h3>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 max-w-[180px]">
-                      Reward every purchase with instant cashback credited
-                      directly to their digital wallet.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 border border-white shadow-sm cursor-pointer hover:bg-white transition-colors">
-                    <span className="text-xs">🇮🇳</span>
-                    <span className="text-[9px] font-black text-slate-900">
-                      INR
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-12 flex flex-col space-y-6">
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                      Smarter Campaigns
-                    </p>
-                    <p className="text-[11px] font-medium text-slate-400 leading-relaxed max-w-xs">
-                      Easily create and manage campaigns from one dashboard to
-                      drive repeat visits effortlessly.
-                    </p>
-                  </div>
-
-                  <div className="flex justify-between items-end gap-5">
-                    <div className="flex -space-x-2.5">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div
-                          key={i}
-                          className="w-10 h-10 rounded-full border-[2px] border-white overflow-hidden bg-white shadow-lg transition-transform hover:scale-110 hover:z-20 cursor-pointer flex items-center justify-center p-1"
-                        >
-                          <img
-                            src={`brand/${i}.webp`}
-                            alt="Brand Logo"
-                            className={`w-full h-full object-contain ${i === 4 ? "brightness-0 opacity-80" : ""}`}
-                            onError={(e) => {
-                              const currentSrc = e.target.src;
-                              if (currentSrc.includes("brand/")) {
-                                e.target.src = `${i}.webp`;
-                              }
-                            }}
-                          />
-                        </div>
-                      ))}
+              <div className="space-y-6">
+                {[
+                  "Customers visit once and don't return",
+                  "Discounts reduce margins but don't build loyalty",
+                  "Hard to track which customers are coming back",
+                ].map((pain, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 + i * 0.1 }}
+                    className="flex items-start gap-4 group"
+                  >
+                    <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-rose-400" />
                     </div>
-                    <Button
-                      className="!bg-slate-900 hover:!bg-black !text-white !h-12 !px-6 !rounded-xl !text-[10px] !font-black !uppercase !tracking-widest !shadow-xl !shadow-slate-900/20 transition-all hover:scale-[1.02]"
-                      onClick={() => navigate("/brand-registration")}
-                    >
-                      Get Started
-                    </Button>
+                    <p className="text-base md:text-lg text-slate-500 font-medium leading-relaxed group-hover:text-slate-700 transition-colors">
+                      {pain}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Right: Solution Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+            >
+              <div className="relative bg-emerald-600 rounded-[2.5rem] p-8 md:p-10 overflow-hidden shadow-2xl shadow-emerald-600/25">
+                {/* Subtle dot mesh overlay */}
+                <div
+                  className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(circle at 2px 2px, #fff 1px, transparent 0)",
+                    backgroundSize: "20px 20px",
+                  }}
+                />
+                {/* Glow blob */}
+                <div className="absolute -top-16 -right-16 w-64 h-64 bg-emerald-400/30 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 space-y-8">
+                  <h3 className="text-2xl md:text-3xl font-black text-white leading-snug">
+                    Here's a smarter way to retain customers.
+                  </h3>
+
+                  <div className="space-y-5">
+                    {[
+                      "Reward every purchase with instant cashback",
+                      "Easily create and manage campaigns from one dashboard",
+                      "Track customer activity and repeat visits in real time",
+                    ].map((benefit, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        className="flex items-start gap-4"
+                      >
+                        <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-xl bg-emerald-500/50 border border-emerald-400/40 flex items-center justify-center shadow-inner">
+                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-base font-semibold text-white/90 leading-relaxed">
+                          {benefit}
+                        </p>
+                      </motion.div>
+                    ))}
                   </div>
+
                 </div>
               </div>
             </motion.div>
@@ -1221,64 +925,42 @@ const VendorLandingPage = () => {
           ))}
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left Content */}
-            <div className="space-y-12">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="space-y-6"
-              >
-                <h3 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.95]">
-                  Why Cashback <br />
-                  Works <span className="text-emerald-600 italic">Better.</span>
-                </h3>
-              </motion.div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="space-y-16">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="space-y-6"
+            >
+              <h3 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.95]">
+                Why Cashback <br className="hidden md:block" />
+                Works <span className="text-emerald-600 italic">Better.</span>
+              </h3>
+            </motion.div>
 
-              <div className="space-y-8">
-                {[
-                  "Instant rewards create immediate excitement",
-                  "Customers remember value, not just products",
-                  "Rewards build habit, and habit drives repeat business",
-                ].map((text, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-6 group"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-500">
-                      <Zap className="w-6 h-6 fill-current text-emerald-400" />
-                    </div>
-                    <p className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-                      {text}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Content: Premium Image Asset */}
-            <div className="relative h-[450px] flex items-center justify-center">
-              <div className="relative w-full max-w-2xl h-full flex items-center justify-center">
+            <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto">
+              {[
+                "Instant rewards create immediate excitement",
+                "Customers remember value, not just products",
+                "Rewards build habit, and habit drives repeat business",
+              ].map((text, i) => (
                 <motion.div
-                  initial={{ opacity: 0, y: 40, scale: 0.9, rotateX: 20 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
-                  className="relative z-10 w-full h-full flex items-center justify-center perspective-1000"
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-center gap-6 group w-full bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:bg-white hover:shadow-xl transition-all duration-300"
                 >
-                  <img
-                    src="/Gif.gif"
-                    alt="Why Cashback Works"
-                    className="h-[650px] min-w-[300px] w-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.1)] transition-all duration-1000 z-10"
-                  />
+                  <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                    <Zap className="w-6 h-6 fill-current text-emerald-400" />
+                  </div>
+                  <p className="text-xl md:text-2xl font-black text-slate-800 tracking-tight text-left">
+                    {text}
+                  </p>
                 </motion.div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
