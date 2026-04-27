@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
+import VendorNavbar from "../components/VendorNavbar";
 import { format, differenceInDays, subDays, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
 import { PDFDocument } from "pdf-lib";
@@ -50,6 +51,9 @@ import {
   Building2,
   MapPin,
   Search,
+  Lock,
+  Share2,
+  ExternalLink,
 } from "lucide-react";
 import {
   getMe,
@@ -132,6 +136,7 @@ import {
   GHOST_BUTTON,
   ICON_BUTTON,
   LINK_BUTTON,
+  combineClasses,
   getTabButtonClass,
 } from "../styles/buttonStyles";
 
@@ -294,54 +299,58 @@ const getToastTypeByNotification = (type) => {
   return "info";
 };
 
-const NotificationItem = React.memo(({ item, onClick, getMeta, formatDate }) => {
-  const meta = getMeta(item);
-  const Icon = meta.icon;
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(item)}
-      className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
-        item.isRead
-          ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-          : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <div
-          className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
-        >
-          <Icon size={18} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-              {item.title || meta.label}
+const NotificationItem = React.memo(
+  ({ item, onClick, getMeta, formatDate }) => {
+    const meta = getMeta(item);
+    const Icon = meta.icon;
+    return (
+      <button
+        type="button"
+        onClick={() => onClick(item)}
+        className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
+          item.isRead
+            ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+            : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
+          >
+            <Icon size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                {item.title || meta.label}
+              </div>
+              <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                {formatDate(item.createdAt)}
+              </div>
             </div>
-            <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              {formatDate(item.createdAt)}
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+              {item.message || "No details available."}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5">
+              {!item.isRead && (
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
+              <span
+                className={`text-[10px] font-semibold ${
+                  item.isRead
+                    ? "text-gray-400 dark:text-gray-500"
+                    : "text-primary"
+                }`}
+              >
+                {item.isRead ? "Read" : "New"}
+              </span>
             </div>
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-            {item.message || "No details available."}
-          </div>
-          <div className="mt-2 flex items-center gap-1.5">
-            {!item.isRead && (
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            )}
-            <span
-              className={`text-[10px] font-semibold ${
-                item.isRead ? "text-gray-400 dark:text-gray-500" : "text-primary"
-              }`}
-            >
-              {item.isRead ? "Read" : "New"}
-            </span>
-          </div>
         </div>
-      </div>
-    </button>
-  );
-});
+      </button>
+    );
+  },
+);
 
 const getNotificationMeta = (notification) => {
   if (!notification?.type) return notificationTypeConfig.default;
@@ -532,6 +541,7 @@ const VendorDashboard = () => {
   const [notificationsError, setNotificationsError] = useState("");
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMarkingNotificationsRead, setIsMarkingNotificationsRead] =
     useState(false);
   const [bulkExportJobs, setBulkExportJobs] = useState([]);
@@ -661,7 +671,8 @@ const VendorDashboard = () => {
   });
 
   const [redemptionTrend, setRedemptionTrend] = useState([]);
-  const [isLoadingRedemptionTrend, setIsLoadingRedemptionTrend] = useState(false);
+  const [isLoadingRedemptionTrend, setIsLoadingRedemptionTrend] =
+    useState(false);
   const [redemptionTrendError, setRedemptionTrendError] = useState("");
   const [otpStatus, setOtpStatus] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -774,6 +785,7 @@ const VendorDashboard = () => {
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
 
   const [campaigns, setCampaigns] = useState([]);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [campaignStatsMap, setCampaignStatsMap] = useState({});
   const [overviewCampaignId, setOverviewCampaignId] = useState("all");
   const [dateFilter, setDateFilter] = useState({
@@ -1401,11 +1413,14 @@ const VendorDashboard = () => {
         );
         copiedPages.forEach((page) => mergedPdf.addPage(page));
         successfulSheets += 1;
-        
+
         // Use a safe estimate if the response header doesn't specify count
         remainingToLimit -= sheetLimit;
       } catch (err) {
-        if (err?.status === 400 && err?.message?.toLowerCase().includes("no qr codes found")) {
+        if (
+          err?.status === 400 &&
+          err?.message?.toLowerCase().includes("no qr codes found")
+        ) {
           console.warn(`Skipped empty sheet ${sheetIndex + 1}`);
         } else {
           throw err;
@@ -2018,8 +2033,11 @@ const VendorDashboard = () => {
         const newest = list[0];
         const toastType = getToastTypeByNotification(newest.type);
         const toastTitle = diff === 1 ? newest.title : "New Notifications";
-        const toastMsg = diff === 1 ? newest.message : `${newest.title} (and ${diff - 1} more)`;
-        
+        const toastMsg =
+          diff === 1
+            ? newest.message
+            : `${newest.title} (and ${diff - 1} more)`;
+
         if (toastType === "success") success(toastTitle, toastMsg);
         else if (toastType === "error") toastError(toastTitle, toastMsg);
         else if (toastType === "warning") info(toastTitle, toastMsg);
@@ -2387,7 +2405,8 @@ const VendorDashboard = () => {
     if (dashboardFilters.dateTo) params.dateTo = dashboardFilters.dateTo;
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
-    if (dashboardFilters.location) params.location = dashboardFilters.location.trim();
+    if (dashboardFilters.location)
+      params.location = dashboardFilters.location.trim();
     if (dashboardFilters.productId)
       params.productId = dashboardFilters.productId;
     if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
@@ -2800,6 +2819,7 @@ const VendorDashboard = () => {
     try {
       const data = await getVendorCampaigns(authToken);
       setCampaigns(Array.isArray(data) ? data : []);
+      setCampaignsLoaded(true);
     } catch (err) {
       if (handleVendorAccessError(err)) return;
       if (err.status === 404) {
@@ -2807,6 +2827,7 @@ const VendorDashboard = () => {
       } else {
         setCampaignError(err.message || "Unable to load campaigns.");
       }
+      setCampaignsLoaded(true);
     }
   };
 
@@ -3188,14 +3209,14 @@ const VendorDashboard = () => {
   };
 
   useEffect(() => {
-    if (vendorInfo?.id && Array.isArray(campaigns)) {
+    if (vendorInfo?.id && Array.isArray(campaigns) && campaignsLoaded) {
       const storageKey = `hasSeenWelcome_${vendorInfo.id}`;
       const hasSeen = localStorage.getItem(storageKey);
       if (!hasSeen && campaigns.length === 0) {
         setShowWelcomeModal(true);
       }
     }
-  }, [vendorInfo, campaigns]);
+  }, [vendorInfo, campaigns, campaignsLoaded]);
 
   useEffect(() => {
     if (!token) return;
@@ -3262,7 +3283,10 @@ const VendorDashboard = () => {
   useEffect(() => {
     if (!token) return;
     const interval = setInterval(() => {
-      refreshCampaignPaymentState(token, { includeQrs: true, includeOrders: true });
+      refreshCampaignPaymentState(token, {
+        includeQrs: true,
+        includeOrders: true,
+      });
     }, 30000);
     return () => clearInterval(interval);
   }, [token]);
@@ -3430,7 +3454,15 @@ const VendorDashboard = () => {
       setPassword("");
       setAuthStatus("Signed in successfully.");
     } catch (err) {
-      setAuthError(err.message || "Sign in failed.");
+      const msg = err.message || "";
+      if (
+        msg.toLowerCase().includes("credentials") ||
+        msg.toLowerCase().includes("invalid")
+      ) {
+        setAuthError("Invalid email ID or password");
+      } else {
+        setAuthError(msg || "Sign in failed.");
+      }
     } finally {
       setIsSigningIn(false);
     }
@@ -3489,6 +3521,7 @@ const VendorDashboard = () => {
     setIsSendingOtp(false);
     setIsResettingOtp(false);
     setCampaigns([]);
+    setCampaignsLoaded(false);
     setCampaignId("");
     setLastBatchSummary(null);
     setSelectedQrSeries("");
@@ -4656,7 +4689,10 @@ const VendorDashboard = () => {
 
           // Find campaign to get allocations for recharged count
           const camp = campaigns.find((c) => String(c.id) === String(s.id));
-          if (camp?.planType === "postpaid" && Array.isArray(camp.allocations)) {
+          if (
+            camp?.planType === "postpaid" &&
+            Array.isArray(camp.allocations)
+          ) {
             const recharged = camp.allocations.reduce((sum, allocation) => {
               const qty = Number.parseInt(allocation?.quantity, 10) || 0;
               const cb = Number.parseFloat(allocation?.cashbackAmount) || 0;
@@ -5202,7 +5238,9 @@ const VendorDashboard = () => {
   }, [overviewFilteredQrs]);
 
   const displayedRecentRedemptions =
-    recentRedemptions.length > 0 ? recentRedemptions : fallbackRecentRedemptions;
+    recentRedemptions.length > 0
+      ? recentRedemptions
+      : fallbackRecentRedemptions;
 
   const qrGallery = useMemo(() => {
     return [...qrs].sort(
@@ -5567,276 +5605,336 @@ const VendorDashboard = () => {
         </div>
       )}
 
-      <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-300 p-6 text-gray-900 dark:text-gray-100">
+      <div
+        className={`flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-300 ${token ? "p-6" : "p-0"} text-gray-900 dark:text-gray-100`}
+      >
         <>
           {!isAuthenticated && (
-            <div className="flex min-h-[80vh] items-center justify-center p-4">
-              <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-strong"></div>
+            <div className="flex flex-col min-h-screen w-full relative bg-gray-50 dark:bg-zinc-950">
+              <VendorNavbar />
 
-                <div className="p-8 space-y-8">
-                  <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary-strong/20 text-primary dark:text-primary mb-4 ring-1 ring-primary/10 dark:ring-primary-strong/40">
-                      <Store size={24} />
+              <div className="flex-1 flex items-start justify-center p-4 pt-12 relative z-10">
+                <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-strong"></div>
+
+                  <div className="p-8 space-y-8">
+                    <div className="text-center space-y-2">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary-strong/20 text-primary dark:text-primary mb-4 ring-1 ring-primary/10 dark:ring-primary-strong/40">
+                        <Store size={24} />
+                      </div>
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                        Vendor Portal
+                      </h1>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Sign in to manage your store & campaigns
+                      </p>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                      Vendor Portal
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Sign in to manage your store & campaigns
-                    </p>
-                  </div>
 
-                  <div className="space-y-5">
-                    {!showOtpReset ? (
-                      <>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                            Email or Username
-                          </label>
-                          <div className="relative group">
-                            <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
-                              <User size={18} />
-                            </div>
-                            <input
-                              type="text"
-                              name="email"
-                              value={loginData.email}
-                              onChange={handleLoginChange}
-                              placeholder="Enter your email/username"
-                              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleLogin();
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center px-1">
-                            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                              Password
+                    <div className="space-y-5">
+                      {!showOtpReset ? (
+                        <>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
+                              Email or Username
                             </label>
-                            <button
-                              onClick={() => setShowOtpReset(true)}
-                              className="text-[11px] font-bold text-primary hover:text-primary-strong transition-colors"
-                            >
-                              Forgot Password?
-                            </button>
-                          </div>
-                          <div className="relative group">
-                            <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
-                              <Lock size={18} />
+                            <div className="relative group">
+                              <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
+                                <User size={18} />
+                              </div>
+                              <input
+                                type="text"
+                                name="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email/username"
+                                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSignIn();
+                                }}
+                              />
                             </div>
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              name="password"
-                              value={loginData.password}
-                              onChange={handleLoginChange}
-                              placeholder="••••••••"
-                              className="w-full pl-10 pr-12 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleLogin();
-                              }}
-                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center px-1">
+                              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                Password
+                              </label>
+                              <button
+                                onClick={() => setShowOtpReset(true)}
+                                className="text-[11px] font-bold text-primary hover:text-primary-strong transition-colors"
+                              >
+                                Forgot Password?
+                              </button>
+                            </div>
+                            <div className="relative group">
+                              <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
+                                <Lock size={18} />
+                              </div>
+                              <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full pl-10 pr-12 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSignIn();
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              >
+                                {showPassword ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={handleSignIn}
+                            disabled={isSigningIn}
+                            className="w-full bg-primary hover:bg-primary-strong text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 group"
+                          >
+                            {isSigningIn ? (
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                              <>
+                                <span>Sign In to Dashboard</span>
+                                <ChevronRight
+                                  size={18}
+                                  className="group-hover:translate-x-0.5 transition-transform"
+                                />
+                              </>
+                            )}
+                          </button>
+
+                          {authError && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold animate-shake">
+                              <BadgeCheck size={14} className="rotate-180" />
+                              {authError}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-2 bg-gray-50/50 dark:bg-zinc-900/30 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
+                          <div className="flex items-center justify-between mb-1 pb-1 border-b border-gray-200 dark:border-zinc-800">
+                            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                              Reset Password
+                            </h3>
                             <button
                               type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              onClick={() => setShowOtpReset(false)}
+                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
                             >
-                              {showPassword ? (
-                                <EyeOff size={18} />
-                              ) : (
-                                <Eye size={18} />
-                              )}
+                              <X size={16} />
                             </button>
                           </div>
-                        </div>
-
-                        <button
-                          onClick={handleLogin}
-                          disabled={isLoading}
-                          className="w-full bg-primary hover:bg-primary-strong text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 group"
-                        >
-                          {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          ) : (
-                            <>
-                              <span>Sign In to Dashboard</span>
-                              <ChevronRight
-                                size={18}
-                                className="group-hover:translate-x-0.5 transition-transform"
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
+                                Registered Email
+                              </label>
+                              <input
+                                type="email"
+                                value={otpReset.email}
+                                onChange={handleOtpFieldChange("email")}
+                                placeholder="you@company.com"
+                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                               />
-                            </>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
+                                OTP
+                              </label>
+                              <input
+                                type="text"
+                                value={otpReset.otp}
+                                onChange={handleOtpFieldChange("otp")}
+                                placeholder="6-digit OTP"
+                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tracking-widest"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
+                                New password
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={
+                                    otpReset.showNewPassword
+                                      ? "text"
+                                      : "password"
+                                  }
+                                  value={otpReset.newPassword}
+                                  onChange={handleOtpFieldChange("newPassword")}
+                                  placeholder="New password"
+                                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOtpReset((p) => ({
+                                      ...p,
+                                      showNewPassword: !p.showNewPassword,
+                                    }))
+                                  }
+                                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                  {otpReset.showNewPassword ? (
+                                    <EyeOff size={18} />
+                                  ) : (
+                                    <Eye size={18} />
+                                  )}
+                                </button>
+                              </div>
+                              {otpReset.newPassword &&
+                                (() => {
+                                  const pass = otpReset.newPassword;
+                                  let score = 0;
+                                  if (pass.length >= 6) score += 1;
+                                  if (pass.length >= 8) score += 1;
+                                  if (/[A-Z]/.test(pass)) score += 1;
+                                  if (/[0-9]/.test(pass)) score += 1;
+                                  if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+                                  const isStrong = score >= 5;
+                                  const isMedium = score === 3 || score === 4;
+                                  const label = isStrong
+                                    ? "Strong"
+                                    : isMedium
+                                      ? "Medium"
+                                      : "Weak";
+                                  const colorClass = isStrong
+                                    ? "bg-emerald-500"
+                                    : isMedium
+                                      ? "bg-amber-500"
+                                      : "bg-red-500";
+                                  const textClass = isStrong
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : isMedium
+                                      ? "text-amber-600 dark:text-amber-400"
+                                      : "text-red-600 dark:text-red-400";
+                                  return (
+                                    <div className="mt-1 space-y-1 animate-in fade-in">
+                                      <div className="flex gap-1 h-1 w-full">
+                                        <div
+                                          className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                        ></div>
+                                        <div
+                                          className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                        ></div>
+                                        <div
+                                          className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                        ></div>
+                                      </div>
+                                      <div className="flex justify-between items-center text-[10px]">
+                                        <span
+                                          className={`font-bold tracking-wide ${textClass}`}
+                                        >
+                                          {label}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
+                                Confirm password
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={
+                                    otpReset.showConfirmPassword
+                                      ? "text"
+                                      : "password"
+                                  }
+                                  value={otpReset.confirmPassword}
+                                  onChange={handleOtpFieldChange(
+                                    "confirmPassword",
+                                  )}
+                                  placeholder="Confirm password"
+                                  className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOtpReset((p) => ({
+                                      ...p,
+                                      showConfirmPassword:
+                                        !p.showConfirmPassword,
+                                    }))
+                                  }
+                                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                >
+                                  {otpReset.showConfirmPassword ? (
+                                    <EyeOff size={18} />
+                                  ) : (
+                                    <Eye size={18} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 pt-1">
+                            <button
+                              type="button"
+                              onClick={handleSendOtp}
+                              disabled={isSendingOtp}
+                              className="w-full rounded-lg border border-primary/40 bg-white dark:bg-transparent text-primary dark:text-primary text-sm font-semibold py-2.5 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors disabled:opacity-60"
+                            >
+                              {isSendingOtp ? "Sending..." : "Send OTP"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleOtpResetPassword}
+                              disabled={isResettingOtp}
+                              className="w-full rounded-lg bg-primary hover:bg-primary text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60"
+                            >
+                              {isResettingOtp ? "Resetting..." : "Reset"}
+                            </button>
+                          </div>
+                          {(otpStatus || otpError) && (
+                            <div
+                              className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"} mt-1`}
+                            >
+                              {otpStatus || otpError}
+                            </div>
                           )}
-                        </button>
+                        </div>
+                      )}
+                    </div>
 
-                        {authError && (
-                          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold animate-shake">
-                            <BadgeCheck size={14} className="rotate-180" />
-                            {authError}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="space-y-4 animate-in fade-in slide-in-from-right-2 bg-gray-50/50 dark:bg-zinc-900/30 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
-                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-gray-200 dark:border-zinc-800">
-                          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Reset Password</h3>
-                          <button
-                            type="button"
-                            onClick={() => setShowOtpReset(false)}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
-                              Registered Email
-                            </label>
-                            <input
-                              type="email"
-                              value={otpReset.email}
-                              onChange={handleOtpFieldChange("email")}
-                              placeholder="you@company.com"
-                              className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
-                              OTP
-                            </label>
-                            <input
-                              type="text"
-                              value={otpReset.otp}
-                              onChange={handleOtpFieldChange("otp")}
-                              placeholder="6-digit OTP"
-                              className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tracking-widest"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
-                              New password
-                            </label>
-                            <div className="relative">
-                              <input
-                                type={otpReset.showNewPassword ? "text" : "password"}
-                                value={otpReset.newPassword}
-                                onChange={handleOtpFieldChange("newPassword")}
-                                placeholder="New password"
-                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setOtpReset(p => ({...p, showNewPassword: !p.showNewPassword}))}
-                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                              >
-                                {otpReset.showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                              </button>
-                            </div>
-                            {otpReset.newPassword && (() => {
-                              const pass = otpReset.newPassword;
-                              let score = 0;
-                              if (pass.length >= 6) score += 1;
-                              if (pass.length >= 8) score += 1;
-                              if (/[A-Z]/.test(pass)) score += 1;
-                              if (/[0-9]/.test(pass)) score += 1;
-                              if (/[^A-Za-z0-9]/.test(pass)) score += 1;
-                              const isStrong = score >= 5;
-                              const isMedium = score === 3 || score === 4;
-                              const label = isStrong ? "Strong" : isMedium ? "Medium" : "Weak";
-                              const colorClass = isStrong ? "bg-emerald-500" : isMedium ? "bg-amber-500" : "bg-red-500";
-                              const textClass = isStrong ? "text-emerald-600 dark:text-emerald-400" : isMedium ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
-                              return (
-                                <div className="mt-1 space-y-1 animate-in fade-in">
-                                  <div className="flex gap-1 h-1 w-full">
-                                    <div className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
-                                    <div className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
-                                    <div className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
-                                  </div>
-                                  <div className="flex justify-between items-center text-[10px]">
-                                    <span className={`font-bold tracking-wide ${textClass}`}>{label}</span>
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
-                              Confirm password
-                            </label>
-                            <div className="relative">
-                              <input
-                                type={otpReset.showConfirmPassword ? "text" : "password"}
-                                value={otpReset.confirmPassword}
-                                onChange={handleOtpFieldChange("confirmPassword")}
-                                placeholder="Confirm password"
-                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setOtpReset(p => ({...p, showConfirmPassword: !p.showConfirmPassword}))}
-                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                              >
-                                {otpReset.showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={handleSendOtp}
-                            disabled={isSendingOtp}
-                            className="w-full rounded-lg border border-primary/40 bg-white dark:bg-transparent text-primary dark:text-primary text-sm font-semibold py-2.5 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors disabled:opacity-60"
-                          >
-                            {isSendingOtp ? "Sending..." : "Send OTP"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleOtpResetPassword}
-                            disabled={isResettingOtp}
-                            className="w-full rounded-lg bg-primary hover:bg-primary text-white text-sm font-semibold py-2.5 transition-colors disabled:opacity-60"
-                          >
-                            {isResettingOtp ? "Resetting..." : "Reset"}
-                          </button>
-                        </div>
-                        {(otpStatus || otpError) && (
-                          <div
-                            className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"} mt-1`}
-                          >
-                            {otpStatus || otpError}
-                          </div>
-                        )}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-100 dark:border-zinc-800"></div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-100 dark:border-zinc-800"></div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white dark:bg-zinc-900 px-2 text-gray-400 font-medium tracking-wider">
+                          New to Platform?
+                        </span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white dark:bg-zinc-900 px-2 text-gray-400 font-medium tracking-wider">
-                        New to Platform?
-                      </span>
-                    </div>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => navigate("/brand-registration")}
-                    className="w-full rounded-xl border border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/30 text-gray-600 dark:text-gray-400 font-semibold py-3 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-primary hover:text-primary text-sm transition-all flex items-center justify-center gap-2 group"
-                  >
-                    <Store
-                      size={16}
-                      className="group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary"
-                    />
-                    Apply for Partnership
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/brand-registration")}
+                      className="w-full rounded-xl border border-dashed border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/30 text-gray-600 dark:text-gray-400 font-semibold py-3 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:border-primary hover:text-primary text-sm transition-all flex items-center justify-center gap-2 group"
+                    >
+                      <Store
+                        size={16}
+                        className="group-hover:scale-110 transition-transform text-gray-400 group-hover:text-primary"
+                      />
+                      Apply for Partnership
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5844,7 +5942,7 @@ const VendorDashboard = () => {
 
           {/* Onboarding / Registration Modal */}
           {showOnboarding && !isAuthenticated && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/60 backdrop-blur-md">
               <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="px-6 py-5 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900 sticky top-0 z-10">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -6189,11 +6287,33 @@ const VendorDashboard = () => {
           {isAuthenticated && (
             <>
               {/* Main Dashboard Layout */}
-              <div className="mx-auto w-full max-w-[1920px] px-4 py-6">
+              <div className="mx-auto w-full max-w-[1920px] px-0 py-4 sm:px-4 sm:py-6">
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
                   {/* Sidebar Navigation */}
-                  <aside className="lg:w-64 flex-shrink-0 bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 shadow-xl h-fit sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto no-scrollbar">
+                  {/* Mobile Sidebar Backdrop */}
+                  {isSidebarOpen && (
+                    <div
+                      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] lg:hidden animate-in fade-in duration-300"
+                      onClick={() => setIsSidebarOpen(false)}
+                    />
+                  )}
+
+                  {/* Sidebar Navigation */}
+                  <aside
+                    className={`fixed lg:sticky top-0 lg:top-6 left-0 z-[100] h-full lg:h-fit w-72 lg:w-64 bg-white dark:bg-[#1a1a1a] border-r lg:border border-gray-100 dark:border-gray-800 p-4 shadow-2xl lg:shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0 lg:rounded-xl overflow-y-auto no-scrollbar ${
+                      isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
+                  >
                     <div className="space-y-6">
+                      {/* Mobile Close Button */}
+                      <div className="flex lg:hidden justify-end mb-2">
+                        <button
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
                       {/* Profile Section */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
@@ -6303,7 +6423,10 @@ const VendorDashboard = () => {
                               <StarBorder
                                 key={item.id}
                                 as="button"
-                                onClick={() => navigate(`/vendor/${item.id}`)}
+                                onClick={() => {
+                                  navigate(`/vendor/${item.id}`);
+                                  setIsSidebarOpen(false);
+                                }}
                                 color="var(--primary)"
                                 speed="4s"
                                 className="w-full cursor-pointer"
@@ -6319,7 +6442,10 @@ const VendorDashboard = () => {
                           return (
                             <button
                               key={item.id}
-                              onClick={() => navigate(`/vendor/${item.id}`)}
+                              onClick={() => {
+                                navigate(`/vendor/${item.id}`);
+                                setIsSidebarOpen(false);
+                              }}
                               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-[#252525] dark:hover:text-gray-200 transition-all font-medium"
                             >
                               <item.icon size={18} />
@@ -6341,135 +6467,149 @@ const VendorDashboard = () => {
                   </aside>
 
                   {/* Main Content */}
-                  <main className="flex-1 min-w-0 flex flex-col space-y-4 overflow-x-hidden min-h-[calc(100vh-3rem)]">
-                    {/* Top Greeting Header */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                          Good morning, {vendorInfo?.name || "Vendor"}!
-                        </h1>
-                        <p className="text-sm text-gray-400 mt-1">
-                          Here's what's happening with your store today
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* <div className="relative">
-                          <input
-                            type="search"
-                            placeholder="Search..."
-                            className="w-64 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-4 py-2 pl-10 text-sm text-gray-900 dark:text-white placeholder-gray-500"
-                          />
-                          <svg
-                            className="absolute left-3 top-2.5 h-4 w-4 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
-                        </div> */}
-                        <div className="relative mr-2">
+                  <main className="flex-1 min-w-0 flex flex-col space-y-3 sm:space-y-4 overflow-x-hidden min-h-[calc(100vh-3rem)] bg-gray-100 dark:bg-zinc-950 sm:bg-transparent sm:dark:bg-transparent">
+                    {/* Redesigned Premium Header Section */}
+                    <div className="flex flex-col gap-4 sm:gap-8 mb-0 sm:mb-8 px-0 bg-white dark:bg-[#111] sm:bg-transparent sm:dark:bg-transparent pb-3 sm:pb-0">
+                      <div className="flex items-center justify-between gap-4 px-4 sm:px-0">
+                        <div className="flex items-center gap-4">
+                          {/* Premium Hamburger Menu Button */}
                           <button
-                            ref={notificationsTriggerRef}
-                            type="button"
-                            onClick={() =>
-                              setIsNotificationsOpen((prev) => !prev)
-                            }
-                            className={`h-10 w-10 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white flex items-center justify-center transition-all ${
-                              isNotificationsOpen
-                                ? "ring-2 ring-primary/30 border-primary/40"
-                                : ""
-                            }`}
-                            aria-label="Notifications"
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden flex items-center justify-center h-12 w-12 rounded-2xl bg-white/80 backdrop-blur-md dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-400 shadow-sm hover:shadow-md active:scale-95 transition-all"
                           >
-                            <Bell size={18} />
-                            {notificationUnreadCount > 0 && (
-                              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center px-1">
-                                {notificationUnreadCount > 9
-                                  ? "9+"
-                                  : notificationUnreadCount}
-                              </span>
-                            )}
+                            <Menu size={24} />
                           </button>
+
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                                Welcome Back
+                              </span>
+                              <span className="h-px w-4 bg-emerald-500/30" />
+                            </div>
+                            <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+                              Good morning,{" "}
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-400 dark:to-emerald-300">
+                                {vendorInfo?.name || "Partner"}
+                              </span>
+                            </h1>
+                            <p className="text-xs sm:text-sm font-bold text-gray-400 dark:text-zinc-500">
+                              Here's what's happening today
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Top Actions */}
+                        <div className="flex items-center gap-3 pr-1">
+                          <div className="relative">
+                            <button
+                              ref={notificationsTriggerRef}
+                              type="button"
+                              onClick={() =>
+                                setIsNotificationsOpen((prev) => !prev)
+                              }
+                              className={`h-12 w-12 rounded-2xl border transition-all duration-300 flex items-center justify-center active:scale-95 shadow-sm ${
+                                isNotificationsOpen
+                                  ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/20"
+                                  : "bg-white/80 backdrop-blur-md dark:bg-zinc-900/80 border-gray-100 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-emerald-200 dark:hover:border-emerald-500/30"
+                              }`}
+                              aria-label="Notifications"
+                            >
+                              <Bell size={22} />
+                              {notificationUnreadCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 h-6 min-w-[24px] rounded-full bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center px-1.5 ring-4 ring-white dark:ring-zinc-950 shadow-lg shadow-emerald-500/20">
+                                  {notificationUnreadCount > 9
+                                    ? "9+"
+                                    : notificationUnreadCount}
+                                </span>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
+
+                      {/* Overview Tab Controls - Pulled into header for better accessibility */}
+                      {activeTab === "overview" && (
+                        <div className="flex items-center justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border-y sm:border border-gray-100 dark:border-zinc-800 rounded-none sm:rounded-2xl p-2 pl-4 shadow-sm">
+                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                            Filter View
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={overviewCampaignId}
+                              onChange={(event) =>
+                                setOverviewCampaignId(event.target.value)
+                              }
+                              className="appearance-none min-w-[140px] max-w-[200px] rounded-xl border-none bg-gray-50 dark:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                            >
+                              {overviewCampaignOptions.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                              <Megaphone size={14} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Stats Row */}
                     {activeTab === "overview" && (
-                      <div className="space-y-6">
-                        <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-gray-400 pr-6">
-                          <span className="text-gray-500">Campaign</span>
-                          <select
-                            value={overviewCampaignId}
-                            onChange={(event) =>
-                              setOverviewCampaignId(event.target.value)
-                            }
-                            className="mr-2 min-w-[180px] max-w-[240px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#0f0f0f] px-3 py-1.5 text-xs text-gray-900 dark:text-white"
-                          >
-                            {overviewCampaignOptions.map((option) => (
-                              <option key={option.id} value={option.id}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                      <div className="space-y-4 sm:space-y-6">
+                        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-0">
                           {/* Wallet Balance Card */}
-                          <div 
+                          <div
                             onClick={() => navigate("/vendor/wallet")}
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                           >
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
                               <div className="overflow-hidden">
                                 <div
-                                  className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate"
+                                  className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-0.5 sm:mb-1 truncate"
                                   title={`\u20B9${formatAmount(walletBalance)}`}
                                 >
                                   {"\u20B9"}
                                   {formatAmount(walletBalance)}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-[10px] sm:text-xs text-gray-500 font-medium">
                                   Wallet Balance
                                 </div>
                               </div>
-                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-cyan-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                <Wallet className="h-5 w-5 xl:h-6 xl:w-6 text-cyan-400" />
+                              <div className="h-9 w-9 sm:h-10 sm:w-10 xl:h-12 xl:w-12 rounded-lg bg-cyan-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <Wallet className="h-4 w-4 sm:h-5 w-5 xl:h-6 xl:w-6 text-cyan-400" />
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-xs">
-                              <span className="text-primary">+5.9%</span>
+                            <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                              <span className="text-primary font-bold">
+                                +5.9%
+                              </span>
                               <span className="text-gray-500">
                                 vs last month
                               </span>
                             </div>
                           </div>
 
-                          <div 
+                          <div
                             onClick={() => navigate("/vendor/campaigns")}
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                           >
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
                               <div className="overflow-hidden">
-                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                <div className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-0.5 sm:mb-1 truncate">
                                   {overviewSelectedCampaignCount}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-[10px] sm:text-xs text-gray-500 font-medium">
                                   Total Campaigns
                                 </div>
                               </div>
-                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-purple-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                <BadgeCheck className="h-5 w-5 xl:h-6 xl:w-6 text-purple-400" />
+                              <div className="h-9 w-9 sm:h-10 sm:w-10 xl:h-12 xl:w-12 rounded-lg bg-purple-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <BadgeCheck className="h-4 w-4 sm:h-5 w-5 xl:h-6 xl:w-6 text-purple-400" />
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <span>
+                            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+                              <span className="font-medium">
                                 Selected: {overviewSelectedCampaignCount}
                               </span>
                               <span className="text-gray-400">|</span>
@@ -6477,32 +6617,32 @@ const VendorDashboard = () => {
                             </div>
                           </div>
 
-                          <div 
-                            onClick={() => navigate("/vendor/campaigns", { state: { campaignTab: "active" } })}
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                          <div
+                            onClick={() =>
+                              navigate("/vendor/campaigns", {
+                                state: { campaignTab: "active" },
+                              })
+                            }
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                           >
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
                               <div className="overflow-hidden">
-                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                <div className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-0.5 sm:mb-1 truncate">
                                   {isOverviewAll
                                     ? qrStats.active
-                                    : Math.max(
-                                        0,
-                                        qrStats.active
-                                      )}
+                                    : Math.max(0, qrStats.active)}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-[10px] sm:text-xs text-gray-500 font-medium">
                                   Active QRs
                                 </div>
                               </div>
-                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                <QrCode className="h-5 w-5 xl:h-6 xl:w-6 text-primary" />
+                              <div className="h-9 w-9 sm:h-10 sm:w-10 xl:h-12 xl:w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <QrCode className="h-4 w-4 sm:h-5 w-5 xl:h-6 xl:w-6 text-primary" />
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <span>
-                                Selected:{" "}
-                                {qrStats.recharged}
+                            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+                              <span className="font-medium">
+                                Selected: {qrStats.recharged}
                               </span>
                               <span className="text-gray-400">|</span>
                               <span>
@@ -6514,25 +6654,25 @@ const VendorDashboard = () => {
                             </div>
                           </div>
 
-                          <div 
+                          <div
                             onClick={() => navigate("/vendor/customers")}
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
+                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-4 sm:p-5 overflow-hidden shadow-sm dark:shadow-none cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
                           >
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-start mb-1.5 sm:mb-2">
                               <div className="overflow-hidden">
-                                <div className="text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-1 truncate">
+                                <div className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-white mb-0.5 sm:mb-1 truncate">
                                   {overviewSelectedQrRedeemed}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-[10px] sm:text-xs text-gray-500 font-medium">
                                   QRs Redeemed
                                 </div>
                               </div>
-                              <div className="h-10 w-10 xl:h-12 xl:w-12 rounded-lg bg-pink-600/10 flex items-center justify-center flex-shrink-0 ml-2">
-                                <Store className="h-5 w-5 xl:h-6 xl:w-6 text-pink-400" />
+                              <div className="h-9 w-9 sm:h-10 sm:w-10 xl:h-12 xl:w-12 rounded-lg bg-pink-600/10 flex items-center justify-center flex-shrink-0 ml-2">
+                                <Store className="h-4 w-4 sm:h-5 w-5 xl:h-6 xl:w-6 text-pink-400" />
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <span>
+                            <div className="flex items-center gap-1 text-[10px] sm:text-xs text-gray-500">
+                              <span className="font-medium">
                                 Selected: {overviewSelectedQrRedeemed}
                               </span>
                               <span className="text-gray-400">|</span>
@@ -6550,7 +6690,7 @@ const VendorDashboard = () => {
                         />
 
                         <div className="grid grid-cols-1 xl:grid-cols-[1.75fr_1fr] gap-4">
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none">
                             <div className="flex items-center justify-between gap-3 mb-4">
                               <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-emerald-600/15 flex items-center justify-center">
@@ -6597,9 +6737,10 @@ const VendorDashboard = () => {
                                 map activity.
                               </div>
                             ) : (
-                              <div className="h-[320px] rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+                              <div className="h-[320px] rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800 relative z-0">
                                 <MapContainer
                                   center={locationMapCenter}
+                                  style={{ zIndex: 0 }}
                                   zoom={5}
                                   minZoom={3}
                                   maxBounds={[
@@ -6643,7 +6784,7 @@ const VendorDashboard = () => {
                             )}
                           </div>
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
+                          <div className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none">
                             <div className="grid grid-cols-2 gap-3 mb-4">
                               <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3">
                                 <div className="text-[11px] text-gray-500">
@@ -6718,7 +6859,7 @@ const VendorDashboard = () => {
 
                         <div
                           id="overview"
-                          className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
+                          className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none"
                         >
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -6751,63 +6892,136 @@ const VendorDashboard = () => {
                               started!
                             </div>
                           ) : (
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left text-sm text-gray-400">
-                                <thead className="text-xs uppercase bg-gray-100 dark:bg-[#252525] text-gray-500 dark:text-gray-300">
-                                  <tr>
-                                    <th className="px-4 py-3 rounded-l-lg">
-                                      Time
-                                    </th>
-                                    <th className="px-4 py-3">Campaign</th>
-                                    <th className="px-4 py-3">Amount</th>
-                                    <th className="px-4 py-3 rounded-r-lg text-right">
-                                      Hash
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-800">
-                                  {displayedRecentRedemptions.map((redemption) => (
-                                      <tr
-                                        key={redemption.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                                      >
-                                        <td className="px-4 py-3">
-                                          <div className="font-medium text-gray-900 dark:text-white">
-                                            {redemption?.createdAt
-                                              ? format(
-                                                  new Date(redemption.createdAt),
-                                                  "dd MMM yyyy",
-                                                )
+                            <div className="w-full">
+                              {/* Desktop Table View */}
+                              <div className="hidden sm:block overflow-x-auto">
+                                <table className="w-full text-left text-sm text-gray-400">
+                                  <thead className="text-xs uppercase bg-gray-100 dark:bg-[#252525] text-gray-500 dark:text-gray-300">
+                                    <tr>
+                                      <th className="px-4 py-3 rounded-l-lg">
+                                        Time
+                                      </th>
+                                      <th className="px-4 py-3">Campaign</th>
+                                      <th className="px-4 py-3">Amount</th>
+                                      <th className="px-4 py-3 rounded-r-lg text-right">
+                                        Hash
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                    {displayedRecentRedemptions.map(
+                                      (redemption) => (
+                                        <tr
+                                          key={redemption.id}
+                                          className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                        >
+                                          <td className="px-4 py-3">
+                                            <div className="font-medium text-gray-900 dark:text-white">
+                                              {redemption?.createdAt
+                                                ? format(
+                                                    new Date(
+                                                      redemption.createdAt,
+                                                    ),
+                                                    "dd MMM yyyy",
+                                                  )
+                                                : "-"}
+                                            </div>
+                                            <div className="text-[10px] text-gray-500">
+                                              {redemption?.createdAt
+                                                ? format(
+                                                    new Date(
+                                                      redemption.createdAt,
+                                                    ),
+                                                    "h:mm a",
+                                                  )
+                                                : "-"}
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <div className="truncate max-w-[150px] text-gray-900 dark:text-white">
+                                              {redemption?.campaign?.title ||
+                                                "Unknown Campaign"}
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-3 font-bold text-primary">
+                                            {"\u20B9"}
+                                            {formatAmount(
+                                              redemption?.amount || 0,
+                                            )}
+                                          </td>
+                                          <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
+                                            {redemption?.qr?.hash
+                                              ? `${redemption.qr.hash.slice(0, 8)}...`
                                               : "-"}
-                                          </div>
-                                          <div className="text-[10px] text-gray-500">
-                                            {redemption?.createdAt
-                                              ? format(
-                                                  new Date(redemption.createdAt),
-                                                  "h:mm a",
-                                                )
-                                              : "-"}
-                                          </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                          <div className="truncate max-w-[150px] text-gray-900 dark:text-white">
+                                          </td>
+                                        </tr>
+                                      ),
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Mobile Card View */}
+                              <div className="sm:hidden divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                {displayedRecentRedemptions.map(
+                                  (redemption) => (
+                                    <div
+                                      key={redemption.id}
+                                      className="p-4 space-y-3 hover:bg-emerald-50/10 transition-colors"
+                                    >
+                                      <div className="flex justify-between items-center gap-2">
+                                        <div className="flex flex-col min-w-0">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            Campaign
+                                          </span>
+                                          <span className="text-xs font-black text-gray-900 dark:text-white truncate">
                                             {redemption?.campaign?.title ||
                                               "Unknown Campaign"}
+                                          </span>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          <div className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            Amount
                                           </div>
-                                        </td>
-                                        <td className="px-4 py-3 font-bold text-primary">
-                                          {"\u20B9"}
-                                          {formatAmount(redemption?.amount || 0)}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
-                                          {redemption?.qr?.hash
-                                            ? `${redemption.qr.hash.slice(0, 8)}...`
-                                            : "-"}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                </tbody>
-                              </table>
+                                          <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                            ₹
+                                            {formatAmount(
+                                              redemption?.amount || 0,
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="flex justify-between items-end gap-2 bg-gray-50 dark:bg-zinc-800/30 p-2.5 rounded-lg border border-gray-100 dark:border-zinc-800/50">
+                                        <div className="flex flex-col">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            Scanned At
+                                          </span>
+                                          <span className="text-[11px] text-gray-500 dark:text-gray-400 font-bold">
+                                            {redemption?.createdAt
+                                              ? format(
+                                                  new Date(
+                                                    redemption.createdAt,
+                                                  ),
+                                                  "dd MMM, h:mm a",
+                                                )
+                                              : "-"}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-col text-right">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            QR Hash
+                                          </span>
+                                          <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                                            {redemption?.qr?.hash
+                                              ? redemption.qr.hash.slice(0, 12)
+                                              : "-"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ),
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -6817,7 +7031,7 @@ const VendorDashboard = () => {
                     {activeTab === "brand" && (
                       <div className="space-y-6 pb-20">
                         <div
-                          className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none"
+                          className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none"
                           id="brand"
                         >
                           <div className="flex items-center justify-between mb-6">
@@ -7389,7 +7603,11 @@ const VendorDashboard = () => {
                                       </label>
                                       <div className="relative">
                                         <input
-                                          type={otpReset.showNewPassword ? "text" : "password"}
+                                          type={
+                                            otpReset.showNewPassword
+                                              ? "text"
+                                              : "password"
+                                          }
                                           value={otpReset.newPassword}
                                           onChange={handleOtpFieldChange(
                                             "newPassword",
@@ -7399,39 +7617,77 @@ const VendorDashboard = () => {
                                         />
                                         <button
                                           type="button"
-                                          onClick={() => setOtpReset(p => ({...p, showNewPassword: !p.showNewPassword}))}
+                                          onClick={() =>
+                                            setOtpReset((p) => ({
+                                              ...p,
+                                              showNewPassword:
+                                                !p.showNewPassword,
+                                            }))
+                                          }
                                           className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                                         >
-                                          {otpReset.showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                          {otpReset.showNewPassword ? (
+                                            <EyeOff size={16} />
+                                          ) : (
+                                            <Eye size={16} />
+                                          )}
                                         </button>
                                       </div>
-                                      {otpReset.newPassword && (() => {
-                                        const pass = otpReset.newPassword;
-                                        let score = 0;
-                                        if (pass.length >= 6) score += 1;
-                                        if (pass.length >= 8) score += 1;
-                                        if (/[A-Z]/.test(pass)) score += 1;
-                                        if (/[0-9]/.test(pass)) score += 1;
-                                        if (/[^A-Za-z0-9]/.test(pass)) score += 1;
-                                        const isStrong = score >= 5;
-                                        const isMedium = score === 3 || score === 4;
-                                        const label = isStrong ? "Strong" : isMedium ? "Medium" : "Weak";
-                                        const colorClass = isStrong ? "bg-emerald-500" : isMedium ? "bg-amber-500" : "bg-red-500";
-                                        const textClass = isStrong ? "text-emerald-600 dark:text-emerald-400" : isMedium ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
-                                        return (
-                                          <div className="mt-1.5 space-y-1.5 animate-in fade-in">
-                                            <div className="flex gap-1 h-1 w-full">
-                                              <div className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
-                                              <div className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
-                                              <div className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                      {otpReset.newPassword &&
+                                        (() => {
+                                          const pass = otpReset.newPassword;
+                                          let score = 0;
+                                          if (pass.length >= 6) score += 1;
+                                          if (pass.length >= 8) score += 1;
+                                          if (/[A-Z]/.test(pass)) score += 1;
+                                          if (/[0-9]/.test(pass)) score += 1;
+                                          if (/[^A-Za-z0-9]/.test(pass))
+                                            score += 1;
+                                          const isStrong = score >= 5;
+                                          const isMedium =
+                                            score === 3 || score === 4;
+                                          const label = isStrong
+                                            ? "Strong"
+                                            : isMedium
+                                              ? "Medium"
+                                              : "Weak";
+                                          const colorClass = isStrong
+                                            ? "bg-emerald-500"
+                                            : isMedium
+                                              ? "bg-amber-500"
+                                              : "bg-red-500";
+                                          const textClass = isStrong
+                                            ? "text-emerald-600 dark:text-emerald-400"
+                                            : isMedium
+                                              ? "text-amber-600 dark:text-amber-400"
+                                              : "text-red-600 dark:text-red-400";
+                                          return (
+                                            <div className="mt-1.5 space-y-1.5 animate-in fade-in">
+                                              <div className="flex gap-1 h-1 w-full">
+                                                <div
+                                                  className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                                ></div>
+                                                <div
+                                                  className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                                ></div>
+                                                <div
+                                                  className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}
+                                                ></div>
+                                              </div>
+                                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[10px] gap-1">
+                                                <span
+                                                  className={`font-bold tracking-wide ${textClass}`}
+                                                >
+                                                  {label}
+                                                </span>
+                                                <span className="text-gray-500 dark:text-gray-400 font-medium">
+                                                  Use 8+ chars, 1 uppercase, 1
+                                                  symbol
+                                                </span>
+                                              </div>
                                             </div>
-                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[10px] gap-1">
-                                              <span className={`font-bold tracking-wide ${textClass}`}>{label}</span>
-                                              <span className="text-gray-500 dark:text-gray-400 font-medium">Use 8+ chars, 1 uppercase, 1 symbol</span>
-                                            </div>
-                                          </div>
-                                        );
-                                      })()}
+                                          );
+                                        })()}
                                     </div>
                                     <div className="space-y-1">
                                       <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -7439,7 +7695,11 @@ const VendorDashboard = () => {
                                       </label>
                                       <div className="relative">
                                         <input
-                                          type={otpReset.showConfirmPassword ? "text" : "password"}
+                                          type={
+                                            otpReset.showConfirmPassword
+                                              ? "text"
+                                              : "password"
+                                          }
                                           value={otpReset.confirmPassword}
                                           onChange={handleOtpFieldChange(
                                             "confirmPassword",
@@ -7449,10 +7709,20 @@ const VendorDashboard = () => {
                                         />
                                         <button
                                           type="button"
-                                          onClick={() => setOtpReset(p => ({...p, showConfirmPassword: !p.showConfirmPassword}))}
+                                          onClick={() =>
+                                            setOtpReset((p) => ({
+                                              ...p,
+                                              showConfirmPassword:
+                                                !p.showConfirmPassword,
+                                            }))
+                                          }
                                           className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                                         >
-                                          {otpReset.showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                          {otpReset.showConfirmPassword ? (
+                                            <EyeOff size={16} />
+                                          ) : (
+                                            <Eye size={16} />
+                                          )}
                                         </button>
                                       </div>
                                     </div>
@@ -7494,7 +7764,7 @@ const VendorDashboard = () => {
 
                     {activeTab === "campaigns" && (
                       <div
-                        className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-4"
+                        className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-2xl border-y sm:border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-4"
                         id="campaigns"
                       >
                         <div className="flex items-center justify-between">
@@ -7515,30 +7785,46 @@ const VendorDashboard = () => {
                         </div>
 
                         {/* Campaign Sub-tabs */}
-                        <div className="flex border-b border-gray-200 dark:border-zinc-800">
+                        <div className="flex border-b border-gray-200 dark:border-zinc-800 overflow-x-auto scrollbar-hide whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
                           <button
                             onClick={() => setCampaignTab("create")}
-                            className={getTabButtonClass(
-                              campaignTab === "create",
+                            className={combineClasses(
+                              getTabButtonClass(campaignTab === "create"),
+                              "flex-1 min-w-fit text-center",
                             )}
                           >
-                            Create Campaign
+                            <span className="sm:hidden">Create</span>
+                            <span className="hidden sm:inline">
+                              Create Campaign
+                            </span>
                           </button>
                           <button
                             onClick={() => setCampaignTab("pending")}
-                            className={getTabButtonClass(
-                              campaignTab === "pending",
+                            className={combineClasses(
+                              getTabButtonClass(campaignTab === "pending"),
+                              "flex-1 min-w-fit text-center",
                             )}
                           >
-                            Pending Campaigns ({pendingCampaigns.length})
+                            <span className="sm:hidden">
+                              Pending ({pendingCampaigns.length})
+                            </span>
+                            <span className="hidden sm:inline">
+                              Pending Campaigns ({pendingCampaigns.length})
+                            </span>
                           </button>
                           <button
                             onClick={() => setCampaignTab("active")}
-                            className={getTabButtonClass(
-                              campaignTab === "active",
+                            className={combineClasses(
+                              getTabButtonClass(campaignTab === "active"),
+                              "flex-1 min-w-fit text-center",
                             )}
                           >
-                            Active Campaigns ({activeCampaigns.length})
+                            <span className="sm:hidden">
+                              Active ({activeCampaigns.length})
+                            </span>
+                            <span className="hidden sm:inline">
+                              Active Campaigns ({activeCampaigns.length})
+                            </span>
                           </button>
                         </div>
                         {/* Create Campaign Tab */}
@@ -7698,7 +7984,8 @@ const VendorDashboard = () => {
                             {campaignForm.planType !== "postpaid" && (
                               <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-zinc-800 bg-gray-50/60 dark:bg-zinc-900/40 px-3 py-2 text-xs">
                                 <span className="text-gray-500 dark:text-gray-400">
-                                  Subtotal ({campaignAllocationSummary.quantity} QRs)
+                                  Subtotal ({campaignAllocationSummary.quantity}{" "}
+                                  QRs)
                                 </span>
                                 <span className="font-semibold text-gray-900 dark:text-gray-100">
                                   {"\u20B9"}
@@ -8172,15 +8459,17 @@ Quantity: ${invoiceData.quantity} QRs
                                         key={productName}
                                         className="mb-8 last:mb-0"
                                       >
-                                        <div className="flex items-center gap-3 mb-4 pl-1">
+                                        <div className="flex items-center justify-start gap-3 mb-6 pl-1">
                                           <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                                           </div>
-                                          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                            <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
                                             {productName}
+                                            
                                           </h3>
-                                          <span className="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                                            {campaigns.length}
+                                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                            {campaigns.length} Campaigns
                                           </span>
                                         </div>
                                         <div className="space-y-4">
@@ -8224,7 +8513,11 @@ Quantity: ${invoiceData.quantity} QRs
                                               isDownloadingPdf={
                                                 isDownloadingPdf
                                               }
-                                              loadCampaigns={(t) => refreshCampaignPaymentState(t || token)}
+                                              loadCampaigns={(t) =>
+                                                refreshCampaignPaymentState(
+                                                  t || token,
+                                                )
+                                              }
                                             />
                                           ))}
                                         </div>
@@ -8245,152 +8538,214 @@ Quantity: ${invoiceData.quantity} QRs
                                 No pending campaigns found.
                               </div>
                             ) : (
-                              pendingCampaigns.map((campaign) => {
-                                const allocationGroups = buildAllocationGroups(
-                                  campaign.allocations,
+                              (() => {
+                                const grouped = pendingCampaigns.reduce(
+                                  (acc, c) => {
+                                    const p =
+                                      c.Product?.name || "Other Campaigns";
+                                    if (!acc[p]) acc[p] = [];
+                                    acc[p].push(c);
+                                    return acc;
+                                  },
+                                  {},
                                 );
-                                const totalQty = allocationGroups.reduce(
-                                  (sum, group) => sum + group.quantity,
-                                  0,
-                                );
-                                const fallbackBudget = allocationGroups.reduce(
-                                  (sum, group) => sum + group.totalBudget,
-                                  0,
-                                );
-                                const totalBudget = parseNumericValue(
-                                  campaign.subtotal,
-                                  parseNumericValue(
-                                    campaign.totalBudget,
-                                    fallbackBudget,
-                                  ),
-                                );
-                                return (
-                                  <div
-                                    key={campaign.id}
-                                    className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-                                  >
-                                    <div className="bg-gradient-to-r from-amber-600/20 to-amber-600/10 px-4 py-3">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                          <Megaphone
-                                            size={18}
-                                            className="text-amber-400"
-                                          />
-                                          <div>
-                                            <span className="text-base font-bold text-gray-900 dark:text-white">
-                                              {campaign.title}
-                                            </span>
-                                          </div>
+                                return Object.entries(grouped).map(
+                                  ([productName, campaigns]) => (
+                                    <div
+                                      key={productName}
+                                      className="mb-8 last:mb-0"
+                                    >
+                                      <div className="flex items-center gap-3 mb-4 pl-1">
+                                        <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center">
+                                          <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
                                         </div>
-                                        <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20 text-[10px] uppercase font-bold tracking-wide">
-                                          Pending
+                                        <span className="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+                                          {campaigns.length}
                                         </span>
                                       </div>
-                                    </div>
-
-                                    <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
-                                      {allocationGroups.length === 0 ? (
-                                        <div className="p-4 text-xs text-gray-500">
-                                          No allocations configured yet.
-                                        </div>
-                                      ) : (
-                                        allocationGroups.map((group) => {
-                                          const groupKey = `${campaign.id}-${group.price.toFixed(2)}`;
+                                      <div className="space-y-4">
+                                        {campaigns.map((campaign) => {
+                                          const allocationGroups =
+                                            buildAllocationGroups(
+                                              campaign.allocations,
+                                            );
+                                          const totalQty =
+                                            allocationGroups.reduce(
+                                              (sum, group) =>
+                                                sum + group.quantity,
+                                              0,
+                                            );
+                                          const fallbackBudget =
+                                            allocationGroups.reduce(
+                                              (sum, group) =>
+                                                sum + group.totalBudget,
+                                              0,
+                                            );
+                                          const totalBudget = parseNumericValue(
+                                            campaign.subtotal,
+                                            parseNumericValue(
+                                              campaign.totalBudget,
+                                              fallbackBudget,
+                                            ),
+                                          );
                                           return (
-                                            <div key={groupKey} className="p-4">
-                                              <div className="flex items-center">
-                                                <div className="flex items-center gap-4">
-                                                  {!(
-                                                    campaign.planType === "postpaid" &&
-                                                    group.price === 0
-                                                  ) && (
+                                            <div
+                                              key={campaign.id}
+                                              className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                            >
+                                              <div className="bg-gradient-to-r from-amber-600/20 to-amber-600/10 px-4 py-3">
+                                                <div className="flex items-center justify-between">
+                                                  <div className="flex items-center gap-3">
+                                                    <Megaphone
+                                                      size={18}
+                                                      className="text-amber-400"
+                                                    />
                                                     <div>
-                                                      <div className="text-xs text-gray-500">
-                                                        Cashback Amount
-                                                      </div>
-                                                      <div className="text-lg font-bold text-primary">
-                                                        {"\u20B9"}
-                                                        {formatAmount(group.price)}
-                                                      </div>
-                                                    </div>
-                                                  )}
-                                                  <div>
-                                                    <div className="text-xs text-gray-500">
-                                                      Quantity
-                                                    </div>
-                                                    <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                      {group.quantity} QRs
+                                                      <span className="text-base font-bold text-gray-900 dark:text-white">
+                                                        {campaign.title}
+                                                      </span>
                                                     </div>
                                                   </div>
+                                                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20 text-[10px] uppercase font-bold tracking-wide">
+                                                    Pending
+                                                  </span>
+                                                </div>
+                                              </div>
+
+                                              <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
+                                                {allocationGroups.length ===
+                                                0 ? (
+                                                  <div className="p-4 text-xs text-gray-500">
+                                                    No allocations configured
+                                                    yet.
+                                                  </div>
+                                                ) : (
+                                                  allocationGroups.map(
+                                                    (group) => {
+                                                      const groupKey = `${campaign.id}-${group.price.toFixed(2)}`;
+                                                      return (
+                                                        <div
+                                                          key={groupKey}
+                                                          className="p-4"
+                                                        >
+                                                          <div className="flex items-center">
+                                                            <div className="flex items-center gap-4">
+                                                              {!(
+                                                                campaign.planType ===
+                                                                  "postpaid" &&
+                                                                group.price ===
+                                                                  0
+                                                              ) && (
+                                                                <div>
+                                                                  <div className="text-xs text-gray-500">
+                                                                    Cashback
+                                                                    Amount
+                                                                  </div>
+                                                                  <div className="text-lg font-bold text-primary">
+                                                                    {"\u20B9"}
+                                                                    {formatAmount(
+                                                                      group.price,
+                                                                    )}
+                                                                  </div>
+                                                                </div>
+                                                              )}
+                                                              <div>
+                                                                <div className="text-xs text-gray-500">
+                                                                  Quantity
+                                                                </div>
+                                                                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                                                  {
+                                                                    group.quantity
+                                                                  }{" "}
+                                                                  QRs
+                                                                </div>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                                      );
+                                                    },
+                                                  )
+                                                )}
+                                              </div>
+
+                                              <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
+                                                <div className="flex flex-col gap-0.5">
+                                                  <span>
+                                                    Total: {totalQty} QR
+                                                    {totalQty !== 1 ? "s" : ""}
+                                                    {!(
+                                                      campaign.planType ===
+                                                        "postpaid" &&
+                                                      totalBudget === 0
+                                                    ) && (
+                                                      <>
+                                                        {" "}
+                                                        - Budget {"\u20B9"}
+                                                        {formatAmount(
+                                                          totalBudget,
+                                                        )}
+                                                      </>
+                                                    )}
+                                                  </span>
+                                                  {campaign.planType ===
+                                                    "postpaid" &&
+                                                    totalBudget === 0 && (
+                                                      <span className="text-[10px] text-amber-600 font-medium italic">
+                                                        Cashback amount yet to
+                                                        be decided
+                                                      </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-3 text-xs">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handleDeleteCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      deletingCampaignId ===
+                                                      campaign.id
+                                                    }
+                                                    className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 font-medium hover:bg-rose-500/20 hover:border-rose-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                  >
+                                                    <Trash2 size={14} />
+                                                    {deletingCampaignId ===
+                                                    campaign.id
+                                                      ? "Deleting..."
+                                                      : "Delete"}
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                      handlePayCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                                                  >
+                                                    Proceed to Pay
+                                                    <ArrowRight size={14} />
+                                                  </button>
                                                 </div>
                                               </div>
                                             </div>
                                           );
-                                        })
-                                      )}
-                                    </div>
-
-                                    <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
-                                      <div className="flex flex-col gap-0.5">
-                                        <span>
-                                          Total: {totalQty} QR
-                                          {totalQty !== 1 ? "s" : ""}
-                                          {!(
-                                            campaign.planType === "postpaid" &&
-                                            totalBudget === 0
-                                          ) && (
-                                            <>
-                                              {" "}
-                                              - Budget {"\u20B9"}
-                                              {formatAmount(totalBudget)}
-                                            </>
-                                          )}
-                                        </span>
-                                        {campaign.planType === "postpaid" &&
-                                          totalBudget === 0 && (
-                                            <span className="text-[10px] text-amber-600 font-medium italic">
-                                              Cashback amount yet to be decided
-                                            </span>
-                                          )}
-                                      </div>
-                                      <div className="flex flex-wrap items-center gap-3 text-xs">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDeleteCampaign(campaign)
-                                          }
-                                          disabled={
-                                            deletingCampaignId === campaign.id
-                                          }
-                                          className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 font-medium hover:bg-rose-500/20 hover:border-rose-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                                        >
-                                          <Trash2 size={14} />
-                                          {deletingCampaignId === campaign.id
-                                            ? "Deleting..."
-                                            : "Delete"}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handlePayCampaign(campaign)
-                                          }
-                                          className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
-                                        >
-                                          Proceed to Pay
-                                          <ArrowRight size={14} />
-                                        </button>
+                                        })}
                                       </div>
                                     </div>
-                                  </div>
+                                  ),
                                 );
-                              })
+                              })()
                             )}
                           </div>
                         )}
 
                         {/* Pending Campaign Details Modal */}
                         {selectedPendingCampaign && (
-                          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
                             <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                               <div className="p-6 space-y-6">
                                 <div className="flex items-center justify-between">
@@ -8425,8 +8780,13 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
 
                                 {selectedPendingCampaign.description && (
-                                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
-                                    {selectedPendingCampaign.description}
+                                  <div className="space-y-1.5">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 ml-1">
+                                      Description
+                                    </p>
+                                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
+                                      {selectedPendingCampaign.description}
+                                    </div>
                                   </div>
                                 )}
 
@@ -8703,7 +9063,7 @@ Quantity: ${invoiceData.quantity} QRs
 
                         {/* Active Campaign Details Modal */}
                         {activeCampaignDetails && activeCampaign && (
-                          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
+                          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-safe-4 bg-black/50 backdrop-blur-sm">
                             <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto ios-scroll shadow-2xl border border-gray-100 dark:border-zinc-800">
                               <div className="p-6 space-y-6">
                                 <div className="flex items-center justify-between">
@@ -8746,8 +9106,13 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
 
                                 {activeCampaign.description && (
-                                  <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
-                                    {activeCampaign.description}
+                                  <div className="space-y-1.5">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 ml-1">
+                                      Description
+                                    </p>
+                                    <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-gray-100 dark:border-zinc-800">
+                                      {activeCampaign.description}
+                                    </div>
                                   </div>
                                 )}
 
@@ -8889,7 +9254,7 @@ Quantity: ${invoiceData.quantity} QRs
 
                         {showQrOrdersSection && (
                           <div
-                            className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
+                            className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none space-y-4"
                             id="qr-inventory"
                           >
                             <div className="flex items-center justify-between">
@@ -9141,7 +9506,7 @@ Quantity: ${invoiceData.quantity} QRs
                     {/* Products Section */}
                     {activeTab === "products" && (
                       <div
-                        className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none space-y-4"
+                        className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none space-y-4"
                         id="products"
                       >
                         <div className="flex items-center justify-between">
@@ -9194,65 +9559,28 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                           </div>
                         ) : (
-                          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                            <table className="w-full text-sm table-fixed min-w-[900px]">
-                              <colgroup>
-                                <col className="w-24" />
-                                <col className="w-auto" />
-                                <col className="w-32" />
-                                <col className="w-32" />
-                                <col className="w-28" />
-                                <col className="w-28" />
-                                <col className="w-32" />
-                              </colgroup>
-                              <thead className="bg-gradient-to-r from-primary to-primary text-white">
-                                <tr>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    Image
-                                  </th>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    Product
-                                  </th>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    SKU
-                                  </th>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    Category
-                                  </th>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    MRP
-                                  </th>
-                                  <th className="px-4 py-3 text-left font-semibold">
-                                    Status
-                                  </th>
-                                  <th className="px-4 py-3 text-center font-semibold">
-                                    Actions
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {products.map((product, idx) => {
-                                  const imageSrc = resolveAssetUrl(
-                                    product.imageUrl,
-                                  );
-                                  const hasImageError = failedProductImages.has(
-                                    product.id,
-                                  );
-                                  return (
-                                    <tr
-                                      key={product.id}
-                                      className={`${
-                                        idx % 2 === 0
-                                          ? "bg-gray-50 dark:bg-[#1a1a1a]"
-                                          : "bg-white dark:bg-[#0f0f0f]"
-                                      } hover:bg-primary/5/50 dark:hover:bg-primary-strong/10 transition-colors`}
-                                    >
-                                      <td className="px-4 py-4">
+                          <>
+                            {/* Mobile Product Cards */}
+                            <div className="grid grid-cols-1 gap-4 lg:hidden">
+                              {products.map((product) => {
+                                const imageSrc = resolveAssetUrl(
+                                  product.imageUrl,
+                                );
+                                const hasImageError = failedProductImages.has(
+                                  product.id,
+                                );
+                                return (
+                                  <div
+                                    key={`mob-prod-${product.id}`}
+                                    className="bg-white dark:bg-zinc-900/50 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 space-y-4"
+                                  >
+                                    <div className="flex gap-4">
+                                      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-800 flex-shrink-0 border border-gray-100 dark:border-zinc-800">
                                         {imageSrc && !hasImageError ? (
                                           <img
                                             src={imageSrc}
                                             alt={product.name}
-                                            className="h-14 w-14 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
+                                            className="h-full w-full object-cover"
                                             onError={() => {
                                               setFailedProductImages((prev) => {
                                                 const next = new Set(prev);
@@ -9262,101 +9590,203 @@ Quantity: ${invoiceData.quantity} QRs
                                             }}
                                           />
                                         ) : (
-                                          <div className="h-14 w-14 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                          <div className="h-full w-full flex items-center justify-center">
                                             <Package
                                               size={24}
-                                              className="text-gray-400"
+                                              className="text-gray-300"
                                             />
                                           </div>
                                         )}
-                                      </td>
-                                      <td className="px-4 py-4">
-                                        <div className="space-y-1">
-                                          <div className="font-semibold text-gray-900 dark:text-white leading-tight">
-                                            {product.name}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div>
+                                            <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                              {product.name}
+                                            </h4>
+                                            <p className="text-[10px] text-gray-500 font-medium mt-0.5">
+                                              SKU: {product.sku || "N/A"}
+                                            </p>
                                           </div>
-                                          {product.variant && (
-                                            <div className="text-xs text-gray-500 leading-tight">
-                                              {product.variant}
-                                            </div>
-                                          )}
-                                          {product.description && (
-                                            <div className="text-xs text-gray-400 leading-tight line-clamp-2">
-                                              {product.description}
-                                            </div>
-                                          )}
+                                          <span
+                                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                              product.status === "active"
+                                                ? "bg-emerald-500/10 text-emerald-500"
+                                                : "bg-gray-100 text-gray-500"
+                                            }`}
+                                          >
+                                            {product.status || "active"}
+                                          </span>
                                         </div>
-                                      </td>
-                                      <td className="px-4 py-4 text-gray-600 dark:text-gray-400 font-mono text-xs">
-                                        {product.sku || "-"}
-                                      </td>
-                                      <td className="px-4 py-4 text-gray-600 dark:text-gray-400">
-                                        <span className="line-clamp-2">
-                                          {product.category || "-"}
-                                        </span>
-                                      </td>
-                                      <td className="px-4 py-4 text-gray-900 dark:text-white font-semibold whitespace-nowrap">
-                                        {product.mrp
-                                          ? `INR ${Number(product.mrp).toFixed(2)}`
-                                          : "-"}
-                                      </td>
-                                      <td className="px-4 py-4">
-                                        <span
-                                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                                            product.status === "active"
-                                              ? "bg-primary/10 dark:bg-primary-strong/30 text-primary-strong dark:text-primary"
-                                              : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                          }`}
+                                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 line-clamp-2 leading-relaxed">
+                                          {product.description ||
+                                            "No description provided."}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-zinc-800/50">
+                                      <div>
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                                          Price
+                                        </p>
+                                        <p className="text-sm font-black text-gray-900 dark:text-white">
+                                          INR{" "}
+                                          {Number(product.mrp || 0).toFixed(2)}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => {
+                                            setEditingProduct(product);
+                                            setShowProductModal(true);
+                                          }}
+                                          className="p-2 rounded-xl bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-zinc-700"
                                         >
-                                          {product.status || "active"}
-                                        </span>
-                                      </td>
-                                      <td className="px-4 py-4">
-                                        <div className="flex items-center justify-center gap-2">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditingProduct(product);
-                                              setShowProductModal(true);
-                                            }}
-                                            className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors flex-shrink-0 cursor-pointer"
-                                            title="Edit product"
+                                          <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteProduct(product.id)
+                                          }
+                                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 border border-rose-100 dark:border-rose-900/30"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Desktop Product Table */}
+                            <div className="hidden lg:block overflow-hidden rounded-2xl border border-gray-100 dark:border-zinc-800">
+                              <table className="w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-zinc-900/50 text-gray-500 text-[11px] font-black uppercase tracking-widest">
+                                  <tr>
+                                    <th className="px-6 py-4 text-left">
+                                      Product
+                                    </th>
+                                    <th className="px-6 py-4 text-left">SKU</th>
+                                    <th className="px-6 py-4 text-left">
+                                      Category
+                                    </th>
+                                    <th className="px-6 py-4 text-left">MRP</th>
+                                    <th className="px-6 py-4 text-left">
+                                      Status
+                                    </th>
+                                    <th className="px-6 py-4 text-right">
+                                      Actions
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50 dark:divide-zinc-800">
+                                  {products.map((product) => {
+                                    const imageSrc = resolveAssetUrl(
+                                      product.imageUrl,
+                                    );
+                                    const hasImageError =
+                                      failedProductImages.has(product.id);
+                                    return (
+                                      <tr
+                                        key={`tab-prod-${product.id}`}
+                                        className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors"
+                                      >
+                                        <td className="px-6 py-4">
+                                          <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800">
+                                              {imageSrc && !hasImageError ? (
+                                                <img
+                                                  src={imageSrc}
+                                                  alt={product.name}
+                                                  className="h-full w-full object-cover"
+                                                />
+                                              ) : (
+                                                <div className="h-full w-full flex items-center justify-center">
+                                                  <Package
+                                                    size={20}
+                                                    className="text-gray-300"
+                                                  />
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="min-w-0">
+                                              <p className="font-bold text-gray-900 dark:text-white truncate">
+                                                {product.name}
+                                              </p>
+                                              <p className="text-xs text-gray-500 truncate">
+                                                {product.variant || "Standard"}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 font-medium">
+                                          {product.sku || "-"}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 font-medium">
+                                          {product.category || "-"}
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                                          INR{" "}
+                                          {Number(product.mrp || 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                          <span
+                                            className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                              product.status === "active"
+                                                ? "bg-emerald-500/10 text-emerald-500"
+                                                : "bg-gray-100 text-gray-500"
+                                            }`}
                                           >
-                                            <Edit2 size={16} />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handleDeleteProduct(product.id)
-                                            }
-                                            className="p-2 rounded-lg border border-rose-300 dark:border-rose-600 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors flex-shrink-0 cursor-pointer"
-                                            title="Delete product"
-                                          >
-                                            <Trash2 size={16} />
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
+                                            {product.status || "active"}
+                                          </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                          <div className="flex justify-end gap-2">
+                                            <button
+                                              onClick={() => {
+                                                setEditingProduct(product);
+                                                setShowProductModal(true);
+                                              }}
+                                              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 transition-colors"
+                                            >
+                                              <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                              onClick={() =>
+                                                handleDeleteProduct(product.id)
+                                              }
+                                              className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-500 transition-colors"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </>
                         )}
 
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>
-                            Total: {products.length} product
-                            {products.length !== 1 ? "s" : ""}
-                          </span>
-                          {productStatus && (
-                            <div className="text-primary font-semibold">
-                              {productStatus}
-                            </div>
-                          )}
-                          {productError && (
-                            <div className="text-rose-500 font-semibold">
-                              {productError}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                            <span className="bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded text-gray-500">
+                              Total: {products.length}
+                            </span>
+                            <span>
+                              Product{products.length !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+
+                          {(productStatus || productError) && (
+                            <div
+                              className={`text-xs font-bold ${productError ? "text-rose-500" : "text-primary"}`}
+                            >
+                              {productError || productStatus}
                             </div>
                           )}
                         </div>
@@ -9378,7 +9808,7 @@ Quantity: ${invoiceData.quantity} QRs
                     {/* Wallet Section */}
                     {activeTab === "wallet" && (
                       <div
-                        className="bg-white dark:bg-[#09090b] rounded-2xl p-6 space-y-8 min-h-[80vh]"
+                        className="bg-white dark:bg-[#09090b] rounded-none sm:rounded-2xl p-4 sm:p-8 space-y-10 min-h-[80vh]"
                         id="wallet"
                       >
                         {/* Wallet Controls Header */}
@@ -9490,74 +9920,152 @@ Quantity: ${invoiceData.quantity} QRs
                             )}
 
                           {transactions.length > 0 && (
-                            <div className="rounded-xl border border-gray-100 dark:border-zinc-800 overflow-hidden bg-white dark:bg-[#111]">
-                              <table className="w-full text-xs text-left">
-                                <thead className="bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 font-medium border-b border-gray-100 dark:border-zinc-800">
-                                  <tr>
-                                    <th className="px-5 py-3.5 w-40">Date</th>
-                                    <th className="px-5 py-3.5">Category</th>
-                                    <th className="px-5 py-3.5 w-24">Type</th>
-                                    <th className="px-5 py-3.5 w-40 text-right">
-                                      Amount
-                                    </th>
-                                    <th className="px-5 py-3.5 w-24">Status</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
-                                  {displayedTransactions.map((tx, idx) => {
-                                    const typeLabel = String(
-                                      tx.type || "",
-                                    ).toLowerCase();
-                                    const isCredit = typeLabel === "credit";
+                            <div className="w-full">
+                              {/* Desktop Table View */}
+                              <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111]">
+                                <table className="w-full text-xs text-left">
+                                  <thead className="bg-gray-50 dark:bg-[#1a1a1a] text-gray-500 font-medium border-b border-gray-100 dark:border-zinc-800">
+                                    <tr>
+                                      <th className="px-5 py-3.5 w-40">Date</th>
+                                      <th className="px-5 py-3.5">Category</th>
+                                      <th className="px-5 py-3.5 w-24">Type</th>
+                                      <th className="px-5 py-3.5 w-40 text-right">
+                                        Amount
+                                      </th>
+                                      <th className="px-5 py-3.5 w-24">Status</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
+                                    {displayedTransactions.map((tx, idx) => {
+                                      const typeLabel = String(
+                                        tx.type || "",
+                                      ).toLowerCase();
+                                      const isCredit = typeLabel === "credit";
 
-                                    return (
-                                      <tr
-                                        key={tx.id || idx}
-                                        className="hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors"
-                                      >
-                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-400 font-medium">
-                                          {formatTransactionDate(tx.createdAt)}
-                                        </td>
-                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
-                                          <div className="font-medium capitalize">
+                                      return (
+                                        <tr
+                                          key={tx.id || idx}
+                                          className="hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors"
+                                        >
+                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-400 font-medium">
+                                            {formatTransactionDate(
+                                              tx.createdAt,
+                                            )}
+                                          </td>
+                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
+                                            <div className="font-medium capitalize">
+                                              {String(
+                                                tx.category || "n/a",
+                                              ).replace(/_/g, " ")}
+                                            </div>
+                                            {tx.description && (
+                                              <div
+                                                className="text-xs text-gray-400 mt-1 line-clamp-1"
+                                                title={tx.description}
+                                              >
+                                                {tx.description}
+                                              </div>
+                                            )}
+                                          </td>
+                                          <td className="px-5 py-4 capitalize text-gray-500 dark:text-gray-400">
+                                            {typeLabel}
+                                          </td>
+                                          <td className="px-5 py-4 text-right font-medium">
+                                            <span
+                                              className={
+                                                isCredit
+                                                  ? "text-primary"
+                                                  : "text-rose-500"
+                                              }
+                                            >
+                                              {isCredit ? "+" : "-"}INR{" "}
+                                              {formatAmount(tx.amount)}
+                                            </span>
+                                          </td>
+                                          <td className="px-5 py-4">
+                                            <span className="text-gray-400">
+                                              success
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Mobile Card View */}
+                              <div className="sm:hidden space-y-3">
+                                {displayedTransactions.map((tx, idx) => {
+                                  const typeLabel = String(
+                                    tx.type || "",
+                                  ).toLowerCase();
+                                  const isCredit = typeLabel === "credit";
+
+                                  return (
+                                    <div
+                                      key={tx.id || idx}
+                                      className="p-5 space-y-4 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] transition-colors"
+                                    >
+                                      <div className="flex justify-between items-start gap-3">
+                                        <div className="flex flex-col min-w-0">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1">
+                                            Category
+                                          </span>
+                                          <span className="text-xs font-black text-gray-900 dark:text-white capitalize truncate">
                                             {String(
                                               tx.category || "n/a",
                                             ).replace(/_/g, " ")}
-                                          </div>
-                                          {tx.description && (
-                                            <div
-                                              className="text-xs text-gray-400 mt-1 line-clamp-1"
-                                              title={tx.description}
-                                            >
-                                              {tx.description}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="px-5 py-4 capitalize text-gray-500 dark:text-gray-400">
-                                          {typeLabel}
-                                        </td>
-                                        <td className="px-5 py-4 text-right font-medium">
-                                          <span
-                                            className={
+                                          </span>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1 block">
+                                            Amount
+                                          </span>
+                                          <div
+                                            className={`text-sm font-black ${
                                               isCredit
-                                                ? "text-primary"
-                                                : "text-rose-500"
-                                            }
+                                                ? "text-emerald-600 dark:text-emerald-400"
+                                                : "text-rose-600 dark:text-rose-400"
+                                            }`}
                                           >
                                             {isCredit ? "+" : "-"}INR{" "}
                                             {formatAmount(tx.amount)}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {tx.description && (
+                                        <div className="bg-gray-50/50 dark:bg-zinc-800/20 p-3 rounded-xl border border-gray-100/50 dark:border-zinc-800/30 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic">
+                                          {tx.description}
+                                        </div>
+                                      )}
+
+                                      <div className="flex justify-between items-end pt-2 border-t border-gray-50 dark:border-zinc-800/50">
+                                        <div className="flex flex-col">
+                                          <span className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-black mb-1">
+                                            Timestamp
                                           </span>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                          <span className="text-gray-400">
-                                            success
+                                          <span className="text-[11px] text-gray-600 dark:text-gray-300 font-bold">
+                                            {formatTransactionDate(
+                                              tx.createdAt,
+                                            )}
                                           </span>
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
+                                        </div>
+                                        <div className="flex flex-col text-right">
+                                          <span className="text-[9px] text-gray-400 uppercase tracking-[0.15em] font-black mb-1">
+                                            Status
+                                          </span>
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-100/50 dark:border-emerald-500/20 shadow-sm shadow-emerald-500/5">
+                                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            Verified
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           )}
 
@@ -9614,151 +10122,256 @@ Quantity: ${invoiceData.quantity} QRs
                               </button>
                             </div>
                           )}
-                          <AdvancedFilters
-                            filters={dashboardFilters}
-                            setFilters={setDashboardFilters}
-                            onApply={handleApplyExtraFilters}
-                            campaigns={campaigns}
-                            products={products}
-                            showExport={true}
-                            onExport={() =>
-                              exportVendorCustomers(
-                                token,
-                                buildExtraFilterParams(),
-                              )
-                            }
-                            variant="customers"
-                          />
-                          {extraTabError && (
-                            <p className="mt-3 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
-                              {extraTabError}
-                            </p>
-                          )}
+                          <div className="bg-white dark:bg-[#1a1a1a] sm:rounded-2xl border-y sm:border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
+                            <AdvancedFilters
+                              filters={dashboardFilters}
+                              setFilters={setDashboardFilters}
+                              onApply={handleApplyExtraFilters}
+                              campaigns={campaigns}
+                              products={products}
+                              showExport={true}
+                              onExport={() =>
+                                exportVendorCustomers(
+                                  token,
+                                  buildExtraFilterParams(),
+                                )
+                              }
+                              variant="customers"
+                              noCard={true}
+                            />
+                            {extraTabError && (
+                              <p className="mx-4 mb-4 text-sm font-medium text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg border border-rose-200 dark:border-rose-500/20">
+                                {extraTabError}
+                              </p>
+                            )}
 
-                          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none">
-                            <div className="w-full overflow-x-auto">
-                              <table className="w-full min-w-[900px] text-sm text-left">
-                                <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
-                                  <tr>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Customer
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Mobile
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Codes
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Rewards
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Location
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Joined
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide">
-                                      Last Scanned
-                                    </th>
-                                    <th className="px-5 py-4 font-semibold tracking-wide text-right">
-                                      Action
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
-                                  {isLoadingExtraTab ? (
+                            <div className="w-full border-t border-gray-100 dark:border-zinc-800">
+                              {/* Desktop Table View */}
+                              <div className="hidden sm:block overflow-x-auto">
+                                <table className="w-full min-w-[900px] text-sm text-left">
+                                  <thead className="bg-gray-50/80 dark:bg-[#171717]/80 text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-zinc-800">
                                     <tr>
-                                      <td
-                                        colSpan={8}
-                                        className="px-6 py-12 text-center"
-                                      >
-                                        <div className="flex flex-col items-center justify-center gap-3">
-                                          <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" />
-                                          <span className="text-gray-500 dark:text-gray-400 font-medium tracking-wide">
-                                            Loading customers...
-                                          </span>
-                                        </div>
-                                      </td>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Customer
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Mobile
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Codes
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Rewards
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Location
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Joined
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide">
+                                        Last Scanned
+                                      </th>
+                                      <th className="px-5 py-4 font-semibold tracking-wide text-right">
+                                        Action
+                                      </th>
                                     </tr>
-                                  ) : customersData.length === 0 ? (
-                                    <tr>
-                                      <td
-                                        colSpan={8}
-                                        className="px-6 py-16 text-center"
-                                      >
-                                        <div className="flex flex-col items-center justify-center gap-3">
-                                          <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center mb-2">
-                                            <Users className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-                                          </div>
-                                          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                                            No customers found
-                                          </h3>
-                                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            Try adjusting your filters to see
-                                            more results
-                                          </p>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  ) : (
-                                    customersData.map((customer) => (
-                                      <tr
-                                        key={customer.userId || customer.mobile}
-                                        className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors group"
-                                      >
-                                        <td className="px-5 py-4 align-top">
-                                          <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                                              {customer.name?.[0]?.toUpperCase() ||
-                                                "C"}
-                                            </div>
-                                            <span className="font-medium text-gray-900 dark:text-white break-words max-w-[150px]">
-                                              {customer.name || "-"}
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                    {isLoadingExtraTab ? (
+                                      <tr>
+                                        <td
+                                          colSpan={8}
+                                          className="px-6 py-12 text-center"
+                                        >
+                                          <div className="flex flex-col items-center justify-center gap-3">
+                                            <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin" />
+                                            <span className="text-gray-500 dark:text-gray-400 font-medium tracking-wide">
+                                              Loading customers...
                                             </span>
                                           </div>
                                         </td>
-                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 align-top">
-                                          {customer.mobile || "-"}
-                                        </td>
-                                        <td className="px-5 py-4 align-top">
-                                          <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-medium">
-                                            {customer.codeCount || 0}
-                                          </span>
-                                        </td>
-                                        <td className="px-5 py-4 font-semibold text-emerald-600 dark:text-emerald-400 align-top">
-                                          ₹
-                                          {formatAmount(customer.rewardsEarned)}
-                                        </td>
-                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300 break-words max-w-[150px] align-top">
-                                          {customer.firstScanLocation || "-"}
-                                        </td>
-                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
-                                          {formatDate(customer.memberSince)}
-                                        </td>
-                                        <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
-                                          {formatDate(customer.lastScanned)}
-                                        </td>
-                                        <td className="px-5 py-4 text-right align-top">
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setSelectedCustomerModal(
-                                                customer,
-                                              );
-                                              setIsCustomerModalOpen(true);
-                                            }}
-                                            className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto whitespace-nowrap"
-                                          >
-                                            <Eye className="w-3.5 h-3.5" />
-                                            View History
-                                          </button>
+                                      </tr>
+                                    ) : customersData.length === 0 ? (
+                                      <tr>
+                                        <td
+                                          colSpan={8}
+                                          className="px-6 py-16 text-center"
+                                        >
+                                          <div className="flex flex-col items-center justify-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center mb-2">
+                                              <Users className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                                            </div>
+                                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                                              No customers found
+                                            </h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                              Try adjusting your filters to see
+                                              more results
+                                            </p>
+                                          </div>
                                         </td>
                                       </tr>
-                                    ))
-                                  )}
-                                </tbody>
-                              </table>
+                                    ) : (
+                                      customersData.map((customer) => (
+                                        <tr
+                                          key={
+                                            customer.userId || customer.mobile
+                                          }
+                                          className="hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors group"
+                                        >
+                                          <td className="px-5 py-4 align-top">
+                                            <div className="flex items-start gap-3">
+                                              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                                                {customer.name?.[0]?.toUpperCase() ||
+                                                  "C"}
+                                              </div>
+                                              <span className="font-medium text-gray-900 dark:text-white break-words max-w-[150px]">
+                                                {customer.name || "-"}
+                                              </span>
+                                            </div>
+                                          </td>
+                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-300 align-top">
+                                            {customer.mobile || "-"}
+                                          </td>
+                                          <td className="px-5 py-4 align-top">
+                                            <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-medium">
+                                              {customer.codeCount || 0}
+                                            </span>
+                                          </td>
+                                          <td className="px-5 py-4 font-semibold text-emerald-600 dark:text-emerald-400 align-top">
+                                            ₹
+                                            {formatAmount(
+                                              customer.rewardsEarned,
+                                            )}
+                                          </td>
+                                          <td className="px-5 py-4 text-gray-600 dark:text-gray-300 break-words max-w-[150px] align-top">
+                                            {customer.firstScanLocation || "-"}
+                                          </td>
+                                          <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
+                                            {formatDate(customer.memberSince)}
+                                          </td>
+                                          <td className="px-5 py-4 text-gray-500 dark:text-gray-400 break-words max-w-[120px] align-top">
+                                            {formatDate(customer.lastScanned)}
+                                          </td>
+                                          <td className="px-5 py-4 text-right align-top">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedCustomerModal(
+                                                  customer,
+                                                );
+                                                setIsCustomerModalOpen(true);
+                                              }}
+                                              className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 rounded-lg text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1 ml-auto whitespace-nowrap"
+                                            >
+                                              <Eye className="w-3.5 h-3.5" />
+                                              View History
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* Mobile Card View */}
+                              <div className="sm:hidden divide-y divide-gray-100 dark:divide-zinc-800/80">
+                                {isLoadingExtraTab ? (
+                                  <div className="p-12 text-center">
+                                    <RefreshCw className="w-6 h-6 text-emerald-500 animate-spin mx-auto mb-3" />
+                                    <p className="text-gray-500 dark:text-gray-400 font-bold text-sm">
+                                      Loading customers...
+                                    </p>
+                                  </div>
+                                ) : customersData.length === 0 ? (
+                                  <div className="p-16 text-center">
+                                    <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                                    <h3 className="text-base font-black text-gray-900 dark:text-white">
+                                      No customers found
+                                    </h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      Try adjusting your filters
+                                    </p>
+                                  </div>
+                                ) : (
+                                  customersData.map((customer) => (
+                                    <div
+                                      key={customer.userId || customer.mobile}
+                                      className="p-5 space-y-4 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/5 transition-colors"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-black text-sm shrink-0 shadow-inner">
+                                            {customer.name?.[0]?.toUpperCase() ||
+                                              "C"}
+                                          </div>
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="font-black text-gray-900 dark:text-white truncate">
+                                              {customer.name || "Customer"}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">
+                                              {customer.mobile || "-"}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          <div className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            Rewards
+                                          </div>
+                                          <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                            ₹
+                                            {formatAmount(
+                                              customer.rewardsEarned,
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-zinc-800/30 p-3 rounded-xl border border-gray-100 dark:border-zinc-800/50">
+                                        <div>
+                                          <div className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1">
+                                            Codes
+                                          </div>
+                                          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-white dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-xs font-black shadow-sm border border-gray-100 dark:border-zinc-700">
+                                            {customer.codeCount || 0}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <div className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1">
+                                            Last Activity
+                                          </div>
+                                          <span className="text-xs font-black text-gray-700 dark:text-gray-300">
+                                            {formatDate(customer.lastScanned)}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center justify-between pt-1 gap-4">
+                                        <div className="flex flex-col min-w-0">
+                                          <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                                            Location
+                                          </span>
+                                          <span className="text-xs text-gray-600 dark:text-gray-400 truncate font-bold">
+                                            {customer.firstScanLocation ||
+                                              "Unknown"}
+                                          </span>
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            setSelectedCustomerModal(customer);
+                                            setIsCustomerModalOpen(true);
+                                          }}
+                                          className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap"
+                                        >
+                                          View History
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -9766,7 +10379,7 @@ Quantity: ${invoiceData.quantity} QRs
                     )}
 
                     {activeTab === "locations" && (
-                      <div className="space-y-4">
+                      <div className="bg-white dark:bg-[#1a1a1a] sm:rounded-2xl border-y sm:border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
                         <AdvancedFilters
                           filters={dashboardFilters}
                           setFilters={setDashboardFilters}
@@ -9774,22 +10387,24 @@ Quantity: ${invoiceData.quantity} QRs
                           campaigns={campaigns}
                           products={products}
                           variant="locations"
+                          noCard={true}
                         />
                         {extraTabError && (
-                          <p className="mt-3 text-xs text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-2 rounded-lg">
+                          <p className="mx-4 mb-4 text-xs text-rose-500 bg-rose-50 dark:bg-rose-500/10 p-2 rounded-lg border border-rose-200 dark:border-rose-500/20">
                             {extraTabError}
                           </p>
                         )}
                         {isLoadingExtraTab ? (
-                          <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-6 text-sm text-gray-500">
+                          <div className="p-6 border-t border-gray-100 dark:border-gray-800 text-sm text-gray-500">
                             Loading locations...
                           </div>
                         ) : (
-                          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] overflow-hidden">
-                              <div className="h-[520px] z-0">
+                          <div className="grid gap-0 lg:grid-cols-[2fr_1fr] border-t border-gray-100 dark:border-gray-800">
+                            <div className="overflow-hidden">
+                              <div className="h-[520px] relative z-0">
                                 <MapContainer
                                   center={locationMapCenter}
+                                  style={{ zIndex: 0 }}
                                   zoom={5}
                                   minZoom={3}
                                   maxBounds={[
@@ -9951,7 +10566,7 @@ Quantity: ${invoiceData.quantity} QRs
 
                     {activeTab === "billing" && (
                       <div className="space-y-4">
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
+                        <div className="rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
                             <input
                               type="date"
@@ -10014,131 +10629,262 @@ Quantity: ${invoiceData.quantity} QRs
                           )}
                         </div>
 
-                        <div className="rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
-                              <tr>
-                                <th className="px-4 py-3">Invoice No.</th>
-                                <th className="px-4 py-3">Type</th>
-                                <th className="px-4 py-3">Issued</th>
-                                <th className="px-4 py-3">Subtotal</th>
-                                <th className="px-4 py-3">Tax</th>
-                                <th className="px-4 py-3">Total</th>
-                                <th className="px-4 py-3">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                              {isLoadingExtraTab ? (
+                        <div className="w-full">
+                          {/* Desktop Table View */}
+                          <div className="hidden sm:block rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+                            <table className="w-full text-xs text-left">
+                              <thead className="bg-gray-50 dark:bg-[#171717] text-gray-500 border-b border-gray-100 dark:border-zinc-800">
                                 <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    Loading invoices...
-                                  </td>
+                                  <th className="px-4 py-3">Invoice No.</th>
+                                  <th className="px-4 py-3">Type</th>
+                                  <th className="px-4 py-3">Issued</th>
+                                  <th className="px-4 py-3">Subtotal</th>
+                                  <th className="px-4 py-3">Tax</th>
+                                  <th className="px-4 py-3">Total</th>
+                                  <th className="px-4 py-3">Actions</th>
                                 </tr>
-                              ) : invoicesData.length === 0 ? (
-                                <tr>
-                                  <td
-                                    colSpan={7}
-                                    className="px-4 py-6 text-center text-gray-500"
-                                  >
-                                    No invoices found.
-                                  </td>
-                                </tr>
-                              ) : (
-                                invoicesData.map((invoice) => (
-                                  <tr key={invoice.id}>
-                                    <td className="px-4 py-3 font-mono text-[11px]">
-                                      {invoice.number || invoice.id}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {invoice.type}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {formatDate(invoice.issuedAt)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      INR {formatAmount(invoice.subtotal)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      INR {formatAmount(invoice.tax)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      INR {formatAmount(invoice.total)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            downloadVendorInvoicePdf(
-                                              token,
-                                              invoice.id,
-                                            )
-                                          }
-                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
-                                        >
-                                          Download
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={async () => {
-                                            try {
-                                              const response =
-                                                await shareVendorInvoice(
-                                                  token,
-                                                  invoice.id,
-                                                );
-                                              const shareUrl =
-                                                response?.shareUrl ||
-                                                response?.url ||
-                                                "";
-                                              if (
-                                                shareUrl &&
-                                                navigator?.clipboard?.writeText
-                                              ) {
-                                                await navigator.clipboard.writeText(
-                                                  shareUrl,
-                                                );
-                                                setInvoiceShareStatus(
-                                                  "Share link copied to clipboard.",
-                                                );
-                                              } else if (shareUrl) {
-                                                setInvoiceShareStatus(shareUrl);
-                                              } else {
-                                                setInvoiceShareStatus(
-                                                  "Share link generated.",
-                                                );
-                                              }
-                                            } catch (error) {
-                                              setInvoiceShareStatus(
-                                                error.message ||
-                                                  "Unable to generate share link.",
-                                              );
-                                            }
-                                          }}
-                                          className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
-                                        >
-                                          Share
-                                        </button>
-                                        {invoice.shareToken && (
-                                          <a
-                                            href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center`}
-                                          >
-                                            Open
-                                          </a>
-                                        )}
-                                      </div>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                {isLoadingExtraTab ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      Loading invoices...
                                     </td>
                                   </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                                ) : invoicesData.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={7}
+                                      className="px-4 py-6 text-center text-gray-500"
+                                    >
+                                      No invoices found.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  invoicesData.map((invoice) => (
+                                    <tr key={invoice.id}>
+                                      <td className="px-4 py-3 font-mono text-[11px]">
+                                        {invoice.number || invoice.id}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {invoice.type}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {formatDate(invoice.issuedAt)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.subtotal)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.tax)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        INR {formatAmount(invoice.total)}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              downloadVendorInvoicePdf(
+                                                token,
+                                                invoice.id,
+                                              )
+                                            }
+                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
+                                          >
+                                            Download
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={async () => {
+                                              try {
+                                                const response =
+                                                  await shareVendorInvoice(
+                                                    token,
+                                                    invoice.id,
+                                                  );
+                                                const shareUrl =
+                                                  response?.shareUrl ||
+                                                  response?.url ||
+                                                  "";
+                                                if (
+                                                  shareUrl &&
+                                                  navigator?.clipboard?.writeText
+                                                ) {
+                                                  await navigator.clipboard.writeText(
+                                                    shareUrl,
+                                                  );
+                                                  setInvoiceShareStatus(
+                                                    "Share link copied to clipboard.",
+                                                  );
+                                                } else if (shareUrl) {
+                                                  setInvoiceShareStatus(shareUrl);
+                                                } else {
+                                                  setInvoiceShareStatus(
+                                                    "Share link generated.",
+                                                  );
+                                                }
+                                              } catch (error) {
+                                                setInvoiceShareStatus(
+                                                  error.message ||
+                                                    "Unable to generate share link.",
+                                                );
+                                              }
+                                            }}
+                                            className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1`}
+                                          >
+                                            Share
+                                          </button>
+                                          {invoice.shareToken && (
+                                            <a
+                                              href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className={`${SECONDARY_BUTTON} text-[11px] px-2 py-1 inline-flex items-center`}
+                                            >
+                                              Open
+                                            </a>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Mobile Card View */}
+                          {!isLoadingExtraTab && invoicesData.length > 0 && (
+                            <div className="sm:hidden space-y-4">
+                              {invoicesData.map((invoice) => (
+                                <div
+                                  key={invoice.id}
+                                  className="p-5 space-y-4 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-[#111] shadow-sm"
+                                >
+                                  <div className="flex justify-between items-start gap-3">
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1">
+                                        Invoice No.
+                                      </span>
+                                      <span className="text-xs font-mono font-black text-gray-900 dark:text-white truncate">
+                                        {invoice.number || invoice.id}
+                                      </span>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1 block">
+                                        Total Amount
+                                      </span>
+                                      <div className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                        INR {formatAmount(invoice.total)}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50 dark:border-zinc-800/50">
+                                    <div className="flex flex-col">
+                                      <span className="text-[9px] text-gray-400 uppercase tracking-[0.1em] font-black mb-1">
+                                        Type
+                                      </span>
+                                      <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 capitalize">
+                                        {invoice.type?.replace(/_/g, " ")}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                      <span className="text-[9px] text-gray-400 uppercase tracking-[0.1em] font-black mb-1">
+                                        Issued At
+                                      </span>
+                                      <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">
+                                        {formatDate(invoice.issuedAt)}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        downloadVendorInvoicePdf(
+                                          token,
+                                          invoice.id,
+                                        )
+                                      }
+                                      className="w-full bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center gap-2"
+                                    >
+                                      <Download size={14} />
+                                      Download PDF
+                                    </button>
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          try {
+                                            const response =
+                                              await shareVendorInvoice(
+                                                token,
+                                                invoice.id,
+                                              );
+                                            const shareUrl =
+                                              response?.shareUrl ||
+                                              response?.url ||
+                                              "";
+                                            if (
+                                              shareUrl &&
+                                              navigator?.clipboard?.writeText
+                                            ) {
+                                              await navigator.clipboard.writeText(
+                                                shareUrl,
+                                              );
+                                              setInvoiceShareStatus(
+                                                "Share link copied to clipboard.",
+                                              );
+                                            } else if (shareUrl) {
+                                              setInvoiceShareStatus(shareUrl);
+                                            }
+                                          } catch (error) {
+                                            setInvoiceShareStatus(
+                                              "Error generating link",
+                                            );
+                                          }
+                                        }}
+                                        className="flex-1 bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-gray-100 dark:border-zinc-800 flex items-center justify-center gap-2"
+                                      >
+                                        <Share2 size={12} />
+                                        Share
+                                      </button>
+                                      {invoice.shareToken && (
+                                        <a
+                                          href={`${API_BASE_URL}/api/public/invoices/shared/${invoice.shareToken}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-primary/20 flex items-center justify-center gap-2"
+                                        >
+                                          <ExternalLink size={12} />
+                                          Open
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Mobile Loading/Empty States */}
+                          {isLoadingExtraTab && (
+                            <div className="sm:hidden py-12 text-center text-gray-500 text-xs animate-pulse">
+                              Loading invoices...
+                            </div>
+                          )}
+                          {!isLoadingExtraTab && invoicesData.length === 0 && (
+                            <div className="sm:hidden py-12 text-center text-gray-500 text-xs border border-dashed border-gray-200 dark:border-zinc-800 rounded-2xl">
+                              No invoices found.
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -10180,7 +10926,7 @@ Quantity: ${invoiceData.quantity} QRs
 
               {/* Persistent Notification Panel for instant-open performance */}
               <div
-                className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out ${
+                className={`fixed inset-0 z-[9999] transition-all duration-300 ease-in-out ${
                   isNotificationsOpen
                     ? "opacity-100 pointer-events-auto"
                     : "opacity-0 pointer-events-none"
@@ -10194,7 +10940,7 @@ Quantity: ${invoiceData.quantity} QRs
                 />
                 <div
                   ref={notificationsDropdownRef}
-                  className={`absolute z-50 right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out flex flex-col ${
+                  className={`absolute z-[200] right-6 top-20 w-[420px] max-w-[calc(100vw-2rem)] h-[min(80vh,640px)] rounded-2xl border border-gray-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0f0f0f]/95 shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-300 ease-out flex flex-col ${
                     isNotificationsOpen
                       ? "translate-y-0 scale-100"
                       : "translate-y-4 scale-95"
@@ -10349,7 +11095,7 @@ Quantity: ${invoiceData.quantity} QRs
 
               {/* Payment Modal */}
               {showPaymentModal && paymentForm.campaign && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                   <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a1a1a] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
                     <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-4">
                       <div>
@@ -10622,7 +11368,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
                               )}
                             </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[200] shadow-xl pointer-events-none">
                               Digital Voucher card design is custom made to
                               match your brand style.
                               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
@@ -10667,7 +11413,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
                               )}
                             </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[200] shadow-xl pointer-events-none">
                               Assured Rewards assists you with high-quality
                               physical prints of your vouchers.
                               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
@@ -10710,7 +11456,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
                               )}
                             </button>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[110%] p-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs text-center rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[200] shadow-xl pointer-events-none">
                               Only provides a raw PDF sheet containing your QR
                               codes without any voucher designs.
                               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
@@ -10840,7 +11586,7 @@ Quantity: ${invoiceData.quantity} QRs
 
               {/* Global Toast Notification */}
               {qrActionStatus && (
-                <div className="fixed bottom-4 right-4 z-100 animate-bounce-in">
+                <div className="fixed bottom-4 right-4 z-[10001] animate-bounce-in">
                   <div className="rounded-lg bg-gray-900/90 text-white px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-sm border border-white/10 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     {qrActionStatus}

@@ -23,6 +23,7 @@ const AdvancedFilters = ({
     showExport = false,
     onExport,
     variant = "customers", // "customers" | "locations"
+    noCard = false,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const filterRef = useRef(null);
@@ -74,7 +75,7 @@ const AdvancedFilters = ({
     return (
         <div
             ref={filterRef}
-            className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden transition-all"
+            className={`${noCard ? "" : "bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none"} overflow-hidden transition-all`}
         >
             {/* Compact Filter Bar - Always Visible */}
             <div className="px-4 py-3 flex items-center gap-3 flex-wrap">

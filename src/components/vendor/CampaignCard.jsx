@@ -71,7 +71,10 @@ const CampaignCard = React.memo(
     const fundedPostpaidQty = Array.isArray(campaign.allocations)
       ? campaign.allocations.reduce((sum, allocation) => {
           const quantity = Number.parseInt(allocation?.quantity, 10) || 0;
-          const cashbackAmount = parseNumericValue(allocation?.cashbackAmount, 0);
+          const cashbackAmount = parseNumericValue(
+            allocation?.cashbackAmount,
+            0,
+          );
           return cashbackAmount > 0 ? sum + quantity : sum;
         }, 0)
       : 0;
@@ -120,36 +123,48 @@ const CampaignCard = React.memo(
     const isBulkExportStarting = isStartingBulkExportId === campaign.id;
 
     return (
-      <div className="rounded-2xl border border-gray-200/70 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="rounded-2xl border border-gray-300/20 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between text-left">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="text-base font-semibold text-gray-900 dark:text-white">
+              <div className="text-base font-bold text-gray-900 dark:text-white">
                 {campaign.title}
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold uppercase tracking-wide">
+              <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold uppercase tracking-wider">
                 Active
               </span>
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400">
-              ID: {campaign.id.slice(0, 10)}...
+            {campaign.Product?.name && (
+              <div className="text-[11px] font-bold text-primary/80 dark:text-primary/70 uppercase tracking-tight">
+                {campaign.Product.name}
+              </div>
+            )}
+            <div className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+              Campaign ID: {campaign.id.slice(0, 10)}...
             </div>
           </div>
           <div className="hidden sm:flex flex-wrap items-center gap-2 justify-end">
             {typeof onStartBulkExport === "function" ? (
-              campaignExportJob?.isReady || campaignExportJob?.status === "completed" ? (
+              campaignExportJob?.isReady ||
+              campaignExportJob?.status === "completed" ? (
                 <button
                   type="button"
-                  onClick={() => onDownloadReadyExport && onDownloadReadyExport(campaignExportJob)}
+                  onClick={() =>
+                    onDownloadReadyExport &&
+                    onDownloadReadyExport(campaignExportJob)
+                  }
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-semibold cursor-pointer"
                 >
                   <Download size={14} />
                   Download Export
                 </button>
-              ) : (campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued") ? (
+              ) : campaignExportJob?.status === "processing" ||
+                campaignExportJob?.status === "queued" ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-semibold">
                   <LoaderCircle size={14} className="animate-spin" />
-                  {campaignExportJob.status === "queued" ? "Queued" : `Exporting ${campaignExportJob.progressPercent || 0}%`}
+                  {campaignExportJob.status === "queued"
+                    ? "Queued"
+                    : `Exporting ${campaignExportJob.progressPercent || 0}%`}
                 </span>
               ) : (
                 <button
@@ -189,9 +204,9 @@ const CampaignCard = React.memo(
             <button
               type="button"
               onClick={() => onViewDetails(campaign)}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-400 bg-gray-50 text-gray-600 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-gray-400 dark:hover:bg-zinc-700 transition-all active:scale-95"
             >
-              <Eye size={14} />
+              <Eye size={16} />
             </button>
             <button
               type="button"
@@ -204,36 +219,36 @@ const CampaignCard = React.memo(
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-4 mt-3">
-          <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-gray-500">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 mt-4">
+          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3 transition-all hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 text-left">
+            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
               Budget
             </div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="text-sm font-black text-gray-900 dark:text-white">
               INR {formatAmount(totalBudget)}
             </div>
           </div>
-          <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-gray-500">
+          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3 transition-all hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 text-left">
+            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
               Total QRs
             </div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="text-sm font-black text-gray-900 dark:text-white">
               {totalCount || 0}
             </div>
           </div>
-          <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-gray-500">
+          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3 transition-all hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 text-left">
+            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
               Active
             </div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="text-sm font-black text-gray-900 dark:text-white">
               {activeCount}
             </div>
           </div>
-          <div className="rounded-lg border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wide text-gray-500">
+          <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3 transition-all hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 text-left">
+            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
               Redeemed
             </div>
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+            <div className="text-sm font-black text-primary">
               {redeemedCount}
             </div>
           </div>
@@ -322,7 +337,6 @@ const CampaignCard = React.memo(
           )}
         </div>
 
-
         {campaign.planType === "postpaid" && (
           <PostpaidSheetManager
             campaign={campaign}
@@ -334,43 +348,64 @@ const CampaignCard = React.memo(
         )}
 
         {/* Mobile Actions */}
-        <div className="flex flex-wrap items-center justify-end gap-2 pt-4 sm:hidden">
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-5 sm:hidden border-t border-gray-100 dark:border-zinc-800/50 mt-4">
           <button
             type="button"
-            onClick={() => onDownloadQr(campaign)}
-            disabled={isDownloadingPdf === campaign.id}
-            className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-60"
+            onClick={handleDownloadInvoice}
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all shadow-sm active:scale-95"
+            title="Download Invoice"
           >
-            <Download size={14} />
+            <FileText size={16} />
           </button>
+
+          {typeof onStartBulkExport === "function" && (
+            campaignExportJob?.isReady || campaignExportJob?.status === "completed" ? (
+              <button
+                type="button"
+                onClick={() => onDownloadReadyExport && onDownloadReadyExport(campaignExportJob)}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all shadow-sm active:scale-95"
+                title="Download Export"
+              >
+                <Download size={16} />
+              </button>
+            ) : (campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued") ? (
+              <div className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-sm">
+                <LoaderCircle size={16} className="animate-spin" />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onStartBulkExport(campaign)}
+                disabled={isBulkExportStarting}
+                className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
+                title="Bulk Export"
+              >
+                {isBulkExportStarting ? (
+                  <LoaderCircle size={16} className="animate-spin" />
+                ) : (
+                  <Archive size={16} />
+                )}
+              </button>
+            )
+          )}
+
           <button
             type="button"
             onClick={() => onViewDetails(campaign)}
-            className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-500/30 bg-white/5 text-gray-300 hover:bg-white/10 transition-colors"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all shadow-sm active:scale-95"
+            title="View Details"
           >
-            <Eye size={14} />
+            <Eye size={16} />
           </button>
-          {typeof onStartBulkExport === "function" && (
-            <button
-              type="button"
-              onClick={() => onStartBulkExport(campaign)}
-              disabled={isBulkExportStarting || campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued"}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 hover:bg-cyan-500/20 transition-colors disabled:opacity-60"
-            >
-              {isBulkExportStarting || campaignExportJob?.status === "processing" || campaignExportJob?.status === "queued" ? (
-                <LoaderCircle size={14} className="animate-spin" />
-              ) : (
-                <Archive size={14} />
-              )}
-            </button>
-          )}
+
           <button
             type="button"
             onClick={() => onDelete(campaign)}
             disabled={deletingCampaignId === campaign.id}
-            className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
+            title="Delete Campaign"
           >
-            <Trash2 size={14} />
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
@@ -379,4 +414,3 @@ const CampaignCard = React.memo(
 );
 
 export default CampaignCard;
-

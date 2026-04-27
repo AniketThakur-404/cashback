@@ -79,7 +79,7 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer, token }) => {
     if (!isOpen || !customer) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex justify-end bg-gray-900/60 backdrop-blur-sm sm:items-center sm:justify-center transition-all p-0 sm:p-6">
+        <div className="fixed inset-0 z-[9999] flex justify-end bg-gray-900/60 backdrop-blur-sm sm:items-center sm:justify-center transition-all p-0 sm:p-6">
             <div
                 className="w-full h-full sm:w-[95vw] sm:max-w-5xl sm:h-auto sm:max-h-[90vh] bg-white dark:bg-[#121212] flex flex-col sm:rounded-3xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-right sm:slide-in-from-bottom-8 duration-300 border border-gray-200/50 dark:border-zinc-800/80"
             >

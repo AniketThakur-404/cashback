@@ -6,6 +6,7 @@ import {
   Plus,
   QrCode,
   RefreshCw,
+  Trash2,
   X,
 } from "lucide-react";
 import { useToast } from "../ui";
@@ -36,7 +37,12 @@ const createBatchRow = (overrides = {}) => ({
 });
 
 const formatBatchRange = (start, quantity) => {
-  if (!Number.isFinite(start) || start < 0 || !Number.isFinite(quantity) || quantity <= 0) {
+  if (
+    !Number.isFinite(start) ||
+    start < 0 ||
+    !Number.isFinite(quantity) ||
+    quantity <= 0
+  ) {
     return "No QRs selected";
   }
 
@@ -71,46 +77,49 @@ const BatchCard = ({
   const dirtyLabel = batch.isPersisted && batch.isDirty ? "Edited" : null;
 
   return (
-    <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm transition-all hover:border-emerald-200 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
-              <QrCode className="h-4 w-4" />
+    <div className="group relative overflow-hidden rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:border-emerald-200 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Background Accent */}
+      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/5 blur-2xl transition-opacity group-hover:opacity-100" />
+
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start justify-between">
+        {/* Header Section */}
+        <div className="flex flex-col items-center text-center gap-4 sm:flex-row sm:items-start sm:text-left">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 shadow-inner dark:bg-emerald-500/20 dark:text-emerald-400">
+            <QrCode size={24} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <h4 className="text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight">
+                Batch {batch.batchNumber}
+              </h4>
+              {batch.isPersisted && (
+                <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-tight text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 size={12} />
+                  Saved
+                </span>
+              )}
+              {dirtyLabel && (
+                <span className="inline-flex items-center gap-1 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-tight text-amber-600 dark:text-amber-400">
+                  <Pencil size={12} />
+                  {dirtyLabel}
+                </span>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-black text-gray-900 dark:text-gray-100">
-                  Batch {batch.batchNumber}
-                </p>
-                {batch.isPersisted && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Saved
-                  </span>
-                )}
-                {dirtyLabel && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
-                    <Pencil className="h-3 w-3" />
-                    {dirtyLabel}
-                  </span>
-                )}
-              </div>
-              <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                Recharge block for {formatBatchRange(batch.start, batch.quantityValue)}
-              </p>
-            </div>
+            <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-1">
+              Range: {formatBatchRange(batch.start, batch.quantityValue)}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0 self-start">
+        {/* Actions Section */}
+        <div className="flex items-center justify-center gap-3 sm:justify-end">
           {canDownload && typeof onDownload === "function" && (
             <button
               type="button"
               onClick={onDownload}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-colors hover:bg-emerald-700"
+              className="inline-flex h-11 items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 text-xs font-black text-emerald-600 transition-all hover:bg-emerald-500/20 dark:text-emerald-400 active:scale-95 shadow-sm"
             >
-              <Download className="h-3 w-3" />
+              <Download size={16} />
               Download
             </button>
           )}
@@ -119,96 +128,111 @@ const BatchCard = ({
               type="button"
               onClick={onDelete}
               disabled={isSaving}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-white text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/20 dark:bg-zinc-950 dark:hover:bg-red-500/10"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-500 transition-all hover:bg-rose-500/20 disabled:opacity-50 active:scale-95 shadow-sm"
               title="Remove batch"
             >
-              <X className="h-3.5 w-3.5" />
+              <Trash2 size={18} />
             </button>
           )}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+      {/* Integrated Stats Grid */}
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 dark:border-zinc-800 dark:bg-zinc-800 sm:grid-cols-4">
+        <div className="bg-white p-3 dark:bg-zinc-900">
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
             QR Range
           </p>
-          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-xs font-black text-gray-900 dark:text-gray-100 truncate">
             {formatBatchRange(batch.start, batch.quantityValue)}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <div className="bg-white p-3 dark:bg-zinc-900">
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
             Quantity
           </p>
-          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-xs font-black text-gray-900 dark:text-gray-100">
             {batch.quantityValue || 0} QRs
           </p>
         </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-500/90 dark:text-amber-500/80">
+        <div className="bg-white p-3 dark:bg-zinc-900">
+          <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/80 mb-1">
             Redeemed
           </p>
-          <p className="mt-0.5 text-sm font-bold text-amber-500 dark:text-amber-400">
+          <p className="text-xs font-black text-amber-500">
             {batch.redeemedQrs || 0}
           </p>
         </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <div className="bg-white p-3 dark:bg-zinc-900">
+          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/80 mb-1">
             Cashback
           </p>
-          <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-gray-100">
-            INR {formatAmount(batch.amount)}
+          <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+            ₹{formatAmount(batch.amount)}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 grid gap-4 rounded-xl bg-gray-50/50 p-4 dark:bg-zinc-950/30 sm:grid-cols-2">
-        <label className="space-y-1.5">
-          <span className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+        <div className="flex-1 space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
             QR Quantity
-          </span>
-          <input
-            type="number"
-            min="1"
-            max={Math.max(remainingForRow, 0)}
-            inputMode="numeric"
-            value={batch.quantity}
-            onChange={(event) =>
-              onChange(batch.id, "quantity", event.target.value.replace(/[^\d]/g, ""))
-            }
-            placeholder={`Max ${remainingForRow}`}
-            disabled={isSaving}
-            className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-100 dark:disabled:bg-zinc-800"
-          />
-        </label>
-
-        <label className="space-y-1.5">
-          <span className="block text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            Cashback (INR)
-          </span>
+          </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">₹</span>
+            <input
+              type="number"
+              min="1"
+              max={Math.max(remainingForRow, 0)}
+              inputMode="numeric"
+              value={batch.quantity}
+              onChange={(event) =>
+                onChange(
+                  batch.id,
+                  "quantity",
+                  event.target.value.replace(/[^\d]/g, ""),
+                )
+              }
+              placeholder={`Max ${remainingForRow}`}
+              disabled={isSaving}
+              className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-gray-100 dark:focus:bg-zinc-800"
+            />
+          </div>
+        </div>        <div className="flex-1 space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+            Cashback (INR)
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">
+              ₹
+            </span>
             <input
               type="number"
               min="0"
               step="0.01"
               inputMode="decimal"
               value={batch.amount}
-              onChange={(event) => onChange(batch.id, "amount", event.target.value)}
+              onChange={(event) =>
+                onChange(batch.id, "amount", event.target.value)
+              }
               placeholder="0.00"
               disabled={isSaving}
-              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-8 pr-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-100 dark:disabled:bg-zinc-800"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-8 pr-4 text-sm font-bold text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-gray-100 dark:focus:bg-zinc-800"
             />
           </div>
-        </label>
+        </div>
       </div>
     </div>
   );
 };
 
 const PostpaidSheetManager = React.memo(
-  ({ campaign, totalQrs: totalQrsProp, token, loadCampaigns, onDownloadQr }) => {
+  ({
+    campaign,
+    totalQrs: totalQrsProp,
+    token,
+    loadCampaigns,
+    onDownloadQr,
+  }) => {
     const { success, error: toastError } = useToast();
     const [batchRows, setBatchRows] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
@@ -238,7 +262,8 @@ const PostpaidSheetManager = React.memo(
             id: allocation.id || Math.random().toString(36).slice(2, 10),
             quantity: String(allocation.quantity),
             amount: formatAmount(allocation.cashbackAmount),
-            redeemedQrs: allocation.redeemedQrs || allocation.redeemedCount || 0,
+            redeemedQrs:
+              allocation.redeemedQrs || allocation.redeemedCount || 0,
             isPersisted: true,
           })),
       [normalizedAllocations],
@@ -276,9 +301,9 @@ const PostpaidSheetManager = React.memo(
         const persistedSnapshot = serverMap.get(row.id);
         const isDirty = Boolean(
           row.isPersisted &&
-            persistedSnapshot &&
-            (persistedSnapshot.quantity !== quantityValue ||
-              persistedSnapshot.amount !== amountValue),
+          persistedSnapshot &&
+          (persistedSnapshot.quantity !== quantityValue ||
+            persistedSnapshot.amount !== amountValue),
         );
 
         return {
@@ -314,7 +339,10 @@ const PostpaidSheetManager = React.memo(
       return serializeBatchRows(normalizedRows);
     }, [persistedBatches]);
 
-    const currentSignature = useMemo(() => serializeBatchRows(rowViews), [rowViews]);
+    const currentSignature = useMemo(
+      () => serializeBatchRows(rowViews),
+      [rowViews],
+    );
     const hasUnsavedChanges = currentSignature !== savedSignature;
 
     const totalAssignedPreview = useMemo(
@@ -379,7 +407,10 @@ const PostpaidSheetManager = React.memo(
       );
 
       if (!positiveRows.length && !allowEmpty) {
-        toastError("No batch added", "Add at least one valid batch before saving.");
+        toastError(
+          "No batch added",
+          "Add at least one valid batch before saving.",
+        );
         return;
       }
 
@@ -421,7 +452,10 @@ const PostpaidSheetManager = React.memo(
         await loadCampaigns(token);
         return true;
       } catch (error) {
-        toastError("Save failed", error.message || "Failed to update postpaid batches.");
+        toastError(
+          "Save failed",
+          error.message || "Failed to update postpaid batches.",
+        );
         return false;
       } finally {
         setIsSaving(false);
@@ -454,39 +488,53 @@ const PostpaidSheetManager = React.memo(
 
     return (
       <div className="mt-4 rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/30">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-emerald-100/50 p-1.5 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-              <QrCode className="h-3.5 w-3.5" />
+        <div className="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/30 px-6 py-5 dark:border-zinc-800/50 dark:bg-zinc-800/20 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 shadow-inner dark:bg-emerald-500/20 dark:text-emerald-400">
+              <QrCode size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+              <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-gray-100">
                 Assign Cashback by Batch
-              </p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                Edit quantity and cashback directly. Saving rewrites the batch values.
+              </h3>
+              <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                Configure your QR campaigns in batches. <br className="hidden sm:block" />
+                Edit quantity and cashback values below.
               </p>
             </div>
           </div>
-          <div className="rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-400">
-            {remainingQty} QR{remainingQty === 1 ? "" : "s"} remaining
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-center shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                {remainingQty}
+              </p>
+              <p className="text-[9px] font-bold text-emerald-600/70 dark:text-emerald-400/60 uppercase">
+                QRs Left
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
-              Recharge Batches
-            </p>
-            <div className="text-right text-[10px] text-gray-500 dark:text-gray-400">
-              <div>
-                {totalAssignedPreview} / {totalQrs} QRs assigned
+        <div className="space-y-6 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Recharge Batches
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-right">
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-black text-gray-700 dark:text-gray-300">
+                  {totalAssignedPreview} / {totalQrs} Assigned
+                </p>
+                {hasUnsavedChanges && (
+                  <p className="flex items-center justify-end gap-1 text-[10px] font-black uppercase tracking-tight text-amber-600 dark:text-amber-400">
+                    <RefreshCw size={10} className="animate-spin-slow" />
+                    Unsaved Changes
+                  </p>
+                )}
               </div>
-              {hasUnsavedChanges && (
-                <div className="font-bold text-amber-600 dark:text-amber-300">
-                  Unsaved changes
-                </div>
-              )}
             </div>
           </div>
 
@@ -539,12 +587,12 @@ const PostpaidSheetManager = React.memo(
             </div>
           )}
 
-          <div className="flex flex-col items-end gap-4 border-t border-gray-100 pt-4 dark:border-zinc-800">
-            <div className="text-right">
-              <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <div className="flex flex-col items-center gap-6 border-t border-gray-100 pt-6 dark:border-zinc-800 sm:flex-row sm:justify-between sm:items-center">
+            <div className="text-center sm:text-left">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
                 Total Cashback
               </p>
-              <p className="text-base font-black text-emerald-600 dark:text-emerald-400">
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
                 INR {formatAmount(totalIncrementPreview)}
               </p>
             </div>
