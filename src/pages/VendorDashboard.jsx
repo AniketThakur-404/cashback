@@ -5571,7 +5571,7 @@ const VendorDashboard = () => {
         <>
           {!isAuthenticated && (
             <div className="flex min-h-[80vh] items-center justify-center p-4">
-              <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
+              <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-strong"></div>
 
                 <div className="p-8 space-y-8">
@@ -5600,33 +5600,49 @@ const VendorDashboard = () => {
                             </div>
                             <input
                               type="text"
-                              value={email}
-                              onChange={(event) => setEmail(event.target.value)}
-                              placeholder="Enter your credentials"
-                              className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
+                              name="email"
+                              value={loginData.email}
+                              onChange={handleLoginChange}
+                              placeholder="Enter your email/username"
+                              className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleLogin();
+                              }}
                             />
                           </div>
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-1">
-                            Password
-                          </label>
+                          <div className="flex justify-between items-center px-1">
+                            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                              Password
+                            </label>
+                            <button
+                              onClick={() => setShowOtpReset(true)}
+                              className="text-[11px] font-bold text-primary hover:text-primary-strong transition-colors"
+                            >
+                              Forgot Password?
+                            </button>
+                          </div>
                           <div className="relative group">
                             <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
-                              <ShieldCheck size={18} />
+                              <Lock size={18} />
                             </div>
                             <input
                               type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(event) => setPassword(event.target.value)}
-                              placeholder="Enter password"
-                              className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 pl-10 pr-10 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium"
+                              name="password"
+                              value={loginData.password}
+                              onChange={handleLoginChange}
+                              placeholder="••••••••"
+                              className="w-full pl-10 pr-12 py-3 rounded-2xl border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleLogin();
+                              }}
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                             >
                               {showPassword ? (
                                 <EyeOff size={18} />
@@ -5637,46 +5653,26 @@ const VendorDashboard = () => {
                           </div>
                         </div>
 
-                        <div className="flex justify-end mt-1">
-                          <button
-                            type="button"
-                            onClick={() => setShowOtpReset(true)}
-                            className="text-xs font-semibold text-primary hover:text-primary-strong transition-colors"
-                          >
-                            Forgot Password?
-                          </button>
-                        </div>
-
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={handleSignIn}
-                            disabled={isSigningIn}
-                            className="w-full rounded-xl bg-gradient-to-r from-primary to-primary-strong hover:from-primary hover:to-primary-strong text-white text-sm font-bold py-3 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {isSigningIn ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Signing in...</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>Sign In</span>
-                                <ArrowRight size={18} className="opacity-80" />
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        {authStatus && (
-                          <div className="p-3 bg-primary/5 dark:bg-primary-strong/20 border border-primary/10 dark:border-primary-strong/30 rounded-lg flex items-center gap-2 text-xs font-medium text-primary dark:text-primary">
-                            <Check size={14} />
-                            {authStatus}
-                          </div>
-                        )}
+                        <button
+                          onClick={handleLogin}
+                          disabled={isLoading}
+                          className="w-full bg-primary hover:bg-primary-strong text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 group"
+                        >
+                          {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          ) : (
+                            <>
+                              <span>Sign In to Dashboard</span>
+                              <ChevronRight
+                                size={18}
+                                className="group-hover:translate-x-0.5 transition-transform"
+                              />
+                            </>
+                          )}
+                        </button>
 
                         {authError && (
-                          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg flex items-center gap-2 text-xs font-medium text-red-600 dark:text-red-400">
+                          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold animate-shake">
                             <BadgeCheck size={14} className="rotate-180" />
                             {authError}
                           </div>
@@ -5684,7 +5680,7 @@ const VendorDashboard = () => {
                       </>
                     ) : (
                       <div className="space-y-4 animate-in fade-in slide-in-from-right-2 bg-gray-50/50 dark:bg-zinc-900/30 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
-                        <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-200 dark:border-zinc-800">
+                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-gray-200 dark:border-zinc-800">
                           <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Reset Password</h3>
                           <button
                             type="button"
@@ -5694,9 +5690,9 @@ const VendorDashboard = () => {
                             <X size={16} />
                           </button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
                               Registered Email
                             </label>
                             <input
@@ -5708,45 +5704,89 @@ const VendorDashboard = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
                               OTP
                             </label>
                             <input
                               type="text"
                               value={otpReset.otp}
                               onChange={handleOtpFieldChange("otp")}
-                              placeholder="Enter 6-digit OTP"
+                              placeholder="6-digit OTP"
                               className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all tracking-widest"
                             />
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
                               New password
                             </label>
-                            <input
-                              type="password"
-                              value={otpReset.newPassword}
-                              onChange={handleOtpFieldChange("newPassword")}
-                              placeholder="New pass"
-                              className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
+                            <div className="relative">
+                              <input
+                                type={otpReset.showNewPassword ? "text" : "password"}
+                                value={otpReset.newPassword}
+                                onChange={handleOtpFieldChange("newPassword")}
+                                placeholder="New password"
+                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setOtpReset(p => ({...p, showNewPassword: !p.showNewPassword}))}
+                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                              >
+                                {otpReset.showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </button>
+                            </div>
+                            {otpReset.newPassword && (() => {
+                              const pass = otpReset.newPassword;
+                              let score = 0;
+                              if (pass.length >= 6) score += 1;
+                              if (pass.length >= 8) score += 1;
+                              if (/[A-Z]/.test(pass)) score += 1;
+                              if (/[0-9]/.test(pass)) score += 1;
+                              if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+                              const isStrong = score >= 5;
+                              const isMedium = score === 3 || score === 4;
+                              const label = isStrong ? "Strong" : isMedium ? "Medium" : "Weak";
+                              const colorClass = isStrong ? "bg-emerald-500" : isMedium ? "bg-amber-500" : "bg-red-500";
+                              const textClass = isStrong ? "text-emerald-600 dark:text-emerald-400" : isMedium ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+                              return (
+                                <div className="mt-1 space-y-1 animate-in fade-in">
+                                  <div className="flex gap-1 h-1 w-full">
+                                    <div className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                    <div className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                    <div className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                  </div>
+                                  <div className="flex justify-between items-center text-[10px]">
+                                    <span className={`font-bold tracking-wide ${textClass}`}>{label}</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                           <div className="space-y-1">
-                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 ml-1">
                               Confirm password
                             </label>
-                            <input
-                              type="password"
-                              value={otpReset.confirmPassword}
-                              onChange={handleOtpFieldChange("confirmPassword")}
-                              placeholder="Confirm pass"
-                              className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
+                            <div className="relative">
+                              <input
+                                type={otpReset.showConfirmPassword ? "text" : "password"}
+                                value={otpReset.confirmPassword}
+                                onChange={handleOtpFieldChange("confirmPassword")}
+                                placeholder="Confirm password"
+                                className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-10 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setOtpReset(p => ({...p, showConfirmPassword: !p.showConfirmPassword}))}
+                                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                              >
+                                {otpReset.showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 pt-3">
+                        <div className="grid grid-cols-2 gap-3 pt-1">
                           <button
                             type="button"
                             onClick={handleSendOtp}
@@ -5766,7 +5806,7 @@ const VendorDashboard = () => {
                         </div>
                         {(otpStatus || otpError) && (
                           <div
-                            className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"} mt-2`}
+                            className={`text-xs text-center font-medium ${otpError ? "text-red-500" : "text-primary"} mt-1`}
                           >
                             {otpStatus || otpError}
                           </div>
@@ -7347,29 +7387,74 @@ const VendorDashboard = () => {
                                       <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                                         New password
                                       </label>
-                                      <input
-                                        type="password"
-                                        value={otpReset.newPassword}
-                                        onChange={handleOtpFieldChange(
-                                          "newPassword",
-                                        )}
-                                        placeholder="New pass"
-                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                      />
+                                      <div className="relative">
+                                        <input
+                                          type={otpReset.showNewPassword ? "text" : "password"}
+                                          value={otpReset.newPassword}
+                                          onChange={handleOtpFieldChange(
+                                            "newPassword",
+                                          )}
+                                          placeholder="New pass"
+                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-9 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => setOtpReset(p => ({...p, showNewPassword: !p.showNewPassword}))}
+                                          className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        >
+                                          {otpReset.showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                      </div>
+                                      {otpReset.newPassword && (() => {
+                                        const pass = otpReset.newPassword;
+                                        let score = 0;
+                                        if (pass.length >= 6) score += 1;
+                                        if (pass.length >= 8) score += 1;
+                                        if (/[A-Z]/.test(pass)) score += 1;
+                                        if (/[0-9]/.test(pass)) score += 1;
+                                        if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+                                        const isStrong = score >= 5;
+                                        const isMedium = score === 3 || score === 4;
+                                        const label = isStrong ? "Strong" : isMedium ? "Medium" : "Weak";
+                                        const colorClass = isStrong ? "bg-emerald-500" : isMedium ? "bg-amber-500" : "bg-red-500";
+                                        const textClass = isStrong ? "text-emerald-600 dark:text-emerald-400" : isMedium ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+                                        return (
+                                          <div className="mt-1.5 space-y-1.5 animate-in fade-in">
+                                            <div className="flex gap-1 h-1 w-full">
+                                              <div className={`flex-1 rounded-full ${score >= 1 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                              <div className={`flex-1 rounded-full ${score >= 3 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                              <div className={`flex-1 rounded-full ${score >= 5 ? colorClass : "bg-gray-200 dark:bg-zinc-700"}`}></div>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[10px] gap-1">
+                                              <span className={`font-bold tracking-wide ${textClass}`}>{label}</span>
+                                              <span className="text-gray-500 dark:text-gray-400 font-medium">Use 8+ chars, 1 uppercase, 1 symbol</span>
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                     <div className="space-y-1">
                                       <label className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                                         Confirm
                                       </label>
-                                      <input
-                                        type="password"
-                                        value={otpReset.confirmPassword}
-                                        onChange={handleOtpFieldChange(
-                                          "confirmPassword",
-                                        )}
-                                        placeholder="Confirm pass"
-                                        className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
-                                      />
+                                      <div className="relative">
+                                        <input
+                                          type={otpReset.showConfirmPassword ? "text" : "password"}
+                                          value={otpReset.confirmPassword}
+                                          onChange={handleOtpFieldChange(
+                                            "confirmPassword",
+                                          )}
+                                          placeholder="Confirm pass"
+                                          className="w-full rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pr-9 py-2 text-sm text-gray-900 dark:text-gray-100"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => setOtpReset(p => ({...p, showConfirmPassword: !p.showConfirmPassword}))}
+                                          className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                                        >
+                                          {otpReset.showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="grid grid-cols-2 gap-3 pt-1">
