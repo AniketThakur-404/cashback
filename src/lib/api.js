@@ -113,6 +113,18 @@ export const sendEmailOtp = (email) =>
     body: { email },
   });
 
+export const sendEmailVerificationOtp = (email, name = "") =>
+  apiRequest("/api/auth/send-email-verification-otp", {
+    method: "POST",
+    body: { email, name },
+  });
+
+export const verifyEmailVerificationOtp = (email, otp) =>
+  apiRequest("/api/auth/verify-email-verification-otp", {
+    method: "POST",
+    body: { email, otp },
+  });
+
 export const resetPasswordWithOtp = (email, otp, password) =>
   apiRequest("/api/auth/reset-password-otp", {
     method: "POST",

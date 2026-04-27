@@ -74,6 +74,8 @@ import {
   getVendorProfile,
   upsertVendorBrand,
   updateUserProfile,
+  sendEmailVerificationOtp,
+  verifyEmailVerificationOtp,
   getVendorProducts,
   addVendorProduct,
   updateVendorProduct,
@@ -653,6 +655,8 @@ const VendorDashboard = () => {
   const [accountStatus, setAccountStatus] = useState("");
   const [accountError, setAccountError] = useState("");
   const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [showProfileOtp, setShowProfileOtp] = useState(false);
+  const [profileOtp, setProfileOtp] = useState("");
 
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: "",
@@ -3349,13 +3353,7 @@ const VendorDashboard = () => {
       }));
     }
 
-    // Sync back to account if empty
-    if (companyProfile.contactPhone && !accountProfile.phoneNumber) {
-      setAccountProfile((prev) => ({
-        ...prev,
-        phoneNumber: companyProfile.contactPhone,
-      }));
-    }
+
   }, [
     accountProfile.email,
     accountProfile.phoneNumber,
@@ -4132,6 +4130,24 @@ const VendorDashboard = () => {
     setAccountStatus("");
     setIsSavingAccount(true);
     try {
+      await sendEmailVerificationOtp(vendorInfo.email, vendorInfo.name);
+      setShowProfileOtp(true);
+      setAccountStatus("OTP sent to your email. Please verify to save.");
+    } catch (err) {
+      setAccountError(err.message || "Failed to send OTP.");
+    } finally {
+      setIsSavingAccount(false);
+    }
+  };
+
+  const handleVerifyAndSaveProfile = async () => {
+    if (!token) return;
+    setAccountError("");
+    setAccountStatus("");
+    setIsSavingAccount(true);
+    try {
+      await verifyEmailVerificationOtp(vendorInfo.email, profileOtp);
+      
       const payload = {
         name: accountProfile.name.trim() || null,
         email: accountProfile.email.trim() || null,
@@ -4153,10 +4169,12 @@ const VendorDashboard = () => {
           email: updatedUser.email || prev.email || "",
         }));
       }
-      setAccountStatus("Login profile updated.");
+      setAccountStatus("Login profile updated successfully.");
+      setShowProfileOtp(false);
+      setProfileOtp("");
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      setAccountError(err.message || "Unable to update login profile.");
+      setAccountError(err.message || "Invalid OTP or unable to update profile.");
     } finally {
       setIsSavingAccount(false);
     }
@@ -7441,7 +7459,8 @@ const VendorDashboard = () => {
                                   value={accountProfile.username}
                                   onChange={handleAccountChange("username")}
                                   placeholder="Unique username"
-                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-400"
+                                  disabled={true}
+                                  className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3 text-base text-gray-500 dark:text-gray-400 outline-none transition-all cursor-not-allowed opacity-80"
                                 />
                               </div>
                               <div className="space-y-2">
@@ -7470,9 +7489,49 @@ const VendorDashboard = () => {
                                     Saving...
                                   </>
                                 ) : (
-                                  "Save Login Details"
+                                  "Send OTP to Save"
                                 )}
                               </button>
+                              
+                              {showProfileOtp && (
+                                <div className="mt-4 p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                                      Enter OTP sent to email
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={profileOtp}
+                                      onChange={(e) => setProfileOtp(e.target.value)}
+                                      placeholder="6-digit OTP"
+                                      className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
+                                      maxLength={6}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={handleVerifyAndSaveProfile}
+                                      disabled={isSavingAccount || !profileOtp || profileOtp.length < 6}
+                                      className="flex-1 rounded-xl bg-primary hover:bg-primary-strong text-white text-sm font-bold py-3 transition-all disabled:opacity-60"
+                                    >
+                                      {isSavingAccount ? "Verifying..." : "Verify & Save"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setShowProfileOtp(false);
+                                        setProfileOtp("");
+                                        setAccountError("");
+                                        setAccountStatus("");
+                                      }}
+                                      className="px-4 rounded-xl border border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                               {(accountStatus || accountError) && (
                                 <div
                                   className={`text-sm text-center mt-3 font-medium ${accountError ? "text-red-500" : "text-primary"}`}
