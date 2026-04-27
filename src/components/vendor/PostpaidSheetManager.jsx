@@ -487,24 +487,23 @@ const PostpaidSheetManager = React.memo(
     if (totalQrs <= 0) return null;
 
     return (
-      <div className="mt-4 rounded-xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-col gap-4 border-b border-gray-100 bg-gray-50/30 px-6 py-5 dark:border-zinc-800/50 dark:bg-zinc-800/20 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 shadow-inner dark:bg-emerald-500/20 dark:text-emerald-400">
-              <QrCode size={24} />
+      <div className="mt-4 border-t border-gray-100 dark:border-zinc-800 pt-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+              <QrCode size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-black uppercase tracking-tight text-gray-900 dark:text-gray-100">
-                Assign Cashback by Batch
+              <h3 className="text-xs font-black uppercase tracking-tight text-gray-900 dark:text-gray-100">
+                Cashback Batches
               </h3>
-              <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
-                Configure your QR campaigns in batches. <br className="hidden sm:block" />
-                Edit quantity and cashback values below.
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 leading-relaxed">
+                Edit quantity and cashback per batch
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-center shadow-sm">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-center">
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 {remainingQty}
               </p>
@@ -515,7 +514,7 @@ const PostpaidSheetManager = React.memo(
           </div>
         </div>
 
-        <div className="space-y-6 p-6">
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
