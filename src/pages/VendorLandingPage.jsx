@@ -823,10 +823,10 @@ const VendorLandingPage = () => {
       {/* Improved Versatile Solutions Section */}
       <section
         id="features"
-        className="py-32 bg-white relative overflow-hidden"
+        className="py-24 bg-white relative overflow-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="mb-24 max-w-4xl text-center md:text-left">
+          <div className="mb-16 max-w-4xl text-center md:text-left">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -897,15 +897,9 @@ const VendorLandingPage = () => {
                 <h4 className="text-2xl font-black text-slate-900 mb-6 tracking-tight group-hover:text-emerald-700 transition-colors">
                   {solution.title}
                 </h4>
-                <p className="text-slate-500 leading-relaxed font-medium text-lg mb-10">
+                <p className="text-slate-500 leading-relaxed font-medium text-lg">
                   {solution.desc}
                 </p>
-                <div className="mt-auto">
-                  <div className="flex items-center gap-3 text-sm font-black uppercase tracking-widest text-slate-900 group-hover:text-emerald-600 transition-colors cursor-pointer">
-                    Learn more{" "}
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
               </motion.div>
             ))}
           </div>
