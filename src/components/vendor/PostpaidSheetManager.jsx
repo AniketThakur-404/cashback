@@ -586,7 +586,7 @@ const PostpaidSheetManager = React.memo(
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-6 border-t border-gray-100 pt-6 dark:border-zinc-800 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex flex-col items-center gap-4 border-t border-gray-100 pt-4 dark:border-zinc-800 sm:flex-row sm:justify-between sm:items-center">
             <div className="text-center sm:text-left">
               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1">
                 Total Cashback
@@ -600,7 +600,7 @@ const PostpaidSheetManager = React.memo(
               type="button"
               onClick={handleApply}
               disabled={isSaving || !hasUnsavedChanges}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex w-full sm:w-auto h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 text-xs font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? (
                 <>
