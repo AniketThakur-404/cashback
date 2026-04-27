@@ -8555,14 +8555,20 @@ Quantity: ${invoiceData.quantity} QRs
                                       key={productName}
                                       className="mb-8 last:mb-0"
                                     >
-                                      <div className="flex items-center gap-3 mb-4 pl-1">
+                                      {/* Product Group Header */}
+                                      <div className="flex items-center justify-start gap-3 mb-6 pl-1">
                                         <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center">
-                                          <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                                          <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                                         </div>
-                                        <span className="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-                                          {campaigns.length}
+                                        <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                          <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
+                                          {productName}
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                          {campaigns.length} Campaigns
                                         </span>
                                       </div>
+
                                       <div className="space-y-4">
                                         {campaigns.map((campaign) => {
                                           const allocationGroups =
@@ -8588,148 +8594,113 @@ Quantity: ${invoiceData.quantity} QRs
                                               fallbackBudget,
                                             ),
                                           );
+                                          const firstCashback = allocationGroups[0]?.price ?? 0;
+
                                           return (
                                             <div
                                               key={campaign.id}
-                                              className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                              className="rounded-2xl border border-amber-200/40 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-amber-400/50 hover:shadow-md"
                                             >
-                                              <div className="bg-gradient-to-r from-amber-600/20 to-amber-600/10 px-4 py-3">
-                                                <div className="flex items-center justify-between">
-                                                  <div className="flex items-center gap-3">
-                                                    <Megaphone
-                                                      size={18}
-                                                      className="text-amber-400"
-                                                    />
-                                                    <div>
-                                                      <span className="text-base font-bold text-gray-900 dark:text-white">
-                                                        {campaign.title}
-                                                      </span>
+                                              {/* Card Header */}
+                                              <div className="flex items-start justify-between gap-3 mb-4">
+                                                <div className="space-y-1 min-w-0">
+                                                  <div className="flex items-center gap-2 flex-wrap">
+                                                    <div className="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                      {campaign.title}
                                                     </div>
+                                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20 shrink-0">
+                                                      Pending
+                                                    </span>
                                                   </div>
-                                                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20 text-[10px] uppercase font-bold tracking-wide">
-                                                    Pending
-                                                  </span>
-                                                </div>
-                                              </div>
-
-                                              <div className="bg-gray-50 dark:bg-[#0f0f0f] divide-y divide-gray-200 dark:divide-gray-800">
-                                                {allocationGroups.length ===
-                                                0 ? (
-                                                  <div className="p-4 text-xs text-gray-500">
-                                                    No allocations configured
-                                                    yet.
+                                                  {campaign.Product?.name && (
+                                                    <div className="text-[11px] font-bold text-primary/80 uppercase tracking-tight">
+                                                      {campaign.Product.name}
+                                                    </div>
+                                                  )}
+                                                  <div className="text-[10px] text-gray-500 font-medium">
+                                                    ID: {campaign.id.slice(0, 10)}...
                                                   </div>
-                                                ) : (
-                                                  allocationGroups.map(
-                                                    (group) => {
-                                                      const groupKey = `${campaign.id}-${group.price.toFixed(2)}`;
-                                                      return (
-                                                        <div
-                                                          key={groupKey}
-                                                          className="p-4"
-                                                        >
-                                                          <div className="flex items-center">
-                                                            <div className="flex items-center gap-4">
-                                                              {!(
-                                                                campaign.planType ===
-                                                                  "postpaid" &&
-                                                                group.price ===
-                                                                  0
-                                                              ) && (
-                                                                <div>
-                                                                  <div className="text-xs text-gray-500">
-                                                                    Cashback
-                                                                    Amount
-                                                                  </div>
-                                                                  <div className="text-lg font-bold text-primary">
-                                                                    {"\u20B9"}
-                                                                    {formatAmount(
-                                                                      group.price,
-                                                                    )}
-                                                                  </div>
-                                                                </div>
-                                                              )}
-                                                              <div>
-                                                                <div className="text-xs text-gray-500">
-                                                                  Quantity
-                                                                </div>
-                                                                <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                                  {
-                                                                    group.quantity
-                                                                  }{" "}
-                                                                  QRs
-                                                                </div>
-                                                              </div>
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                      );
-                                                    },
-                                                  )
-                                                )}
-                                              </div>
-
-                                              <div className="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-[#0f0f0f]">
-                                                <div className="flex flex-col gap-0.5">
-                                                  <span>
-                                                    Total: {totalQty} QR
-                                                    {totalQty !== 1 ? "s" : ""}
-                                                    {!(
-                                                      campaign.planType ===
-                                                        "postpaid" &&
-                                                      totalBudget === 0
-                                                    ) && (
-                                                      <>
-                                                        {" "}
-                                                        - Budget {"\u20B9"}
-                                                        {formatAmount(
-                                                          totalBudget,
-                                                        )}
-                                                      </>
-                                                    )}
-                                                  </span>
-                                                  {campaign.planType ===
-                                                    "postpaid" &&
-                                                    totalBudget === 0 && (
-                                                      <span className="text-[10px] text-amber-600 font-medium italic">
-                                                        Cashback amount yet to
-                                                        be decided
-                                                      </span>
-                                                    )}
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-3 text-xs">
+                                                {/* Desktop Actions */}
+                                                <div className="hidden sm:flex items-center gap-2 shrink-0">
                                                   <button
                                                     type="button"
-                                                    onClick={() =>
-                                                      handleDeleteCampaign(
-                                                        campaign,
-                                                      )
-                                                    }
-                                                    disabled={
-                                                      deletingCampaignId ===
-                                                      campaign.id
-                                                    }
-                                                    className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 font-medium hover:bg-rose-500/20 hover:border-rose-500/50 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                    onClick={() => handleDeleteCampaign(campaign)}
+                                                    disabled={deletingCampaignId === campaign.id}
+                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
                                                   >
                                                     <Trash2 size={14} />
-                                                    {deletingCampaignId ===
-                                                    campaign.id
-                                                      ? "Deleting..."
-                                                      : "Delete"}
                                                   </button>
                                                   <button
                                                     type="button"
-                                                    onClick={() =>
-                                                      handlePayCampaign(
-                                                        campaign,
-                                                      )
-                                                    }
-                                                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+                                                    onClick={() => handlePayCampaign(campaign)}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs"
                                                   >
-                                                    Proceed to Pay
-                                                    <ArrowRight size={14} />
+                                                    Pay & Activate
+                                                    <ArrowRight size={13} />
                                                   </button>
                                                 </div>
+                                              </div>
+
+                                              {/* Stats Grid */}
+                                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Budget</div>
+                                                  <div className="text-sm font-black text-gray-900 dark:text-white">
+                                                    {!(campaign.planType === "postpaid" && totalBudget === 0)
+                                                      ? `INR ${formatAmount(totalBudget)}`
+                                                      : <span className="text-amber-500 text-[10px]">TBD</span>}
+                                                  </div>
+                                                </div>
+                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total QRs</div>
+                                                  <div className="text-sm font-black text-gray-900 dark:text-white">{totalQty || 0}</div>
+                                                </div>
+                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Cashback</div>
+                                                  <div className="text-sm font-black text-primary">
+                                                    {firstCashback > 0 ? `₹${formatAmount(firstCashback)}` : <span className="text-amber-500 text-[10px]">TBD</span>}
+                                                  </div>
+                                                </div>
+                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Plan</div>
+                                                  <div className="text-sm font-black text-gray-900 dark:text-white capitalize">
+                                                    {campaign.planType || "prepaid"}
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Dates */}
+                                              <div className="flex flex-wrap items-center gap-3 mt-3 px-1">
+                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                  <span className="font-medium text-gray-700 dark:text-gray-300">Start:</span>
+                                                  <span>{campaign.startDate ? formatShortDate(campaign.startDate) : "—"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                  <span className="font-medium text-gray-700 dark:text-gray-300">End:</span>
+                                                  <span>{campaign.endDate ? formatShortDate(campaign.endDate) : "—"}</span>
+                                                </div>
+                                              </div>
+
+                                              {/* Mobile Actions - icon buttons row */}
+                                              <div className="flex flex-wrap items-center justify-center gap-3 pt-5 sm:hidden border-t border-gray-100 dark:border-zinc-800/50 mt-4">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleDeleteCampaign(campaign)}
+                                                  disabled={deletingCampaignId === campaign.id}
+                                                  className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
+                                                  title="Delete Campaign"
+                                                >
+                                                  <Trash2 size={16} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handlePayCampaign(campaign)}
+                                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 active:scale-[0.98] transition-all text-sm"
+                                                >
+                                                  Pay & Activate
+                                                  <ArrowRight size={14} />
+                                                </button>
                                               </div>
                                             </div>
                                           );
@@ -8742,6 +8713,7 @@ Quantity: ${invoiceData.quantity} QRs
                             )}
                           </div>
                         )}
+
 
                         {/* Pending Campaign Details Modal */}
                         {selectedPendingCampaign && (
