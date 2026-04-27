@@ -56,16 +56,16 @@ const ScrollContent = () => {
 
   return (
     <div className="relative w-full py-4 bg-transparent">
-      <div className="relative w-full flex flex-col items-center justify-center overflow-hidden">
+      <div className="relative w-full flex flex-col items-center justify-center">
         {/* Connection Line from Top */}
-        <div className="h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line mb-4" />
+        <div className="h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line" />
 
-        <div className="relative max-w-4xl mx-auto w-full flex items-center justify-center pt-4 min-h-[300px]">
+        <div className="relative max-w-4xl mx-auto w-full flex items-center justify-center pt-2 min-h-[320px] md:min-h-[400px]">
           {/* The Arc SVG */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <svg
-              viewBox="0 0 1000 500"
-              className="w-full h-auto overflow-visible"
+              viewBox="90 40 820 420"
+              className="min-w-[600px] md:min-w-0 w-full h-auto overflow-visible opacity-50 md:opacity-100"
             >
               {/* Base Dashed Arc */}
               <path
@@ -102,7 +102,7 @@ const ScrollContent = () => {
                 className="flex flex-col items-center text-center"
               >
                 <div
-                  className="text-[80px] md:text-[120px] font-black tracking-tighter leading-none mb-4 transition-colors duration-500"
+                  className="text-[100px] md:text-[120px] font-black tracking-tighter leading-none mb-2 md:mb-4 transition-colors duration-500"
                   style={{ color: states[idx].color }}
                 >
                   {states[idx].number}
@@ -721,7 +721,7 @@ const VendorLandingPage = () => {
 
       {/* Premium Multi-State Arc Metric Section */}
       <section
-        className="pt-20 pb-24 bg-white relative overflow-hidden"
+        className="pt-20 pb-12 md:pb-24 bg-white relative overflow-hidden"
         id="how-it-works"
       >
         {/* Subtle Background Elements */}
@@ -755,7 +755,7 @@ const VendorLandingPage = () => {
       {/* Improved Impact Section */}
       <section
         id="resources"
-        className="py-32 bg-white relative overflow-hidden"
+        className="pt-16 pb-8 md:py-32 bg-white relative overflow-hidden"
       >
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px]" />
@@ -823,10 +823,10 @@ const VendorLandingPage = () => {
       {/* Improved Versatile Solutions Section */}
       <section
         id="features"
-        className="py-24 bg-white relative overflow-hidden"
+        className="pt-8 pb-16 md:py-24 bg-white relative overflow-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="mb-16 max-w-4xl text-center md:text-left">
+          <div className="mb-10 md:mb-16 max-w-4xl text-center md:text-left">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -1002,16 +1002,16 @@ const VendorLandingPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="bg-linear-to-br from-emerald-500 to-emerald-700 rounded-[4rem] p-16 md:p-24 text-center relative overflow-hidden shadow-[0_60px_120px_-20px_rgba(16,185,129,0.3)]"
+            className="bg-linear-to-br from-emerald-500 to-emerald-700 rounded-[3rem] md:rounded-[4rem] p-8 py-16 md:p-24 text-center relative overflow-hidden shadow-[0_60px_120px_-20px_rgba(16,185,129,0.3)]"
           >
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent)]" />
 
             <div className="relative z-10 space-y-12">
-              <h2 className="text-5xl md:text-8xl font-black text-white tracking-tight leading-[0.95] font-admin-heading">
+              <h2 className="text-4xl sm:text-5xl md:text-8xl font-black text-white tracking-tight leading-[1.1] md:leading-[0.95] font-admin-heading">
                 Ready to Grow Your <br />
                 <span className="text-gray-800">Business?</span>
               </h2>
-              <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed">
+              <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed px-2">
                 Join 500+ businesses already using cashback rewards to increase
                 repeat customers and sales volume.
               </p>
@@ -1019,14 +1019,14 @@ const VendorLandingPage = () => {
               <div className="flex flex-col items-center gap-12">
                 <Button
                   size="lg"
-                  className="!bg-black hover:!bg-slate-900 text-white font-black px-16 py-10 text-2xl rounded-3xl gap-4 w-full sm:w-auto shadow-2xl transition-all hover:scale-105 active:scale-95 group"
+                  className="!bg-black hover:!bg-slate-900 text-white font-black px-8 py-6 md:px-16 md:py-10 text-lg md:text-2xl rounded-2xl md:rounded-3xl gap-3 md:gap-4 w-full sm:w-auto shadow-2xl transition-all hover:scale-105 active:scale-95 group"
                   onClick={() => navigate("/brand-registration")}
                 >
                   Register Your Store Now
-                  <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+                  <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
                 </Button>
 
-                <div className="flex flex-wrap justify-center gap-12 text-[10px] font-black text-white/60 uppercase tracking-[0.4em]">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-12 text-[10px] font-black text-white/60 uppercase tracking-[0.4em]">
                   <span>Start in Minutes</span>
                   <span>No Setup Cost</span>
                   <span>Free Trial Available</span>
