@@ -558,6 +558,18 @@ export const downloadVendorInvoicePdf = (token, invoiceId) =>
     `invoice-${invoiceId}.pdf`
   );
 
+export const fetchVendorInvoicePdfBlob = async (token, invoiceId) => {
+  const authToken = resolveAuthToken(token);
+  const url = buildApiUrl(`/api/vendor/invoices/${encodeURIComponent(invoiceId)}/pdf`);
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch invoice PDF");
+  }
+  return await response.blob();
+};
+
 export const shareVendorInvoice = (token, invoiceId) =>
   apiRequest(`/api/vendor/invoices/${encodeURIComponent(invoiceId)}/share`, {
     method: "POST",

@@ -105,6 +105,7 @@ import {
   exportVendorCustomers,
   getVendorInvoices,
   downloadVendorInvoicePdf,
+  fetchVendorInvoicePdfBlob,
   shareVendorInvoice,
 } from "../lib/api";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
@@ -10674,31 +10675,28 @@ Quantity: ${invoiceData.quantity} QRs
                                             type="button"
                                             onClick={async () => {
                                               try {
-                                                const response =
-                                                  await shareVendorInvoice(
-                                                    token,
-                                                    invoice.id,
-                                                  );
-                                                const shareUrl =
-                                                  response?.shareUrl ||
-                                                  response?.url ||
-                                                  "";
-                                                if (
-                                                  shareUrl &&
-                                                  navigator?.clipboard?.writeText
-                                                ) {
-                                                  await navigator.clipboard.writeText(
-                                                    shareUrl,
-                                                  );
-                                                  setInvoiceShareStatus(
-                                                    "Share link copied to clipboard.",
-                                                  );
-                                                } else if (shareUrl) {
-                                                  setInvoiceShareStatus(shareUrl);
+                                                setInvoiceShareStatus("Preparing file...");
+                                                const blob = await fetchVendorInvoicePdfBlob(token, invoice.id);
+                                                if (!blob) throw new Error("Could not fetch PDF");
+                                                const file = new File([blob], `Invoice_${invoice.number || invoice.id}.pdf`, { type: 'application/pdf' });
+                                                
+                                                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                                  await navigator.share({
+                                                    files: [file],
+                                                    title: `Invoice ${invoice.number || invoice.id}`,
+                                                  });
+                                                  setInvoiceShareStatus("");
                                                 } else {
-                                                  setInvoiceShareStatus(
-                                                    "Share link generated.",
-                                                  );
+                                                  // Fallback if sharing files is not supported
+                                                  const response = await shareVendorInvoice(token, invoice.id);
+                                                  const shareUrl = response?.shareUrl || response?.url || "";
+                                                  if (shareUrl) {
+                                                    const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(shareUrl)}&lang=en`;
+                                                    window.open(whatsappUrl, "_blank");
+                                                    setInvoiceShareStatus("Opening WhatsApp...");
+                                                  } else {
+                                                    setInvoiceShareStatus("Share link generated.");
+                                                  }
                                                 }
                                               } catch (error) {
                                                 setInvoiceShareStatus(
@@ -10795,32 +10793,28 @@ Quantity: ${invoiceData.quantity} QRs
                                         type="button"
                                         onClick={async () => {
                                           try {
-                                            const response =
-                                              await shareVendorInvoice(
-                                                token,
-                                                invoice.id,
-                                              );
-                                            const shareUrl =
-                                              response?.shareUrl ||
-                                              response?.url ||
-                                              "";
-                                            if (
-                                              shareUrl &&
-                                              navigator?.clipboard?.writeText
-                                            ) {
-                                              await navigator.clipboard.writeText(
-                                                shareUrl,
-                                              );
-                                              setInvoiceShareStatus(
-                                                "Share link copied to clipboard.",
-                                              );
-                                            } else if (shareUrl) {
-                                              setInvoiceShareStatus(shareUrl);
+                                            setInvoiceShareStatus("Preparing file...");
+                                            const blob = await fetchVendorInvoicePdfBlob(token, invoice.id);
+                                            if (!blob) throw new Error("Could not fetch PDF");
+                                            const file = new File([blob], `Invoice_${invoice.number || invoice.id}.pdf`, { type: 'application/pdf' });
+                                            
+                                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                              await navigator.share({
+                                                files: [file],
+                                                title: `Invoice ${invoice.number || invoice.id}`,
+                                              });
+                                              setInvoiceShareStatus("");
+                                            } else {
+                                              const response = await shareVendorInvoice(token, invoice.id);
+                                              const shareUrl = response?.shareUrl || response?.url || "";
+                                              if (shareUrl) {
+                                                const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(shareUrl)}&lang=en`;
+                                                window.open(whatsappUrl, "_blank");
+                                                setInvoiceShareStatus("Opening WhatsApp...");
+                                              }
                                             }
                                           } catch (error) {
-                                            setInvoiceShareStatus(
-                                              "Error generating link",
-                                            );
+                                            setInvoiceShareStatus("Error generating link");
                                           }
                                         }}
                                         className="flex-1 bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-gray-100 dark:border-zinc-800 flex items-center justify-center gap-2"
