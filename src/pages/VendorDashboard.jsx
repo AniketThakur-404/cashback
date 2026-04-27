@@ -6476,19 +6476,19 @@ const VendorDashboard = () => {
                           {/* Premium Hamburger Menu Button */}
                           <button
                             onClick={() => setIsSidebarOpen(true)}
-                            className="lg:hidden flex items-center justify-center h-12 w-12 rounded-2xl bg-white/80 backdrop-blur-md dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-400 shadow-sm hover:shadow-md active:scale-95 transition-all"
+                            className="lg:hidden shrink-0 flex items-center justify-center h-12 w-12 rounded-2xl bg-white/80 backdrop-blur-md dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-400 shadow-sm hover:shadow-md active:scale-95 transition-all"
                           >
                             <Menu size={24} />
                           </button>
 
-                          <div className="flex flex-col">
+                          <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-1.5 mb-0.5">
                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
                                 Welcome Back
                               </span>
                               <span className="h-px w-4 bg-emerald-500/30" />
                             </div>
-                            <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+                            <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight truncate">
                               Good morning,{" "}
                               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-400 dark:to-emerald-300">
                                 {vendorInfo?.name || "Partner"}
@@ -6501,7 +6501,7 @@ const VendorDashboard = () => {
                         </div>
 
                         {/* Top Actions */}
-                        <div className="flex items-center gap-3 pr-1">
+                        <div className="flex items-center gap-3 pr-1 shrink-0">
                           <div className="relative">
                             <button
                               ref={notificationsTriggerRef}
@@ -10374,7 +10374,7 @@ Quantity: ${invoiceData.quantity} QRs
                         ) : (
                           <div className="grid gap-0 lg:grid-cols-[2fr_1fr] border-t border-gray-100 dark:border-gray-800">
                             <div className="overflow-hidden">
-                              <div className="h-[520px] relative z-0">
+                              <div className="h-[280px] sm:h-[350px] lg:h-[520px] relative z-0">
                                 <MapContainer
                                   center={locationMapCenter}
                                   style={{ zIndex: 0 }}
