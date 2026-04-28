@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { getUserDashboard } from "../lib/api";
 import {
   AUTH_TOKEN_KEY,
@@ -82,11 +82,7 @@ const Wallet = () => {
   };
 
   if (!token) {
-    return (
-      <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 p-4 flex items-center justify-center transition-colors duration-300">
-        <WalletAuth onLoginSuccess={handleLoginSuccess} />
-      </div>
-    );
+    return <Navigate to="/signin" replace />;
   }
 
   const balance = dashboard?.wallet?.balance || 0;

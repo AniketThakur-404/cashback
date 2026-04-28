@@ -1,9 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { sendOtp, verifyOtp } from "../../lib/api";
 import { storeAuthToken } from "../../lib/auth";
 
-const WalletAuth = ({ onLoginSuccess }) => {
+const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
+  const navigate = useNavigate();
+  const [isLoginMode, setIsLoginMode] = useState(initialMode === "login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -26,13 +29,15 @@ const WalletAuth = ({ onLoginSuccess }) => {
   }, [resendCooldown]);
 
   const handleSendOtp = async () => {
-    if (!name.trim()) {
-      setError("Enter your name to continue.");
-      return;
-    }
-    if (!email.trim()) {
-      setError("Enter your email address.");
-      return;
+    if (!isLoginMode) {
+      if (!name.trim()) {
+        setError("Enter your name to continue.");
+        return;
+      }
+      if (!email.trim()) {
+        setError("Enter your email address.");
+        return;
+      }
     }
     if (!phoneNumber.trim()) {
       setError("Enter your phone number to receive an OTP.");
@@ -44,13 +49,12 @@ const WalletAuth = ({ onLoginSuccess }) => {
     try {
       const data = await sendOtp(
         phoneNumber.trim(),
-        name.trim(),
-        email.trim().toLowerCase(),
+        isLoginMode ? undefined : name.trim(),
+        isLoginMode ? undefined : email.trim().toLowerCase(),
       );
       setOtpSent(true);
-      setStatus("A 6-digit verification code has been sent to your email.");
+      setStatus("A verification code has been sent to your email.");
       setResendCooldown(30); // 30 seconds cooldown
-      // User must now enter the OTP manually from their email
     } catch (err) {
       setError(err.message || "Failed to send OTP.");
     } finally {
@@ -86,35 +90,39 @@ const WalletAuth = ({ onLoginSuccess }) => {
         <div className="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary">
           <ShieldCheck size={24} />
         </div>
-        Sign in to view Wallet
+        {isLoginMode ? "Sign In to view Wallet" : "Sign Up for Wallet"}
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-            Full Name
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Enter your name"
-            className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-          />
-        </div>
+        {!isLoginMode && (
+          <>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Enter your name"
+                className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-            Email Address
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Enter your email"
-            className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-          />
-        </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Enter your email"
+                className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
+              />
+            </div>
+          </>
+        )}
 
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
@@ -136,7 +144,11 @@ const WalletAuth = ({ onLoginSuccess }) => {
             disabled={isSendingOtp}
             className="w-full rounded-2xl bg-primary hover:bg-primary-strong text-white font-bold py-3.5 shadow-lg shadow-primary/25 disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            {isSendingOtp ? "Sending Code..." : "Send Verification Code"}
+            {isSendingOtp 
+              ? "Sending Code..." 
+              : isLoginMode 
+                ? "Send Verification Code" 
+                : "Sign Up & Send Code"}
           </button>
         ) : (
           <>
@@ -180,6 +192,26 @@ const WalletAuth = ({ onLoginSuccess }) => {
               </button>
             </div>
           </>
+        )}
+        {!otpSent && (
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (isLoginMode) {
+                  navigate("/signup");
+                } else {
+                  navigate("/wallet");
+                }
+                setIsLoginMode(!isLoginMode);
+                setError("");
+                setStatus("");
+              }}
+              className="text-xs font-bold text-primary hover:text-primary-strong transition-colors"
+            >
+              {isLoginMode ? "New user? Sign up here" : "Already have an account? Sign In"}
+            </button>
+          </div>
         )}
       </div>
 

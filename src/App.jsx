@@ -28,6 +28,8 @@ import VendorDashboard from "./pages/VendorDashboard";
 import VendorSignup from "./pages/VendorSignup";
 import HelpSupport from "./pages/HelpSupport";
 import VendorLandingPage from "./pages/VendorLandingPage";
+import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
 import VendorPrivacyPolicy from "./pages/VendorPrivacyPolicy";
 import VendorTerms from "./pages/VendorTerms";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -129,6 +131,8 @@ function App() {
 
               {/* Profile with sub-routes */}
               <Route path="/profile" element={<Profile />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signin" element={<SignIn />} />
               <Route path="/profile/upi" element={<ManageUPI />} />
               <Route
                 path="/profile/privacy-policy"

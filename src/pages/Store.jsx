@@ -127,6 +127,7 @@ const ProductCard = ({
   isRedeeming,
   onRedeem,
 }) => {
+  const navigate = useNavigate();
   const gradient =
     CATEGORY_STYLES[item.category] || "from-slate-700 to-slate-500";
 
@@ -150,7 +151,7 @@ const ProductCard = ({
   } else if (!isAuthenticated) {
     actionLabel = "Login";
     buttonStyle =
-      "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-slate-400";
+      "bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-slate-300";
   } else if (isOutOfStock) {
     actionLabel = "Out of Stock";
     buttonStyle =
@@ -163,10 +164,8 @@ const ProductCard = ({
 
   const disableRedeem =
     isRedeeming ||
-    !isAuthenticated ||
     amount <= 0 ||
-    isOutOfStock ||
-    !hasEnoughBalance;
+    (isAuthenticated && (isOutOfStock || !hasEnoughBalance));
 
   return (
     <article className="group flex flex-col h-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
@@ -235,11 +234,17 @@ const ProductCard = ({
         <button
           type="button"
           disabled={disableRedeem}
-          onClick={() => onRedeem(item)}
+          onClick={() => {
+            if (!isAuthenticated) {
+              navigate("/signin");
+            } else {
+              onRedeem(item);
+            }
+          }}
           className={`w-full mt-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all active:scale-[0.96] shadow-md ${buttonStyle}`}
         >
           {actionLabel}
-          {!disableRedeem && <ArrowRight size={14} strokeWidth={3} />}
+          {(!disableRedeem && isAuthenticated) && <ArrowRight size={14} strokeWidth={3} />}
         </button>
       </div>
     </article>

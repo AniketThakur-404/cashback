@@ -50,7 +50,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (!token) {
-      navigate("/wallet"); // Redirect if not authenticated
+      navigate("/signin"); // Redirect if not authenticated
       return;
     }
     loadProfile();
