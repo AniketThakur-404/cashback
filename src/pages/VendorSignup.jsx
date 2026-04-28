@@ -370,6 +370,13 @@ const VendorSignup = () => {
             >
               Login here
             </Link>
+            <span className="mx-2 text-gray-700">|</span>
+            <Link
+              to="/vendor?reset=true"
+              className="text-violet-400 hover:text-violet-300"
+            >
+              Forgot Password?
+            </Link>
           </p>
         </form>
       </div>

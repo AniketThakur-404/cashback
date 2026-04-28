@@ -241,7 +241,7 @@ const Button = ({
 
 const VendorLandingPage = () => {
   const { scrollY } = useScroll();
-  const heroImageY = useTransform(scrollY, [0, 800], [0, 150]);
+  const heroImageY = useTransform(scrollY, [0, 800], [-50, 100]);
 
   const [hoveredLogo, setHoveredLogo] = useState(null);
   const [isRupee, setIsRupee] = useState(false);
@@ -472,9 +472,8 @@ const VendorLandingPage = () => {
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight font-admin-heading">
               Powering Loyalty Across Industries
             </h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">
-              From local favorites to national brands, we help businesses grow
-              with data-driven rewards.
+            <p className="text-lg text-slate-500 max-w-3xl mx-auto font-medium">
+              From local favorites to national brands, we help businesses grow with data-driven rewards.
             </p>
           </motion.div>
         </div>
@@ -806,7 +805,7 @@ const VendorLandingPage = () => {
               <h2 className="text-sm font-black text-emerald-600 uppercase tracking-[0.4em]">
                 Real Business Impact
               </h2>
-              <p className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
+              <p className="text-4xl font-black text-slate-900 tracking-tight leading-tight font-admin-heading">
                 Proven results that drive{" "}
                 <span className="text-emerald-500">sustainable growth.</span>
               </p>
@@ -858,7 +857,7 @@ const VendorLandingPage = () => {
 
                   {/* Text */}
                   <div className="space-y-2 relative z-10">
-                    <span className="block text-[15px] font-black text-slate-900 uppercase tracking-widest leading-snug">
+                    <span className="block text-[15px] font-black text-slate-900 uppercase tracking-widest leading-snug font-admin-heading">
                       {stat.label}
                     </span>
                     <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">

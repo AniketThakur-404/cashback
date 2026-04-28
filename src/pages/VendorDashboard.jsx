@@ -519,6 +519,15 @@ const VendorDashboard = () => {
     ? normalizedSection
     : "overview";
 
+  const [showOtpReset, setShowOtpReset] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("reset") === "true") {
+      setShowOtpReset(true);
+    }
+  }, [location.search]);
+
   useEffect(() => {
     if (section === "notifications") {
       navigate("/vendor/overview", { replace: true });
@@ -667,7 +676,6 @@ const VendorDashboard = () => {
   const [passwordError, setPasswordError] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const [showOtpReset, setShowOtpReset] = useState(false);
   const [otpReset, setOtpReset] = useState({
     email: "",
     otp: "",
@@ -5679,12 +5687,6 @@ const VendorDashboard = () => {
                               <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                 Password
                               </label>
-                              <button
-                                onClick={() => setShowOtpReset(true)}
-                                className="text-[11px] font-bold text-primary hover:text-primary-strong transition-colors"
-                              >
-                                Forgot Password?
-                              </button>
                             </div>
                             <div className="relative group">
                               <div className="absolute left-3 top-3 text-gray-400 group-focus-within:text-primary transition-colors">
@@ -5732,6 +5734,16 @@ const VendorDashboard = () => {
                               </>
                             )}
                           </button>
+
+                          <div className="text-center mt-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowOtpReset(true)}
+                              className="text-[11px] font-bold text-primary hover:text-primary-strong transition-colors"
+                            >
+                              Forgot Password?
+                            </button>
+                          </div>
 
                           {authError && (
                             <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold animate-shake">
