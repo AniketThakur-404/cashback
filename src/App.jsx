@@ -52,6 +52,7 @@ import History from "./pages/History";
 import ProductReport from "./pages/ProductReport";
 import ReturnRefund from "./pages/ReturnRefund";
 import Orders from "./pages/Orders";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const AppLayout = () => (
@@ -156,6 +157,9 @@ function App() {
               <Route path="/brands" element={<Brands />} />
               <Route path="/product-report" element={<ProductReport />} />
             </Route>
+
+            {/* 404 Catch-All Route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
         <ToastContainer />

@@ -16,7 +16,13 @@ import {
   CreditCard,
   Quote,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+  useTransform,
+} from "framer-motion";
 import VendorNavbar from "../components/VendorNavbar";
 // import whyCashbackHero from "../assets/why-cashback-hero.png";
 const ScrollContent = () => {
@@ -46,35 +52,70 @@ const ScrollContent = () => {
     },
   ];
 
-  // Auto-change every 3 seconds
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setIdx((prev) => (prev + 1) % states.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [states.length]);
+  const containerRef = React.useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"],
+  });
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (latest < 0.33) {
+      if (idx !== 0) setIdx(0);
+    } else if (latest < 0.66) {
+      if (idx !== 1) setIdx(1);
+    } else {
+      if (idx !== 2) setIdx(2);
+    }
+  });
 
   return (
-    <div className="relative w-full py-4 bg-transparent">
-      <div className="relative w-full flex flex-col items-center justify-center">
+    <div
+      ref={containerRef}
+      className="relative w-full h-[250vh] bg-transparent"
+    >
+      <div className="sticky top-[10vh] w-full flex flex-col items-center justify-center">
+        {/* Section Header inside sticky container */}
+        <div className="text-center mb-8 w-full">
+          <h2 className="text-6xl md:text-5xl font-black tracking-tighter text-slate-900 uppercase leading-none">
+            HOW IT <span className="text-emerald-600">WORKS.</span>
+          </h2>
+          <p className="text-xl md:text-xl text-slate-500 font-medium mt-4">
+            Simple for you. Seamless for your customers.
+          </p>
+        </div>
+
         {/* Connection Line from Top */}
         <div className="h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line" />
 
-        <div className="relative max-w-4xl mx-auto w-full flex items-center justify-center pt-2 min-h-[320px] md:min-h-[400px]">
+        <div className="relative max-w-3xl mx-auto w-full flex items-center justify-center pt-2 min-h-[240px] md:min-h-[300px]">
           {/* The Arc SVG */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <svg
               viewBox="90 40 820 420"
-              className="min-w-[600px] md:min-w-0 w-full h-auto overflow-visible opacity-50 md:opacity-100"
+              className="min-w-[300px] md:min-w-0 w-[90%] max-w-[700px] h-auto overflow-visible opacity-50 md:opacity-100"
             >
+              <defs>
+                <filter
+                  id="arc-glow"
+                  x="-20%"
+                  y="-20%"
+                  width="140%"
+                  height="140%"
+                >
+                  <feGaussianBlur stdDeviation="12" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
               {/* Base Dashed Arc */}
               <path
                 d="M 100,450 A 400,400 0 0 1 900,450"
                 fill="none"
-                stroke="#cbd5e1"
-                strokeWidth="3"
-                strokeDasharray="12 12"
-                className="opacity-40"
+                stroke="#e2e8f0"
+                strokeWidth="4"
+                strokeDasharray="8 16"
+                strokeLinecap="round"
+                className="opacity-70"
               />
 
               {/* Animated Progress Arc */}
@@ -82,16 +123,16 @@ const ScrollContent = () => {
                 d="M 100,450 A 400,400 0 0 1 900,450"
                 fill="none"
                 stroke={states[idx].color}
-                strokeWidth="6"
+                strokeWidth="8"
                 strokeLinecap="round"
-                animate={{ pathLength: (idx + 1) / states.length }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                filter="url(#arc-glow)"
+                style={{ pathLength: scrollYProgress }}
               />
             </svg>
           </div>
 
           {/* Central Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center mt-4">
+          <div className="relative z-10 flex flex-col items-center justify-center mt-16 md:mt-24">
             <AnimatePresence mode="wait">
               <motion.div
                 key={idx}
@@ -102,8 +143,11 @@ const ScrollContent = () => {
                 className="flex flex-col items-center text-center"
               >
                 <div
-                  className="text-[100px] md:text-[120px] font-black tracking-tighter leading-none mb-2 md:mb-4 transition-colors duration-500"
-                  style={{ color: states[idx].color }}
+                  className="text-[80px] md:text-[100px] font-black tracking-tighter leading-none mb-4 transition-colors duration-500"
+                  style={{
+                    color: states[idx].color,
+                    filter: `drop-shadow(0px 10px 20px ${states[idx].color}50)`,
+                  }}
                 >
                   {states[idx].number}
                 </div>
@@ -113,27 +157,37 @@ const ScrollContent = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">
+                  <div
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 font-black text-[10px] uppercase tracking-widest border"
+                    style={{
+                      color: states[idx].color,
+                      backgroundColor: `${states[idx].color}10`,
+                      borderColor: `${states[idx].color}30`,
+                    }}
+                  >
+                    {states[idx].tag}
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-3">
                     {states[idx].label}
                   </h3>
-                  <p className="text-sm md:text-base text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed px-6">
+                  <p className="text-base md:text-lg text-slate-500 font-medium max-w-sm mx-auto leading-relaxed px-6">
                     {states[idx].sub}
                   </p>
                 </motion.div>
 
                 {/* Pagination Dots */}
-                <div className="flex justify-center gap-3 mt-12 pointer-events-auto">
+                <div className="flex justify-center gap-4 mt-16 pointer-events-auto">
                   {states.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setIdx(i)}
-                      className="group relative flex items-center justify-center w-8 h-8 focus:outline-none"
+                      className="group relative flex items-center justify-center w-10 h-10 focus:outline-none"
                     >
                       <motion.div
                         animate={{
-                          scale: i === idx ? 1.4 : 1,
+                          scale: i === idx ? 1.5 : 1,
                           backgroundColor:
-                            i === idx ? states[idx].color : "#cbd5e1",
+                            i === idx ? states[idx].color : "#e2e8f0",
                         }}
                         className="w-2.5 h-2.5 rounded-full"
                       />
@@ -186,6 +240,9 @@ const Button = ({
 };
 
 const VendorLandingPage = () => {
+  const { scrollY } = useScroll();
+  const heroImageY = useTransform(scrollY, [0, 800], [0, 150]);
+
   const [hoveredLogo, setHoveredLogo] = useState(null);
   const [isRupee, setIsRupee] = useState(false);
   const navigate = useNavigate();
@@ -281,17 +338,6 @@ const VendorLandingPage = () => {
       <section className="relative pt-20 pb-20 overflow-hidden bg-white">
         {/* Advanced Background Design */}
         <div className="absolute inset-0 z-0">
-          <div
-            className="absolute top-0 left-0 right-0 h-[800px] opacity-40"
-            style={{
-              background: `
-                radial-gradient(at 0% 0%, hsla(160, 84%, 93%, 1) 0px, transparent 50%),
-                radial-gradient(at 50% 0%, hsla(180, 80%, 95%, 1) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, hsla(200, 70%, 94%, 1) 0px, transparent 50%)
-              `,
-            }}
-          />
-
           {/* Subtle Grid Pattern */}
           <div
             className="absolute inset-0 opacity-[0.03]"
@@ -300,41 +346,17 @@ const VendorLandingPage = () => {
               backgroundSize: "40px 40px",
             }}
           />
-
-          {/* Abstract Soft Shapes */}
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-emerald-200/20 rounded-full blur-[120px]"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [0.2, 0.4, 0.2],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-            className="absolute top-0 -right-20 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-[100px]"
-          />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
             {/* Left Column: Content */}
             <div className="flex flex-col items-start text-left">
-
               {/* Main Heading */}
               <motion.h1
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-8 font-admin-heading"
               >
                 Grow Your <br />
@@ -347,9 +369,13 @@ const VendorLandingPage = () => {
 
               {/* Subheading */}
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                transition={{
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.1,
+                }}
                 className="text-lg md:text-xl text-slate-500 max-w-xl mb-12 leading-relaxed font-medium"
               >
                 Launch your own customer loyalty program with QR-based cashback
@@ -359,9 +385,13 @@ const VendorLandingPage = () => {
 
               {/* CTA Buttons */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                transition={{
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.2,
+                }}
                 className="flex flex-col sm:flex-row items-center justify-start gap-5 mb-12"
               >
                 <Button
@@ -386,9 +416,9 @@ const VendorLandingPage = () => {
 
               {/* Trusted Details */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 0.6 }}
+                initial={{ opacity: 0, filter: "blur(4px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ duration: 1, delay: 0.4 }}
                 className="flex flex-wrap items-center justify-start gap-8 text-xs text-slate-400 font-bold uppercase tracking-widest"
               >
                 <div className="flex items-center gap-2">
@@ -405,15 +435,20 @@ const VendorLandingPage = () => {
             {/* Right Column: Premium Image Asset */}
             <div className="relative hidden lg:flex justify-center lg:justify-end items-center h-full pl-8">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
+                initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{
+                  duration: 1.2,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: 0.3,
+                }}
+                style={{ y: heroImageY }}
                 className="relative z-10 w-full max-w-[90%] flex items-center justify-center"
               >
                 <img
                   src="/Gif.gif"
                   alt="Dashboard Animation"
-                  className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.08)] rounded-2xl bg-white p-2"
+                  className="w-full h-auto object-contain mix-blend-multiply"
                 />
               </motion.div>
             </div>
@@ -425,9 +460,10 @@ const VendorLandingPage = () => {
       <section className="py-12 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-4"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -451,7 +487,7 @@ const VendorLandingPage = () => {
           <div className="flex flex-col gap-8">
             {/* Marquee Row 1 */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee whitespace-nowrap flex items-center gap-6 px-6 py-4">
+              <div className="animate-marquee whitespace-nowrap flex items-center gap-18 px-6 py-4">
                 {[...logos, ...logos].map((logo, idx) => (
                   <div
                     key={idx}
@@ -466,19 +502,19 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-12 py-8 min-h-[160px]">
+              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-8 py-4 min-h-[160px]">
                 {[...brandImages, ...brandImages, ...brandImages].map(
                   (num, idx) => {
                     const isWhiteLogo = [5, 6, 10, 11].includes(num);
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-center min-w-[280px]"
+                        className="flex items-center justify-center min-w-[300px]"
                       >
                         <img
                           src={`/${num}.webp`}
                           alt={`Brand ${num}`}
-                          className={`w-64 h-32 object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                          className={`w-[320px] h-[160px] object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                           onError={(e) => {
                             const currentSrc = e.target.src;
                             if (currentSrc.includes("brand/")) {
@@ -511,10 +547,10 @@ const VendorLandingPage = () => {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left: Problem */}
             <motion.div
-              initial={{ opacity: 0, x: -30 }}
+              initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-10"
             >
               <div className="space-y-4">
@@ -534,8 +570,12 @@ const VendorLandingPage = () => {
                     key={i}
                     initial={{ opacity: 0, x: -20 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.1 + i * 0.1 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{
+                      duration: 0.8,
+                      ease: [0.16, 1, 0.3, 1],
+                      delay: 0.1 + i * 0.1,
+                    }}
                     className="flex items-start gap-4 group"
                   >
                     <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center">
@@ -551,10 +591,10 @@ const VendorLandingPage = () => {
 
             {/* Right: Solution Card */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 40 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.15 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
             >
               <div className="relative bg-emerald-600 rounded-[2.5rem] p-8 md:p-10 overflow-hidden shadow-2xl shadow-emerald-600/25">
                 {/* Subtle dot mesh overlay */}
@@ -582,10 +622,14 @@ const VendorLandingPage = () => {
                     ].map((benefit, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: 0.3 + i * 0.1 }}
+                        transition={{
+                          duration: 0.8,
+                          ease: [0.16, 1, 0.3, 1],
+                          delay: 0.4 + i * 0.1,
+                        }}
                         className="flex items-start gap-4"
                       >
                         <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-xl bg-emerald-500/50 border border-emerald-400/40 flex items-center justify-center shadow-inner">
@@ -597,7 +641,6 @@ const VendorLandingPage = () => {
                       </motion.div>
                     ))}
                   </div>
-
                 </div>
               </div>
             </motion.div>
@@ -611,15 +654,16 @@ const VendorLandingPage = () => {
           {/* Centered Header & Quote */}
           <div className="text-center max-w-4xl mx-auto mb-20">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-8"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em]">
                 Vendor Advantage
               </div>
-              <h3 className="text-5xl md:text-7xl font-black tracking-tight font-admin-heading bg-linear-to-b from-slate-900 to-slate-500 bg-clip-text text-transparent">
+              <h3 className="text-5xl md:text-5xl font-black tracking-tight font-admin-heading bg-linear-to-b from-slate-900 to-slate-500 bg-clip-text text-transparent">
                 WHY VENDORS LOVE <br className="hidden md:block" />
                 <span className="text-emerald-600 uppercase">
                   Assured Rewards.
@@ -663,10 +707,14 @@ const VendorLandingPage = () => {
             ].map((stat, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: i * 0.15,
+                }}
                 className={`relative group p-8 lg:p-10 rounded-[2.5rem] transition-all duration-700 overflow-hidden ${
                   stat.highlight
                     ? "bg-emerald-600 text-white shadow-2xl shadow-emerald-500/30"
@@ -721,7 +769,7 @@ const VendorLandingPage = () => {
 
       {/* Premium Multi-State Arc Metric Section */}
       <section
-        className="pt-20 pb-12 md:pb-24 bg-white relative overflow-hidden"
+        className="pt-20 pb-12 md:pb-24 bg-white relative"
         id="how-it-works"
       >
         {/* Subtle Background Elements */}
@@ -735,16 +783,6 @@ const VendorLandingPage = () => {
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          {/* Section Header */}
-          <div className="text-center mb-0">
-            <h2 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 uppercase leading-none">
-              HOW IT <span className="text-emerald-600">WORKS.</span>
-            </h2>
-            <p className="text-xl md:text-2xl text-slate-500 font-medium mt-4">
-              Simple for you. Seamless for your customers.
-            </p>
-          </div>
-
           {/* The Arc & Dynamic Content */}
           <div className="relative max-w-5xl mx-auto">
             <ScrollContent />
@@ -798,21 +836,38 @@ const VendorLandingPage = () => {
               ].map((stat, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-slate-50/50 border border-slate-100 rounded-[3rem] p-12 flex flex-col items-center lg:items-start group hover:bg-white hover:shadow-[0_40px_100px_rgba(0,0,0,0.06)] transition-all duration-500"
+                  initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                  whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{
+                    duration: 0.8,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: i * 0.15,
+                  }}
+                  className="relative bg-white border border-slate-100 rounded-[2.5rem] p-10 md:p-12 flex flex-col items-start text-left group hover:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.15)] hover:-translate-y-2 transition-all duration-500 overflow-hidden"
                 >
-                  <span className="text-6xl font-black text-emerald-600 tracking-tighter mb-5 font-admin-heading group-hover:scale-110 transition-transform">
-                    {stat.number}
-                  </span>
-                  <span className="text-base font-bold text-slate-900 uppercase tracking-widest mb-2">
-                    {stat.label}
-                  </span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    {stat.sub}
-                  </span>
+                  {/* Subtle top accent line */}
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-200 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                  {/* Number */}
+                  <div className="mb-6">
+                    <span className="text-6xl md:text-7xl font-black tracking-tighter font-admin-heading text-transparent bg-clip-text bg-gradient-to-br from-emerald-600 to-emerald-400 group-hover:scale-105 transition-transform duration-500 inline-block origin-left">
+                      {stat.number}
+                    </span>
+                  </div>
+
+                  {/* Text */}
+                  <div className="space-y-2 relative z-10">
+                    <span className="block text-[15px] font-black text-slate-900 uppercase tracking-widest leading-snug">
+                      {stat.label}
+                    </span>
+                    <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                      {stat.sub}
+                    </span>
+                  </div>
+
+                  {/* Background flare on hover */}
+                  <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                 </motion.div>
               ))}
             </div>
@@ -828,14 +883,15 @@ const VendorLandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="mb-10 md:mb-16 max-w-4xl text-center md:text-left">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black uppercase tracking-[0.3em] mb-8">
                 Targeted Solutions
               </div>
-              <h3 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight font-admin-heading mb-10 leading-[1.05]">
+              <h3 className="text-5xl md:text-5xl font-black text-slate-900 tracking-tight font-admin-heading mb-10 leading-[1.05]">
                 Built for businesses <br />
                 <span className="text-emerald-600">that want to scale.</span>
               </h3>
@@ -869,14 +925,18 @@ const VendorLandingPage = () => {
             ].map((solution, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group bg-slate-50/50 rounded-[3.5rem] p-12 border border-slate-100 hover:bg-white hover:shadow-[0_40px_100px_rgba(0,0,0,0.08)] transition-all duration-700 hover:-translate-y-3 flex flex-col items-start"
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                  delay: i * 0.15,
+                }}
+                className="group bg-slate-50/50 rounded-[3.5rem] p-12 border border-slate-100 hover:bg-white hover:shadow-[0_40px_100px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-2 flex flex-col items-start"
               >
                 <div
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-12 group-hover:scale-110 transition-transform duration-700 ${
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-12 group-hover:scale-110 transition-transform duration-300 ${
                     solution.accent === "emerald"
                       ? "bg-emerald-100/50"
                       : solution.accent === "blue"
@@ -894,7 +954,7 @@ const VendorLandingPage = () => {
                     }`}
                   />
                 </div>
-                <h4 className="text-2xl font-black text-slate-900 mb-6 tracking-tight group-hover:text-emerald-700 transition-colors">
+                <h4 className="text-2xl font-black text-slate-900 mb-6 tracking-tight group-hover:text-emerald-700 transition-colors duration-300">
                   {solution.title}
                 </h4>
                 <p className="text-slate-500 leading-relaxed font-medium text-lg">
@@ -922,12 +982,13 @@ const VendorLandingPage = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="space-y-16">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-6"
             >
-              <h3 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-[0.95]">
+              <h3 className="text-5xl md:text-5xl font-black text-slate-900 tracking-tighter leading-[0.95]">
                 Why Cashback <br className="hidden md:block" />
                 Works <span className="text-emerald-600 italic">Better.</span>
               </h3>
@@ -941,14 +1002,18 @@ const VendorLandingPage = () => {
               ].map((text, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{
+                    duration: 0.8,
+                    ease: [0.16, 1, 0.3, 1],
+                    delay: i * 0.15,
+                  }}
                   className="flex items-center gap-6 group w-full bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:bg-white hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center text-white shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                    <Zap className="w-6 h-6 fill-current text-emerald-400" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-100 group-hover:scale-110 transition-all duration-300">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <p className="text-xl md:text-2xl font-black text-slate-800 tracking-tight text-left">
                     {text}
@@ -972,8 +1037,10 @@ const VendorLandingPage = () => {
           </svg>
 
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-16 max-w-4xl tracking-tight italic"
           >
             “Since using Assured Rewards, our sales increased because customers
@@ -1000,33 +1067,53 @@ const VendorLandingPage = () => {
       <section id="pricing" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="bg-linear-to-br from-emerald-500 to-emerald-700 rounded-[3rem] md:rounded-[4rem] p-8 py-16 md:p-24 text-center relative overflow-hidden shadow-[0_60px_120px_-20px_rgba(16,185,129,0.3)]"
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="group rounded-[3rem] md:rounded-[4rem] p-8 py-16 md:p-24 text-center relative overflow-hidden border border-emerald-100 bg-emerald-50/30"
           >
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent)]" />
+            {/* Simple Light Gradients */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-white pointer-events-none" />
 
-            <div className="relative z-10 space-y-12">
-              <h2 className="text-4xl sm:text-5xl md:text-8xl font-black text-white tracking-tight leading-[1.1] md:leading-[0.95] font-admin-heading">
+            {/* Glowing top border (subtle) */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-gradient-to-r from-transparent via-emerald-300/50 to-transparent" />
+
+            {/* Ambient Corner Glows (Light) */}
+            <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-200/40 rounded-full blur-[80px] pointer-events-none transition-all duration-1000 group-hover:bg-emerald-300/40 group-hover:scale-110" />
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-100/50 rounded-full blur-[80px] pointer-events-none transition-all duration-1000 group-hover:bg-teal-200/50 group-hover:scale-110" />
+
+            {/* Minimal Grid Pattern overlay */}
+            <div
+              className="absolute inset-0 opacity-[0.5] pointer-events-none mix-blend-multiply"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 2px 2px, #cbd5e1 1px, transparent 0)",
+                backgroundSize: "32px 32px",
+              }}
+            />
+
+            <div className="relative z-10 space-y-10">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] font-admin-heading">
                 Ready to Grow Your <br />
-                <span className="text-gray-800">Business?</span>
+                <span className="text-emerald-600">Business?</span>
               </h2>
-              <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed px-2">
+              <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed px-2">
                 Join 500+ businesses already using cashback rewards to increase
                 repeat customers and sales volume.
               </p>
 
-              <div className="flex flex-col items-center gap-12">
+              <div className="flex flex-col items-center gap-10">
                 <Button
                   size="lg"
-                  className="!bg-black hover:!bg-slate-900 text-white font-black px-8 py-6 md:px-16 md:py-10 text-lg md:text-2xl rounded-2xl md:rounded-3xl gap-3 md:gap-4 w-full sm:w-auto shadow-2xl transition-all hover:scale-105 active:scale-95 group"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-6 md:px-12 md:py-8 text-lg md:text-xl rounded-2xl md:rounded-3xl gap-3 md:gap-4 w-full sm:w-auto shadow-2xl shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 group border border-emerald-500"
                   onClick={() => navigate("/brand-registration")}
                 >
                   Register Your Store Now
                   <ArrowRight className="w-6 h-6 md:w-8 md:h-8 group-hover:translate-x-2 transition-transform" />
                 </Button>
 
-                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-12 text-[10px] font-black text-white/60 uppercase tracking-[0.4em]">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-12 text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
                   <span>Start in Minutes</span>
                   <span>No Setup Cost</span>
                   <span>Free Trial Available</span>
