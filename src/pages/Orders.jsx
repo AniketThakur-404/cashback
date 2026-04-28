@@ -190,16 +190,16 @@ const Orders = () => {
             <ShoppingBag className="w-10 h-10 text-gray-400 dark:text-zinc-600" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            Sign in to view orders
+            Login to view orders
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2 mb-8">
             Your store redemptions are available after login.
           </p>
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/signin")}
             className="px-8 py-3 rounded-2xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
           >
-            Go to Profile
+            Go to Login
           </button>
         </div>
       </div>

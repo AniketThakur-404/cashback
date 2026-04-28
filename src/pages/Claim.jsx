@@ -151,7 +151,7 @@ const Claim = () => {
         {!authToken && previewStatus !== "expired" && (
           <div className="space-y-4">
             <div className="text-sm text-slate-600 text-center">
-              Sign in to add this reward to your wallet.
+              Login to add this reward to your wallet.
             </div>
             <WalletAuth onLoginSuccess={setAuthToken} />
           </div>

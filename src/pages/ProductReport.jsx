@@ -195,16 +195,16 @@ const ProductReport = () => {
           <div className="rounded-3xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-sm text-center">
             <FileText className="mx-auto w-10 h-10 text-primary mb-3" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              Sign in to submit product reports
+              Login to submit product reports
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Your report history is available after login.
             </p>
             <Link
-              to="/profile"
+              to="/signin"
               className="inline-flex mt-5 px-5 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-strong transition-colors"
             >
-              Go to Profile
+              Go to Login
             </Link>
           </div>
         </div>

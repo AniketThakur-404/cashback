@@ -90,7 +90,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
         <div className="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary">
           <ShieldCheck size={24} />
         </div>
-        {isLoginMode ? "Sign In to view Wallet" : "Sign Up for Wallet"}
+        {isLoginMode ? "Login to view Wallet" : "Sign Up for Wallet"}
       </div>
 
       <div className="space-y-4">
@@ -209,7 +209,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
               }}
               className="text-xs font-bold text-primary hover:text-primary-strong transition-colors"
             >
-              {isLoginMode ? "New user? Sign up here" : "Already have an account? Sign In"}
+              {isLoginMode ? "New user? Sign up here" : "Already have an account? Login"}
             </button>
           </div>
         )}

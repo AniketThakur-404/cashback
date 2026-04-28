@@ -87,16 +87,16 @@ const History = () => {
         <div className="max-w-3xl mx-auto">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-10 shadow-sm border border-gray-100 dark:border-zinc-800 text-center">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              Sign in to view history
+              Login to view history
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-5">
               Your scan and wallet history is available after login.
             </p>
             <button
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/signin")}
               className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-strong text-white font-semibold"
             >
-              Go to Profile
+              Go to Login
             </button>
           </div>
         </div>

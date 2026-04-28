@@ -345,7 +345,7 @@ const Store = () => {
 
   const handleRedeemProduct = async (item) => {
     if (!isAuthenticated || !authToken) {
-      setRedeemError("Sign in to redeem products.");
+      setRedeemError("Login to redeem products.");
       return;
     }
 
@@ -417,7 +417,7 @@ const Store = () => {
             <div
               className={`flex items-center gap-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1.5 pr-4 shadow-sm ${!isAuthenticated ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
               onClick={() => {
-                if (!isAuthenticated) navigate("/profile");
+                if (!isAuthenticated) navigate("/signin");
               }}
             >
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -432,7 +432,7 @@ const Store = () => {
                     ? isWalletLoading
                       ? "..."
                       : formatPoints(walletBalance)
-                    : "Sign in"}
+                    : "Login"}
                 </p>
               </div>
             </div>

@@ -242,7 +242,7 @@ const UserProfileMenu = () => {
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-gray-700 transition hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-zinc-800"
               >
                 <LogIn size={16} />
-                Sign in
+                Login
               </button>
             )}
           </div>
