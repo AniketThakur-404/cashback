@@ -31,8 +31,8 @@ const ScrollContent = () => {
   const states = [
     {
       number: "1",
-      label: "Set Cashback",
-      sub: "Create your campaign and decide how much cashback you want to offer.",
+      label: "Set Rewards",
+      sub: "Create your campaign and decide how much rewards you want to offer.",
       color: "#10b981",
       tag: "STEP 01",
     },
@@ -45,8 +45,8 @@ const ScrollContent = () => {
     },
     {
       number: "3",
-      label: "Cashback Credited",
-      sub: "Cashback is credited instantly, giving them a strong reason to return.",
+      label: "Rewards Credited",
+      sub: "Rewards are credited instantly, giving them a strong reason to return.",
       color: "#a855f7",
       tag: "STEP 03",
     },
@@ -378,7 +378,7 @@ const VendorLandingPage = () => {
                 }}
                 className="text-lg md:text-xl text-slate-500 max-w-xl mb-12 leading-relaxed font-medium"
               >
-                Launch your own customer loyalty program with QR-based cashback
+                Launch your own customer loyalty program with QR-based rewards
                 rewards. Scale your business effortlessly — without apps, cards,
                 or complicated systems.
               </motion.p>
@@ -615,7 +615,7 @@ const VendorLandingPage = () => {
 
                   <div className="space-y-5">
                     {[
-                      "Reward every purchase with instant cashback",
+                      "Reward every purchase with instant rewards",
                       "Easily create and manage campaigns from one dashboard",
                       "Track customer activity and repeat visits in real time",
                     ].map((benefit, i) => (
@@ -685,14 +685,14 @@ const VendorLandingPage = () => {
               {
                 label: "Easy Setup",
                 value: "3 MIN",
-                desc: "Create and launch cashback campaigns in minutes without any technical complexity.",
+                desc: "Create and launch rewards campaigns in minutes without any technical complexity.",
                 icon: Zap,
                 highlight: false,
               },
               {
                 label: "Repeat Visits",
                 value: "80%",
-                desc: "Cashback rewards encourage customers to return and purchase again consistently.",
+                desc: "Rewards encourage customers to return and purchase again consistently.",
                 icon: RefreshCw,
                 highlight: true,
               },
@@ -988,7 +988,7 @@ const VendorLandingPage = () => {
               className="space-y-6"
             >
               <h3 className="text-5xl md:text-5xl font-black text-slate-900 tracking-tighter leading-[0.95]">
-                Why Cashback <br className="hidden md:block" />
+                Why Rewards <br className="hidden md:block" />
                 Works <span className="text-emerald-600 italic">Better.</span>
               </h3>
             </motion.div>

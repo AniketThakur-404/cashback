@@ -121,7 +121,7 @@ const Wallet = () => {
 
           <div className="relative z-10">
             <div className="text-sm font-medium text-white/90 mb-1 opacity-90">
-              Cashback Wallet
+              Assured Rewards Wallet
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-extrabold tracking-tight">
