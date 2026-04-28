@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Gift,
   ChevronRight,
@@ -787,7 +787,7 @@ const Home = () => {
                               fill="currentColor"
                             />
                           </svg>
-                          Avail Now
+                          View Details
                         </button>
                       </div>
                     </div>
