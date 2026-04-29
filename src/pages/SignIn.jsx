@@ -9,17 +9,16 @@ const SignIn = () => {
 
   const handleLoginSuccess = (newToken) => {
     storeAuthToken(newToken);
-    const redirectTarget = popPostLoginRedirect();
-    if (redirectTarget) {
-      navigate(redirectTarget);
-    } else {
-      navigate("/");
-    }
   };
 
   React.useEffect(() => {
     if (token) {
-      navigate("/");
+      const redirectTarget = popPostLoginRedirect();
+      if (redirectTarget) {
+        navigate(redirectTarget);
+      } else {
+        navigate("/");
+      }
     }
   }, [token, navigate]);
 
