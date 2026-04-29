@@ -37,9 +37,9 @@ const ReturnRefund = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               Assured Rewards primarily operates as a cashback and rewards
               facilitation platform. As a general principle, transactions that
-              involve reward credits, cashback validation, promotional benefits,
-              wallet processing, or digital code generation are non-refundable
-              once processed, confirmed, or delivered.
+              involve reward credits, cashback validation, promotional benefits
+              or wallet processing are non-refundable once processed, confirmed,
+              or delivered.
               <br />
               <br />
               Refunds are not automatically granted and are subject to review,
