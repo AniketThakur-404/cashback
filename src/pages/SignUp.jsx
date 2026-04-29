@@ -13,13 +13,13 @@ const SignUp = () => {
     if (redirectTarget) {
       navigate(redirectTarget);
     } else {
-      navigate("/wallet");
+      navigate("/");
     }
   };
 
   React.useEffect(() => {
     if (token) {
-      navigate("/wallet");
+      navigate("/");
     }
   }, [token, navigate]);
 

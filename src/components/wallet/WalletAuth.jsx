@@ -210,7 +210,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
                 if (isLoginMode) {
                   navigate("/signup");
                 } else {
-                  navigate("/wallet");
+                  navigate("/signin");
                 }
                 setIsLoginMode(!isLoginMode);
                 setError("");
@@ -243,7 +243,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
               setStatus("");
             } else if (lowerError.includes('login')) {
               setIsLoginMode(true);
-              navigate("/wallet");
+              navigate("/signin");
               setError("");
               setStatus("");
             }
