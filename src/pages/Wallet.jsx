@@ -168,7 +168,10 @@ const Wallet = () => {
                 Recent Activity
               </h2>
             </div>
-            <button className="text-xs font-bold text-primary flex items-center gap-0.5 hover:underline">
+            <button 
+              onClick={() => navigate("/wallet/transactions")}
+              className="text-xs font-bold text-primary flex items-center gap-0.5 hover:underline"
+            >
               View All <ChevronRight size={14} />
             </button>
           </div>
