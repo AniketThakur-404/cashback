@@ -28,6 +28,18 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
+  const isValidEmail = (emailStr) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr.trim());
+  };
+
+  const isFormValid = () => {
+    if (!email.trim() || !isValidEmail(email)) return false;
+    if (!isLoginMode) {
+      if (!name.trim() || !phoneNumber.trim()) return false;
+    }
+    return true;
+  };
+
   const handleSendOtp = async () => {
     if (!isLoginMode) {
       if (!name.trim()) {
@@ -142,7 +154,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
           <button
             type="button"
             onClick={handleSendOtp}
-            disabled={isSendingOtp}
+            disabled={isSendingOtp || !isFormValid()}
             className="w-full rounded-2xl bg-primary hover:bg-primary-strong text-white font-bold py-3.5 shadow-lg shadow-primary/25 disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             {isSendingOtp 
