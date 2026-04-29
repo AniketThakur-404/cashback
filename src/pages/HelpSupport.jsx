@@ -25,11 +25,6 @@ const HelpSupport = () => {
           answer:
             "Visit our website and click 'Get Started.' Enter your business name, contact number, and basic store details. After a quick OTP verification, your vendor account is live. You can launch your first cashback campaign from the dashboard within minutes — no technical knowledge required.",
         },
-        {
-          question: "Is Assured Rewards free to use?",
-          answer:
-            "Yes! Your first campaign is completely free. We believe in letting you experience real results before committing to a plan. After that, flexible pricing plans are available based on your business size and campaign volume. You only pay for what you use.",
-        },
       ],
     },
     {
@@ -49,11 +44,6 @@ const HelpSupport = () => {
           question: "How do I redeem or withdraw my cashback?",
           answer:
             "You have two options: use your cashback balance as a discount on your next purchase at any participating Assured Rewards store, or transfer it directly to your UPI-linked bank account. UPI transfers are typically processed within a few hours.",
-        },
-        {
-          question: "Does my cashback expire?",
-          answer:
-            "Cashback is valid for 6 months from the date it was credited. You'll receive a reminder notification before it expires so you have ample time to use it. Any campaign-specific bonus cashback may carry a shorter validity period — this will always be displayed before you scan.",
         },
       ],
     },
