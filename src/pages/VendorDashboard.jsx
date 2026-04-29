@@ -827,6 +827,13 @@ const VendorDashboard = () => {
     { id: Date.now(), cashbackAmount: "", quantity: "", totalBudget: "" },
   ]);
   const [campaignTab, setCampaignTab] = useState("create"); // 'create', 'pending', 'active'
+  const [collapsedCampaignGroups, setCollapsedCampaignGroups] = useState({});
+  const toggleCampaignGroup = (groupName) => {
+    setCollapsedCampaignGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }));
+  };
 
   useEffect(() => {
     if (location.state?.campaignTab) {
@@ -8504,7 +8511,7 @@ Quantity: ${invoiceData.quantity} QRs
                               </div>
                             )}
 
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                               {activeCampaigns.length === 0 ? (
                                 <div className="text-xs text-center text-gray-500 py-4 space-y-2">
                                   <div>No active campaign found.</div>
@@ -8526,25 +8533,34 @@ Quantity: ${invoiceData.quantity} QRs
                                     {},
                                   );
                                   return Object.entries(grouped).map(
-                                    ([productName, campaigns]) => (
+                                    ([productName, campaigns]) => {
+                                      const isCollapsed = collapsedCampaignGroups[`active-${productName}`];
+                                      return (
                                       <div
                                         key={productName}
-                                        className="mb-8 last:mb-0"
+                                        className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
                                       >
-                                        <div className="flex items-center justify-start gap-3 mb-6 pl-1">
-                                          <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                        <div 
+                                          className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
+                                          onClick={() => toggleCampaignGroup(`active-${productName}`)}
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                            </div>
+                                            <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                              <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
+                                              {productName}
+                                            </h3>
+                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                              {campaigns.length} Campaigns
+                                            </span>
                                           </div>
-                                          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
-                                            <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
-                                            {productName}
-                                            
-                                          </h3>
-                                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
-                                            {campaigns.length} Campaigns
-                                          </span>
+                                          <div className="text-gray-400">
+                                            <ChevronRight size={18} className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`} />
+                                          </div>
                                         </div>
-                                        <div className="space-y-4">
+                                        <div className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}>
                                           {campaigns.map((campaign) => (
                                             <CampaignCard
                                               key={campaign.id}
@@ -8594,7 +8610,8 @@ Quantity: ${invoiceData.quantity} QRs
                                           ))}
                                         </div>
                                       </div>
-                                    ),
+                                      );
+                                    }
                                   );
                                 })()
                               )}
@@ -8622,26 +8639,36 @@ Quantity: ${invoiceData.quantity} QRs
                                   {},
                                 );
                                 return Object.entries(grouped).map(
-                                  ([productName, campaigns]) => (
+                                  ([productName, campaigns]) => {
+                                    const isCollapsed = collapsedCampaignGroups[`pending-${productName}`];
+                                    return (
                                     <div
                                       key={productName}
-                                      className="mb-8 last:mb-0"
+                                      className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
                                     >
                                       {/* Product Group Header */}
-                                      <div className="flex items-center justify-start gap-3 mb-6 pl-1">
-                                        <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center">
-                                          <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                      <div 
+                                        className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
+                                        onClick={() => toggleCampaignGroup(`pending-${productName}`)}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                          </div>
+                                          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                            <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
+                                            {productName}
+                                          </h3>
+                                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                            {campaigns.length} Campaigns
+                                          </span>
                                         </div>
-                                        <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
-                                          <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
-                                          {productName}
-                                        </h3>
-                                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
-                                          {campaigns.length} Campaigns
-                                        </span>
+                                        <div className="text-gray-400">
+                                          <ChevronRight size={18} className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`} />
+                                        </div>
                                       </div>
 
-                                      <div className="space-y-4">
+                                      <div className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}>
                                         {campaigns.map((campaign) => {
                                           const allocationGroups =
                                             buildAllocationGroups(
@@ -8779,7 +8806,8 @@ Quantity: ${invoiceData.quantity} QRs
                                         })}
                                       </div>
                                     </div>
-                                  ),
+                                    );
+                                  }
                                 );
                               })()
                             )}
