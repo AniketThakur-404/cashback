@@ -19,6 +19,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Trash2,
+  Calendar,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { getMe, updateUserProfile, uploadUserAvatar, deleteUserAccount } from "../lib/api";
@@ -45,6 +46,7 @@ const Profile = () => {
     email: "",
     phoneNumber: "",
     avatarUrl: "",
+    dob: "",
   });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -74,6 +76,7 @@ const Profile = () => {
         email: data.email || "",
         phoneNumber: data.phoneNumber || "",
         avatarUrl: data.avatarUrl || "",
+        dob: data.dob || "",
       });
       setImgError(false);
     } catch (err) {
@@ -100,6 +103,7 @@ const Profile = () => {
       await updateUserProfile(token, {
         name: profile.name,
         email: profile.email,
+        dob: profile.dob || undefined,
       });
 
       info(
@@ -308,7 +312,7 @@ const Profile = () => {
                 label="How Assured Rewards Works?"
                 to="/how-verify-works"
               />
-              <MenuButton icon={MessageCircle} label="General FAQ" to="/help" />
+              <MenuButton icon={MessageCircle} label="Help & Support" to="/help" />
               <MenuButton
                 icon={Mail}
                 label="Contact Us"
@@ -453,6 +457,23 @@ const Profile = () => {
                         }
                         className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
                         placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                      Date of Birth
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="date"
+                        value={profile.dob}
+                        onChange={(e) =>
+                          setProfile({ ...profile, dob: e.target.value })
+                        }
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border-0 focus:ring-2 focus:ring-primary/20 text-gray-900 dark:text-white transition-all placeholder:text-gray-400"
                       />
                     </div>
                   </div>

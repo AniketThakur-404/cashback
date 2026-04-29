@@ -95,16 +95,16 @@ const downloadAuthedFile = async (token, path, fallbackName) => {
   window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
 };
 
-export const sendOtp = (phoneNumber, name = "", email = "") =>
+export const sendOtp = (email, phoneNumber = "", name = "", dob = "") =>
   apiRequest("/api/auth/send-otp", {
     method: "POST",
-    body: { phoneNumber, name, email },
+    body: { email, phoneNumber, name, dob },
   });
 
-export const verifyOtp = (phoneNumber, otp) =>
+export const verifyOtp = (email, otp) =>
   apiRequest("/api/auth/verify-otp", {
     method: "POST",
-    body: { phoneNumber, otp },
+    body: { email, otp },
   });
 
 export const sendEmailOtp = (email) =>

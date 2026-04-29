@@ -9,7 +9,6 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
   const [isLoginMode, setIsLoginMode] = useState(initialMode === "login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [dob, setDob] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -35,17 +34,13 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
         setError("Enter your name to continue.");
         return;
       }
-      if (!email.trim()) {
-        setError("Enter your email address.");
-        return;
-      }
-      if (!dob.trim()) {
-        setError("Enter your date of birth.");
+      if (!phoneNumber.trim()) {
+        setError("Enter your phone number.");
         return;
       }
     }
-    if (!phoneNumber.trim()) {
-      setError("Enter your phone number to receive an OTP.");
+    if (!email.trim()) {
+      setError("Enter your email address to receive an OTP.");
       return;
     }
     setError("");
@@ -53,9 +48,10 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
     setIsSendingOtp(true);
     try {
       const data = await sendOtp(
-        phoneNumber.trim(),
+        email.trim().toLowerCase(),
+        isLoginMode ? undefined : phoneNumber.trim(),
         isLoginMode ? undefined : name.trim(),
-        isLoginMode ? undefined : email.trim().toLowerCase(),
+        undefined // dob is no longer collected
       );
       setOtpSent(true);
       setStatus("A verification code has been sent to your email.");
@@ -76,7 +72,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
     setStatus("");
     setIsVerifyingOtp(true);
     try {
-      const data = await verifyOtp(phoneNumber.trim(), otp.trim());
+      const data = await verifyOtp(email.trim().toLowerCase(), otp.trim());
       storeAuthToken(data.token);
       setStatus("Verified. Wallet connected.");
       if (onLoginSuccess) {
@@ -116,25 +112,13 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-                Email Address
+                Phone number
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Enter your email"
-                className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-                Date of Birth
-              </label>
-              <input
-                type="date"
-                value={dob}
-                onChange={(event) => setDob(event.target.value)}
+                type="tel"
+                value={phoneNumber}
+                onChange={(event) => setPhoneNumber(event.target.value)}
+                placeholder="Enter phone number"
                 className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
               />
             </div>
@@ -143,13 +127,13 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
 
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-            Phone number
+            Email Address
           </label>
           <input
-            type="tel"
-            value={phoneNumber}
-            onChange={(event) => setPhoneNumber(event.target.value)}
-            placeholder="Enter phone number"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Enter your email"
             className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
           />
         </div>
@@ -241,7 +225,27 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
       )}
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-sm font-semibold rounded-2xl text-center animate-in shake-in">
+        <div 
+          onClick={() => {
+            const lowerError = error.toLowerCase();
+            if (lowerError.includes('sign up')) {
+              setIsLoginMode(false);
+              navigate("/signup");
+              setError("");
+              setStatus("");
+            } else if (lowerError.includes('login')) {
+              setIsLoginMode(true);
+              navigate("/wallet");
+              setError("");
+              setStatus("");
+            }
+          }}
+          className={`p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 text-red-600 dark:text-red-400 text-sm font-semibold rounded-2xl text-center animate-in shake-in ${
+            error.toLowerCase().includes('sign up') || error.toLowerCase().includes('login') 
+              ? 'cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-all active:scale-[0.98]' 
+              : ''
+          }`}
+        >
           {error}
         </div>
       )}
