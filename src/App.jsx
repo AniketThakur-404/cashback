@@ -32,6 +32,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import VendorPrivacyPolicy from "./pages/VendorPrivacyPolicy";
 import VendorTerms from "./pages/VendorTerms";
+import VendorFAQs from "./pages/VendorFAQs";
 import { ThemeProvider } from "./components/ThemeProvider";
 import RedeemQr from "./pages/RedeemQr";
 import Claim from "./pages/Claim";
@@ -101,6 +102,8 @@ function App() {
             <Route path="/vendor-landing" element={<VendorLandingPage />} />
             <Route path="/vendor/privacy" element={<VendorPrivacyPolicy />} />
             <Route path="/vendor/terms" element={<VendorTerms />} />
+            <Route path="/vendor/faqs" element={<VendorFAQs />} />
+            <Route path="/vendor-faqs" element={<VendorFAQs />} />
 
             {/* QR Scan Flow */}
             <Route path="/scan" element={<CameraScan />} />

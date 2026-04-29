@@ -15,6 +15,9 @@ import {
   Activity,
   CreditCard,
   Quote,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
 } from "lucide-react";
 import {
   motion,
@@ -1062,6 +1065,8 @@ const VendorLandingPage = () => {
         </div>
       </section>
 
+
+
       {/* Improved Final CTA Section */}
       <section id="pricing" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1124,9 +1129,9 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Improved Footer */}
-      <footer className="bg-slate-50 border-t border-slate-200 py-24">
+      <footer className="bg-slate-50 border-t border-slate-200 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-16">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 pb-12 border-b border-slate-200/50">
             <div className="space-y-4 text-center md:text-left">
               <div className="text-3xl font-black text-slate-900 tracking-tighter font-admin-heading">
                 Assured<span className="text-emerald-600">Rewards</span>
@@ -1136,11 +1141,12 @@ const VendorLandingPage = () => {
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-10 text-[11px] font-black uppercase tracking-widest text-slate-500">
+            <div className="flex flex-wrap justify-center md:justify-end gap-6 md:gap-10 text-[11px] font-black uppercase tracking-widest text-slate-500">
               {[
                 { label: "Login", path: "/vendor-dashboard" },
                 { label: "Privacy Policy", path: "/vendor/privacy" },
                 { label: "Terms of Service", path: "/vendor/terms" },
+                { label: "FAQs", path: "/vendor/faqs" },
                 { label: "Contact", href: "mailto:contact@assuredrewards.com" },
               ].map((link, i) => (
                 <a
@@ -1158,9 +1164,14 @@ const VendorLandingPage = () => {
                 </a>
               ))}
             </div>
+          </div>
 
-            <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">
               © 2024 {APP_NAME}. Built for scale.
+            </div>
+            <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+              Secure • Reliable • Seamless
             </div>
           </div>
         </div>

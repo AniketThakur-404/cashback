@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MessageSquare,
@@ -11,42 +11,93 @@ import {
 } from "lucide-react";
 
 const HelpSupport = () => {
-  const faqs = [
+  const faqSections = [
     {
-      question: "How do I enter my code?",
-      answer:
-        "You can enter your code on the home page by tapping the 'Scan' button or manually entering the alphanumeric code found on your product.",
+      title: "General",
+      faqs: [
+        {
+          question: "What is Assured Rewards and how does it work?",
+          answer:
+            "Assured Rewards is a QR-based loyalty and cashback platform that connects vendors and customers. Vendors create reward campaigns and generate a QR code for their store. Customers scan the code after a purchase to earn instant cashback, which gets credited to their Assured Rewards wallet right away — no app download, no loyalty cards, no complicated steps.",
+        },
+        {
+          question: "How do I sign up as a vendor?",
+          answer:
+            "Visit our website and click 'Get Started.' Enter your business name, contact number, and basic store details. After a quick OTP verification, your vendor account is live. You can launch your first cashback campaign from the dashboard within minutes — no technical knowledge required.",
+        },
+        {
+          question: "Is Assured Rewards free to use?",
+          answer:
+            "Yes! Your first campaign is completely free. We believe in letting you experience real results before committing to a plan. After that, flexible pricing plans are available based on your business size and campaign volume. You only pay for what you use.",
+        },
+      ],
     },
     {
-      question: "Why is my code showing as invalid?",
-      answer:
-        "Please double-check for typos. If the code is still invalid, it might have already been used or expired. Contact support if you believe this is an error.",
+      title: "For Customers",
+      faqs: [
+        {
+          question: "How do I earn cashback as a customer?",
+          answer:
+            "It's easy: make a purchase at any participating store, scan the QR code displayed at the counter using your phone's camera, and your cashback is instantly added to your Assured Rewards wallet. No app download is needed — just a smartphone and the QR code.",
+        },
+        {
+          question: "When does my cashback get credited?",
+          answer:
+            "Cashback is credited to your wallet the moment your QR scan is confirmed — no delays, no waiting periods. You'll see your updated balance on the confirmation screen immediately after scanning.",
+        },
+        {
+          question: "How do I redeem or withdraw my cashback?",
+          answer:
+            "You have two options: use your cashback balance as a discount on your next purchase at any participating Assured Rewards store, or transfer it directly to your UPI-linked bank account. UPI transfers are typically processed within a few hours.",
+        },
+        {
+          question: "Does my cashback expire?",
+          answer:
+            "Cashback is valid for 6 months from the date it was credited. You'll receive a reminder notification before it expires so you have ample time to use it. Any campaign-specific bonus cashback may carry a shorter validity period — this will always be displayed before you scan.",
+        },
+      ],
     },
     {
-      question: "How long does cashback take to credit?",
-      answer:
-        "Cashback is usually credited instantly to your wallet after a successful code redemption.",
+      title: "For Vendors",
+      faqs: [
+        {
+          question: "How do I create a cashback campaign?",
+          answer:
+            "Log in to your vendor dashboard, click 'Create Campaign,' set your preferred cashback amount (percentage or fixed), choose start and end dates, and hit Publish. A unique QR code is generated instantly. Print it and place it at your billing counter — your customers can start earning right away.",
+        },
+        {
+          question: "Can I track how my campaign is performing?",
+          answer:
+            "Yes. Your dashboard provides real-time analytics including total QR scans, cashback distributed, number of new vs. returning customers, and revenue trends. For vendors with multiple outlets, you can filter data by location, campaign, or date range.",
+        },
+        {
+          question: "Can I run multiple campaigns at the same time?",
+          answer:
+            "Absolutely. You can run simultaneous campaigns — for example, a year-round loyalty campaign alongside a limited-time festive offer. Each campaign gets its own QR code and tracks independently in your dashboard so results are never mixed.",
+        },
+      ],
     },
     {
-      question: "How do I transfer money to my UPI?",
-      answer:
-        "Go to your Wallet, select 'Withdraw', enter the amount and your UPI ID. Transfers are processed within 24 hours.",
-    },
-    {
-      question: "What if my UPI transfer fails?",
-      answer:
-        "Don't worry! If a transfer fails, the amount is automatically refunded to your Cashback Wallet within 24-48 hours.",
-    },
-    {
-      question: "Can I use a code more than once?",
-      answer: "No, each unique code can only be redeemed once.",
+      title: "Troubleshooting",
+      faqs: [
+        {
+          question: "Why didn't I receive my cashback after scanning?",
+          answer:
+            "Please check: (1) you completed the scan and saw a confirmation screen, (2) your internet connection was active during the scan, and (3) the campaign was still running at the time. If everything looks correct but cashback was not credited, contact our support team with your scan timestamp and store name — we resolve most cases within 24 hours.",
+        },
+        {
+          question: "I'm a vendor and my QR code isn't scanning. What should I do?",
+          answer:
+            "First, confirm the campaign is still active in your dashboard. If the printed QR code is faded or damaged, you can regenerate and reprint it at any time from your campaign settings — at no extra charge. If the issue continues, reach out to our support team via chat or email. We're available 7 days a week.",
+        },
+      ],
     },
   ];
 
-  const [openIndex, setOpenIndex] = useState(4); // Default open index to match reference
+  const [openId, setOpenId] = useState("0-0");
 
-  const toggleFaq = (index) => {
-    setOpenIndex(openIndex === index ? null : index);
+  const toggleFaq = (id) => {
+    setOpenId(openId === id ? null : id);
   };
 
   return (
@@ -99,30 +150,44 @@ const HelpSupport = () => {
             Frequently Asked Questions
           </h3>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-          {faqs.map((faq, index) => (
-            <div key={index} className="py-3 last:pb-0">
-              <button
-                onClick={() => toggleFaq(index)}
-                className="flex w-full items-center justify-between text-left"
-              >
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
-                  {faq.question}
-                </span>
-                {openIndex === index ? (
-                  <ChevronUp size={16} className="text-gray-400 min-w-[16px]" />
-                ) : (
-                  <ChevronDown
-                    size={16}
-                    className="text-gray-400 min-w-[16px]"
-                  />
-                )}
-              </button>
-              {openIndex === index && (
-                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed pl-0 pr-4">
-                  {faq.answer}
-                </div>
-              )}
+        <div className="space-y-6">
+          {faqSections.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="space-y-3">
+              <h4 className="text-xs font-bold text-orange-500 dark:text-orange-400 uppercase tracking-wider px-1 flex items-center gap-1.5 mt-4 first:mt-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                {section.title}
+              </h4>
+              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {section.faqs.map((faq, faqIndex) => {
+                  const id = `${sectionIndex}-${faqIndex}`;
+                  const isOpen = openId === id;
+                  return (
+                    <div key={faqIndex} className="py-3 first:pt-0 last:pb-0">
+                      <button
+                        onClick={() => toggleFaq(id)}
+                        className="flex w-full items-center justify-between text-left"
+                      >
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 pr-4">
+                          {faq.question}
+                        </span>
+                        {isOpen ? (
+                          <ChevronUp size={16} className="text-gray-400 min-w-[16px]" />
+                        ) : (
+                          <ChevronDown
+                            size={16}
+                            className="text-gray-400 min-w-[16px]"
+                          />
+                        )}
+                      </button>
+                      {isOpen && (
+                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed pl-0 pr-4 whitespace-pre-line">
+                          {faq.answer}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>
@@ -132,10 +197,10 @@ const HelpSupport = () => {
       <div>
         <div className="mb-3">
           <h3 className="font-semibold text-gray-800 dark:text-gray-200">
-            Still Need Help?
+            Still have questions?
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Reach out to our support team
+            Reach out to our support team — we're here to help 7 days a week.
           </p>
         </div>
         <div className="space-y-3">

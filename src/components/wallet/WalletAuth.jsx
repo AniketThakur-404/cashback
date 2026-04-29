@@ -9,6 +9,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
   const [isLoginMode, setIsLoginMode] = useState(initialMode === "login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [dob, setDob] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -36,6 +37,10 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
       }
       if (!email.trim()) {
         setError("Enter your email address.");
+        return;
+      }
+      if (!dob.trim()) {
+        setError("Enter your date of birth.");
         return;
       }
     }
@@ -118,6 +123,18 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="Enter your email"
+                className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                value={dob}
+                onChange={(event) => setDob(event.target.value)}
                 className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
               />
             </div>

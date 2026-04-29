@@ -9,12 +9,6 @@ const PrivacyPolicy = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-4 pb-24 md:pb-8 transition-colors duration-300">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-4 mb-2">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 rounded-full hover:bg-white dark:hover:bg-zinc-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
-          </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Privacy Policy
@@ -62,11 +56,12 @@ const PrivacyPolicy = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               Cashback, reward credits, or wallet balances are issued based on
               eligible transactions. Rewards are subject to validity periods
-              starting from the credit date and must be redeemed or withdrawn per
-              the Platform"s Terms &amp; Conditions. Expired rewards may be
+              starting from the credit date and must be redeemed or withdrawn
+              per the Platform"s Terms &amp; Conditions. Expired rewards may be
               forfeited unless otherwise allowed at our discretion. The Company
               reserves the right to modify reward structures, eligibility
-              criteria, or expiration timelines with prior notice on the Platform.
+              criteria, or expiration timelines with prior notice on the
+              Platform.
             </p>
           </section>
 
@@ -77,10 +72,10 @@ const PrivacyPolicy = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               We automatically collect technical and usage data such as IP
               address, browser type, device information, operating system,
-              access times, referring URLs, pages viewed, clickstream activity,
-              and session duration. This data supports system security, fraud
-              prevention, performance analysis, user experience improvements,
-              and Platform optimization.
+              access times, referring URLs, GPS, pages viewed, clickstream
+              activity, and session duration. This data supports system
+              security, fraud prevention, performance analysis, user experience
+              improvements, and Platform optimization.
             </p>
           </section>
 
@@ -116,8 +111,8 @@ const PrivacyPolicy = () => {
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               We share data with trusted service providers (payment gateways,
-              hosting, analytics, support systems, infrastructure partners) under
-              confidentiality agreements. Partnered merchants may receive
+              hosting, analytics, support systems, infrastructure partners)
+              under confidentiality agreements. Partnered merchants may receive
               information strictly for verification and reward validation.
               Disclosures also occur to comply with law, regulatory authorities,
               court orders, or to protect legal rights, prevent fraud, or ensure
@@ -143,10 +138,10 @@ const PrivacyPolicy = () => {
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               Personal information is retained as long as necessary to fulfill
-              the outlined purposes, maintain accounts, comply with laws, resolve
-              disputes, and enforce agreements. Users may request deletion via
-              support; we will delete or anonymize data subject to legal
-              requirements.
+              the outlined purposes, maintain accounts, comply with laws,
+              resolve disputes, and enforce agreements. Users may request
+              deletion via support; we will delete or anonymize data subject to
+              legal requirements.
             </p>
           </section>
 
@@ -189,8 +184,9 @@ const PrivacyPolicy = () => {
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               We may revise this Privacy Policy from time to time. Any updates
-              will be posted on this page along with an effective date. Continued
-              use after updates constitutes acceptance of the revised policy.
+              will be posted on this page along with an effective date.
+              Continued use after updates constitutes acceptance of the revised
+              policy.
             </p>
           </section>
 
