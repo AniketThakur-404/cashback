@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Phone } from "lucide-react";
 import { sendOtp, verifyOtp } from "../../lib/api";
 import { storeAuthToken } from "../../lib/auth";
 
@@ -28,8 +28,18 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const isValidEmail = (emailStr) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr.trim());
+  const isValidPhone = (phone) => {
+    // Accept 10-digit Indian numbers, optionally prefixed with +91 or 91
+    const cleaned = phone.replace(/[\s\-()]/g, "");
+    return /^(\+91|91)?[6-9]\d{9}$/.test(cleaned);
+  };
+
+  const normalizePhone = (phone) => {
+    let cleaned = phone.replace(/[\s\-()]/g, "");
+    // Strip +91 or 91 prefix to get raw 10-digit number
+    if (cleaned.startsWith("+91")) cleaned = cleaned.slice(3);
+    else if (cleaned.startsWith("91") && cleaned.length === 12) cleaned = cleaned.slice(2);
+    return cleaned;
   };
 
   const handleSendOtp = async () => {
@@ -38,31 +48,28 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
         setError("Enter your name to continue.");
         return;
       }
-      if (!phoneNumber.trim()) {
-        setError("Enter your phone number.");
-        return;
-      }
     }
-    if (!email.trim()) {
-      setError("Enter your email address to receive an OTP.");
+    if (!phoneNumber.trim()) {
+      setError("Enter your phone number to receive an OTP.");
       return;
     }
-    if (!isValidEmail(email)) {
-      setError("Please enter a valid email address.");
+    if (!isValidPhone(phoneNumber)) {
+      setError("Please enter a valid 10-digit phone number.");
       return;
     }
     setError("");
     setStatus("");
     setIsSendingOtp(true);
     try {
+      const normalized = normalizePhone(phoneNumber);
       const data = await sendOtp(
-        email.trim().toLowerCase(),
-        isLoginMode ? undefined : phoneNumber.trim(),
+        normalized,
+        isLoginMode ? undefined : email.trim().toLowerCase() || undefined,
         isLoginMode ? undefined : name.trim(),
         undefined // dob is no longer collected
       );
       setOtpSent(true);
-      setStatus("A verification code has been sent to your email.");
+      setStatus("A verification code has been sent to your phone via SMS.");
       setResendCooldown(30); // 30 seconds cooldown
     } catch (err) {
       setError(err.message || "Failed to send OTP.");
@@ -80,7 +87,8 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
     setStatus("");
     setIsVerifyingOtp(true);
     try {
-      const data = await verifyOtp(email.trim().toLowerCase(), otp.trim());
+      const normalized = normalizePhone(phoneNumber);
+      const data = await verifyOtp(normalized, otp.trim());
       storeAuthToken(data.token);
       setStatus("Verified. Wallet connected.");
       if (onLoginSuccess) {
@@ -94,7 +102,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 shadow-xl shadow-zinc-900/5 space-y-6 max-w-md mx-auto">
+    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 shadow-xl shadow-zinc-900/5 space-y-6 w-full max-w-xl mx-auto">
       <div className="flex items-center gap-3 text-lg font-semibold text-gray-900 dark:text-white">
         <div className="p-2.5 bg-primary/10 dark:bg-primary/20 rounded-xl text-primary">
           <ShieldCheck size={24} />
@@ -117,34 +125,44 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
                 className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
               />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-                Phone number
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter phone number"
-                className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-              />
-            </div>
           </>
         )}
 
         <div className="space-y-2">
           <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
-            Email Address
+            Phone Number
           </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Enter your email"
-            className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
-          />
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-gray-500 dark:text-gray-400 pointer-events-none">
+              <Phone size={16} />
+              <span className="text-sm font-semibold">+91</span>
+              <span className="text-gray-300 dark:text-zinc-600">|</span>
+            </div>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={(event) => setPhoneNumber(event.target.value)}
+              placeholder="Enter phone number"
+              maxLength={10}
+              className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 pl-[5.5rem] pr-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
+            />
+          </div>
         </div>
+
+        {!isLoginMode && (
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 ml-1">
+              Email Address <span className="text-gray-400 dark:text-gray-500 font-normal normal-case">(optional)</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Enter your email"
+              className="w-full rounded-2xl border-0 bg-gray-50 dark:bg-zinc-800/50 px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-gray-400"
+            />
+          </div>
+        )}
 
         {!otpSent ? (
           <button
