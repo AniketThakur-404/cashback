@@ -101,10 +101,16 @@ export const sendOtp = (phoneNumber, email = "", name = "", dob = "") =>
     body: { phoneNumber, email, name, dob },
   });
 
-export const verifyOtp = (phoneNumber, otp) =>
+export const verifyOtp = (phoneNumber, otp, email = "") =>
   apiRequest("/api/auth/verify-otp", {
     method: "POST",
-    body: { phoneNumber, otp },
+    body: { phoneNumber, otp, email },
+  });
+
+export const googleLogin = (email, name = "") =>
+  apiRequest("/api/auth/google-login", {
+    method: "POST",
+    body: { email, name },
   });
 
 export const sendEmailOtp = (email) =>
