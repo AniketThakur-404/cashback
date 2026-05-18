@@ -334,9 +334,13 @@ const NotificationItem = React.memo(
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
                 )}
-                <span className={`text-[13px] line-clamp-1 leading-snug tracking-tight ${
-                  item.isRead ? "font-semibold text-gray-700 dark:text-zinc-300" : "font-black text-gray-900 dark:text-white"
-                }`}>
+                <span
+                  className={`text-[13px] line-clamp-1 leading-snug tracking-tight ${
+                    item.isRead
+                      ? "font-semibold text-gray-700 dark:text-zinc-300"
+                      : "font-black text-gray-900 dark:text-white"
+                  }`}
+                >
                   {item.title || meta.label}
                 </span>
               </div>
@@ -344,9 +348,13 @@ const NotificationItem = React.memo(
                 {formatDate(item.createdAt)}
               </span>
             </div>
-            <p className={`text-xs mt-1.5 leading-relaxed line-clamp-2 ${
-              item.isRead ? "text-gray-500 dark:text-zinc-400 font-medium" : "text-gray-700 dark:text-zinc-300 font-semibold"
-            }`}>
+            <p
+              className={`text-xs mt-1.5 leading-relaxed line-clamp-2 ${
+                item.isRead
+                  ? "text-gray-500 dark:text-zinc-400 font-medium"
+                  : "text-gray-700 dark:text-zinc-300 font-semibold"
+              }`}
+            >
               {item.message || "No details available."}
             </p>
           </div>
@@ -807,6 +815,18 @@ const VendorDashboard = () => {
     to: format(new Date(), "yyyy-MM-dd"),
     preset: "1w",
   });
+
+  const dateFilterRef = useRef(dateFilter);
+  const overviewCampaignIdRef = useRef(overviewCampaignId);
+
+  useEffect(() => {
+    dateFilterRef.current = dateFilter;
+  }, [dateFilter]);
+
+  useEffect(() => {
+    overviewCampaignIdRef.current = overviewCampaignId;
+  }, [overviewCampaignId]);
+
   const [campaignForm, setCampaignForm] = useState({
     title: "",
     description: "",
@@ -2878,14 +2898,15 @@ const VendorDashboard = () => {
     setIsLoadingRecentRedemptions(true);
     setRecentRedemptionsError("");
 
+    const currentCampaignId = overviewCampaignIdRef.current;
     const requestParams = {
       page: 1,
       limit: 10,
       type: "redeem_success",
       campaignId:
-        overviewCampaignId === "all" || overviewCampaignId === "unassigned"
+        currentCampaignId === "all" || currentCampaignId === "unassigned"
           ? undefined
-          : overviewCampaignId,
+          : currentCampaignId,
       ...params,
     };
 
@@ -2978,10 +2999,12 @@ const VendorDashboard = () => {
     if (!authToken) return;
     setIsLoadingRedemptionTrend(true);
     setRedemptionTrendError("");
+    const currentFilter = dateFilterRef.current;
+    const currentCampaignId = overviewCampaignIdRef.current;
     const requestParams = {
-      campaignId: overviewCampaignId === "all" ? undefined : overviewCampaignId,
-      from: dateFilter.from,
-      to: dateFilter.to,
+      campaignId: currentCampaignId === "all" ? undefined : currentCampaignId,
+      from: currentFilter.from,
+      to: currentFilter.to,
       ...params,
     };
     try {
@@ -3368,8 +3391,6 @@ const VendorDashboard = () => {
         ...companyUpdates,
       }));
     }
-
-
   }, [
     accountProfile.email,
     accountProfile.phoneNumber,
@@ -4163,7 +4184,7 @@ const VendorDashboard = () => {
     setIsSavingAccount(true);
     try {
       await verifyEmailVerificationOtp(vendorInfo.email, profileOtp);
-      
+
       const payload = {
         name: accountProfile.name.trim() || null,
         email: accountProfile.email.trim() || null,
@@ -4190,7 +4211,9 @@ const VendorDashboard = () => {
       setProfileOtp("");
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      setAccountError(err.message || "Invalid OTP or unable to update profile.");
+      setAccountError(
+        err.message || "Invalid OTP or unable to update profile.",
+      );
     } finally {
       setIsSavingAccount(false);
     }
@@ -7518,7 +7541,7 @@ const VendorDashboard = () => {
                                   "Send OTP to Save"
                                 )}
                               </button>
-                              
+
                               {showProfileOtp && (
                                 <div className="mt-4 p-4 rounded-xl border border-primary/30 bg-primary/5 space-y-4 animate-in fade-in slide-in-from-top-2">
                                   <div className="space-y-2">
@@ -7528,7 +7551,9 @@ const VendorDashboard = () => {
                                     <input
                                       type="text"
                                       value={profileOtp}
-                                      onChange={(e) => setProfileOtp(e.target.value)}
+                                      onChange={(e) =>
+                                        setProfileOtp(e.target.value)
+                                      }
                                       placeholder="6-digit OTP"
                                       className="w-full rounded-xl border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-base text-gray-900 dark:text-white focus:border-primary outline-none transition-all"
                                       maxLength={6}
@@ -7538,10 +7563,16 @@ const VendorDashboard = () => {
                                     <button
                                       type="button"
                                       onClick={handleVerifyAndSaveProfile}
-                                      disabled={isSavingAccount || !profileOtp || profileOtp.length < 6}
+                                      disabled={
+                                        isSavingAccount ||
+                                        !profileOtp ||
+                                        profileOtp.length < 6
+                                      }
                                       className="flex-1 rounded-xl bg-primary hover:bg-primary-strong text-white text-sm font-bold py-3 transition-all disabled:opacity-60"
                                     >
-                                      {isSavingAccount ? "Verifying..." : "Verify & Save"}
+                                      {isSavingAccount
+                                        ? "Verifying..."
+                                        : "Verify & Save"}
                                     </button>
                                     <button
                                       type="button"
@@ -8541,84 +8572,100 @@ Quantity: ${invoiceData.quantity} QRs
                                   );
                                   return Object.entries(grouped).map(
                                     ([productName, campaigns]) => {
-                                      const isCollapsed = collapsedCampaignGroups[`active-${productName}`];
+                                      const isCollapsed =
+                                        collapsedCampaignGroups[
+                                          `active-${productName}`
+                                        ];
                                       return (
-                                      <div
-                                        key={productName}
-                                        className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
-                                      >
-                                        <div 
-                                          className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
-                                          onClick={() => toggleCampaignGroup(`active-${productName}`)}
+                                        <div
+                                          key={productName}
+                                          className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
                                         >
-                                          <div className="flex items-center gap-3">
-                                            <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                                              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                          <div
+                                            className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
+                                            onClick={() =>
+                                              toggleCampaignGroup(
+                                                `active-${productName}`,
+                                              )
+                                            }
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <div className="h-4 w-4 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                              </div>
+                                              <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                                <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">
+                                                  PRODUCT:
+                                                </span>
+                                                {productName}
+                                              </h3>
+                                              <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                                {campaigns.length} Campaigns
+                                              </span>
                                             </div>
-                                            <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
-                                              <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
-                                              {productName}
-                                            </h3>
-                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
-                                              {campaigns.length} Campaigns
-                                            </span>
+                                            <div className="text-gray-400">
+                                              <ChevronRight
+                                                size={18}
+                                                className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                                              />
+                                            </div>
                                           </div>
-                                          <div className="text-gray-400">
-                                            <ChevronRight size={18} className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`} />
+                                          <div
+                                            className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}
+                                          >
+                                            {campaigns.map((campaign) => (
+                                              <CampaignCard
+                                                key={campaign.id}
+                                                campaign={campaign}
+                                                campaignStats={
+                                                  campaignStatsMap[
+                                                    campaign.id
+                                                  ] ||
+                                                  campaignStatsMap[
+                                                    `title:${campaign.title}`
+                                                  ] ||
+                                                  {}
+                                                }
+                                                token={token}
+                                                onDownloadQr={
+                                                  handleDownloadCampaignPdf
+                                                }
+                                                onStartBulkExport={
+                                                  handleStartCampaignBulkExport
+                                                }
+                                                campaignExportJob={campaignBulkExportJobsMap.get(
+                                                  campaign.id,
+                                                )}
+                                                isStartingBulkExportId={
+                                                  startingBulkExportKey ===
+                                                  `campaign:${campaign.id}`
+                                                    ? campaign.id
+                                                    : ""
+                                                }
+                                                onDownloadReadyExport={
+                                                  handleDownloadBulkExportJob
+                                                }
+                                                onViewDetails={
+                                                  setSelectedActiveCampaign
+                                                }
+                                                onDelete={handleDeleteCampaign}
+                                                deletingCampaignId={
+                                                  deletingCampaignId
+                                                }
+                                                isDownloadingPdf={
+                                                  isDownloadingPdf
+                                                }
+                                                loadCampaigns={(t) =>
+                                                  refreshCampaignPaymentState(
+                                                    t || token,
+                                                  )
+                                                }
+                                              />
+                                            ))}
                                           </div>
                                         </div>
-                                        <div className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}>
-                                          {campaigns.map((campaign) => (
-                                            <CampaignCard
-                                              key={campaign.id}
-                                              campaign={campaign}
-                                              campaignStats={
-                                                campaignStatsMap[campaign.id] ||
-                                                campaignStatsMap[
-                                                  `title:${campaign.title}`
-                                                ] ||
-                                                {}
-                                              }
-                                              token={token}
-                                              onDownloadQr={
-                                                handleDownloadCampaignPdf
-                                              }
-                                              onStartBulkExport={
-                                                handleStartCampaignBulkExport
-                                              }
-                                              campaignExportJob={campaignBulkExportJobsMap.get(
-                                                campaign.id,
-                                              )}
-                                              isStartingBulkExportId={
-                                                startingBulkExportKey ===
-                                                `campaign:${campaign.id}`
-                                                  ? campaign.id
-                                                  : ""
-                                              }
-                                              onDownloadReadyExport={
-                                                handleDownloadBulkExportJob
-                                              }
-                                              onViewDetails={
-                                                setSelectedActiveCampaign
-                                              }
-                                              onDelete={handleDeleteCampaign}
-                                              deletingCampaignId={
-                                                deletingCampaignId
-                                              }
-                                              isDownloadingPdf={
-                                                isDownloadingPdf
-                                              }
-                                              loadCampaigns={(t) =>
-                                                refreshCampaignPaymentState(
-                                                  t || token,
-                                                )
-                                              }
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
                                       );
-                                    }
+                                    },
                                   );
                                 })()
                               )}
@@ -8647,180 +8694,260 @@ Quantity: ${invoiceData.quantity} QRs
                                 );
                                 return Object.entries(grouped).map(
                                   ([productName, campaigns]) => {
-                                    const isCollapsed = collapsedCampaignGroups[`pending-${productName}`];
+                                    const isCollapsed =
+                                      collapsedCampaignGroups[
+                                        `pending-${productName}`
+                                      ];
                                     return (
-                                    <div
-                                      key={productName}
-                                      className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
-                                    >
-                                      {/* Product Group Header */}
-                                      <div 
-                                        className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
-                                        onClick={() => toggleCampaignGroup(`pending-${productName}`)}
+                                      <div
+                                        key={productName}
+                                        className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 p-4 shadow-sm"
                                       >
-                                        <div className="flex items-center gap-3">
-                                          <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                        {/* Product Group Header */}
+                                        <div
+                                          className={`flex items-center justify-between cursor-pointer select-none ${isCollapsed ? "" : "mb-6"}`}
+                                          onClick={() =>
+                                            toggleCampaignGroup(
+                                              `pending-${productName}`,
+                                            )
+                                          }
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                                              <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                            </div>
+                                            <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
+                                              <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">
+                                                PRODUCT:
+                                              </span>
+                                              {productName}
+                                            </h3>
+                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
+                                              {campaigns.length} Campaigns
+                                            </span>
                                           </div>
-                                          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight flex items-center gap-2">
-                                            <span className="text-gray-400 dark:text-zinc-500 text-[11px] tracking-widest">PRODUCT:</span>
-                                            {productName}
-                                          </h3>
-                                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200 dark:border-zinc-700">
-                                            {campaigns.length} Campaigns
-                                          </span>
+                                          <div className="text-gray-400">
+                                            <ChevronRight
+                                              size={18}
+                                              className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                                            />
+                                          </div>
                                         </div>
-                                        <div className="text-gray-400">
-                                          <ChevronRight size={18} className={`transform transition-transform ${isCollapsed ? "" : "rotate-90"}`} />
-                                        </div>
-                                      </div>
 
-                                      <div className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}>
-                                        {campaigns.map((campaign) => {
-                                          const allocationGroups =
-                                            buildAllocationGroups(
-                                              campaign.allocations,
-                                            );
-                                          const totalQty =
-                                            allocationGroups.reduce(
-                                              (sum, group) =>
-                                                sum + group.quantity,
-                                              0,
-                                            );
-                                          const fallbackBudget =
-                                            allocationGroups.reduce(
-                                              (sum, group) =>
-                                                sum + group.totalBudget,
-                                              0,
-                                            );
-                                          const totalBudget = parseNumericValue(
-                                            campaign.subtotal,
-                                            parseNumericValue(
-                                              campaign.totalBudget,
-                                              fallbackBudget,
-                                            ),
-                                          );
-                                          const firstCashback = allocationGroups[0]?.price ?? 0;
+                                        <div
+                                          className={`space-y-4 ${isCollapsed ? "hidden" : "block"}`}
+                                        >
+                                          {campaigns.map((campaign) => {
+                                            const allocationGroups =
+                                              buildAllocationGroups(
+                                                campaign.allocations,
+                                              );
+                                            const totalQty =
+                                              allocationGroups.reduce(
+                                                (sum, group) =>
+                                                  sum + group.quantity,
+                                                0,
+                                              );
+                                            const fallbackBudget =
+                                              allocationGroups.reduce(
+                                                (sum, group) =>
+                                                  sum + group.totalBudget,
+                                                0,
+                                              );
+                                            const totalBudget =
+                                              parseNumericValue(
+                                                campaign.subtotal,
+                                                parseNumericValue(
+                                                  campaign.totalBudget,
+                                                  fallbackBudget,
+                                                ),
+                                              );
+                                            const firstCashback =
+                                              allocationGroups[0]?.price ?? 0;
 
-                                          return (
-                                            <div
-                                              key={campaign.id}
-                                              className="rounded-2xl border border-amber-200/40 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-amber-400/50 hover:shadow-md"
-                                            >
-                                              {/* Card Header */}
-                                              <div className="flex items-start justify-between gap-3 mb-4">
-                                                <div className="space-y-1 min-w-0">
-                                                  <div className="flex items-center gap-2 flex-wrap">
-                                                    <div className="text-base font-bold text-gray-900 dark:text-white truncate">
-                                                      {campaign.title}
+                                            return (
+                                              <div
+                                                key={campaign.id}
+                                                className="rounded-2xl border border-amber-200/40 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-amber-400/50 hover:shadow-md"
+                                              >
+                                                {/* Card Header */}
+                                                <div className="flex items-start justify-between gap-3 mb-4">
+                                                  <div className="space-y-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                      <div className="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {campaign.title}
+                                                      </div>
+                                                      <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20 shrink-0">
+                                                        Pending
+                                                      </span>
                                                     </div>
-                                                    <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20 shrink-0">
-                                                      Pending
+                                                    {campaign.Product?.name && (
+                                                      <div className="text-[11px] font-bold text-primary/80 uppercase tracking-tight">
+                                                        {campaign.Product.name}
+                                                      </div>
+                                                    )}
+                                                    <div className="text-[10px] text-gray-500 font-medium">
+                                                      ID:{" "}
+                                                      {campaign.id.slice(0, 10)}
+                                                      ...
+                                                    </div>
+                                                  </div>
+                                                  {/* Desktop Actions */}
+                                                  <div className="hidden sm:flex items-center gap-2 shrink-0">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        handleDeleteCampaign(
+                                                          campaign,
+                                                        )
+                                                      }
+                                                      disabled={
+                                                        deletingCampaignId ===
+                                                        campaign.id
+                                                      }
+                                                      className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
+                                                    >
+                                                      <Trash2 size={14} />
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        handlePayCampaign(
+                                                          campaign,
+                                                        )
+                                                      }
+                                                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs"
+                                                    >
+                                                      Pay & Activate
+                                                      <ArrowRight size={13} />
+                                                    </button>
+                                                  </div>
+                                                </div>
+
+                                                {/* Stats Grid */}
+                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                    <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                                                      Budget
+                                                    </div>
+                                                    <div className="text-sm font-black text-gray-900 dark:text-white">
+                                                      {!(
+                                                        campaign.planType ===
+                                                          "postpaid" &&
+                                                        totalBudget === 0
+                                                      ) ? (
+                                                        `INR ${formatAmount(totalBudget)}`
+                                                      ) : (
+                                                        <span className="text-amber-500 text-[10px]">
+                                                          TBD
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                    <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                                                      Total QRs
+                                                    </div>
+                                                    <div className="text-sm font-black text-gray-900 dark:text-white">
+                                                      {totalQty || 0}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                    <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                                                      Cashback
+                                                    </div>
+                                                    <div className="text-sm font-black text-primary">
+                                                      {firstCashback > 0 ? (
+                                                        `₹${formatAmount(firstCashback)}`
+                                                      ) : (
+                                                        <span className="text-amber-500 text-[10px]">
+                                                          TBD
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
+                                                    <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">
+                                                      Plan
+                                                    </div>
+                                                    <div className="text-sm font-black text-gray-900 dark:text-white capitalize">
+                                                      {campaign.planType ||
+                                                        "prepaid"}
+                                                    </div>
+                                                  </div>
+                                                </div>
+
+                                                {/* Dates */}
+                                                <div className="flex flex-wrap items-center gap-3 mt-3 px-1">
+                                                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                      Start:
+                                                    </span>
+                                                    <span>
+                                                      {campaign.startDate
+                                                        ? formatShortDate(
+                                                            campaign.startDate,
+                                                          )
+                                                        : "—"}
                                                     </span>
                                                   </div>
-                                                  {campaign.Product?.name && (
-                                                    <div className="text-[11px] font-bold text-primary/80 uppercase tracking-tight">
-                                                      {campaign.Product.name}
-                                                    </div>
-                                                  )}
-                                                  <div className="text-[10px] text-gray-500 font-medium">
-                                                    ID: {campaign.id.slice(0, 10)}...
+                                                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                                      End:
+                                                    </span>
+                                                    <span>
+                                                      {campaign.endDate
+                                                        ? formatShortDate(
+                                                            campaign.endDate,
+                                                          )
+                                                        : "—"}
+                                                    </span>
                                                   </div>
                                                 </div>
-                                                {/* Desktop Actions */}
-                                                <div className="hidden sm:flex items-center gap-2 shrink-0">
+
+                                                {/* Mobile Actions - icon buttons row */}
+                                                <div className="flex flex-wrap items-center justify-center gap-3 pt-5 sm:hidden border-t border-gray-100 dark:border-zinc-800/50 mt-4">
                                                   <button
                                                     type="button"
-                                                    onClick={() => handleDeleteCampaign(campaign)}
-                                                    disabled={deletingCampaignId === campaign.id}
-                                                    className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
+                                                    onClick={() =>
+                                                      handleDeleteCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    disabled={
+                                                      deletingCampaignId ===
+                                                      campaign.id
+                                                    }
+                                                    className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
+                                                    title="Delete Campaign"
                                                   >
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={16} />
                                                   </button>
                                                   <button
                                                     type="button"
-                                                    onClick={() => handlePayCampaign(campaign)}
-                                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs"
+                                                    onClick={() =>
+                                                      handlePayCampaign(
+                                                        campaign,
+                                                      )
+                                                    }
+                                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 active:scale-[0.98] transition-all text-sm"
                                                   >
                                                     Pay & Activate
-                                                    <ArrowRight size={13} />
+                                                    <ArrowRight size={14} />
                                                   </button>
                                                 </div>
                                               </div>
-
-                                              {/* Stats Grid */}
-                                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
-                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Budget</div>
-                                                  <div className="text-sm font-black text-gray-900 dark:text-white">
-                                                    {!(campaign.planType === "postpaid" && totalBudget === 0)
-                                                      ? `INR ${formatAmount(totalBudget)}`
-                                                      : <span className="text-amber-500 text-[10px]">TBD</span>}
-                                                  </div>
-                                                </div>
-                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
-                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Total QRs</div>
-                                                  <div className="text-sm font-black text-gray-900 dark:text-white">{totalQty || 0}</div>
-                                                </div>
-                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
-                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Cashback</div>
-                                                  <div className="text-sm font-black text-primary">
-                                                    {firstCashback > 0 ? `₹${formatAmount(firstCashback)}` : <span className="text-amber-500 text-[10px]">TBD</span>}
-                                                  </div>
-                                                </div>
-                                                <div className="rounded-xl border border-gray-100 dark:border-zinc-800 bg-gray-50/80 dark:bg-zinc-900/60 px-3 py-3">
-                                                  <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold mb-1">Plan</div>
-                                                  <div className="text-sm font-black text-gray-900 dark:text-white capitalize">
-                                                    {campaign.planType || "prepaid"}
-                                                  </div>
-                                                </div>
-                                              </div>
-
-                                              {/* Dates */}
-                                              <div className="flex flex-wrap items-center gap-3 mt-3 px-1">
-                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                  <span className="font-medium text-gray-700 dark:text-gray-300">Start:</span>
-                                                  <span>{campaign.startDate ? formatShortDate(campaign.startDate) : "—"}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                                  <span className="font-medium text-gray-700 dark:text-gray-300">End:</span>
-                                                  <span>{campaign.endDate ? formatShortDate(campaign.endDate) : "—"}</span>
-                                                </div>
-                                              </div>
-
-                                              {/* Mobile Actions - icon buttons row */}
-                                              <div className="flex flex-wrap items-center justify-center gap-3 pt-5 sm:hidden border-t border-gray-100 dark:border-zinc-800/50 mt-4">
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleDeleteCampaign(campaign)}
-                                                  disabled={deletingCampaignId === campaign.id}
-                                                  className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
-                                                  title="Delete Campaign"
-                                                >
-                                                  <Trash2 size={16} />
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handlePayCampaign(campaign)}
-                                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary text-white font-bold shadow-lg shadow-primary/30 hover:shadow-primary/50 active:scale-[0.98] transition-all text-sm"
-                                                >
-                                                  Pay & Activate
-                                                  <ArrowRight size={14} />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
+                                            );
+                                          })}
+                                        </div>
                                       </div>
-                                    </div>
                                     );
-                                  }
+                                  },
                                 );
                               })()
                             )}
                           </div>
                         )}
-
 
                         {/* Pending Campaign Details Modal */}
                         {selectedPendingCampaign && (
@@ -10011,7 +10138,9 @@ Quantity: ${invoiceData.quantity} QRs
                                       <th className="px-5 py-3.5 w-40 text-right">
                                         Amount
                                       </th>
-                                      <th className="px-5 py-3.5 w-24">Status</th>
+                                      <th className="px-5 py-3.5 w-24">
+                                        Status
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
@@ -10781,12 +10910,30 @@ Quantity: ${invoiceData.quantity} QRs
                                             type="button"
                                             onClick={async () => {
                                               try {
-                                                setInvoiceShareStatus("Preparing file...");
-                                                const blob = await fetchVendorInvoicePdfBlob(token, invoice.id);
-                                                if (!blob) throw new Error("Could not fetch PDF");
-                                                const file = new File([blob], `Invoice_${invoice.number || invoice.id}.pdf`, { type: 'application/pdf' });
-                                                
-                                                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                                setInvoiceShareStatus(
+                                                  "Preparing file...",
+                                                );
+                                                const blob =
+                                                  await fetchVendorInvoicePdfBlob(
+                                                    token,
+                                                    invoice.id,
+                                                  );
+                                                if (!blob)
+                                                  throw new Error(
+                                                    "Could not fetch PDF",
+                                                  );
+                                                const file = new File(
+                                                  [blob],
+                                                  `Invoice_${invoice.number || invoice.id}.pdf`,
+                                                  { type: "application/pdf" },
+                                                );
+
+                                                if (
+                                                  navigator.canShare &&
+                                                  navigator.canShare({
+                                                    files: [file],
+                                                  })
+                                                ) {
                                                   await navigator.share({
                                                     files: [file],
                                                     title: `Invoice ${invoice.number || invoice.id}`,
@@ -10794,14 +10941,28 @@ Quantity: ${invoiceData.quantity} QRs
                                                   setInvoiceShareStatus("");
                                                 } else {
                                                   // Fallback if sharing files is not supported
-                                                  const response = await shareVendorInvoice(token, invoice.id);
-                                                  const shareUrl = response?.shareUrl || response?.url || "";
+                                                  const response =
+                                                    await shareVendorInvoice(
+                                                      token,
+                                                      invoice.id,
+                                                    );
+                                                  const shareUrl =
+                                                    response?.shareUrl ||
+                                                    response?.url ||
+                                                    "";
                                                   if (shareUrl) {
                                                     const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(shareUrl)}&lang=en`;
-                                                    window.open(whatsappUrl, "_blank");
-                                                    setInvoiceShareStatus("Opening WhatsApp...");
+                                                    window.open(
+                                                      whatsappUrl,
+                                                      "_blank",
+                                                    );
+                                                    setInvoiceShareStatus(
+                                                      "Opening WhatsApp...",
+                                                    );
                                                   } else {
-                                                    setInvoiceShareStatus("Share link generated.");
+                                                    setInvoiceShareStatus(
+                                                      "Share link generated.",
+                                                    );
                                                   }
                                                 }
                                               } catch (error) {
@@ -10899,28 +11060,60 @@ Quantity: ${invoiceData.quantity} QRs
                                         type="button"
                                         onClick={async () => {
                                           try {
-                                            setInvoiceShareStatus("Preparing file...");
-                                            const blob = await fetchVendorInvoicePdfBlob(token, invoice.id);
-                                            if (!blob) throw new Error("Could not fetch PDF");
-                                            const file = new File([blob], `Invoice_${invoice.number || invoice.id}.pdf`, { type: 'application/pdf' });
-                                            
-                                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                            setInvoiceShareStatus(
+                                              "Preparing file...",
+                                            );
+                                            const blob =
+                                              await fetchVendorInvoicePdfBlob(
+                                                token,
+                                                invoice.id,
+                                              );
+                                            if (!blob)
+                                              throw new Error(
+                                                "Could not fetch PDF",
+                                              );
+                                            const file = new File(
+                                              [blob],
+                                              `Invoice_${invoice.number || invoice.id}.pdf`,
+                                              { type: "application/pdf" },
+                                            );
+
+                                            if (
+                                              navigator.canShare &&
+                                              navigator.canShare({
+                                                files: [file],
+                                              })
+                                            ) {
                                               await navigator.share({
                                                 files: [file],
                                                 title: `Invoice ${invoice.number || invoice.id}`,
                                               });
                                               setInvoiceShareStatus("");
                                             } else {
-                                              const response = await shareVendorInvoice(token, invoice.id);
-                                              const shareUrl = response?.shareUrl || response?.url || "";
+                                              const response =
+                                                await shareVendorInvoice(
+                                                  token,
+                                                  invoice.id,
+                                                );
+                                              const shareUrl =
+                                                response?.shareUrl ||
+                                                response?.url ||
+                                                "";
                                               if (shareUrl) {
                                                 const whatsappUrl = `https://api.whatsapp.com/send/?text=${encodeURIComponent(shareUrl)}&lang=en`;
-                                                window.open(whatsappUrl, "_blank");
-                                                setInvoiceShareStatus("Opening WhatsApp...");
+                                                window.open(
+                                                  whatsappUrl,
+                                                  "_blank",
+                                                );
+                                                setInvoiceShareStatus(
+                                                  "Opening WhatsApp...",
+                                                );
                                               }
                                             }
                                           } catch (error) {
-                                            setInvoiceShareStatus("Error generating link");
+                                            setInvoiceShareStatus(
+                                              "Error generating link",
+                                            );
                                           }
                                         }}
                                         className="flex-1 bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-400 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-gray-100 dark:border-zinc-800 flex items-center justify-center gap-2"
