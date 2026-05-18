@@ -54,6 +54,9 @@ import {
   Lock,
   Share2,
   ExternalLink,
+  SlidersHorizontal,
+  ChevronDown,
+  Filter,
 } from "lucide-react";
 import {
   getMe,
@@ -310,44 +313,42 @@ const NotificationItem = React.memo(
       <button
         type="button"
         onClick={() => onClick(item)}
-        className={`w-full text-left rounded-xl border p-3 transition-colors cursor-pointer ${
+        className={`w-full text-left p-4 transition-all duration-200 cursor-pointer border-b border-gray-100 dark:border-zinc-800/40 last:border-b-0 ${
           item.isRead
-            ? "border-gray-200/80 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
-            : "border-primary/25 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/15"
+            ? "bg-transparent hover:bg-gray-50/60 dark:hover:bg-zinc-900/40"
+            : "bg-emerald-500/[0.03] dark:bg-emerald-500/[0.04] hover:bg-emerald-500/[0.06] dark:hover:bg-emerald-500/[0.08]"
         }`}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3.5">
           <div
-            className={`h-10 w-10 rounded-xl border ${meta.badgeClass} flex items-center justify-center flex-shrink-0`}
+            className={`h-9 w-9 rounded-xl border flex items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-300 ${meta.badgeClass}`}
           >
-            <Icon size={18} />
+            <Icon size={16} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-                {item.title || meta.label}
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                {!item.isRead && (
+                  <span className="relative flex h-2 w-2 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                )}
+                <span className={`text-[13px] line-clamp-1 leading-snug tracking-tight ${
+                  item.isRead ? "font-semibold text-gray-700 dark:text-zinc-300" : "font-black text-gray-900 dark:text-white"
+                }`}>
+                  {item.title || meta.label}
+                </span>
               </div>
-              <div className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              <span className="text-[10px] font-semibold text-gray-400 dark:text-zinc-500 whitespace-nowrap pt-0.5">
                 {formatDate(item.createdAt)}
-              </div>
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-              {item.message || "No details available."}
-            </div>
-            <div className="mt-2 flex items-center gap-1.5">
-              {!item.isRead && (
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              )}
-              <span
-                className={`text-[10px] font-semibold ${
-                  item.isRead
-                    ? "text-gray-400 dark:text-gray-500"
-                    : "text-primary"
-                }`}
-              >
-                {item.isRead ? "Read" : "New"}
               </span>
             </div>
+            <p className={`text-xs mt-1.5 leading-relaxed line-clamp-2 ${
+              item.isRead ? "text-gray-500 dark:text-zinc-400 font-medium" : "text-gray-700 dark:text-zinc-300 font-semibold"
+            }`}>
+              {item.message || "No details available."}
+            </p>
           </div>
         </div>
       </button>
@@ -4886,13 +4887,16 @@ const VendorDashboard = () => {
   }, [fundableCampaigns, products, selectedQrCampaign, selectedQrProduct]);
 
   useEffect(() => {
-    const isValidSelection = overviewCampaignOptions.some(
-      (option) => option.id === overviewCampaignId,
-    );
-    if (!isValidSelection) {
-      setOverviewCampaignId("all");
+    if (!campaignsLoaded || campaigns.length === 0) return;
+    if (overviewCampaignId !== "all" && overviewCampaignId !== "unassigned") {
+      const isValidSelection = campaigns.some(
+        (campaign) => campaign.id === overviewCampaignId,
+      );
+      if (!isValidSelection) {
+        setOverviewCampaignId("all");
+      }
     }
-  }, [overviewCampaignId, overviewCampaignOptions]);
+  }, [overviewCampaignId, campaigns, campaignsLoaded]);
 
   useEffect(() => {
     if (token) {
@@ -6568,17 +6572,20 @@ const VendorDashboard = () => {
 
                       {/* Overview Tab Controls - Pulled into header for better accessibility */}
                       {activeTab === "overview" && (
-                        <div className="flex items-center justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm border-y sm:border border-gray-100 dark:border-zinc-800 rounded-none sm:rounded-2xl p-2 pl-4 shadow-sm">
-                          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                            Filter View
-                          </span>
+                        <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-3 px-4 shadow-sm">
                           <div className="flex items-center gap-2">
+                            <Filter size={16} className="text-emerald-500" />
+                            <span className="text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300">
+                              Filter by Campaign
+                            </span>
+                          </div>
+                          <div className="relative">
                             <select
                               value={overviewCampaignId}
                               onChange={(event) =>
                                 setOverviewCampaignId(event.target.value)
                               }
-                              className="appearance-none min-w-[140px] max-w-[200px] rounded-xl border-none bg-gray-50 dark:bg-zinc-800 px-3 py-1.5 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
+                              className="appearance-none w-[160px] sm:w-[200px] rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 pl-3 pr-8 py-1.5 text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer"
                             >
                               {overviewCampaignOptions.map((option) => (
                                 <option key={option.id} value={option.id}>
@@ -6586,8 +6593,8 @@ const VendorDashboard = () => {
                                 </option>
                               ))}
                             </select>
-                            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                              <Megaphone size={14} />
+                            <div className="absolute right-2.5 top-2 text-gray-400 pointer-events-none">
+                              <ChevronDown size={14} />
                             </div>
                           </div>
                         </div>
@@ -11011,23 +11018,23 @@ Quantity: ${invoiceData.quantity} QRs
                       : "translate-y-4 scale-95"
                   }`}
                 >
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-zinc-800/60 bg-white/60 dark:bg-[#0f0f0f]/40 backdrop-blur-md">
                     <div className="flex items-center gap-2">
-                      <Bell size={16} className="text-primary" />
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      <Bell size={16} className="text-emerald-500" />
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
                         Notifications
                       </span>
                       {notificationUnreadCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white shadow-sm shadow-emerald-500/20">
                           {notificationUnreadCount} new
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => loadNotifications(token)}
-                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
                         title="Refresh notifications"
                       >
                         <RefreshCw
@@ -11044,7 +11051,7 @@ Quantity: ${invoiceData.quantity} QRs
                           isLoadingNotifications ||
                           notificationUnreadCount === 0
                         }
-                        className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="h-8 px-3.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Check size={12} />
                         {isMarkingNotificationsRead
@@ -11054,7 +11061,7 @@ Quantity: ${invoiceData.quantity} QRs
                       <button
                         type="button"
                         onClick={() => setIsNotificationsOpen(false)}
-                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
                         title="Close notifications"
                       >
                         <X size={14} />
@@ -11067,7 +11074,7 @@ Quantity: ${invoiceData.quantity} QRs
                     </div>
                   )}
                   <div
-                    className="min-h-0 flex-1 overflow-y-scroll overscroll-contain p-3 pr-2 space-y-2 custom-scrollbar touch-pan-y"
+                    className="min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar touch-pan-y"
                     style={{ WebkitOverflowScrolling: "touch" }}
                     onWheel={(event) => event.stopPropagation()}
                     onTouchMove={(event) => event.stopPropagation()}
