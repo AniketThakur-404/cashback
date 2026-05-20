@@ -140,7 +140,7 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
       setOtpSent(true);
       setStatus(
         authMethod === "phone"
-          ? "A verification code has been sent to your phone via SMS."
+          ? "A verification code has been sent to your phone via WhatsApp."
           : "A verification code has been sent to your email address."
       );
       setResendCooldown(30); // 30 seconds cooldown
@@ -199,7 +199,6 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
             <Mail size={16} />
             <span>Email OTP</span>
           </button>
-          {/* 
           <button
             type="button"
             onClick={() => handleMethodChange("phone")}
@@ -210,9 +209,8 @@ const WalletAuth = ({ onLoginSuccess, initialMode = "login" }) => {
             }`}
           >
             <Phone size={16} />
-            <span>Mobile OTP</span>
+            <span>WhatsApp OTP</span>
           </button>
-          */}
         </div>
       )}
 
