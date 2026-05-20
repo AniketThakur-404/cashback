@@ -329,28 +329,6 @@ const WalletAuth = ({ onLoginSuccess }) => {
       ) : !otpSent ? (
         /* Send OTP Step */
         <div className="space-y-5">
-          {/* Continue with Google */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isGoogleSigningIn}
-            className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-200 font-semibold py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/40 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 text-sm"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.6 -0.05,-1.17 -0.13,-1.7Z" fill="#4285f4" />
-              <path d="M12.5,17.38c-1.54,0 -2.84,-1.04 -3.3,-2.45h-3.41v2.64C7.03,20.08 9.54,21.6 12.5,21.6c2.53,0 4.88,-0.9 6.64,-2.58l-3.3,-2.58C14.9,16.96 13.78,17.38 12.5,17.38Z" fill="#34a853" />
-              <path d="M9.2,14.93c-0.23,-0.69 -0.36,-1.43 -0.36,-2.2c0,-0.77 0.13,-1.51 0.36,-2.2v7.89h-3.4C5.03,9.52 4.5,11.45 4.5,13.5c0,2.05 0.53,3.98 1.3,5.61l3.4,-2.18Z" fill="#fbbc05" />
-              <path d="M12.5,8.13c1.37,0 2.6,0.47 3.57,1.4l2.67,-2.67C17.15,5.32 14.97,4.5 12.5,4.5C9.54,4.5 7.03,6.02 5.8,8.59l3.4,2.64c0.46,-1.41 1.76,-2.45 3.3,-2.45Z" fill="#ea4335" />
-            </svg>
-            <span>{isGoogleSigningIn ? "Signing in..." : "Continue with Google"}</span>
-          </button>
-
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
-            <span className="text-xs text-gray-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Or</span>
-            <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
-          </div>
-
           <div className="space-y-3.5">
             {authMethod === "phone" ? (
               <div className="relative">
@@ -402,6 +380,28 @@ const WalletAuth = ({ onLoginSuccess }) => {
               {isSendingOtp ? "Sending..." : "Continue"}
             </button>
           </div>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+            <span className="text-xs text-gray-400 dark:text-zinc-500 font-semibold uppercase tracking-wider">Or</span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-800" />
+          </div>
+
+          {/* Continue with Google */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isGoogleSigningIn}
+            className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-200 font-semibold py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/40 shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 text-sm"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.6 -0.05,-1.17 -0.13,-1.7Z" fill="#4285f4" />
+              <path d="M12.5,17.38c-1.54,0 -2.84,-1.04 -3.3,-2.45h-3.41v2.64C7.03,20.08 9.54,21.6 12.5,21.6c2.53,0 4.88,-0.9 6.64,-2.58l-3.3,-2.58C14.9,16.96 13.78,17.38 12.5,17.38Z" fill="#34a853" />
+              <path d="M9.2,14.93c-0.23,-0.69 -0.36,-1.43 -0.36,-2.2c0,-0.77 0.13,-1.51 0.36,-2.2v7.89h-3.4C5.03,9.52 4.5,11.45 4.5,13.5c0,2.05 0.53,3.98 1.3,5.61l3.4,-2.18Z" fill="#fbbc05" />
+              <path d="M12.5,8.13c1.37,0 2.6,0.47 3.57,1.4l2.67,-2.67C17.15,5.32 14.97,4.5 12.5,4.5C9.54,4.5 7.03,6.02 5.8,8.59l3.4,2.64c0.46,-1.41 1.76,-2.45 3.3,-2.45Z" fill="#ea4335" />
+            </svg>
+            <span>{isGoogleSigningIn ? "Signing in..." : "Continue with Google"}</span>
+          </button>
         </div>
       ) : (
         /* OTP Sent Verification Step */
