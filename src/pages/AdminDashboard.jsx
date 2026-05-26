@@ -1022,6 +1022,9 @@ const AdminDashboard = () => {
   const [analyticsRange, setAnalyticsRange] = useState(30);
   const [analyticsMetric, setAnalyticsMetric] = useState("transactions");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const searchLower = (searchQuery || "").toLowerCase().trim();
+  const normalizedSearch = searchQuery.trim().toLowerCase();
 
   const clearSession = (message = "") => {
     if (typeof window !== "undefined") {
@@ -1183,19 +1186,42 @@ const AdminDashboard = () => {
   const showVendorTable = isVendorsRoute; // Always show table if vendors route
   const shouldRenderVendorsSection = isVendorsRoute;
 
+  const filteredWithdrawals = useMemo(() => {
+    const list = withdrawals || [];
+    if (!searchLower) return list;
+    return list.filter((w) => {
+      const id = String(w?.id || "").toLowerCase();
+      const requester = String(
+        w?.Wallet?.Vendor?.businessName ||
+        w?.Wallet?.User?.name ||
+        w?.Wallet?.User?.email ||
+        ""
+      ).toLowerCase();
+      const status = String(w?.status || "").toLowerCase();
+      const ref = String(w?.referenceNo || "").toLowerCase();
+      return (
+        id.includes(searchLower) ||
+        requester.includes(searchLower) ||
+        status.includes(searchLower) ||
+        ref.includes(searchLower)
+      );
+    });
+  }, [withdrawals, searchLower]);
+
   const withdrawalPreview = useMemo(() => {
-    if (!withdrawals?.length) return [];
-    const pending = withdrawals.filter(
+    const list = filteredWithdrawals || [];
+    if (!list.length) return [];
+    const pending = list.filter(
       (w) => String(w.status || "").toLowerCase() === "pending",
     );
     if (showAllWithdrawals) {
-      return pending.length ? pending : withdrawals;
+      return pending.length ? pending : list;
     }
     if (pending.length) {
       return pending.slice(0, 3);
     }
-    return withdrawals.slice(0, 3);
-  }, [withdrawals, showAllWithdrawals]);
+    return list.slice(0, 3);
+  }, [filteredWithdrawals, showAllWithdrawals]);
 
   const navRouteMap = {
     overview: "/admin/overview",
@@ -3177,23 +3203,30 @@ const AdminDashboard = () => {
   const notificationCount = pendingWithdrawalCount + orderAttentionCount;
 
   const filteredLogs = useMemo(() => {
-    if (logsFilter === "all") return logs;
+    let list = logs || [];
     if (logsFilter === "qr") {
-      return logs.filter((log) => String(log.action || "").includes("qr"));
-    }
-    if (logsFilter === "wallet") {
-      return logs.filter((log) => String(log.action || "").includes("wallet"));
-    }
-    if (logsFilter === "admin") {
-      return logs.filter(
+      list = list.filter((log) => String(log.action || "").includes("qr"));
+    } else if (logsFilter === "wallet") {
+      list = list.filter((log) => String(log.action || "").includes("wallet"));
+    } else if (logsFilter === "admin") {
+      list = list.filter(
         (log) => String(log.actorRole || "").toLowerCase() === "admin",
       );
+    } else if (logsFilter === "fraud") {
+      list = list.filter((log) => String(log.action || "").includes("flag"));
     }
-    if (logsFilter === "fraud") {
-      return logs.filter((log) => String(log.action || "").includes("flag"));
-    }
-    return logs;
-  }, [logs, logsFilter]);
+    if (!searchLower) return list;
+    return list.filter((log) => {
+      const action = String(log.action || "").toLowerCase();
+      const role = String(log.actorRole || "").toLowerCase();
+      const metadata = JSON.stringify(log.metadata || {}).toLowerCase();
+      return (
+        action.includes(searchLower) ||
+        role.includes(searchLower) ||
+        metadata.includes(searchLower)
+      );
+    });
+  }, [logs, logsFilter, searchLower]);
 
   const handleCampaignRowStatusSave = async (campaignId, currentStatus) => {
     if (!campaignId) return;
@@ -3512,10 +3545,9 @@ const AdminDashboard = () => {
       }
     }
   };
-  const normalizedSearch = searchQuery.trim().toLowerCase();
 
   // --- Filtering & Derived State for Dashboard Views ---
-  const searchLower = (searchQuery || "").toLowerCase().trim();
+
 
   // Vendors
   const normalizedVendorView = String(vendorView || "all").toLowerCase();
@@ -3697,12 +3729,12 @@ const AdminDashboard = () => {
     });
   }, [qrs]);
 
-  const qrBatchSearchTerm = qrBatchSearch.trim().toLowerCase();
+  const qrBatchSearchTerm = (qrBatchSearch || searchQuery || "").trim().toLowerCase();
   const filteredQrBatchSummary = useMemo(() => {
     if (!qrBatchSearchTerm) return qrBatchSummary;
     return qrBatchSummary.filter((batch) => {
       const haystack =
-        `${batch.campaignTitle} ${batch.brandName} - {batch.vendorLabel}`.toLowerCase();
+        `${batch.campaignTitle} ${batch.brandName} ${batch.vendorLabel}`.toLowerCase();
       return haystack.includes(qrBatchSearchTerm);
     });
   }, [qrBatchSummary, qrBatchSearchTerm]);
@@ -3812,9 +3844,26 @@ const AdminDashboard = () => {
     });
   }, [orders]);
 
+  const filteredCampaigns = useMemo(() => {
+    const list = campaigns || [];
+    if (!searchLower) return list;
+    return list.filter((c) => {
+      const title = String(c?.title || "").toLowerCase();
+      const desc = String(c?.description || "").toLowerCase();
+      const brand = String(c?.Brand?.name || c?.brand?.name || "").toLowerCase();
+      const id = String(c?.id || "").toLowerCase();
+      return (
+        title.includes(searchLower) ||
+        desc.includes(searchLower) ||
+        brand.includes(searchLower) ||
+        id.includes(searchLower)
+      );
+    });
+  }, [campaigns, searchLower]);
+
   const campaignStatusCounts = useMemo(
-    () => buildStatusCounts(campaigns || [], "status"),
-    [campaigns],
+    () => buildStatusCounts(filteredCampaigns || [], "status"),
+    [filteredCampaigns],
   );
 
   // --- Dashboard Data Filtering ---
@@ -3874,6 +3923,50 @@ const AdminDashboard = () => {
       );
     }
 
+    // Filter by Search Query
+    if (searchLower) {
+      _transactions = _transactions.filter((t) => {
+        const id = String(t.id || "").toLowerCase();
+        const category = String(t.category || "").toLowerCase();
+        const desc = String(t.description || "").toLowerCase();
+        const email = String(t.Wallet?.User?.email || t.Wallet?.Vendor?.contactEmail || "").toLowerCase();
+        const name = String(t.Wallet?.User?.name || t.Wallet?.Vendor?.businessName || "").toLowerCase();
+        return (
+          id.includes(searchLower) ||
+          category.includes(searchLower) ||
+          desc.includes(searchLower) ||
+          email.includes(searchLower) ||
+          name.includes(searchLower)
+        );
+      });
+
+      _qrs = _qrs.filter((q) => {
+        const id = String(q.id || "").toLowerCase();
+        const campaignTitle = String(q.Campaign?.title || "").toLowerCase();
+        const brandName = String(q.Campaign?.Brand?.name || "").toLowerCase();
+        const code = String(q.code || "").toLowerCase();
+        return (
+          id.includes(searchLower) ||
+          campaignTitle.includes(searchLower) ||
+          brandName.includes(searchLower) ||
+          code.includes(searchLower)
+        );
+      });
+
+      _orders = _orders.filter((o) => {
+        const id = String(o.id || "").toLowerCase();
+        const userEmail = String(o.User?.email || o.user?.email || "").toLowerCase();
+        const campaignTitle = String(o.Campaign?.title || o.campaign?.title || "").toLowerCase();
+        const brandName = String(o.Campaign?.Brand?.name || o.vendor?.Brand?.name || "").toLowerCase();
+        return (
+          id.includes(searchLower) ||
+          userEmail.includes(searchLower) ||
+          campaignTitle.includes(searchLower) ||
+          brandName.includes(searchLower)
+        );
+      });
+    }
+
     return { transactions: _transactions, qrs: _qrs, orders: _orders };
   }, [
     transactions,
@@ -3882,6 +3975,7 @@ const AdminDashboard = () => {
     filterVendorId,
     filterCampaignId,
     filterBrandId,
+    searchLower,
   ]);
 
   const {
@@ -3909,7 +4003,7 @@ const AdminDashboard = () => {
   const limitedQrs = showAllQrs ? effectiveQrs : effectiveQrs.slice(0, 12);
 
   // Campaigns
-  const limitedCampaigns = showAllCampaigns ? campaigns : campaigns.slice(0, 6);
+  const limitedCampaigns = showAllCampaigns ? filteredCampaigns : filteredCampaigns.slice(0, 6);
 
   // Analytics - Transaction Series (these were missing)
   const transactionSeries = useMemo(
@@ -4111,7 +4205,6 @@ const AdminDashboard = () => {
                 <ShieldCheck size={18} className="text-[#059669]" />
                 Secure Login
               </div>
-              <ModeToggle />
             </div>
 
             <form
@@ -4296,17 +4389,7 @@ const AdminDashboard = () => {
 
             {/* Right: search + actions + avatar */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Search */}
-              <div className="hidden md:flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 w-48">
-                <Search size={14} className="text-slate-400 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery || ""}
-                  onChange={(e) => setSearchQuery?.(e.target.value)}
-                  className="bg-transparent text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none w-full"
-                />
-              </div>
+
 
               {/* Refresh */}
               <button
@@ -4323,19 +4406,67 @@ const AdminDashboard = () => {
               </button>
 
               {/* Notifications */}
-              <button
-                className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell size={17} />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#059669] text-[9px] font-bold text-white flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                  className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell size={17} />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#059669] text-[9px] font-bold text-white flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
 
-              <ModeToggle />
+                {isNotificationDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsNotificationDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#0f0f11] z-50 animate-in fade-in slide-in-from-top-1 duration-100">
+                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2 mb-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">
+                          Notifications ({notificationCount})
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {vendorNotificationActivities.length === 0 ? (
+                          <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                            No notifications yet.
+                          </div>
+                        ) : (
+                          vendorNotificationActivities.map((act) => (
+                            <button
+                              key={act.id}
+                              onClick={() => {
+                                handleRequestClick(act);
+                                setIsNotificationDropdownOpen(false);
+                              }}
+                              className="w-full text-left p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-start gap-3"
+                            >
+                              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                  {act.title}
+                                </p>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                                  {act.subtitle}
+                                </p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                  {act.date}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* Admin avatar pill */}
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-white/10 ml-1">
@@ -4374,66 +4505,6 @@ const AdminDashboard = () => {
               id="overview"
               className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
             >
-              {/* Filters Bar */}
-              <div className="flex flex-col md:flex-row gap-3 bg-white dark:bg-[#111113] p-4 rounded-xl border border-slate-200 dark:border-white/[0.06]">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
-                    Vendor / Brand
-                  </label>
-                  <select
-                    value={filterVendorId}
-                    onChange={(e) => {
-                      const vId = e.target.value;
-                      setFilterVendorId(vId);
-                      if (vId === "all") {
-                        setFilterBrandId("all");
-                      } else {
-                        const v = vendors.find((v) => v.id === vId);
-                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
-                      }
-                      setFilterCampaignId("all");
-                    }}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Vendors</option>
-                    {vendors.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.businessName || v.User?.name || v.contactEmail}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
-                    Campaign
-                  </label>
-                  <select
-                    value={filterCampaignId}
-                    onChange={(e) => setFilterCampaignId(e.target.value)}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Campaigns</option>
-                    {campaigns
-                      .filter((c) => {
-                        const mv =
-                          filterVendorId === "all" ||
-                          c.vendorId === filterVendorId ||
-                          c.Vendor?.id === filterVendorId;
-                        const mb =
-                          filterBrandId === "all" ||
-                          c.brandId === filterBrandId ||
-                          c.Brand?.id === filterBrandId;
-                        return mv && mb;
-                      })
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.title || "Untitled"}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-
               {/* KPI Cards — 2 rows of 3 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {[
@@ -4540,6 +4611,66 @@ const AdminDashboard = () => {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Filters Bar */}
+              <div className="flex flex-col md:flex-row gap-3 bg-white dark:bg-[#111113] p-4 rounded-xl border border-slate-200 dark:border-white/[0.06]">
+                <div className="flex-1 space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
+                    Vendor / Brand
+                  </label>
+                  <select
+                    value={filterVendorId}
+                    onChange={(e) => {
+                      const vId = e.target.value;
+                      setFilterVendorId(vId);
+                      if (vId === "all") {
+                        setFilterBrandId("all");
+                      } else {
+                        const v = vendors.find((v) => v.id === vId);
+                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
+                      }
+                      setFilterCampaignId("all");
+                    }}
+                    className={adminInputClass}
+                  >
+                    <option value="all">All Vendors</option>
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.businessName || v.User?.name || v.contactEmail}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
+                    Campaign
+                  </label>
+                  <select
+                    value={filterCampaignId}
+                    onChange={(e) => setFilterCampaignId(e.target.value)}
+                    className={adminInputClass}
+                  >
+                    <option value="all">All Campaigns</option>
+                    {campaigns
+                      .filter((c) => {
+                        const campaignVendorId = c.Brand?.vendorId || c.brand?.vendorId || c.vendorId;
+                        const mv =
+                          filterVendorId === "all" ||
+                          campaignVendorId === filterVendorId;
+                        const mb =
+                          filterBrandId === "all" ||
+                          c.brandId === filterBrandId ||
+                          c.Brand?.id === filterBrandId;
+                        return mv && mb;
+                      })
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title || "Untitled"}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
 
               {/* Platform Activity Chart */}
@@ -4824,10 +4955,10 @@ const AdminDashboard = () => {
                     <option value="all">All Campaigns</option>
                     {campaigns
                       .filter((c) => {
+                        const campaignVendorId = c.Brand?.vendorId || c.brand?.vendorId || c.vendorId;
                         const matchesVendor =
                           filterVendorId === "all" ||
-                          c.vendorId === filterVendorId ||
-                          c.Vendor?.id === filterVendorId;
+                          campaignVendorId === filterVendorId;
                         const matchesBrand =
                           filterBrandId === "all" ||
                           c.brandId === filterBrandId ||
@@ -5122,10 +5253,10 @@ const AdminDashboard = () => {
                     <option value="all">All Campaigns</option>
                     {campaigns
                       .filter((c) => {
+                        const campaignVendorId = c.Brand?.vendorId || c.brand?.vendorId || c.vendorId;
                         const matchesVendor =
                           filterVendorId === "all" ||
-                          c.vendorId === filterVendorId ||
-                          c.Vendor?.id === filterVendorId;
+                          campaignVendorId === filterVendorId;
                         const matchesBrand =
                           filterBrandId === "all" ||
                           c.brandId === filterBrandId ||
@@ -6444,7 +6575,7 @@ const AdminDashboard = () => {
                 )}
               </div>
 
-              {withdrawals.length > 0 && (
+              {filteredWithdrawals.length > 0 && (
                 <div className={`${adminPanelClass} overflow-hidden`}>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
@@ -6460,7 +6591,7 @@ const AdminDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {withdrawals.map((withdrawal) => {
+                        {filteredWithdrawals.map((withdrawal) => {
                           const requester =
                             withdrawal?.Wallet?.Vendor?.businessName ||
                             withdrawal?.Wallet?.User?.name ||
