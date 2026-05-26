@@ -16,6 +16,7 @@ import {
 } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
+import AuthImage from "../components/AuthImage";
 
 const CATEGORY_STYLES = {
   Popular: "from-emerald-600 to-teal-500",
@@ -172,11 +173,10 @@ const ProductCard = ({
       <div
         className={`h-28 sm:h-40 relative overflow-hidden bg-linear-to-br ${gradient}`}
       >
-        {imageSrc && !imgError ? (
-          <img
+        {imageSrc ? (
+          <AuthImage
             src={imageSrc}
             alt={item.name}
-            onError={() => setImgError(true)}
             className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700"
           />
         ) : (

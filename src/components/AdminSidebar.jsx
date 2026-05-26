@@ -24,6 +24,7 @@ import {
     UserMinus,
     UserX,
     Gift,
+    ShoppingBag,
 } from 'lucide-react';
 import StarBorder from './StarBorder';
 import { useTheme } from "./ThemeProvider";
@@ -91,6 +92,7 @@ const AdminSidebar = ({
                 { id: 'finance', label: 'Finance & Revenue', icon: TrendingUp },
                 { id: 'qrs', label: 'QR Registry', icon: QrCode },
                 { id: 'redeem-catalog', label: 'Redeem Catalog', icon: Gift },
+                { id: 'product-track', label: 'Product Track', icon: ShoppingBag },
             ],
         },
         {

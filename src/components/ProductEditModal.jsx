@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "../styles/buttonStyles";
 import { getApiBaseUrl } from "../lib/apiClient";
+import AuthImage from "./AuthImage";
 
 const API_BASE_URL = getApiBaseUrl();
 const MAX_IMAGE_SIZE_MB = 10;
@@ -355,7 +356,7 @@ const ProductEditModal = ({ product, onClose, onSave, isLoading }) => {
               <div className="flex items-center gap-4">
                 {imagePreview ? (
                   <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-zinc-700 shrink-0">
-                    <img
+                    <AuthImage
                       src={imagePreview}
                       alt="Preview"
                       className="w-full h-full object-cover"

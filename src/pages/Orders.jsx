@@ -30,22 +30,27 @@ const formatDate = (value) => {
   });
 };
 
-const OrderDetailModal = ({ order, onClose }) => {
+const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
   if (!order) return null;
 
   const timeline = [
     { status: "Order Placed", date: order.createdAt, done: true, icon: Clock },
-    { status: "Processing", date: order.createdAt, done: true, icon: Package },
     {
-      status: "Confirmed",
+      status: "Processing",
       date: order.createdAt,
-      done: true,
+      done: status === "PROCESSING" || status === "SHIPPED" || status === "DELIVERED",
+      icon: Package,
+    },
+    {
+      status: "Shipped",
+      date: order.createdAt,
+      done: status === "SHIPPED" || status === "DELIVERED",
       icon: ShieldCheck,
     },
     {
-      status: "Success",
+      status: "Delivered",
       date: order.createdAt,
-      done: true,
+      done: status === "DELIVERED",
       icon: CheckCircle2,
     },
   ];
@@ -150,6 +155,18 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderStatuses, setOrderStatuses] = useState({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("redeem_order_statuses");
+      if (saved) {
+        setOrderStatuses(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const loadOrders = useCallback(async () => {
     if (!authToken) {
@@ -265,9 +282,21 @@ const Orders = () => {
                     {tx.description.replace(/Store redeem: /i, "")}
                   </div>
                   <div className="flex items-center gap-2 mt-2">
-                    <div className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                      Success
-                    </div>
+                    {(() => {
+                      const statusVal = orderStatuses[tx.id] || "SUCCESS";
+                      const classes = statusVal === "SUCCESS"
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+                        : statusVal === "PROCESSING"
+                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                        : statusVal === "SHIPPED"
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                        : "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400";
+                      return (
+                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${classes}`}>
+                          {statusVal}
+                        </div>
+                      );
+                    })()}
                     <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500">
                       {formatDate(tx.createdAt)}
                     </div>
@@ -297,6 +326,7 @@ const Orders = () => {
         {selectedOrder && (
           <OrderDetailModal
             order={selectedOrder}
+            status={orderStatuses[selectedOrder.id] || "SUCCESS"}
             onClose={() => setSelectedOrder(null)}
           />
         )}

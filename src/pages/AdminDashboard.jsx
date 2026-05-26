@@ -106,6 +106,7 @@ import {
   deleteAdminUser,
 } from "../lib/api";
 import { getApiBaseUrl } from "../lib/apiClient";
+import AuthImage from "../components/AuthImage";
 
 const ADMIN_TOKEN_KEY = "cashback_admin_token";
 const ADMIN_SIDEBAR_KEY = "cashback_admin_sidebar";
@@ -8300,7 +8301,7 @@ const AdminDashboard = () => {
                                 <div className="flex items-center gap-3">
                                   <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 overflow-hidden">
                                     {product?.image ? (
-                                      <img
+                                      <AuthImage
                                         src={resolveAssetUrl(product.image)}
                                         alt=""
                                         className="h-full w-full object-cover"
@@ -8766,7 +8767,7 @@ const AdminDashboard = () => {
                           <div className="flex flex-col md:flex-row md:items-center gap-4">
                             <div className="h-20 w-32 rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center">
                               {banner?.img ? (
-                                <img
+                                <AuthImage
                                   src={resolveAssetUrl(banner.img)}
                                   alt="Banner preview"
                                   className="h-full w-full object-cover"

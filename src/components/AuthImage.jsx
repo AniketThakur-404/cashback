@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { getAuthToken } from "../lib/auth";
 
-const FallbackImage = ({
+const AuthImage = ({
   src,
   alt,
   className,
   fallbackSrc = "/placeholder.svg",
-  fallback, // Support React Element as fallback
+  fallback, // React element fallback
   showLoader = true,
   ...props
 }) => {
@@ -25,6 +25,9 @@ const FallbackImage = ({
       }
 
       const sourceStr = String(src).trim();
+
+      // If it doesn't contain /api/upload or isn't a relative upload API route,
+      // load it directly
       const isAuthRequired = /\/api\/upload\//i.test(sourceStr);
 
       if (!isAuthRequired) {
@@ -54,7 +57,7 @@ const FallbackImage = ({
         objectUrl = URL.createObjectURL(blob);
         setImgSrc(objectUrl);
       } catch (err) {
-        console.error("FallbackImage auth load error:", err);
+        console.error("AuthImage load error:", err);
         if (active) {
           setError(true);
           setImgSrc(fallbackSrc);
@@ -83,7 +86,7 @@ const FallbackImage = ({
   return (
     <div className={`relative ${className || ""}`}>
       {loading && showLoader && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-zinc-800/40 animate-pulse rounded-inherit">
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-zinc-800 animate-pulse">
           <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
@@ -103,4 +106,4 @@ const FallbackImage = ({
   );
 };
 
-export default FallbackImage;
+export default AuthImage;

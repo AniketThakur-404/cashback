@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Trash2,
   Calendar,
+  ShoppingBag,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { getMe, updateUserProfile, uploadUserAvatar, deleteUserAccount } from "../lib/api";
@@ -285,6 +286,11 @@ const Profile = () => {
                 icon={User}
                 label="Edit Profile"
                 onClick={() => setShowEditModal(true)}
+              />
+              <MenuButton
+                icon={ShoppingBag}
+                label="My Orders"
+                to="/orders"
               />
               {/*
               <MenuButton
