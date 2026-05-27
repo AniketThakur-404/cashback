@@ -13,6 +13,7 @@ import {
   Bell,
   Building2,
   CheckCircle2,
+  Clock,
   ChevronRight,
   ChevronDown,
   CircleDollarSign,
@@ -105,6 +106,9 @@ import {
   getAdminSupportTickets,
   replyAdminSupportTicket,
   deleteAdminUser,
+  getAdminProducts,
+  updateAdminProduct,
+  deleteAdminProduct,
 } from "../lib/api";
 import { getApiBaseUrl } from "../lib/apiClient";
 import AuthImage from "../components/AuthImage";
@@ -1012,6 +1016,25 @@ const AdminDashboard = () => {
   const [supportActionError, setSupportActionError] = useState("");
   const [supportView, setSupportView] = useState("all");
 
+  const [adminProducts, setAdminProducts] = useState([]);
+  const [isLoadingAdminProducts, setIsLoadingAdminProducts] = useState(false);
+  const [adminProductsError, setAdminProductsError] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [selectedProductForDetail, setSelectedProductForDetail] = useState(null);
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
+  const [redeemOrderStatuses, setRedeemOrderStatuses] = useState({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("redeem_order_statuses");
+      if (saved) {
+        setRedeemOrderStatuses(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   // User Wallet Modal
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUserWalletOpen, setIsUserWalletOpen] = useState(false);
@@ -1189,6 +1212,7 @@ const AdminDashboard = () => {
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
   const isRedeemCatalogRoute = activeSection === "redeem-catalog";
+  const isProductTrackRoute = activeSection === "product-track" || activeSection === "product_track";
   const isAddProductRoute = activeSection === "add-product";
   const isAccountRoute = activeSection === "account";
   const isSecurityRoute = activeSection === "security";
@@ -1257,6 +1281,8 @@ const AdminDashboard = () => {
     transactions: "/admin/transactions",
     qrs: "/admin/qrs",
     "redeem-catalog": "/admin/redeem-catalog",
+    "product-track": "/admin/product-track",
+    "product_track": "/admin/product_track",
     logs: "/admin/logs",
     settings: "/admin/settings",
     account: "/admin/account",
@@ -1278,6 +1304,8 @@ const AdminDashboard = () => {
     transactions: "Transactions",
     qrs: "QR Registry",
     "redeem-catalog": "Redeem Catalog",
+    "product-track": "Product Track",
+    "product_track": "Product Track",
     logs: "Logs & Audit",
     settings: "System Settings",
     account: "Account",
@@ -1383,6 +1411,52 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadAdminProducts = async (authToken = token) => {
+    if (!authToken) return;
+    setIsLoadingAdminProducts(true);
+    setAdminProductsError("");
+    try {
+      const data = await getAdminProducts(authToken);
+      const items = Array.isArray(data) ? data : data?.products || data?.items || [];
+      setAdminProducts(items);
+    } catch (err) {
+      handleRequestError(err, setAdminProductsError, "Unable to load products.");
+    } finally {
+      setIsLoadingAdminProducts(false);
+    }
+  };
+
+  const handleToggleProductStatus = async (product) => {
+    if (!token) return;
+    const newStatus = product.status === "active" ? "paused" : "active";
+    try {
+      await updateAdminProduct(token, product.id, { status: newStatus });
+      setAdminProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, status: newStatus } : p))
+      );
+    } catch (err) {
+      alert(err.message || "Failed to update product status.");
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!token) return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await deleteAdminProduct(token, productId);
+      setAdminProducts((prev) => prev.filter((p) => p.id !== productId));
+    } catch (err) {
+      alert(err.message || "Failed to delete product.");
+    }
+  };
+
+  const handleUpdateRedeemOrderStatus = (orderId, newStatus) => {
+    const updated = { ...redeemOrderStatuses, [orderId]: newStatus };
+    setRedeemOrderStatuses(updated);
+    localStorage.setItem("redeem_order_statuses", JSON.stringify(updated));
+  };
+
+
   const loadCampaignAnalytics = async (
     authToken = token,
     campaignId = campaignAnalyticsId,
@@ -1467,7 +1541,7 @@ const AdminDashboard = () => {
     setIsLoadingTransactions(true);
     setTransactionsError("");
     try {
-      const data = await getAdminTransactions(authToken);
+      const data = await getAdminTransactionsFiltered(authToken, { limit: 1000 });
       setTransactions(data?.transactions || []);
     } catch (err) {
       handleRequestError(
@@ -1746,6 +1820,8 @@ const AdminDashboard = () => {
       tasks.push(loadLogs(authToken));
     } else if (isRedeemCatalogRoute || isAddProductRoute) {
       tasks.push(loadSettings(authToken));
+    } else if (isProductTrackRoute) {
+      tasks.push(loadTransactions(authToken), loadSettings(authToken));
     } else if (isSettingsRoute) {
       tasks.push(loadSettings(authToken), loadBrands(authToken));
     }
@@ -8803,7 +8879,358 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     </div>
-                  )}
+          )}
+            </section>
+          )}
+
+          {/* Product Track Section (Redemption Order Tracking) */}
+          {isProductTrackRoute && (
+            <section
+              id="product-track"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div className={`${adminPanelClass} p-5 space-y-5`}>
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      Order Tracking
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Track and manage customer redeem store order statuses.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => loadTransactions(token)}
+                      disabled={isLoadingTransactions}
+                      className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2`}
+                    >
+                      <RefreshCw size={14} className={isLoadingTransactions ? "animate-spin" : ""} />
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                    <input
+                      type="text"
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                      placeholder="Search by order ID, customer name, email, or product..."
+                      className="w-full rounded-lg border border-slate-200 bg-white/80 px-9 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#059669] dark:border-white/10 dark:bg-[#0f0f11] dark:text-white dark:placeholder:text-white/40"
+                    />
+                  </div>
+                </div>
+
+                {/* Loading / Error States */}
+                {isLoadingTransactions ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-primary border-r-transparent"></div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-3">
+                      Loading redemption orders...
+                    </div>
+                  </div>
+                ) : transactionsError ? (
+                  <div className="text-xs text-rose-500 font-semibold p-4 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30">
+                    {transactionsError}
+                  </div>
+                ) : (
+                  <>
+                    {/* Orders Table */}
+                    {(() => {
+                      const allOrders = (transactions || []).filter((tx) => {
+                        const desc = String(tx?.description || "").toLowerCase();
+                        return desc.includes("redeem") || desc.includes("order");
+                      });
+
+                      const filtered = allOrders.filter((order) => {
+                        if (!order) return false;
+                        const query = productSearchQuery.toLowerCase().trim();
+                        if (!query) return true;
+                        
+                        const id = String(order.id || "").toLowerCase();
+                        const desc = String(order.description || "").toLowerCase();
+                        const productName = desc.replace(/^(store redeem:|redeem:)\s*/i, "").toLowerCase();
+                        const userEmail = String(order.Wallet?.User?.email || "").toLowerCase();
+                        const userName = String(order.Wallet?.User?.name || "").toLowerCase();
+                        
+                        return (
+                          id.includes(query) ||
+                          productName.includes(query) ||
+                          userEmail.includes(query) ||
+                          userName.includes(query)
+                        );
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
+                            <Package
+                              size={48}
+                              className="mx-auto text-slate-400 mb-3"
+                            />
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                              No redemption orders found.
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="overflow-hidden rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-black/20">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                              <thead className="bg-slate-50 dark:bg-white/5 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">
+                                <tr>
+                                  <th className="px-5 py-3">Order ID</th>
+                                  <th className="px-5 py-3">Customer</th>
+                                  <th className="px-5 py-3">Product</th>
+                                  <th className="px-5 py-3">Points</th>
+                                  <th className="px-5 py-3">Date</th>
+                                  <th className="px-5 py-3">Status</th>
+                                  <th className="px-5 py-3 text-right">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200/70 dark:divide-white/5">
+                                {filtered.map((order) => {
+                                  const orderStatus = redeemOrderStatuses[order.id] || "SUCCESS";
+                                  const productName = order.description.replace(/^(Store redeem:|Redeem:)\s*/i, "");
+                                  
+                                  const statusBadgeClass = orderStatus === "SUCCESS"
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                    : orderStatus === "PROCESSING"
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                    : orderStatus === "SHIPPED"
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"
+                                    : "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-300";
+
+                                  return (
+                                    <tr
+                                      key={order.id}
+                                      className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
+                                    >
+                                      <td className="px-5 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">
+                                        <span 
+                                          onClick={() => {
+                                            setSelectedProductForDetail(order);
+                                            setIsProductDetailOpen(true);
+                                          }}
+                                          className="cursor-pointer hover:underline hover:text-primary font-bold text-slate-800 dark:text-slate-200"
+                                        >
+                                          #{order.id.slice(-8).toUpperCase()}
+                                        </span>
+                                      </td>
+                                      <td className="px-5 py-3">
+                                        <div className="font-semibold text-slate-900 dark:text-white">
+                                          {order.Wallet?.User?.name || "Customer"}
+                                        </div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                          {order.Wallet?.User?.email || "-"}
+                                        </div>
+                                      </td>
+                                      <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
+                                        {productName}
+                                      </td>
+                                      <td className="px-5 py-3 text-rose-500 font-bold">
+                                        -{formatAmount(order.amount)}
+                                      </td>
+                                      <td className="px-5 py-3 text-slate-500 dark:text-slate-400 text-xs">
+                                        {formatDate(order.createdAt)}
+                                      </td>
+                                      <td className="px-5 py-3">
+                                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${statusBadgeClass}`}>
+                                          {orderStatus === "SUCCESS" ? "Placed" : orderStatus}
+                                        </span>
+                                      </td>
+                                      <td className="px-5 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                          <button
+                                            onClick={() => {
+                                              setSelectedProductForDetail(order);
+                                              setIsProductDetailOpen(true);
+                                            }}
+                                            className="p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 dark:text-slate-400 dark:hover:text-primary dark:hover:bg-white/10 transition-colors"
+                                            title="View Timeline"
+                                          >
+                                            <Eye size={16} />
+                                          </button>
+                                          <select
+                                            value={orderStatus}
+                                            onChange={(e) => handleUpdateRedeemOrderStatus(order.id, e.target.value)}
+                                            className="text-xs rounded-lg border border-slate-200 bg-white px-2 py-1 focus:outline-none focus:border-primary dark:border-white/10 dark:bg-black/40 dark:text-white cursor-pointer"
+                                          >
+                                            <option value="SUCCESS">Placed</option>
+                                            <option value="PROCESSING">Processing</option>
+                                            <option value="SHIPPED">Shipped</option>
+                                            <option value="DELIVERED">Delivered</option>
+                                          </select>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+
+              {/* Order Tracking Detail Modal */}
+              {isProductDetailOpen && selectedProductForDetail && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                  <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#0f0f11] border border-slate-200/60 dark:border-white/10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 dark:border-white/10">
+                      <div>
+                        <span className="text-xs font-semibold text-primary uppercase tracking-wider">Order Tracking Details</span>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white truncate">
+                          Order #{selectedProductForDetail.id.slice(-8).toUpperCase()}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsProductDetailOpen(false);
+                          setSelectedProductForDetail(null);
+                        }}
+                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 transition-colors"
+                        aria-label="Close"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                      {/* Summary card */}
+                      {(() => {
+                        const productName = selectedProductForDetail.description.replace(/^(Store redeem:|Redeem:)\s*/i, "").trim().toLowerCase();
+                        const products = getRedeemStoreProducts();
+                        const matchedProduct = products.find(p => p.name?.toLowerCase().trim() === productName);
+                        const hasImage = !!matchedProduct?.image;
+                        return (
+                          <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                            {hasImage && (
+                              <div className="w-20 h-20 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 flex items-center justify-center self-center sm:self-start">
+                                <AuthImage
+                                  src={resolveAssetUrl(matchedProduct.image)}
+                                  alt={matchedProduct.name}
+                                  className="w-full h-full object-contain p-1"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 space-y-2">
+                              <div className="flex justify-between text-sm gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">Product:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-right">
+                                  {selectedProductForDetail.description.replace(/^(Store redeem:|Redeem:)\s*/i, "")}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">Customer:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-right">
+                                  {selectedProductForDetail.Wallet?.User?.name || "Customer"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">Email:</span>
+                                <span className="font-semibold text-slate-500 dark:text-slate-400 font-mono text-xs text-right break-all">
+                                  {selectedProductForDetail.Wallet?.User?.email || "-"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">Amount Charged:</span>
+                                <span className="font-bold text-rose-500 text-right">
+                                  -{formatAmount(selectedProductForDetail.amount)} Points
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Timeline status track */}
+                      {(() => {
+                        const currentStatus = redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS";
+                        const timelineSteps = [
+                          { label: "Order Placed", key: "SUCCESS", done: true, icon: Clock },
+                          { label: "Processing", key: "PROCESSING", done: currentStatus === "PROCESSING" || currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: Package },
+                          { label: "Shipped", key: "SHIPPED", done: currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: ShieldCheck },
+                          { label: "Delivered", key: "DELIVERED", done: currentStatus === "DELIVERED", icon: CheckCircle2 }
+                        ];
+
+                        return (
+                          <div className="space-y-6 px-2">
+                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Delivery Progress Timeline</h4>
+                            {timelineSteps.map((step, i) => (
+                              <div key={i} className="flex gap-4 relative">
+                                {i !== timelineSteps.length - 1 && (
+                                  <div className={`absolute left-3 top-7 bottom-0 w-[2px] ${step.done ? "bg-emerald-500" : "bg-slate-200 dark:bg-white/5"}`} />
+                                )}
+                                <div
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center shadow-sm z-10 ${
+                                    step.done ? "bg-emerald-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-400"
+                                  }`}
+                                >
+                                  <step.icon size={12} />
+                                </div>
+                                <div className="flex-1 pb-4">
+                                  <p className={`text-sm font-bold leading-none ${step.done ? "text-slate-950 dark:text-slate-50" : "text-slate-400"}`}>
+                                    {step.label}
+                                  </p>
+                                  {step.done && (
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                                      {formatDate(selectedProductForDetail.createdAt)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-between items-center gap-3 px-6 py-4 bg-slate-50 dark:bg-[#131317] border-t border-slate-200/70 dark:border-white/10">
+                      <div className="flex gap-2">
+                        {["SUCCESS", "PROCESSING", "SHIPPED", "DELIVERED"].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => handleUpdateRedeemOrderStatus(selectedProductForDetail.id, st)}
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                              (redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS") === st
+                                ? "bg-primary text-white"
+                                : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                            }`}
+                          >
+                            {st === "SUCCESS" ? "Placed" : st.charAt(0) + st.slice(1).toLowerCase()}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsProductDetailOpen(false);
+                          setSelectedProductForDetail(null);
+                        }}
+                        className={`${adminGhostButtonClass}`}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
           )}
 

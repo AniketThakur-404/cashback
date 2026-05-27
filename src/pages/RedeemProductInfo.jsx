@@ -44,6 +44,7 @@ const RedeemProductInfo = () => {
   const [walletBalance, setWalletBalance] = useState(0);
   
   const [isRedeeming, setIsRedeeming] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -164,21 +165,24 @@ const RedeemProductInfo = () => {
   const disableRedeem = isRedeeming || amount <= 0 || (isAuthenticated && (isOutOfStock || !hasEnoughBalance));
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black pb-32">
+    <div className="min-h-screen bg-white dark:bg-black pb-32 transition-colors duration-300">
       {/* Header section with gallery */}
-      <div className={`w-full relative group ${gradient}`}>
-        <button 
-          onClick={() => navigate("/store")} 
-          className="absolute top-6 left-6 z-20 w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-black/50 transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        
+      <div className="w-full relative group overflow-hidden bg-[#f4f7fb] dark:bg-[#0c0c0e] shadow-xs">
         {imageList.length > 0 ? (
           <>
-            <div id="image-gallery" className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar scroll-smooth">
+            <div
+              id="image-gallery"
+              className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth h-96"
+              onScroll={(e) => {
+                const scrollLeft = e.currentTarget.scrollLeft;
+                const width = e.currentTarget.clientWidth;
+                if (width > 0) {
+                  setActiveImageIdx(Math.round(scrollLeft / width));
+                }
+              }}
+            >
               {imageList.map((img, idx) => (
-                <div key={idx} className="w-full h-72 shrink-0 snap-center relative">
+                <div key={idx} className="w-full h-full shrink-0 snap-center relative flex items-center justify-center">
                   <AuthImage 
                     src={resolvePublicAssetUrl(img)} 
                     alt={`${product.name} - ${idx + 1}`} 
@@ -198,7 +202,7 @@ const RedeemProductInfo = () => {
                       gallery.scrollBy({ left: -gallery.clientWidth, behavior: 'smooth' });
                     }
                   }}
-                  className="absolute top-1/2 left-4 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/30 hover:bg-black/60 transition-colors shadow-lg"
+                  className="absolute top-1/2 left-4 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/5 hover:bg-black/15 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all opacity-0 group-hover:opacity-100"
                 >
                   <ArrowLeft size={16} />
                 </button>
@@ -211,7 +215,7 @@ const RedeemProductInfo = () => {
                       gallery.scrollBy({ left: gallery.clientWidth, behavior: 'smooth' });
                     }
                   }}
-                  className="absolute top-1/2 right-4 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/30 hover:bg-black/60 transition-colors shadow-lg"
+                  className="absolute top-1/2 right-4 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/5 hover:bg-black/15 flex items-center justify-center text-slate-700 dark:text-slate-300 transition-all opacity-0 group-hover:opacity-100"
                 >
                   <ArrowRight size={16} />
                 </button>
@@ -219,102 +223,135 @@ const RedeemProductInfo = () => {
             )}
           </>
         ) : (
-          <div className="w-full h-72 flex items-center justify-center relative">
-            <ShoppingBag className="text-white/20 w-20 h-20" />
+          <div className="w-full h-96 flex items-center justify-center relative">
+            <ShoppingBag className="text-slate-300 dark:text-zinc-800 w-24 h-24" />
           </div>
         )}
         
-        {/* Pagination dots if multiple images */}
+        {/* Pagination dots */}
         {imageList.length > 1 && (
-          <div className="absolute bottom-32 left-0 right-0 flex justify-center gap-1.5 z-10">
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1.5 z-30">
             {imageList.map((_, idx) => (
-              <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/50" />
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const gallery = document.getElementById('image-gallery');
+                  if (gallery) {
+                    gallery.scrollTo({
+                      left: idx * gallery.clientWidth,
+                      behavior: 'smooth'
+                    });
+                    setActiveImageIdx(idx);
+                  }
+                }}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === activeImageIdx 
+                    ? "bg-slate-800 dark:bg-white w-5 shadow-xs" 
+                    : "bg-slate-400/40 dark:bg-white/30 w-2 hover:bg-slate-400/70"
+                }`}
+                aria-label={`Go to image ${idx + 1}`}
+              />
             ))}
           </div>
         )}
 
-        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none">
-          <div className="px-2.5 py-0.5 rounded bg-white/20 backdrop-blur-md border border-white/30 text-[10px] font-bold text-white uppercase tracking-widest inline-block mb-3 shadow-sm">
-            {product.category || "General"}
-          </div>
-          <h1 className="text-3xl font-black text-white leading-tight mb-2 tracking-tight drop-shadow-md">
-            {product.name}
-          </h1>
-          {product.brand && (
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400 flex items-center gap-1.5 drop-shadow-sm">
-              <Sparkles size={14} strokeWidth={3} /> {product.brand}
-            </p>
-          )}
-        </div>
+        {/* Small drag handle at the bottom center */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-slate-300/80 dark:bg-zinc-800" />
       </div>
 
-      <div className="px-6 py-8 flex flex-col gap-6">
-        <div className="space-y-6">
-          <section className="bg-white dark:bg-zinc-900 rounded-[32px] p-6 shadow-sm border border-slate-200/60 dark:border-white/5">
-            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">About this reward</h3>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base">
-              {product.description || "No description provided. This is a premium reward from our catalog."}
-            </p>
-          </section>
+      <div className="px-6 py-6 flex flex-col gap-6 max-w-md mx-auto">
+        {/* Title, Rating, Points */}
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+            {product.name}
+          </h1>
+
+          <div>
+            <div className="flex items-baseline gap-2.5">
+              <span className="text-sm text-slate-400 line-through decoration-slate-300 dark:decoration-zinc-600">
+                {POINTS_FORMATTER.format(Math.ceil(amount * 1.1))} Points
+              </span>
+              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-900/30">
+                10% OFF
+              </span>
+            </div>
+            <span className="text-2xl font-extrabold text-[#2563eb] dark:text-[#60a5fa] tracking-tight">
+              {formatPoints(amount)}
+            </span>
+          </div>
         </div>
 
-        <div className="pb-8">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-200/60 dark:border-white/5 relative overflow-hidden">
-            {/* Subtle background glow */}
-            <div className={`absolute -top-24 -right-24 w-48 h-48 bg-linear-to-br ${gradient} rounded-full blur-3xl opacity-10 dark:opacity-20`} />
-            
-            <div className="relative z-10">
-              <div className="flex items-end justify-between mb-8">
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
-                    Required Points
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-                      {formatPoints(amount).replace(' Points', '')}
-                    </span>
-                    <span className="text-lg font-bold text-slate-400 dark:text-slate-500">Pts</span>
-                  </div>
-                </div>
-                
-                {isAuthenticated && (
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
-                      Your Balance
-                    </p>
-                    <p className={`text-base font-black ${hasEnoughBalance ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {POINTS_FORMATTER.format(walletBalance)} Pts
-                    </p>
-                  </div>
-                )}
-              </div>
 
+        {/* Specifications Table */}
+        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-zinc-900">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Specification</h3>
+          <div className="rounded-2xl border border-slate-100 dark:border-zinc-850 overflow-hidden text-sm">
+            <div className="grid grid-cols-3 border-b border-slate-100 dark:border-zinc-850 hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
+              <div className="px-4 py-3 text-slate-400 font-medium bg-slate-50/50 dark:bg-zinc-900/10">Model</div>
+              <div className="px-4 py-3 col-span-2 text-slate-700 dark:text-slate-300 font-medium">{product.name}</div>
+            </div>
+            <div className="grid grid-cols-3 border-b border-slate-100 dark:border-zinc-850 hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
+              <div className="px-4 py-3 text-slate-400 font-medium bg-slate-50/50 dark:bg-zinc-900/10">Brand</div>
+              <div className="px-4 py-3 col-span-2 text-slate-700 dark:text-slate-300 font-medium">{product.brand || "Apple"}</div>
+            </div>
+            <div className="grid grid-cols-3 border-b border-slate-100 dark:border-zinc-850 hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
+              <div className="px-4 py-3 text-slate-400 font-medium bg-slate-50/50 dark:bg-zinc-900/10">Category</div>
+              <div className="px-4 py-3 col-span-2 text-slate-700 dark:text-slate-300 font-medium">{product.category || "Electronics"}</div>
+            </div>
+            <div className="grid grid-cols-3 border-b border-slate-100 dark:border-zinc-850 hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
+              <div className="px-4 py-3 text-slate-400 font-medium bg-slate-50/50 dark:bg-zinc-900/10">Required</div>
+              <div className="px-4 py-3 col-span-2 text-slate-700 dark:text-slate-300 font-medium">{formatPoints(amount)}</div>
+            </div>
+            <div className="grid grid-cols-3 hover:bg-slate-50/50 dark:hover:bg-zinc-900/20">
+              <div className="px-4 py-3 text-slate-400 font-medium bg-slate-50/50 dark:bg-zinc-900/10">Stock status</div>
+              <div className="px-4 py-3 col-span-2 text-slate-700 dark:text-slate-300 font-medium">
+                {product.stock !== null ? `${product.stock} available` : "In stock"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Description Section */}
+        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-900">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">About this reward</h3>
+          <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+            {product.description || "No description provided. This is a premium reward from our catalog."}
+          </p>
+        </div>
+
+        {/* Wallet Balance display & Redeem button */}
+        <div className="pb-8 pt-4 border-t border-slate-100 dark:border-zinc-900">
+          <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800 rounded-3xl p-6 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">
+                  Your Balance
+                </p>
+                <p className={`text-base font-black ${hasEnoughBalance ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                  {POINTS_FORMATTER.format(walletBalance)} Pts
+                </p>
+              </div>
               {Number.isFinite(stockValue) && (
-                <div className={`mb-8 px-4 py-3.5 rounded-2xl border text-xs font-black flex items-center justify-center gap-2 ${
-                    stockValue < 5
-                      ? "bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/20 dark:border-rose-800/30 dark:text-rose-400"
-                      : "bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800/30 dark:text-emerald-400"
-                  }`}>
-                  <div className="relative flex h-2 w-2">
-                    {stockValue > 0 && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${stockValue < 5 ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>}
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${stockValue > 0 ? (stockValue < 5 ? 'bg-rose-500' : 'bg-emerald-500') : 'bg-slate-400'}`}></span>
-                  </div>
-                  {stockValue > 0 ? `${stockValue} AVAILABLE IN STOCK` : "SOLD OUT"}
+                <div className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                  stockValue > 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' : 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30'
+                }`}>
+                  {stockValue > 0 ? "IN STOCK" : "SOLD OUT"}
                 </div>
               )}
-              
-              <button
-                type="button"
-                disabled={disableRedeem}
-                onClick={handleRedeem}
-                className={`w-full py-4 rounded-2xl text-sm font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${buttonStyle}`}
-              >
-                {actionLabel}
-                {(!disableRedeem && isAuthenticated) && <ArrowRight size={18} strokeWidth={3} />}
-              </button>
             </div>
+
+            <button
+              type="button"
+              disabled={disableRedeem}
+              onClick={handleRedeem}
+              className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${buttonStyle}`}
+            >
+              {actionLabel}
+              {(!disableRedeem && isAuthenticated) && <ArrowRight size={16} strokeWidth={3} />}
+            </button>
           </div>
         </div>
       </div>
