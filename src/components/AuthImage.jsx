@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { getAuthToken } from "../lib/auth";
+import { ShoppingBag } from "lucide-react";
 
 const AuthImage = ({
   src,
   alt,
   className,
-  fallbackSrc = "/placeholder.svg",
   fallback, // React element fallback
   showLoader = true,
+  onError: externalOnError,
   ...props
 }) => {
   const [imgSrc, setImgSrc] = useState("");
@@ -20,7 +21,7 @@ const AuthImage = ({
 
     const loadImage = async () => {
       if (!src) {
-        setImgSrc(fallbackSrc);
+        setError(true);
         return;
       }
 
@@ -60,7 +61,6 @@ const AuthImage = ({
         console.error("AuthImage load error:", err);
         if (active) {
           setError(true);
-          setImgSrc(fallbackSrc);
         }
       } finally {
         if (active) {
@@ -77,10 +77,18 @@ const AuthImage = ({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [src, fallbackSrc]);
+  }, [src]);
 
-  if (error && fallback) {
-    return <div className={className}>{fallback}</div>;
+  // Render fallback when error
+  if (error) {
+    if (fallback) {
+      return <div className={className}>{fallback}</div>;
+    }
+    return (
+      <div className={`relative flex items-center justify-center bg-slate-100 dark:bg-zinc-800/50 ${className || ""}`}>
+        <ShoppingBag className="text-slate-300 dark:text-zinc-600 w-12 h-12" />
+      </div>
+    );
   }
 
   return (
@@ -91,14 +99,14 @@ const AuthImage = ({
         </div>
       )}
       <img
-        src={imgSrc || fallbackSrc}
+        src={imgSrc}
         alt={alt}
         className={`w-full h-full object-cover transition-opacity duration-300 ${
           loading ? "opacity-0" : "opacity-100"
         }`}
         onError={() => {
           setError(true);
-          setImgSrc(fallbackSrc);
+          if (externalOnError) externalOnError();
         }}
         {...props}
       />

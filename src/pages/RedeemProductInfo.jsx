@@ -172,7 +172,7 @@ const RedeemProductInfo = () => {
           <>
             <div
               id="image-gallery"
-              className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth h-96"
+              className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth h-80"
               onScroll={(e) => {
                 const scrollLeft = e.currentTarget.scrollLeft;
                 const width = e.currentTarget.clientWidth;
@@ -223,7 +223,7 @@ const RedeemProductInfo = () => {
             )}
           </>
         ) : (
-          <div className="w-full h-96 flex items-center justify-center relative">
+          <div className="w-full h-70 flex items-center justify-center relative">
             <ShoppingBag className="text-slate-300 dark:text-zinc-800 w-24 h-24" />
           </div>
         )}
