@@ -33,23 +33,36 @@ const formatDate = (value) => {
 const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
   if (!order) return null;
 
+  const getStepDate = (stepKey, hoursOffset) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("redeem_order_timestamps") || "{}");
+      const orderTimes = saved[order.id];
+      if (orderTimes && orderTimes[stepKey]) {
+        return new Date(orderTimes[stepKey]);
+      }
+    } catch (e) {}
+    if (stepKey === "SUCCESS") return new Date(order.createdAt);
+    const date = new Date(order.createdAt);
+    return new Date(date.getTime() + hoursOffset * 60 * 60 * 1000);
+  };
+
   const timeline = [
-    { status: "Order Placed", date: order.createdAt, done: true, icon: Clock },
+    { status: "Order Placed", date: getStepDate("SUCCESS", 0), done: true, icon: Clock },
     {
       status: "Processing",
-      date: order.createdAt,
+      date: getStepDate("PROCESSING", 2),
       done: status === "PROCESSING" || status === "SHIPPED" || status === "DELIVERED",
       icon: Package,
     },
     {
       status: "Shipped",
-      date: order.createdAt,
+      date: getStepDate("SHIPPED", 24),
       done: status === "SHIPPED" || status === "DELIVERED",
       icon: ShieldCheck,
     },
     {
       status: "Delivered",
-      date: order.createdAt,
+      date: getStepDate("DELIVERED", 48),
       done: status === "DELIVERED",
       icon: CheckCircle2,
     },
@@ -227,14 +240,18 @@ const Orders = () => {
     <div className="min-h-dvh bg-transparent p-4 pb-24 transition-colors duration-300">
       <div className="max-w-md mx-auto space-y-6">
         {/* Banner Section */}
-        <div className="relative overflow-hidden p-6 rounded-[32px] bg-zinc-900 text-white shadow-2xl">
-          <div className="relative z-10">
-            <h2 className="text-2xl font-black italic">My Orders</h2>
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mt-1">
+        <div className="relative overflow-hidden rounded-[24px] shadow-lg bg-[#d4f5e4]" style={{ height: '140px' }}>
+          <img
+            src="/orders-banner.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover scale-110"
+          />
+          <div className="relative z-10 h-full flex flex-col justify-center p-6">
+            <h2 className="text-2xl font-black italic text-emerald-900 drop-shadow-sm">My Orders</h2>
+            <p className="text-[10px] font-bold text-emerald-700/60 uppercase tracking-[0.2em] mt-1">
               Store Redemptions
             </p>
           </div>
-          <ShoppingBag className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12" />
         </div>
 
         {error && (
@@ -269,55 +286,71 @@ const Orders = () => {
             </button>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {orders.map((tx) => (
-              <motion.div
-                key={tx.id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedOrder(tx)}
-                className="group p-5 rounded-[24px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:border-emerald-500/30 transition-all cursor-pointer flex items-center justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <div className="text-[15px] font-black text-gray-900 dark:text-white truncate group-hover:text-emerald-600 transition-colors">
-                    {tx.description.replace(/Store redeem: /i, "")}
+          <div className="grid gap-3">
+            {orders.map((tx) => {
+              const statusVal = orderStatuses[tx.id] || "SUCCESS";
+              const statusColor =
+                statusVal === "SUCCESS"
+                  ? "bg-emerald-500 text-white"
+                  : statusVal === "PROCESSING"
+                  ? "bg-amber-500 text-white"
+                  : statusVal === "SHIPPED"
+                  ? "bg-blue-500 text-white"
+                  : "bg-indigo-500 text-white";
+              const iconBg =
+                statusVal === "PROCESSING"
+                  ? "bg-amber-50 dark:bg-amber-900/20"
+                  : "bg-emerald-50 dark:bg-emerald-900/20";
+              const iconColor =
+                statusVal === "PROCESSING"
+                  ? "text-amber-500"
+                  : "text-emerald-600 dark:text-emerald-400";
+
+              return (
+                <motion.div
+                  key={tx.id}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedOrder(tx)}
+                  className="group px-4 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800/40 transition-all cursor-pointer flex items-center gap-3.5"
+                >
+                  {/* Gift Icon */}
+                  <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+                    <ShoppingBag size={22} className={iconColor} />
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    {(() => {
-                      const statusVal = orderStatuses[tx.id] || "SUCCESS";
-                      const classes = statusVal === "SUCCESS"
-                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-                        : statusVal === "PROCESSING"
-                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
-                        : statusVal === "SHIPPED"
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                        : "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400";
-                      return (
-                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${classes}`}>
-                          {statusVal}
-                        </div>
-                      );
-                    })()}
-                    <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500">
-                      {formatDate(tx.createdAt)}
+
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-extrabold text-gray-900 dark:text-white truncate leading-tight">
+                      {tx.description.replace(/Store redeem: /i, "")}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider leading-none ${statusColor}`}>
+                        {statusVal}
+                      </span>
+                      <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
+                        {formatDate(tx.createdAt)}
+                      </span>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right whitespace-nowrap">
-                    <div className="text-[15px] font-black text-rose-600 leading-none">
+
+                  {/* Amount */}
+                  <div className="text-right shrink-0 mr-1">
+                    <div className="text-[15px] font-black text-rose-500 leading-none">
                       -{formatAmount(tx.amount)}
                     </div>
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-[0.15em] mt-1">
                       Points
                     </div>
                   </div>
+
+                  {/* Arrow */}
                   <ChevronRight
-                    size={18}
-                    className="text-gray-300 group-hover:text-emerald-500 transition-colors"
+                    size={16}
+                    className="text-gray-300 dark:text-zinc-600 group-hover:text-emerald-500 transition-colors shrink-0"
                   />
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

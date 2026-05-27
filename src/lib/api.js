@@ -1039,12 +1039,12 @@ export const getPublicGiftCardDetails = (giftCardId) =>
 
 export const getPublicStoreData = () => apiRequest("/api/public/store");
 
-export const redeemStoreProduct = (token, productId) =>
+export const redeemStoreProduct = (token, productId, address) =>
   apiRequest("/api/user/store/redeem", {
-    method: "POST",
-    token: resolveAuthToken(token),
-    body: { productId },
-  });
+     method: "POST",
+     token: resolveAuthToken(token),
+     body: { productId, address },
+   });
 
 
 

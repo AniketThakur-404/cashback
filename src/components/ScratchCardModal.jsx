@@ -27,36 +27,36 @@ const ScratchCardModal = ({
     canvas.width = rect.width || 320;
     canvas.height = rect.height || 320;
 
-    // Draw Holographic Gradient Scratch Layer
+    // Draw Holographic Luxury Green Metallic Scratch Layer
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, "#e2e8f0"); // Slate 200
-    gradient.addColorStop(0.3, "#cbd5e1"); // Slate 300
-    gradient.addColorStop(0.5, "#94a3b8"); // Slate 400
-    gradient.addColorStop(0.7, "#cbd5e1"); // Slate 300
-    gradient.addColorStop(1, "#64748b"); // Slate 500
+    gradient.addColorStop(0, "#a7f3d0");   // Light Emerald/Mint
+    gradient.addColorStop(0.25, "#10b981"); // Vibrant Emerald
+    gradient.addColorStop(0.5, "#059669");  // Mid Emerald
+    gradient.addColorStop(0.75, "#34d399"); // Mint Green
+    gradient.addColorStop(1, "#065f46");    // Deep Emerald Forest
     
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw premium overlay pattern
-    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-    for (let i = 0; i < canvas.width; i += 20) {
-      for (let j = 0; j < canvas.height; j += 20) {
+    // Draw premium sparkle dot overlay pattern
+    ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
+    for (let i = 0; i < canvas.width; i += 15) {
+      for (let j = 0; j < canvas.height; j += 15) {
         ctx.beginPath();
-        ctx.arc(i + 10, j + 10, 1.5, 0, Math.PI * 2);
+        ctx.arc(i + 7.5, j + 7.5, 1, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
     // Add Sparkle icon placeholder in center
-    ctx.font = "bold 16px sans-serif";
-    ctx.fillStyle = "#475569";
+    ctx.font = "bold 17px sans-serif";
+    ctx.fillStyle = "#064e3b"; // Deep forest green
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("✨ SCRATCH TO REVEAL ✨", canvas.width / 2, canvas.height / 2 - 10);
     
-    ctx.font = "500 11px sans-serif";
-    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillStyle = "#065f46";
     ctx.fillText("Swipe or drag your finger here", canvas.width / 2, canvas.height / 2 + 15);
   }, []);
 
@@ -177,7 +177,7 @@ const ScratchCardModal = ({
 
         <div className="p-6 flex flex-col items-center">
           <div className="text-center mb-4 mt-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">
               <Gift size={11} strokeWidth={3} /> Redeem Reward
             </span>
             <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight mt-2.5">
@@ -245,19 +245,7 @@ const ScratchCardModal = ({
               <div className="text-center text-xs text-rose-500 font-semibold bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 p-2.5 rounded-xl">
                 {processingError}
               </div>
-            ) : (
-              <div className="text-center">
-                <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mb-2">
-                  <div
-                    className="bg-indigo-500 h-full transition-all duration-200"
-                    style={{ width: `${revealedPercent}%` }}
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
-                  {isScratched ? "Claiming Success!" : `Scratch Card: ${revealedPercent}% Revealed`}
-                </p>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </motion.div>

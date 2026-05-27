@@ -1454,6 +1454,17 @@ const AdminDashboard = () => {
     const updated = { ...redeemOrderStatuses, [orderId]: newStatus };
     setRedeemOrderStatuses(updated);
     localStorage.setItem("redeem_order_statuses", JSON.stringify(updated));
+
+    try {
+      const savedTimestamps = JSON.parse(localStorage.getItem("redeem_order_timestamps") || "{}");
+      if (!savedTimestamps[orderId]) {
+        savedTimestamps[orderId] = {};
+      }
+      savedTimestamps[orderId][newStatus] = new Date().toISOString();
+      localStorage.setItem("redeem_order_timestamps", JSON.stringify(savedTimestamps));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
 
@@ -9149,6 +9160,12 @@ const AdminDashboard = () => {
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm gap-2">
+                                <span className="text-slate-500 dark:text-slate-400">Address:</span>
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 text-right max-w-[200px] break-words">
+                                  {selectedProductForDetail.metadata?.address || "No address provided"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm gap-2">
                                 <span className="text-slate-500 dark:text-slate-400">Amount Charged:</span>
                                 <span className="font-bold text-rose-500 text-right">
                                   -{formatAmount(selectedProductForDetail.amount)} Points
@@ -9161,12 +9178,25 @@ const AdminDashboard = () => {
 
                       {/* Timeline status track */}
                       {(() => {
+                        const getStepDate = (stepKey, hoursOffset) => {
+                          try {
+                            const saved = JSON.parse(localStorage.getItem("redeem_order_timestamps") || "{}");
+                            const orderTimes = saved[selectedProductForDetail.id];
+                            if (orderTimes && orderTimes[stepKey]) {
+                              return new Date(orderTimes[stepKey]);
+                            }
+                          } catch (e) {}
+                          if (stepKey === "SUCCESS") return new Date(selectedProductForDetail.createdAt);
+                          const date = new Date(selectedProductForDetail.createdAt);
+                          return new Date(date.getTime() + hoursOffset * 60 * 60 * 1000);
+                        };
+
                         const currentStatus = redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS";
                         const timelineSteps = [
-                          { label: "Order Placed", key: "SUCCESS", done: true, icon: Clock },
-                          { label: "Processing", key: "PROCESSING", done: currentStatus === "PROCESSING" || currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: Package },
-                          { label: "Shipped", key: "SHIPPED", done: currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: ShieldCheck },
-                          { label: "Delivered", key: "DELIVERED", done: currentStatus === "DELIVERED", icon: CheckCircle2 }
+                          { label: "Order Placed", key: "SUCCESS", done: true, icon: Clock, date: getStepDate("SUCCESS", 0) },
+                          { label: "Processing", key: "PROCESSING", done: currentStatus === "PROCESSING" || currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: Package, date: getStepDate("PROCESSING", 2) },
+                          { label: "Shipped", key: "SHIPPED", done: currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: ShieldCheck, date: getStepDate("SHIPPED", 24) },
+                          { label: "Delivered", key: "DELIVERED", done: currentStatus === "DELIVERED", icon: CheckCircle2, date: getStepDate("DELIVERED", 48) }
                         ];
 
                         return (
@@ -9190,7 +9220,7 @@ const AdminDashboard = () => {
                                   </p>
                                   {step.done && (
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
-                                      {formatDate(selectedProductForDetail.createdAt)}
+                                      {formatDate(step.date)}
                                     </p>
                                   )}
                                 </div>

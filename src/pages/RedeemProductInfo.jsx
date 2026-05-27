@@ -3,9 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getPublicStoreData, getWalletSummary, redeemStoreProduct } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
 import AuthImage from "../components/AuthImage";
-import { Sparkles, ShoppingBag, ArrowLeft, ArrowRight } from "lucide-react";
+import { Sparkles, ShoppingBag, ArrowLeft, ArrowRight, X } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CATEGORY_STYLES = {
   Popular: "from-emerald-600 to-teal-500",
@@ -45,6 +45,14 @@ const RedeemProductInfo = () => {
   
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [address, setAddress] = useState("");
+  const [addressForm, setAddressForm] = useState({
+    street: "",
+    city: "",
+    district: "",
+    pincode: "",
+  });
 
   useEffect(() => {
     let live = true;
@@ -86,14 +94,27 @@ const RedeemProductInfo = () => {
     return () => { live = false; };
   }, [isAuthenticated, authToken]);
 
-  const handleRedeem = async () => {
+  const handleRedeem = () => {
     if (!isAuthenticated) {
       navigate("/signin");
       return;
     }
+    setAddress("");
+    setAddressForm({
+      street: "",
+      city: "",
+      district: "",
+      pincode: "",
+    });
+    setShowAddressModal(true);
+  };
+
+  const confirmRedemption = async () => {
     try {
+      const fullAddress = `${addressForm.street}, ${addressForm.city}, ${addressForm.district} - ${addressForm.pincode}`;
+      setShowAddressModal(false);
       setIsRedeeming(true);
-      await redeemStoreProduct(authToken, product.id);
+      await redeemStoreProduct(authToken, product.id, fullAddress);
       navigate("/orders", { state: { success: true, product } });
     } catch (err) {
       alert(err.message || "Failed to redeem product.");
@@ -355,6 +376,110 @@ const RedeemProductInfo = () => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showAddressModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[30px] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10 p-6"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                  Delivery Address
+                </h3>
+                <button
+                  onClick={() => setShowAddressModal(false)}
+                  className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  <X size={16} className="text-slate-500 dark:text-slate-400" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Please enter your full delivery address where the reward product "{product.name}" should be shipped.
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                    Street Address
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.street}
+                    onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                    placeholder="House No, Building, Street..."
+                    className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.city}
+                      onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                      placeholder="City name"
+                      className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      District / State
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.district}
+                      onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                      placeholder="State name"
+                      className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                    Pin Code
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.pincode}
+                    onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+                    placeholder="6-digit postal code"
+                    maxLength={6}
+                    className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={
+                  !addressForm.street.trim() ||
+                  !addressForm.city.trim() ||
+                  !addressForm.district.trim() ||
+                  !addressForm.pincode.trim()
+                }
+                onClick={confirmRedemption}
+                className="w-full mt-5 py-3.5 rounded-2xl bg-primary hover:bg-primary-strong disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-widest transition-all active:scale-[0.98]"
+              >
+                Confirm Address & Redeem
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

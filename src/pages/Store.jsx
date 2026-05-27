@@ -108,7 +108,7 @@ const RedemptionSuccessModal = ({
           <div className="w-full space-y-3">
             <button
               onClick={onViewOrders}
-              className="w-full py-4 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+              className="w-full py-4 rounded-2xl bg-primary dark:bg-white text-white dark:text-zinc-900 font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
             >
               View My Orders
             </button>
@@ -296,6 +296,14 @@ const Store = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastRedeemedProduct, setLastRedeemedProduct] = useState(null);
   const [scratchProduct, setScratchProduct] = useState(null);
+  const [addressProduct, setAddressProduct] = useState(null);
+  const [address, setAddress] = useState("");
+  const [addressForm, setAddressForm] = useState({
+    street: "",
+    city: "",
+    district: "",
+    pincode: "",
+  });
 
   useEffect(() => {
     let live = true;
@@ -395,7 +403,14 @@ const Store = () => {
     }
 
     setRedeemError("");
-    setScratchProduct(item);
+    setAddress("");
+    setAddressForm({
+      street: "",
+      city: "",
+      district: "",
+      pincode: "",
+    });
+    setAddressProduct(item);
   };
 
   const processRedemption = async (item) => {
@@ -403,7 +418,7 @@ const Store = () => {
     setRedeemingProductId(productId);
     setRedeemError("");
     try {
-      const data = await redeemStoreProduct(authToken, productId);
+      const data = await redeemStoreProduct(authToken, productId, address);
       const nextBalance = Number(data?.wallet?.balance);
       setWalletBalance(Number.isFinite(nextBalance) ? nextBalance : 0);
 
@@ -525,6 +540,112 @@ const Store = () => {
       )}
 
       <AnimatePresence>
+        {addressProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[30px] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10 p-6"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                  Delivery Address
+                </h3>
+                <button
+                  onClick={() => setAddressProduct(null)}
+                  className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  <X size={16} className="text-slate-500 dark:text-slate-400" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                Please enter your full delivery address where the reward product "{addressProduct.name}" should be shipped.
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                    Street Address
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.street}
+                    onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                    placeholder="House No, Building, Street..."
+                    className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.city}
+                      onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                      placeholder="City name"
+                      className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                      District / State
+                    </label>
+                    <input
+                      type="text"
+                      value={addressForm.district}
+                      onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                      placeholder="State name"
+                      className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                    Pin Code
+                  </label>
+                  <input
+                    type="text"
+                    value={addressForm.pincode}
+                    onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+                    placeholder="6-digit postal code"
+                    maxLength={6}
+                    className="w-full text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-zinc-950 p-2.5 focus:outline-none focus:border-primary text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={
+                  !addressForm.street.trim() ||
+                  !addressForm.city.trim() ||
+                  !addressForm.district.trim() ||
+                  !addressForm.pincode.trim()
+                }
+                onClick={() => {
+                  const item = addressProduct;
+                  setAddress(`${addressForm.street}, ${addressForm.city}, ${addressForm.district} - ${addressForm.pincode}`);
+                  setAddressProduct(null);
+                  setScratchProduct(item);
+                }}
+                className="w-full mt-5 py-3.5 rounded-2xl bg-primary hover:bg-primary-strong disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-black uppercase tracking-widest transition-all active:scale-[0.98]"
+              >
+                Confirm Address & Scratch
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
         {showSuccessModal && (
           <RedemptionSuccessModal
             product={lastRedeemedProduct}
