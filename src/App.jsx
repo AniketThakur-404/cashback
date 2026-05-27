@@ -56,6 +56,7 @@ import ProductReport from "./pages/ProductReport";
 import ReturnRefund from "./pages/ReturnRefund";
 import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
+import RedeemProductInfo from "./pages/RedeemProductInfo";
 
 function App() {
   const AppLayout = () => (
@@ -149,6 +150,7 @@ function App() {
               <Route path="/about-us" element={<AboutUs />} />
 
               <Route path="/store" element={<Store />} />
+              <Route path="/store/product/:id" element={<RedeemProductInfo />} />
               <Route path="/brand-details" element={<BrandDetails />} />
               <Route path="/brand-details/:id" element={<BrandDetails />} />
               <Route path="/brandDetails" element={<BrandDetails />} />

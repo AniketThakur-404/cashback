@@ -3,6 +3,8 @@ import { X, Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from "../../styles/buttonStyles";
 import { getApiBaseUrl, resolvePublicAssetUrl as resolveAssetUrl } from "../../lib/apiClient";
 import AuthImage from "../AuthImage";
+import { uploadImage } from "../../lib/api";
+import { getAuthToken } from "../../lib/auth";
 
 
 const MAX_IMAGE_SIZE_MB = 10;
@@ -12,9 +14,8 @@ const RedeemProductModal = ({
   onClose,
   onSave,
   isSaving,
-  onUploadImage,
-  uploadState,
 }) => {
+  const [internalUploadState, setInternalUploadState] = useState({ status: "", error: "" });
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -93,27 +94,55 @@ const RedeemProductModal = ({
     [],
   );
 
-  const handleImagesUpload = (e) => {
+  const handleImagesUpload = async (e) => {
     const files = Array.from(e.target.files || []);
-    if (files.length) {
-      const oversizedFile = files.find(
-        (file) => file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024,
-      );
-      if (oversizedFile) {
-        setErrors((prev) => ({
-          ...prev,
-          image: `Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`,
-        }));
-        e.target.value = "";
-        return;
+    if (!files.length) return;
+
+    const oversizedFile = files.find(
+      (file) => file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024,
+    );
+    if (oversizedFile) {
+      setErrors((prev) => ({
+        ...prev,
+        image: `Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`,
+      }));
+      e.target.value = "";
+      return;
+    }
+
+    const previewEntries = files.map((file) => URL.createObjectURL(file));
+    localPreviewUrlsRef.current = [
+      ...localPreviewUrlsRef.current,
+      ...previewEntries,
+    ];
+    setLocalPreviewUrls((prev) => [...prev, ...previewEntries]);
+    
+    setInternalUploadState({ status: "Uploading...", error: "" });
+    const token = getAuthToken();
+
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        if (!token) throw new Error("Sign in to upload.");
+        const data = await uploadImage(token, file);
+        if (data?.url) {
+          uploadedUrls.push(data.url);
+        }
       }
-      const previewEntries = files.map((file) => URL.createObjectURL(file));
-      localPreviewUrlsRef.current = [
-        ...localPreviewUrlsRef.current,
-        ...previewEntries,
-      ];
-      setLocalPreviewUrls((prev) => [...prev, ...previewEntries]);
-      onUploadImage(files);
+
+      setFormData((prev) => {
+        const currentImages = Array.isArray(prev.images) ? prev.images : (prev.image ? [prev.image] : []);
+        const nextImages = [...new Set([...currentImages, ...uploadedUrls].filter(Boolean))];
+        return {
+          ...prev,
+          image: prev.image || uploadedUrls[0],
+          images: nextImages,
+        };
+      });
+      setInternalUploadState({ status: "Product image uploaded.", error: "" });
+    } catch (err) {
+      setInternalUploadState({ status: "", error: err.message || "Upload failed." });
+    } finally {
       e.target.value = "";
     }
   };
@@ -158,16 +187,8 @@ const RedeemProductModal = ({
 
   // Sync image from props if it changes (e.g. after upload)
   useEffect(() => {
-    if (uploadState?.status && product?.image) {
-      setFormData((prev) => ({
-        ...prev,
-        image: product.image,
-        images: Array.isArray(product.images)
-          ? [...new Set([product.image, ...product.images].filter(Boolean))]
-          : [product.image],
-      }));
-      
-      const statusLower = uploadState?.status?.toLowerCase() || "";
+    if (internalUploadState?.status && formData?.image) {
+      const statusLower = internalUploadState?.status?.toLowerCase() || "";
       // Clear local previews to avoid double images since they are now in product.images
       // Only do this when upload is successful, not when it's 'uploading'
       if (statusLower.includes("success") || statusLower.includes("uploaded")) {
@@ -176,7 +197,15 @@ const RedeemProductModal = ({
          setLocalPreviewUrls([]);
       }
     }
-  }, [uploadState, product]);
+  }, [internalUploadState, formData.image]);
+
+  useEffect(() => {
+    if (formData.image && !formData.image.startsWith("blob:")) {
+      localPreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      localPreviewUrlsRef.current = [];
+      setLocalPreviewUrls([]);
+    }
+  }, [formData.image]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -465,14 +494,14 @@ const RedeemProductModal = ({
                   </div>
 
                   {/* Upload State Feedback */}
-                  {(uploadState?.status || uploadState?.error || errors.image) && (
+                  {(internalUploadState?.status || internalUploadState?.error || errors.image) && (
                     <div className={`p-3 rounded-lg text-xs font-medium flex items-center gap-2 ${
-                      uploadState?.error || errors.image 
+                      internalUploadState?.error || errors.image 
                         ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
                         : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                     }`}>
-                      {uploadState?.error || errors.image ? <AlertCircle size={14} /> : <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
-                      {uploadState?.error || errors.image || uploadState?.status}
+                      {internalUploadState?.error || errors.image ? <AlertCircle size={14} /> : <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
+                      {internalUploadState?.error || errors.image || internalUploadState?.status}
                     </div>
                   )}
                 </div>

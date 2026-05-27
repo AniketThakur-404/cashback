@@ -7,6 +7,7 @@ import {
   Sparkles,
   Wallet,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,6 +18,7 @@ import {
 import { useAuth } from "../lib/auth";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
 import AuthImage from "../components/AuthImage";
+import ScratchCardModal from "../components/ScratchCardModal";
 
 const CATEGORY_STYLES = {
   Popular: "from-emerald-600 to-teal-500",
@@ -41,6 +43,8 @@ const formatPoints = (value) => {
   const normalized = Number.isFinite(amount) ? amount : 0;
   return `${POINTS_FORMATTER.format(normalized)} Points`;
 };
+
+
 
 const RedemptionSuccessModal = ({
   product,
@@ -169,7 +173,10 @@ const ProductCard = ({
     (isAuthenticated && (isOutOfStock || !hasEnoughBalance));
 
   return (
-    <article className="group flex flex-col h-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-black/50 transition-all duration-300">
+    <div 
+      onClick={() => navigate(`/store/product/${item.id}`)}
+      className="cursor-pointer flex flex-col h-full rounded-xl bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-sm transition-all duration-300"
+    >
       <div
         className={`h-28 sm:h-40 relative overflow-hidden bg-linear-to-br ${gradient}`}
       >
@@ -234,7 +241,8 @@ const ProductCard = ({
         <button
           type="button"
           disabled={disableRedeem}
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             if (!isAuthenticated) {
               navigate("/signin");
             } else {
@@ -247,7 +255,7 @@ const ProductCard = ({
           {(!disableRedeem && isAuthenticated) && <ArrowRight size={14} strokeWidth={3} />}
         </button>
       </div>
-    </article>
+    </div>
   );
 };
 
@@ -268,6 +276,7 @@ const Store = () => {
   const [redeemError, setRedeemError] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastRedeemedProduct, setLastRedeemedProduct] = useState(null);
+  const [scratchProduct, setScratchProduct] = useState(null);
 
   useEffect(() => {
     let live = true;
@@ -343,7 +352,7 @@ const Store = () => {
     return list.filter((item) => item.category === activeCategory);
   }, [activeCategory, list]);
 
-  const handleRedeemProduct = async (item) => {
+  const handleRedeemProduct = (item) => {
     if (!isAuthenticated || !authToken) {
       setRedeemError("Login to redeem products.");
       return;
@@ -366,6 +375,12 @@ const Store = () => {
       return;
     }
 
+    setRedeemError("");
+    setScratchProduct(item);
+  };
+
+  const processRedemption = async (item) => {
+    const productId = String(item?.id || "").trim();
     setRedeemingProductId(productId);
     setRedeemError("");
     try {
@@ -375,6 +390,7 @@ const Store = () => {
 
       setLastRedeemedProduct(item);
       setShowSuccessModal(true);
+      setScratchProduct(null); // Close modal on success
 
       setStoreData((prev) => ({
         ...prev,
@@ -494,6 +510,18 @@ const Store = () => {
             balance={walletBalance}
             onClose={() => setShowSuccessModal(false)}
             onViewOrders={() => navigate("/orders")}
+          />
+        )}
+        {scratchProduct && (
+          <ScratchCardModal
+            product={scratchProduct}
+            onClose={() => {
+              setScratchProduct(null);
+              setRedeemError("");
+            }}
+            onScratchComplete={() => processRedemption(scratchProduct)}
+            isProcessing={redeemingProductId === scratchProduct.id}
+            processingError={redeemError}
           />
         )}
       </AnimatePresence>

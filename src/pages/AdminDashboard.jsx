@@ -52,6 +52,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import AdminSidebar from "../components/AdminSidebar";
 import BalanceCard from "../components/BalanceCard";
@@ -223,6 +224,7 @@ const normalizeRedeemProductEntry = (product, index = 0) => {
         : "",
     description: String(product?.description || "").trim(),
     image: String(product?.image || product?.imageUrl || "").trim(),
+    images: Array.isArray(product?.images) ? product.images.filter(Boolean) : [],
     status:
       String(product?.status || "active").toLowerCase() === "inactive"
         ? "inactive"
@@ -999,6 +1001,7 @@ const AdminDashboard = () => {
   const [isDeleteRedeemProductModalOpen, setIsDeleteRedeemProductModalOpen] =
     useState(false);
   const [productToDeleteIndex, setProductToDeleteIndex] = useState(-1);
+  const [productStatusToggleModal, setProductStatusToggleModal] = useState({ isOpen: false, index: -1, currentStatus: "" });
 
   // Support Tickets (Disputes)
   const [supportTickets, setSupportTickets] = useState([]);
@@ -1021,7 +1024,15 @@ const AdminDashboard = () => {
     return saved === "collapsed" ? true : false; // Default to expanded
   });
   const [analyticsRange, setAnalyticsRange] = useState(30);
+  const [activityTimeframe, setActivityTimeframe] = useState("week");
+  const [activityCustomStart, setActivityCustomStart] = useState("");
+  const [activityCustomEnd, setActivityCustomEnd] = useState("");
+  const [txTimeframe, setTxTimeframe] = useState("all");
+  const [txCustomStart, setTxCustomStart] = useState("");
+  const [txCustomEnd, setTxCustomEnd] = useState("");
   const [analyticsMetric, setAnalyticsMetric] = useState("transactions");
+  const [recentTxLimit, setRecentTxLimit] = useState(4);
+  const [recentTxTypeFilter, setRecentTxTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const searchLower = (searchQuery || "").toLowerCase().trim();
@@ -1178,6 +1189,7 @@ const AdminDashboard = () => {
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
   const isRedeemCatalogRoute = activeSection === "redeem-catalog";
+  const isAddProductRoute = activeSection === "add-product";
   const isAccountRoute = activeSection === "account";
   const isSecurityRoute = activeSection === "security";
 
@@ -1732,7 +1744,7 @@ const AdminDashboard = () => {
       tasks.push(loadQrs(authToken));
     } else if (isLogsRoute) {
       tasks.push(loadLogs(authToken));
-    } else if (isRedeemCatalogRoute) {
+    } else if (isRedeemCatalogRoute || isAddProductRoute) {
       tasks.push(loadSettings(authToken));
     } else if (isSettingsRoute) {
       tasks.push(loadSettings(authToken), loadBrands(authToken));
@@ -2287,21 +2299,21 @@ const AdminDashboard = () => {
   };
 
   const handleAddRedeemProduct = () => {
-    if (!settings || isRedeemProductModalOpen) return;
+    if (!settings) return;
     setEditingRedeemProductIndex(-1);
     setRedeemProductDraft(createRedeemProductDraft());
     setRedeemProductDraftUpload({ status: "", error: "" });
     setRedeemProductDraftError("");
-    setIsRedeemProductModalOpen(true);
+    navigate("/admin/add-product");
   };
 
   const handleCloseRedeemProductModal = () => {
     if (settingsLoading) return;
-    setIsRedeemProductModalOpen(false);
     setEditingRedeemProductIndex(-1);
     setRedeemProductDraft(createRedeemProductDraft());
     setRedeemProductDraftUpload({ status: "", error: "" });
     setRedeemProductDraftError("");
+    navigate("/admin/redeem-catalog");
   };
 
   const handleEditRedeemProduct = (index) => {
@@ -2313,7 +2325,7 @@ const AdminDashboard = () => {
       ...product,
       isEditing: true,
     });
-    setIsRedeemProductModalOpen(true);
+    navigate("/admin/add-product");
   };
 
   const handleRedeemProductDraftFieldChange = (field, value) => {
@@ -2356,10 +2368,15 @@ const AdminDashboard = () => {
       if (!uploadedUrl) {
         throw new Error("Upload failed. No URL returned.");
       }
-      setRedeemProductDraft((prev) => ({
-        ...(prev || {}),
-        image: uploadedUrl,
-      }));
+      setRedeemProductDraft((prev) => {
+        const currentImages = Array.isArray(prev?.images) ? prev.images : (prev?.image ? [prev.image] : []);
+        const nextImages = [...new Set([...currentImages, uploadedUrl].filter(Boolean))];
+        return {
+          ...(prev || {}),
+          image: prev?.image || uploadedUrl,
+          images: nextImages,
+        };
+      });
       setRedeemProductDraftUpload({
         status: "Product image uploaded.",
         error: "",
@@ -2518,6 +2535,25 @@ const AdminDashboard = () => {
     setProductToDeleteIndex(-1);
 
     await persistRedeemProductChanges(nextProducts);
+  };
+
+  const handleToggleProductStatusConfirm = (index) => {
+    const product = getRedeemStoreProducts()[index];
+    if (!product) return;
+    const currentStatus = String(product.status || "active").toLowerCase();
+    setProductStatusToggleModal({ isOpen: true, index, currentStatus });
+  };
+
+  const confirmToggleProductStatus = async () => {
+    const { index, currentStatus } = productStatusToggleModal;
+    if (index === -1) return;
+    const nextStatus = currentStatus === "inactive" ? "active" : "inactive";
+    const currentProducts = getRedeemStoreProducts();
+    const nextProducts = [...currentProducts];
+    nextProducts[index] = { ...nextProducts[index], status: nextStatus };
+    setRedeemStoreProducts(nextProducts);
+    await persistRedeemProductChanges(nextProducts);
+    setProductStatusToggleModal({ isOpen: false, index: -1, currentStatus: "" });
   };
 
   const handleRedeemProductFieldChange = (index, field, value) => {
@@ -3985,15 +4021,101 @@ const AdminDashboard = () => {
     orders: effectiveOrders,
   } = filteredDashboardData;
 
-  // Transactions - filter out admin manual recharges to focus on vendor settlements
+  // Transactions - Include all transaction types (Recharges and Settlements)
   // Now using effectiveTransactions
-  const vendorTransactions = (effectiveTransactions || []).filter((tx) => {
-    const category = String(tx.category || "").toUpperCase();
-    return category !== "ADMIN_CREDIT" && category !== "ADMIN_ADJUSTMENT";
-  });
+  const vendorTransactions = effectiveTransactions || [];
+
+  const filteredVendorTransactionsByTime = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return vendorTransactions
+      .filter((tx) => {
+        if (!tx.createdAt) return true;
+        const txDate = new Date(tx.createdAt);
+        if (txTimeframe === "today") {
+          return txDate >= startOfToday;
+        }
+        if (txTimeframe === "week") {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 86400000);
+          return txDate >= oneWeekAgo;
+        }
+        if (txTimeframe === "month") {
+          const oneMonthAgo = new Date(now.getTime() - 30 * 86400000);
+          return txDate >= oneMonthAgo;
+        }
+        if (txTimeframe === "year") {
+          const oneYearAgo = new Date(now.getTime() - 365 * 86400000);
+          return txDate >= oneYearAgo;
+        }
+        if (txTimeframe === "custom") {
+          if (txCustomStart) {
+            const start = new Date(txCustomStart);
+            start.setHours(0, 0, 0, 0);
+            if (txDate < start) return false;
+          }
+          if (txCustomEnd) {
+            const end = new Date(txCustomEnd);
+            end.setHours(23, 59, 59, 999);
+            if (txDate > end) return false;
+          }
+          return true;
+        }
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [vendorTransactions, txTimeframe, txCustomStart, txCustomEnd]);
+
   const limitedVendorTransactions = showAllTransactions
-    ? vendorTransactions
-    : vendorTransactions.slice(0, 10);
+    ? filteredVendorTransactionsByTime
+    : filteredVendorTransactionsByTime.slice(0, 10);
+
+  const filteredRecentVendorTransactions = useMemo(() => {
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+    
+    if (activityTimeframe === "today") {
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+    } else if (activityTimeframe === "week") {
+      startDate.setDate(now.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "month") {
+      startDate.setDate(now.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "year") {
+      startDate.setFullYear(now.getFullYear() - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "custom") {
+      startDate = activityCustomStart ? new Date(activityCustomStart) : new Date(now.getTime() - 7 * 86400000);
+      endDate = activityCustomEnd ? new Date(activityCustomEnd) : new Date();
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    return (effectiveTransactions || [])
+      .filter((tx) => {
+        const d = new Date(tx.createdAt);
+        if (activityTimeframe === "custom") {
+          if (d < startDate || d > endDate) return false;
+        } else {
+          if (d < startDate) return false;
+        }
+
+        // Filter by Transaction Type (All, Recharge, Withdrawal)
+        if (recentTxTypeFilter === "recharge") {
+          const category = String(tx.category || "").toUpperCase();
+          const isRecharge = tx.type === "credit" || category.includes("RECHARGE") || category === "ADMIN_CREDIT";
+          if (!isRecharge) return false;
+        } else if (recentTxTypeFilter === "withdrawal") {
+          const isDebit = tx.type === "debit";
+          if (!isDebit) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [effectiveTransactions, activityTimeframe, activityCustomStart, activityCustomEnd, recentTxTypeFilter]);
 
   // Orders (Server side usually, but slicing for preview)
   const limitedOrders = showAllOrders
@@ -4293,6 +4415,103 @@ const AdminDashboard = () => {
       </div>
     );
   }
+
+  const activityChartData = useMemo(() => {
+    let txs = effectiveTransactions || [];
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+    
+    if (activityTimeframe === "today") {
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+    } else if (activityTimeframe === "week") {
+      startDate.setDate(now.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "month") {
+      startDate.setDate(now.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "year") {
+      startDate.setFullYear(now.getFullYear() - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "custom") {
+      startDate = activityCustomStart ? new Date(activityCustomStart) : new Date(now.getTime() - 7 * 86400000);
+      endDate = activityCustomEnd ? new Date(activityCustomEnd) : new Date();
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    // Pre-fill all buckets in the range
+    const buckets = {};
+
+    if (activityTimeframe === "today") {
+      for (let h = 0; h <= now.getHours(); h++) {
+        const label = `${h.toString().padStart(2, "0")}:00`;
+        buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: h };
+      }
+    } else if (activityTimeframe === "year") {
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const label = cursor.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        if (!buckets[label]) {
+          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
+        }
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    } else {
+      // day-level buckets for week, month, custom
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const label = cursor.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        if (!buckets[label]) {
+          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    // Fill actual transaction amounts into the buckets
+    const filteredTxs = txs.filter((tx) => {
+      const d = new Date(tx.createdAt);
+      if (activityTimeframe === "custom") {
+        return d >= startDate && d <= endDate;
+      }
+      return d >= startDate;
+    });
+
+    filteredTxs.forEach((tx) => {
+      const d = new Date(tx.createdAt);
+      let key = "";
+      
+      if (activityTimeframe === "today") {
+        key = `${d.getHours().toString().padStart(2, "0")}:00`;
+      } else if (activityTimeframe === "year") {
+        key = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      } else {
+        key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      }
+
+      if (!buckets[key]) {
+        buckets[key] = { name: key, moneyIn: 0, moneyOut: 0, timestamp: activityTimeframe === "today" ? d.getHours() : d.getTime() };
+      }
+      const amount = Number(tx.amount) || 0;
+      if (tx.type === "credit") {
+        buckets[key].moneyIn += amount;
+      } else if (tx.type === "debit") {
+        buckets[key].moneyOut += amount;
+      }
+    });
+
+    return Object.values(buckets).sort((a, b) => a.timestamp - b.timestamp);
+  }, [effectiveTransactions, activityTimeframe, activityCustomStart, activityCustomEnd]);
+
+  const activityTotals = useMemo(() => {
+    return activityChartData.reduce((acc, curr) => {
+      acc.moneyIn += curr.moneyIn;
+      acc.moneyOut += curr.moneyOut;
+      return acc;
+    }, { moneyIn: 0, moneyOut: 0 });
+  }, [activityChartData]);
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100 text-slate-900 dark:bg-[#020202] dark:text-white transition-colors duration-300 font-admin-body">
@@ -4614,116 +4833,271 @@ const AdminDashboard = () => {
                 })}
               </div>
 
-              {/* Filters Bar */}
-              <div className="flex flex-col md:flex-row gap-3 bg-white dark:bg-[#111113] p-4 rounded-xl border border-slate-200 dark:border-white/[0.06]">
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
-                    Vendor / Brand
-                  </label>
-                  <select
-                    value={filterVendorId}
-                    onChange={(e) => {
-                      const vId = e.target.value;
-                      setFilterVendorId(vId);
-                      if (vId === "all") {
-                        setFilterBrandId("all");
-                      } else {
-                        const v = vendors.find((v) => v.id === vId);
-                        setFilterBrandId(v?.brandId || v?.Brand?.id || "all");
-                      }
-                      setFilterCampaignId("all");
-                    }}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Vendors</option>
-                    {vendors.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.businessName || v.User?.name || v.contactEmail}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.08em]">
-                    Campaign
-                  </label>
-                  <select
-                    value={filterCampaignId}
-                    onChange={(e) => setFilterCampaignId(e.target.value)}
-                    className={adminInputClass}
-                  >
-                    <option value="all">All Campaigns</option>
-                    {campaigns
-                      .filter((c) => {
-                        const campaignVendorId = c.Brand?.vendorId || c.brand?.vendorId || c.vendorId;
-                        const mv =
-                          filterVendorId === "all" ||
-                          campaignVendorId === filterVendorId;
-                        const mb =
-                          filterBrandId === "all" ||
-                          c.brandId === filterBrandId ||
-                          c.Brand?.id === filterBrandId;
-                        return mv && mb;
-                      })
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.title || "Untitled"}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
+
 
               {/* Platform Activity Chart */}
-              <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-xl p-5">
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white dark:bg-[#111113] border border-slate-200 dark:border-white/[0.06] rounded-2xl p-6">
+                {/* Header Row */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-2">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
                       Platform Activity
                     </h3>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                      Transaction volume over the last 7 days
+                      Money flow across the platform
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
+                  {/* Pill filter tabs */}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="inline-flex items-center bg-slate-100 dark:bg-white/[0.06] rounded-lg p-0.5">
+                      {[
+                        { label: "Today", value: "today" },
+                        { label: "Week", value: "week" },
+                        { label: "Month", value: "month" },
+                        { label: "Year", value: "year" },
+                        { label: "Custom", value: "custom" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setActivityTimeframe(opt.value)}
+                          className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                            activityTimeframe === opt.value
+                              ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    {activityTimeframe === "custom" && (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <input
+                          type="date"
+                          value={activityCustomStart}
+                          onChange={(e) => setActivityCustomStart(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none transition-all"
+                        />
+                        <span className="text-slate-400 text-xs font-medium">—</span>
+                        <input
+                          type="date"
+                          value={activityCustomEnd}
+                          onChange={(e) => setActivityCustomEnd(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none transition-all"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-emerald-50/30 dark:from-emerald-500/10 dark:to-emerald-500/5 rounded-xl p-4 border border-emerald-100 dark:border-emerald-500/10">
+                    <div className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider mb-1">
                       Money In
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-rose-500" />{" "}
+                    </div>
+                    <div className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
+                      ₹{formatAmount(activityTotals.moneyIn)}
+                    </div>
+                    <div className="absolute -right-3 -bottom-3 w-16 h-16 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5" />
+                  </div>
+                  <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-50/30 dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl p-4 border border-indigo-100 dark:border-indigo-500/10">
+                    <div className="text-[10px] font-bold text-indigo-600/70 dark:text-indigo-400/70 uppercase tracking-wider mb-1">
                       Money Out
-                    </span>
+                    </div>
+                    <div className="text-xl font-extrabold text-indigo-700 dark:text-indigo-400">
+                      ₹{formatAmount(activityTotals.moneyOut)}
+                    </div>
+                    <div className="absolute -right-3 -bottom-3 w-16 h-16 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
-                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                      Money In (Recharges)
-                    </div>
-                    <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">
-                      ₹{formatAmount(transactionTotals.credit)}
-                    </div>
-                    <Sparkline
-                      data={transactionSeries.credit}
-                      stroke="#059669"
-                      fill="rgba(5,150,105,0.08)"
-                    />
-                  </div>
-                  <div className="bg-slate-50 dark:bg-white/[0.03] rounded-lg p-3">
-                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                      Money Out (Payouts)
-                    </div>
-                    <div className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-2">
-                      ₹{formatAmount(transactionTotals.debit)}
-                    </div>
-                    <Sparkline
-                      data={transactionSeries.debit}
-                      stroke="#e11d48"
-                      fill="rgba(225,29,72,0.06)"
-                    />
-                  </div>
+
+                {/* Area / Line Chart */}
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={activityChartData}
+                      margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="gradientMoneyIn" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gradientMoneyOut" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.15} />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        dy={8}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        tickFormatter={(val) => val >= 1000 ? `₹${(val/1000).toFixed(0)}k` : `₹${val}`}
+                        width={55}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(255,255,255,0.95)',
+                          backdropFilter: 'blur(8px)',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                          boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
+                          padding: '10px 14px',
+                        }}
+                        labelStyle={{ color: '#0f172a', fontWeight: '700', fontSize: '12px', marginBottom: '6px' }}
+                        itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+                        formatter={(value, name) => [
+                          `₹${formatAmount(value)}`,
+                          name === 'moneyIn' ? '↑ Money In' : '↓ Money Out'
+                        ]}
+                        cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="moneyIn"
+                        name="moneyIn"
+                        stroke="#059669"
+                        strokeWidth={2.5}
+                        fill="url(#gradientMoneyIn)"
+                        dot={{ r: 3, fill: '#059669', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 5, fill: '#059669', stroke: '#fff', strokeWidth: 2 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="moneyOut"
+                        name="moneyOut"
+                        stroke="#6366f1"
+                        strokeWidth={2.5}
+                        fill="url(#gradientMoneyOut)"
+                        dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 5, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
+
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <span className="w-3 h-[3px] rounded-full bg-emerald-500" /> Money In (Recharges)
+                  </span>
+                  <span className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                    <span className="w-3 h-[3px] rounded-full bg-indigo-500" /> Money Out (Payouts)
+                  </span>
+                </div>
+
+                {/* Recent Transactions */}
+                {effectiveTransactions?.length > 0 && (
+                  <div className="mt-6 border-t border-slate-200 dark:border-white/[0.06] pt-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        Recent Transactions
+                      </h4>
+                      <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-0.5 rounded-lg border border-slate-200/50 dark:border-white/5">
+                        {[
+                          { label: "All", value: "all" },
+                          { label: "Recharges", value: "recharge" },
+                          { label: "Withdrawals", value: "withdrawal" },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              setRecentTxTypeFilter(opt.value);
+                              setRecentTxLimit(4);
+                            }}
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all duration-200 ${
+                              recentTxTypeFilter === opt.value
+                                ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm"
+                                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2.5">
+                      {filteredRecentVendorTransactions.length === 0 ? (
+                        <div className="text-center py-6 text-xs text-slate-400 dark:text-slate-500">
+                          No transactions found matching this type.
+                        </div>
+                      ) : (
+                        filteredRecentVendorTransactions.slice(0, recentTxLimit).map((tx) => {
+                          const vendor = tx.Wallet?.Vendor;
+                          const vendorName = vendor?.businessName || vendor?.User?.name || vendor?.id || "Platform User";
+                          const isDebit = tx.type === "debit";
+                          
+                          const category = String(tx.category || "").toUpperCase();
+                          let displayLabel = isDebit ? "Withdrawal" : "Recharge";
+                          if (category.includes("RECHARGE") || category === "ADMIN_CREDIT") {
+                            displayLabel = "Recharge";
+                          } else if (category.includes("WITHDRAW")) {
+                            displayLabel = "Withdrawal";
+                          } else if (category === "CAMPAIGN_PAYOUT" || category.includes("PAYOUT") || category.includes("SETTLEMENT")) {
+                            displayLabel = "Settlement";
+                          }
+
+                          return (
+                            <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] hover:bg-slate-100/80 dark:hover:bg-white/[0.04] transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDebit ? 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400' : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'}`}>
+                                  {isDebit ? <ArrowLeftRight size={14} /> : <CircleDollarSign size={14} />}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">{vendorName}</p>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      displayLabel === "Recharge" 
+                                        ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                                        : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300"
+                                    }`}>
+                                      {displayLabel}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{formatDate(tx.createdAt)}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className={`text-sm font-bold ${isDebit ? 'text-slate-800 dark:text-slate-200' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                  {isDebit ? "-" : "+"}₹{formatAmount(tx.amount)}
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{tx.status || 'completed'}</p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    {filteredRecentVendorTransactions.length > 4 && (
+                      <div className="flex items-center justify-center mt-4">
+                        {recentTxLimit < filteredRecentVendorTransactions.length ? (
+                          <button
+                            onClick={() => setRecentTxLimit((prev) => prev + 4)}
+                            className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-sm font-semibold text-white transition-all shadow-sm"
+                          >
+                            Show More
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setRecentTxLimit(4)}
+                            className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm text-slate-700 font-medium transition-colors dark:bg-white/5 dark:hover:bg-white/10 dark:text-white"
+                          >
+                            Show Less
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action Items + Notifications */}
@@ -6819,7 +7193,7 @@ const AdminDashboard = () => {
           {/* Continue with remaining sections... */}
           {isTransactionsRoute && (
             <section id="transactions" className="space-y-6 mt-12">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                     Vendor Transactions
@@ -6830,17 +7204,69 @@ const AdminDashboard = () => {
                     campaigns.
                   </p>
                 </div>
-                {vendorTransactions.length > 8 && (
+                {filteredVendorTransactionsByTime.length > 8 && (
                   <button
                     onClick={() => setShowAllTransactions((prev) => !prev)}
                     className={`${adminGhostButtonClass} whitespace-nowrap`}
                   >
                     {showAllTransactions
                       ? "Show less"
-                      : `View all (${vendorTransactions.length})`}
+                      : `View all (${filteredVendorTransactionsByTime.length})`}
                   </button>
                 )}
               </div>
+
+              {/* Timeframe Filter Bar */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/10">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Timeframe:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
+                    {[
+                      { label: "All", value: "all" },
+                      { label: "Today", value: "today" },
+                      { label: "Week", value: "week" },
+                      { label: "Month", value: "month" },
+                      { label: "Year", value: "year" },
+                      { label: "Custom", value: "custom" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setTxTimeframe(opt.value)}
+                        className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                          txTimeframe === opt.value
+                            ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {txTimeframe === "custom" && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <input
+                        type="date"
+                        value={txCustomStart}
+                        onChange={(e) => setTxCustomStart(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none transition-all"
+                      />
+                      <span className="text-slate-400 text-xs font-medium">—</span>
+                      <input
+                        type="date"
+                        value={txCustomEnd}
+                        onChange={(e) => setTxCustomEnd(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none transition-all"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Showing {limitedVendorTransactions.length} of {filteredVendorTransactionsByTime.length} transactions
+                </div>
+              </div>
+
               {isLoadingTransactions && (
                 <div className="text-slate-900 dark:text-white/60">
                   Loading...
@@ -6849,9 +7275,9 @@ const AdminDashboard = () => {
               {transactionsError && (
                 <div className="text-rose-400">{transactionsError}</div>
               )}
-              {!isLoadingTransactions && vendorTransactions.length === 0 ? (
+              {!isLoadingTransactions && filteredVendorTransactionsByTime.length === 0 ? (
                 <div className="text-slate-900 dark:text-white/60">
-                  No vendor settlements yet.
+                  No vendor settlements found for the selected timeframe.
                 </div>
               ) : (
                 <div className={`${adminPanelClass} overflow-hidden`}>
@@ -8155,238 +8581,229 @@ const AdminDashboard = () => {
               className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
             >
               <div className={`${adminPanelClass} p-5 space-y-5`}>
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      Redeem Product Catalog
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Upload and manage products shown in the customer redeem
-                      store.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleAddRedeemProduct}
-                      disabled={
-                        !settings || settingsLoading || isRedeemProductModalOpen
-                      }
-                      className={`${adminPrimaryButtonClass} disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2`}
-                    >
-                      <Plus size={14} /> Add Product
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSettingsUpdate}
-                      disabled={!settings || settingsLoading}
-                      className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {settingsLoading ? "Saving..." : "Save Changes"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Total
-                    </p>
-                    <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
-                      {redeemCatalogSummary.total}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                      Active
-                    </p>
-                    <p className="text-lg font-bold text-emerald-700 dark:text-emerald-200 mt-1">
-                      {redeemCatalogSummary.active}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                      Inactive
-                    </p>
-                    <p className="text-lg font-bold text-amber-700 dark:text-amber-200 mt-1">
-                      {redeemCatalogSummary.inactive}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-blue-200/70 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-blue-700 dark:text-blue-300">
-                      With Image
-                    </p>
-                    <p className="text-lg font-bold text-blue-700 dark:text-blue-200 mt-1">
-                      {redeemCatalogSummary.withImage}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-rose-200/70 dark:border-rose-500/30 bg-rose-50/80 dark:bg-rose-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-wide text-rose-700 dark:text-rose-300">
-                      Missing Amount
-                    </p>
-                    <p className="text-lg font-bold text-rose-700 dark:text-rose-200 mt-1">
-                      {redeemCatalogSummary.missingAmount}
-                    </p>
-                  </div>
-                </div>
-
-                {settingsLoading && (
-                  <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
-                    Loading catalog...
-                  </div>
-                )}
-                {settingsError && (
-                  <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-300">
-                    {settingsError}
-                  </div>
-                )}
-                {settingsMessage && (
-                  <div className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
-                    {settingsMessage}
-                  </div>
-                )}
-              </div>
-
-              {settings && (
-                <div className={`${adminPanelClass} p-6 space-y-6`}>
-                  <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Edit Products
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                          Redeem Product Catalog
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Upload and manage products shown in the customer redeem
+                          store.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleAddRedeemProduct}
+                          disabled={
+                            !settings || settingsLoading
+                          }
+                          className={`${adminPrimaryButtonClass} disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2`}
+                        >
+                          <Plus size={14} /> Add Product
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSettingsUpdate}
+                          disabled={!settings || settingsLoading}
+                          className={`${adminGhostButtonClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {settingsLoading ? "Saving..." : "Save Changes"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {redeemStoreProducts.length} item
-                      {redeemStoreProducts.length === 1 ? "" : "s"}
+
+                    <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
+                      <div className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Total
+                        </p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                          {redeemCatalogSummary.total}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-500/10 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                          Active
+                        </p>
+                        <p className="text-lg font-bold text-emerald-700 dark:text-emerald-200 mt-1">
+                          {redeemCatalogSummary.active}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                          Inactive
+                        </p>
+                        <p className="text-lg font-bold text-amber-700 dark:text-amber-200 mt-1">
+                          {redeemCatalogSummary.inactive}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-blue-200/70 dark:border-blue-500/30 bg-blue-50/80 dark:bg-blue-500/10 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                          With Image
+                        </p>
+                        <p className="text-lg font-bold text-blue-700 dark:text-blue-200 mt-1">
+                          {redeemCatalogSummary.withImage}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-rose-200/70 dark:border-rose-500/30 bg-rose-50/80 dark:bg-rose-500/10 p-3">
+                        <p className="text-[11px] uppercase tracking-wide text-rose-700 dark:text-rose-300">
+                          Missing Amount
+                        </p>
+                        <p className="text-lg font-bold text-rose-700 dark:text-rose-200 mt-1">
+                          {redeemCatalogSummary.missingAmount}
+                        </p>
+                      </div>
                     </div>
+
+                    {settingsLoading && (
+                      <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-slate-50 dark:bg-black/20 px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                        Loading catalog...
+                      </div>
+                    )}
+                    {settingsError && (
+                      <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-300">
+                        {settingsError}
+                      </div>
+                    )}
+                    {settingsMessage && (
+                      <div className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-300">
+                        {settingsMessage}
+                      </div>
+                    )}
                   </div>
 
-                  {redeemStoreProducts.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/70 dark:bg-black/20 p-6 text-sm text-slate-500 dark:text-slate-400">
-                      <p>
-                        No redeem products yet. Click "Add Product" to create
-                        your first item.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleAddRedeemProduct}
-                        disabled={settingsLoading || isRedeemProductModalOpen}
-                        className={`${adminGhostButtonClass} mt-4 disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <Plus size={14} /> Create First Product
-                        </span>
-                      </button>
-                    </div>
-                  )}
+                  {settings && (
+                    <div className={`${adminPanelClass} p-6 space-y-6`}>
+                      <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-3">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Edit Products
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {redeemStoreProducts.length} item
+                          {redeemStoreProducts.length === 1 ? "" : "s"}
+                        </div>
+                      </div>
 
-                  <div className="overflow-hidden rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-black/20">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 dark:bg-white/5 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">
-                          <tr>
-                            <th className="px-5 py-3">Product</th>
-                            <th className="px-5 py-3">Category</th>
-                            <th className="px-5 py-3">Points</th>
-                            <th className="px-5 py-3">Stock</th>
-                            <th className="px-5 py-3">Status</th>
-                            <th className="px-5 py-3 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200/70 dark:divide-white/5">
-                          {redeemStoreProducts.map((product, index) => (
-                            <tr
-                              key={`${product?.id || "product"}-${index}`}
-                              className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
-                            >
-                              <td className="px-5 py-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 overflow-hidden">
-                                    {product?.image ? (
-                                      <AuthImage
-                                        src={resolveAssetUrl(product.image)}
-                                        alt=""
-                                        className="h-full w-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="h-full w-full flex items-center justify-center text-slate-300">
-                                        <Package size={16} />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-slate-900 dark:text-white">
-                                      {product?.name || "Untitled"}
-                                    </div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                                      {product?.id}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
-                                {product?.category || "-"}
-                              </td>
-                              <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
-                                {product?.amount}
-                              </td>
-                              <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
-                                {product?.stock !== "" ? product.stock : "-"}
-                              </td>
-                              <td className="px-5 py-3">
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    String(product?.status).toLowerCase() ===
-                                    "inactive"
-                                      ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
-                                      : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
-                                  }`}
+                      {redeemStoreProducts.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-slate-50/70 dark:bg-black/20 p-6 text-sm text-slate-500 dark:text-slate-400">
+                          <p>
+                            No redeem products yet. Click "Add Product" to create
+                            your first item.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleAddRedeemProduct}
+                            disabled={settingsLoading || isRedeemProductModalOpen}
+                            className={`${adminGhostButtonClass} mt-4 disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <Plus size={14} /> Create First Product
+                            </span>
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="overflow-hidden rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-black/20">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold">
+                              <tr>
+                                <th className="px-5 py-3">Product</th>
+                                <th className="px-5 py-3">Category</th>
+                                <th className="px-5 py-3">Points</th>
+                                <th className="px-5 py-3">Stock</th>
+                                <th className="px-5 py-3">Status</th>
+                                <th className="px-5 py-3 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200/70 dark:divide-white/5">
+                              {redeemStoreProducts.map((product, index) => (
+                                <tr
+                                  key={`${product?.id || "product"}-${index}`}
+                                  className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors"
                                 >
-                                  {String(product?.status).toLowerCase() ===
-                                  "inactive"
-                                    ? "Inactive"
-                                    : "Active"}
-                                </span>
-                              </td>
-                              <td className="px-5 py-3 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  <button
-                                    onClick={() =>
-                                      handleEditRedeemProduct(index)
-                                    }
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-white/10 transition-colors"
-                                    title="Edit"
-                                  >
-                                    <FileText size={16} />
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleRemoveRedeemProduct(index)
-                                    }
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
-                                    title="Remove"
-                                  >
-                                    <X size={16} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                  <td className="px-5 py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                        {product?.image ? (
+                                          <AuthImage
+                                            src={resolveAssetUrl(product.image)}
+                                            alt=""
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="h-full w-full flex items-center justify-center text-slate-300">
+                                            <Package size={16} />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium text-slate-900 dark:text-white">
+                                          {product?.name || "Untitled"}
+                                        </div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                          {product?.id}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                                    {product?.category || "-"}
+                                  </td>
+                                  <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">
+                                    {product?.amount}
+                                  </td>
+                                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                                    {product?.stock !== "" ? product.stock : "-"}
+                                  </td>
+                                  <td className="px-5 py-3">
+                                    <button
+                                      onClick={() => handleToggleProductStatusConfirm(index)}
+                                      title="Click to toggle status"
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
+                                        String(product?.status).toLowerCase() ===
+                                        "inactive"
+                                          ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                                          : "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                                      }`}
+                                    >
+                                      {String(product?.status).toLowerCase() ===
+                                      "inactive"
+                                        ? "Inactive"
+                                        : "Active"}
+                                    </button>
+                                  </td>
+                                  <td className="px-5 py-3 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <button
+                                        onClick={() =>
+                                          handleEditRedeemProduct(index)
+                                        }
+                                        className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-white/10 transition-colors"
+                                        title="Edit"
+                                      >
+                                        <FileText size={16} />
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleRemoveRedeemProduct(index)
+                                        }
+                                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-colors"
+                                        title="Remove"
+                                      >
+                                        <X size={16} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  {isRedeemProductModalOpen && (
-                    <RedeemProductModal
-                      product={redeemProductDraft}
-                      onClose={handleCloseRedeemProductModal}
-                      onSave={handleSaveRedeemProduct}
-                      isSaving={settingsLoading}
-                      onUploadImage={handleRedeemProductDraftImageUpload}
-                      uploadState={redeemProductDraftUpload}
-                    />
                   )}
-                </div>
-              )}
             </section>
           )}
 
@@ -8840,6 +9257,21 @@ const AdminDashboard = () => {
             </section>
           )}
 
+          {/* Add/Edit Product Page */}
+          {isAddProductRoute && (
+            <section
+              id="add-product"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <RedeemProductModal
+                product={redeemProductDraft}
+                onClose={handleCloseRedeemProductModal}
+                onSave={handleSaveRedeemProduct}
+                isSaving={settingsLoading}
+              />
+            </section>
+          )}
+
           {/* Account Settings Section */}
           {isAccountRoute && (
             <section
@@ -9002,6 +9434,45 @@ const AdminDashboard = () => {
                 setSelectedUser(null);
               }}
             />
+          )}
+
+          {productStatusToggleModal.isOpen && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div
+                className={`${adminPanelClass} w-full max-w-sm p-6 space-y-4 shadow-xl scale-100 animate-in zoom-in-95 duration-200`}
+              >
+                <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+                  <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-500/10">
+                    <AlertCircle size={24} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    Change Status?
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Are you sure you want to change this product's status to{" "}
+                  <strong>
+                    {productStatusToggleModal.currentStatus === "inactive" ? "Active" : "Inactive"}
+                  </strong>?
+                </p>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setProductStatusToggleModal({ isOpen: false, index: -1, currentStatus: "" })}
+                    className={adminGhostButtonClass}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmToggleProductStatus}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors shadow-sm"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {isDeleteRedeemProductModalOpen && (
