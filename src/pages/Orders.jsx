@@ -300,10 +300,18 @@ const Orders = () => {
               const iconBg =
                 statusVal === "PROCESSING"
                   ? "bg-amber-50 dark:bg-amber-900/20"
+                  : statusVal === "SHIPPED"
+                  ? "bg-blue-50 dark:bg-blue-900/20"
+                  : statusVal === "DELIVERED"
+                  ? "bg-indigo-50 dark:bg-indigo-900/20"
                   : "bg-emerald-50 dark:bg-emerald-900/20";
               const iconColor =
                 statusVal === "PROCESSING"
                   ? "text-amber-500"
+                  : statusVal === "SHIPPED"
+                  ? "text-blue-500 dark:text-blue-400"
+                  : statusVal === "DELIVERED"
+                  ? "text-indigo-500 dark:text-indigo-400"
                   : "text-emerald-600 dark:text-emerald-400";
 
               return (

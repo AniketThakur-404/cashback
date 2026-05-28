@@ -1451,6 +1451,11 @@ const AdminDashboard = () => {
   };
 
   const handleUpdateRedeemOrderStatus = (orderId, newStatus) => {
+    const statusText = newStatus === "SUCCESS" ? "Placed" : newStatus.charAt(0) + newStatus.slice(1).toLowerCase();
+    if (!window.confirm(`Are you sure you want to change the order status to "${statusText}"?`)) {
+      return;
+    }
+    
     const updated = { ...redeemOrderStatuses, [orderId]: newStatus };
     setRedeemOrderStatuses(updated);
     localStorage.setItem("redeem_order_statuses", JSON.stringify(updated));

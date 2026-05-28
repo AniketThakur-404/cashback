@@ -18,14 +18,50 @@ import {
   ChevronRight,
   ShieldCheck,
   Clock,
+  Lock,
+  Gift,
 } from "lucide-react";
 
 // Helper to format currency
 const formatAmount = (value) => {
   if (value === undefined || value === null) return "0.00";
   const numeric = Number(value);
-  if (Number.isFinite(numeric)) return numeric.toFixed(2);
+  if (Number.isFinite(numeric)) {
+    return numeric.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
   return String(value);
+};
+
+const formatActivityDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "-";
+  
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).toLowerCase();
+
+  if (isToday) {
+    return `Today, ${timeStr}`;
+  } else if (isYesterday) {
+    return `Yesterday, ${timeStr}`;
+  } else {
+    const day = date.getDate();
+    const month = date.toLocaleString("en-US", { month: "short" });
+    return `${day} ${month}, ${timeStr}`;
+  }
 };
 
 const normalizeTxType = (value) => String(value || "").toUpperCase();
@@ -109,68 +145,90 @@ const Wallet = () => {
           </div>
         )}
 
-        {/* 1. Main Wallet Card (Theme Primary) */}
-        <div className="relative overflow-hidden rounded-[1.5rem] bg-primary shadow-xl shadow-primary/20 text-primary-foreground p-6 pb-4 min-h-[180px] flex flex-col justify-between">
-          {/* Background Decor */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/5 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="relative z-10">
-            <div className="text-sm font-medium text-white/90 mb-1 opacity-90">
-              Assured Rewards Wallet
+        {/* 1. Main Wallet Card */}
+        <div className="relative overflow-hidden rounded-[32px] shadow-xl text-white min-h-[190px] flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, #0f9b6e, #0d7a57)' }}>
+          <img
+            src="/wallet-banner.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/20 via-transparent to-transparent pointer-events-none" />
+          
+          <div className="relative z-10 p-6 flex flex-col h-full justify-between flex-1">
+            {/* Top Row: Title & Badge */}
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-white/95">
+                <ShieldCheck size={16} className="text-white" />
+                <span>Assured Rewards Wallet</span>
+              </div>
+              <div className="mt-5">
+                <span className="text-[33px] font-black tracking-tight leading-none drop-shadow-sm">
+                  Rs {formatAmount(balance)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-extrabold tracking-tight">
-                Rs {formatAmount(balance)}
-              </span>
-            </div>
-          </div>
 
-          <div className="relative z-10 mt-6">
-            <div className="bg-white/20 backdrop-blur-md rounded-lg px-3 py-2 flex items-center gap-2 border border-white/10 w-full sm:w-fit">
-              <ShieldCheck size={16} className="text-white" />
-              <span className="text-[11px] font-medium text-white/90">
-                Powered by UPI & Net Banking - Secure transfers
-              </span>
+            {/* Bottom Row: Info Tags */}
+            <div className="mt-4 space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/5 text-[10px] font-medium text-white leading-none">
+                <Lock size={10} className="text-white/80" />
+                <span>Powered by UPI & Net Banking</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white/85 ml-1">
+                <ShieldCheck size={11} className="text-emerald-300" />
+                <span>Secure transfers, every time</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* 2. Action Buttons */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={() => setActiveModal("withdraw")}
-            className="flex flex-col items-center justify-center gap-2 bg-primary text-primary-foreground py-5 px-4 rounded-2xl shadow-md hover:bg-primary-strong transition-colors active:scale-95 duration-200"
+            className="group relative flex items-center justify-between text-left bg-emerald-700 hover:bg-emerald-800 text-white pl-2.5 pr-2 py-4 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 duration-200 gap-1.5"
           >
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center mb-1">
-              <ArrowUpRight size={18} strokeWidth={2.5} />
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                <ArrowUpRight size={20} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[12.5px] font-black tracking-tight leading-tight whitespace-nowrap">Transfer to Bank</div>
+                <div className="text-[8.5px] font-semibold text-emerald-100/70 truncate mt-0.5 whitespace-nowrap">Send money to your bank</div>
+              </div>
             </div>
-            <span className="text-sm font-bold">Transfer to Bank</span>
+            <ChevronRight size={13} className="text-white/50 group-hover:text-white shrink-0" />
           </button>
 
           <button
             onClick={() => navigate("/gift-cards")}
-            className="flex flex-col items-center justify-center gap-2 bg-zinc-900 dark:bg-zinc-800 text-white py-5 px-4 rounded-2xl shadow-md hover:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors active:scale-95 duration-200"
+            className="group relative flex items-center justify-between text-left bg-zinc-900 hover:bg-zinc-800 text-white pl-2.5 pr-2 py-4 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 duration-200 gap-1.5"
           >
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center mb-1">
-              <ShoppingBag size={18} strokeWidth={2.5} />
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0">
+                <ShoppingBag size={18} className="text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[12.5px] font-black tracking-tight leading-tight whitespace-nowrap">Redeem in Store</div>
+                <div className="text-[8.5px] font-semibold text-zinc-400 truncate mt-0.5 whitespace-nowrap">Use points for rewards</div>
+              </div>
             </div>
-            <span className="text-sm font-bold">Redeem in Store</span>
+            <ChevronRight size={13} className="text-white/40 group-hover:text-white shrink-0" />
           </button>
         </div>
 
         {/* 3. Recent Activity */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-zinc-800 min-h-[300px]">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-[32px] px-6 py-5.5 shadow-sm border border-gray-100 dark:border-zinc-800/80 min-h-[300px]">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <Clock size={18} className="text-gray-400" />
-              <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">
+              <Clock size={20} className="text-gray-400 dark:text-zinc-500" />
+              <h2 className="text-[16px] font-black text-gray-900 dark:text-white">
                 Recent Activity
               </h2>
             </div>
             <button 
               onClick={() => navigate("/wallet/transactions")}
-              className="text-xs font-bold text-primary flex items-center gap-0.5 hover:underline"
+              className="text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 hover:underline"
             >
               View All <ChevronRight size={14} />
             </button>
@@ -185,33 +243,49 @@ const Wallet = () => {
               <span className="text-xs">No transactions yet</span>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="divide-y divide-gray-100 dark:divide-zinc-800/50">
               {transactions.map((tx) => {
                 const isCredit = normalizeTxType(tx.type) === "CREDIT";
+                const isStoreRedeem = tx.description?.toLowerCase().includes("store redeem");
+                
+                const iconBg = isStoreRedeem 
+                  ? "bg-emerald-50 dark:bg-emerald-950/20" 
+                  : "bg-emerald-50 dark:bg-emerald-950/20";
+                const iconColor = isStoreRedeem
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-emerald-600 dark:text-emerald-400";
+                  
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between gap-3"
+                    className="flex items-center justify-between py-3.5 gap-3"
                   >
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {tx.description ||
-                          (isCredit ? "Cashback Received" : "Withdrawal")}
-                      </span>
-                      <span className="text-xs text-gray-400 mt-0.5">
-                        {/* Date formatting could be improved with date-fns if available, using basic JS for now */}
-                        {new Date(tx.createdAt).toLocaleDateString() ===
-                        new Date().toLocaleDateString()
-                          ? "Today"
-                          : "Yesterday"}
-                      </span>
+                    {/* Left side: Icon + Title/Sub */}
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className={`w-11 h-11 rounded-full ${iconBg} flex items-center justify-center shrink-0`}>
+                        {isStoreRedeem ? (
+                          <ShoppingBag size={20} className={iconColor} />
+                        ) : (
+                          <Gift size={20} className={iconColor} />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[13.5px] font-black text-gray-900 dark:text-white truncate leading-tight">
+                          {tx.description || (isCredit ? "Cashback Received" : "Withdrawal")}
+                        </div>
+                        <div className="text-[10px] font-medium text-gray-400 dark:text-gray-500 mt-1">
+                          {formatActivityDate(tx.createdAt)}
+                        </div>
+                      </div>
                     </div>
-                    <span
-                      className={`text-sm font-medium shrink-0 whitespace-nowrap ${isCredit ? "text-primary" : "text-gray-900 dark:text-white"}`}
-                    >
-                      {isCredit ? "+" : "-"} Rs{" "}
-                      {Math.floor(Number(tx.amount || 0))}
-                    </span>
+
+                    {/* Right side: Amount + Arrow */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[14.5px] font-black whitespace-nowrap ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-gray-900 dark:text-white"}`}>
+                        {isCredit ? "+" : "-"} Rs {Math.floor(Number(tx.amount || 0))}
+                      </span>
+                      <ChevronRight size={14} className="text-gray-300 dark:text-zinc-600" />
+                    </div>
                   </div>
                 );
               })}
