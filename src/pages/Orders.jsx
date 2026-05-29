@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { getTransactionHistory } from "../lib/api";
+import { getPublicStoreData, getTransactionHistory } from "../lib/api";
+import { resolvePublicAssetUrl } from "../lib/apiClient";
 import { useAuth } from "../lib/auth";
 
 const formatAmount = (value) => {
@@ -28,6 +29,30 @@ const formatDate = (value) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const getOrderProductName = (order) =>
+  String(order?.description || "").replace(/Store redeem:\s*/i, "").trim();
+
+const normalizeName = (value) => String(value || "").trim().toLowerCase();
+
+const ProductThumb = ({ product, statusClassName = "text-emerald-600" }) => {
+  const imageSrc = product?.image || product?.imageUrl || product?.bannerUrl;
+
+  if (imageSrc) {
+    return (
+      <img
+        src={resolvePublicAssetUrl(imageSrc)}
+        alt={product?.name || "Product"}
+        className="w-full h-full object-cover"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
+      />
+    );
+  }
+
+  return <ShoppingBag size={22} className={statusClassName} />;
 };
 
 const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
@@ -114,10 +139,13 @@ const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
           <div className="p-4 rounded-3xl bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm shrink-0">
-                <ShoppingBag size={20} className="text-emerald-600" />
+                <ProductThumb
+                  product={order.product}
+                  statusClassName="text-emerald-600"
+                />
               </div>
               <div className="font-extrabold text-sm text-gray-900 dark:text-white truncate">
-                {order.description.replace(/Store redeem: /i, "")}
+                {getOrderProductName(order)}
               </div>
             </div>
             <div className="text-right shrink-0">
@@ -169,6 +197,7 @@ const Orders = () => {
   const [error, setError] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderStatuses, setOrderStatuses] = useState({});
+  const [storeProductMap, setStoreProductMap] = useState({});
 
   useEffect(() => {
     try {
@@ -207,6 +236,30 @@ const Orders = () => {
       setIsLoading(false);
     }
   }, [authToken]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadStoreProducts = async () => {
+      try {
+        const data = await getPublicStoreData();
+        const products = Array.isArray(data?.products) ? data.products : [];
+        const nextMap = {};
+        products.forEach((product) => {
+          const key = normalizeName(product.name);
+          if (key) nextMap[key] = product;
+        });
+        if (isMounted) setStoreProductMap(nextMap);
+      } catch (err) {
+        if (isMounted) setStoreProductMap({});
+      }
+    };
+
+    loadStoreProducts();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     loadOrders();
@@ -288,6 +341,8 @@ const Orders = () => {
         ) : (
           <div className="grid gap-3">
             {orders.map((tx) => {
+              const productName = getOrderProductName(tx);
+              const product = storeProductMap[normalizeName(productName)];
               const statusVal = orderStatuses[tx.id] || "SUCCESS";
               const statusColor =
                 statusVal === "SUCCESS"
@@ -318,18 +373,18 @@ const Orders = () => {
                 <motion.div
                   key={tx.id}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedOrder(tx)}
+                  onClick={() => setSelectedOrder({ ...tx, product })}
                   className="group px-4 py-4 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-800/40 transition-all cursor-pointer flex items-center gap-3.5"
                 >
                   {/* Gift Icon */}
-                  <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-                    <ShoppingBag size={22} className={iconColor} />
+                  <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0 overflow-hidden`}>
+                    <ProductThumb product={product} statusClassName={iconColor} />
                   </div>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <div className="text-[14px] font-extrabold text-gray-900 dark:text-white truncate leading-tight">
-                      {tx.description.replace(/Store redeem: /i, "")}
+                      {productName}
                     </div>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider leading-none ${statusColor}`}>
