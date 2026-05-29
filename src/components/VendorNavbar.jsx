@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Button = ({
@@ -40,6 +41,7 @@ const Button = ({
 const VendorNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const logoSrc = "/logo.png";
   const APP_NAME = "Assured Rewards";
 
@@ -47,6 +49,7 @@ const VendorNavbar = () => {
     location.pathname === "/vendor" || location.pathname === "/vendor-landing";
 
   const scrollToSection = (sectionId) => {
+    setIsMobileMenuOpen(false);
     if (isLandingPage) {
       const element = document.getElementById(sectionId);
       if (element) {
@@ -59,20 +62,25 @@ const VendorNavbar = () => {
     }
   };
 
+  const handleNavigate = (path) => {
+    setIsMobileMenuOpen(false);
+    navigate(path);
+  };
+
   return (
     <nav className="border-b border-gray-100 bg-white/60 backdrop-blur-xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <div
-          className="flex items-center cursor-pointer"
-          onClick={() => navigate("/vendor")}
+          className="flex min-w-0 items-center cursor-pointer"
+          onClick={() => handleNavigate("/vendor")}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <img
               src={logoSrc}
               alt={APP_NAME}
-              className="h-10 w-auto object-contain"
+              className="h-9 sm:h-10 w-auto object-contain shrink-0"
             />
-            <span className="text-xl font-extrabold text-slate-900 tracking-tighter font-admin-heading">
+            <span className="truncate text-[17px] sm:text-xl font-extrabold text-slate-900 tracking-tighter font-admin-heading">
               Assured<span className="text-emerald-600">Rewards</span>
             </span>
 
@@ -108,22 +116,77 @@ const VendorNavbar = () => {
 
 
 
-        <div className="flex items-center gap-6">
+        <div className="hidden sm:flex items-center gap-6">
           <button 
-            onClick={() => navigate("/vendor-dashboard")}
-            className="hidden sm:block text-[15px] font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+            onClick={() => handleNavigate("/vendor-dashboard")}
+            className="text-[15px] font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
           >
             Login
           </button>
           <Button
             className="!bg-slate-900 !text-white !rounded-full !px-6 !py-2 !h-10 !text-sm !font-semibold hover:!bg-black shadow-lg shadow-slate-900/10 transition-all hover:scale-105 active:scale-95"
-            onClick={() => navigate("/brand-registration")}
+            onClick={() => handleNavigate("/brand-registration")}
           >
             Get Started
           </Button>
         </div>
 
+        <button
+          type="button"
+          className="inline-flex sm:hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-900 shadow-sm transition-colors hover:bg-slate-50"
+          onClick={() => setIsMobileMenuOpen((open) => !open)}
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isMobileMenuOpen}
+        >
+          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </div>
+
+      {isMobileMenuOpen && (
+        <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-4 shadow-lg shadow-slate-900/5">
+          <div className="flex flex-col gap-1 text-[15px] font-semibold text-slate-700">
+            <button
+              onClick={() => scrollToSection("how-it-works")}
+              className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              Solutions
+            </button>
+            <button
+              onClick={() => scrollToSection("features")}
+              className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              Features
+            </button>
+            <button
+              onClick={() => scrollToSection("resources")}
+              className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              Resources
+            </button>
+            <button
+              onClick={() => scrollToSection("pricing")}
+              className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
+            >
+              Pricing
+            </button>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="!h-11 !rounded-full !border-slate-200 !text-slate-700 hover:!bg-slate-50"
+              onClick={() => handleNavigate("/vendor-dashboard")}
+            >
+              Login
+            </Button>
+            <Button
+              className="!h-11 !rounded-full !bg-slate-900 !text-white hover:!bg-black"
+              onClick={() => handleNavigate("/brand-registration")}
+            >
+              Get Started
+            </Button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

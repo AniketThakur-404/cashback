@@ -74,28 +74,28 @@ const ScrollContent = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[250vh] bg-transparent"
+      className="relative w-full h-[112vh] md:h-[250vh] bg-transparent"
     >
-      <div className="sticky top-[10vh] w-full flex flex-col items-center justify-center">
+      <div className="sticky top-[8vh] md:top-[10vh] w-full flex flex-col items-center justify-center">
         {/* Section Header inside sticky container */}
-        <div className="text-center mb-8 w-full">
-          <h2 className="text-6xl md:text-5xl font-black tracking-tighter text-slate-900 uppercase leading-none">
+        <div className="text-center mb-4 md:mb-8 w-full">
+          <h2 className="text-4xl sm:text-5xl md:text-5xl font-black tracking-tight text-slate-900 uppercase leading-none">
             HOW IT <span className="text-emerald-600">WORKS.</span>
           </h2>
-          <p className="text-xl md:text-xl text-slate-500 font-medium mt-4">
+          <p className="text-sm sm:text-base md:text-xl text-slate-500 font-medium mt-3 md:mt-4">
             Simple for you. Seamless for your customers.
           </p>
         </div>
 
         {/* Connection Line from Top */}
-        <div className="h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line" />
+        <div className="h-4 md:h-6 w-[2px] bg-linear-to-b from-slate-200 via-slate-300 to-transparent dashed-line" />
 
-        <div className="relative max-w-3xl mx-auto w-full flex items-center justify-center pt-2 min-h-[240px] md:min-h-[300px]">
+        <div className="relative max-w-3xl mx-auto w-full flex items-center justify-center pt-0 md:pt-2 min-h-[310px] sm:min-h-[340px] md:min-h-[300px] overflow-hidden md:overflow-visible">
           {/* The Arc SVG */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 -top-4 md:top-0 flex items-center justify-center pointer-events-none">
             <svg
               viewBox="90 40 820 420"
-              className="min-w-[300px] md:min-w-0 w-[90%] max-w-[700px] h-auto overflow-visible opacity-50 md:opacity-100"
+              className="min-w-[360px] sm:min-w-[460px] md:min-w-0 w-[118%] sm:w-[105%] md:w-[90%] max-w-[700px] h-auto overflow-visible opacity-45 md:opacity-100"
             >
               <defs>
                 <filter
@@ -135,7 +135,7 @@ const ScrollContent = () => {
           </div>
 
           {/* Central Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center mt-16 md:mt-24">
+          <div className="relative z-10 flex flex-col items-center justify-center mt-16 sm:mt-14 md:mt-24 px-5">
             <AnimatePresence mode="wait">
               <motion.div
                 key={idx}
@@ -146,10 +146,10 @@ const ScrollContent = () => {
                 className="flex flex-col items-center text-center"
               >
                 <div
-                  className="text-[80px] md:text-[100px] font-black tracking-tighter leading-none mb-4 transition-colors duration-500"
+                  className="text-[56px] sm:text-[70px] md:text-[100px] font-black tracking-tighter leading-none mb-3 md:mb-4 transition-colors duration-500"
                   style={{
                     color: states[idx].color,
-                    filter: `drop-shadow(0px 10px 20px ${states[idx].color}50)`,
+                    filter: `drop-shadow(0px 8px 16px ${states[idx].color}45)`,
                   }}
                 >
                   {states[idx].number}
@@ -161,7 +161,7 @@ const ScrollContent = () => {
                   transition={{ delay: 0.1 }}
                 >
                   <div
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-4 font-black text-[10px] uppercase tracking-widest border"
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 md:mb-4 font-black text-[10px] uppercase tracking-widest border"
                     style={{
                       color: states[idx].color,
                       backgroundColor: `${states[idx].color}10`,
@@ -170,21 +170,21 @@ const ScrollContent = () => {
                   >
                     {states[idx].tag}
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-3">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-2 md:mb-3">
                     {states[idx].label}
                   </h3>
-                  <p className="text-base md:text-lg text-slate-500 font-medium max-w-sm mx-auto leading-relaxed px-6">
+                  <p className="text-sm sm:text-base md:text-lg text-slate-500 font-medium max-w-[300px] sm:max-w-sm mx-auto leading-relaxed px-0 sm:px-6">
                     {states[idx].sub}
                   </p>
                 </motion.div>
 
                 {/* Pagination Dots */}
-                <div className="flex justify-center gap-4 mt-16 pointer-events-auto">
+                <div className="flex justify-center gap-4 mt-10 sm:mt-12 md:mt-16 pointer-events-auto">
                   {states.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setIdx(i)}
-                      className="group relative flex items-center justify-center w-10 h-10 focus:outline-none"
+                      className="group relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 focus:outline-none"
                     >
                       <motion.div
                         animate={{
@@ -352,15 +352,15 @@ const VendorLandingPage = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
             {/* Left Column: Content */}
-            <div className="flex flex-col items-start text-left">
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
               {/* Main Heading */}
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-8 font-admin-heading"
+                className="text-[42px] sm:text-5xl md:text-7xl font-black text-slate-900 leading-[1.08] tracking-tight mb-7 sm:mb-8 font-admin-heading"
               >
                 Grow Your <br />
                 Business <br />
@@ -379,9 +379,9 @@ const VendorLandingPage = () => {
                   ease: [0.16, 1, 0.3, 1],
                   delay: 0.1,
                 }}
-                className="text-lg md:text-xl text-slate-500 max-w-xl mb-12 leading-relaxed font-medium"
+                className="text-base sm:text-lg md:text-xl text-slate-500 max-w-xl mb-10 sm:mb-12 leading-relaxed font-medium"
               >
-                Launch your own customer loyalty program with QR-based rewards
+                Launch your own customer loyalty program with QR-based
                 rewards. Scale your business effortlessly — without apps, cards,
                 or complicated systems.
               </motion.p>
@@ -395,11 +395,11 @@ const VendorLandingPage = () => {
                   ease: [0.16, 1, 0.3, 1],
                   delay: 0.2,
                 }}
-                className="flex flex-col sm:flex-row items-center justify-start gap-5 mb-12"
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-5 mb-10 sm:mb-12"
               >
                 <Button
                   size="xl"
-                  className="bg-slate-900 hover:bg-black text-white px-10 h-14 rounded-xl text-base font-bold shadow-2xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group"
+                  className="bg-slate-900 hover:bg-black text-white px-10 h-14 w-full sm:w-auto rounded-xl text-base font-bold shadow-2xl shadow-slate-900/20 transition-all hover:scale-105 active:scale-95 group"
                   onClick={() => navigate("/brand-registration")}
                 >
                   Start Free
@@ -408,7 +408,7 @@ const VendorLandingPage = () => {
                 <Button
                   size="xl"
                   variant="outline"
-                  className="bg-white/40 backdrop-blur-md border-slate-200 text-slate-700 px-10 h-14 rounded-xl text-base font-bold hover:bg-white/60 transition-all"
+                  className="bg-white/40 backdrop-blur-md border-slate-200 text-slate-700 px-10 h-14 w-full sm:w-auto rounded-xl text-base font-bold hover:bg-white/60 transition-all"
                 >
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-[10px] mr-3">
                     ▶
@@ -422,7 +422,7 @@ const VendorLandingPage = () => {
                 initial={{ opacity: 0, filter: "blur(4px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
                 transition={{ duration: 1, delay: 0.4 }}
-                className="flex flex-wrap items-center justify-start gap-8 text-xs text-slate-400 font-bold uppercase tracking-widest"
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-5 sm:gap-8 text-xs text-slate-400 font-bold uppercase tracking-widest"
               >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -436,7 +436,7 @@ const VendorLandingPage = () => {
             </div>
 
             {/* Right Column: Premium Image Asset */}
-            <div className="relative hidden lg:flex justify-center lg:justify-end items-center h-full pl-8">
+            <div className="relative hidden lg:flex justify-center lg:justify-end items-center h-full lg:pl-8 lg:pr-0">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -446,7 +446,7 @@ const VendorLandingPage = () => {
                   delay: 0.3,
                 }}
                 style={{ y: heroImageY }}
-                className="relative z-10 w-full max-w-[90%] flex items-center justify-center"
+                className="relative z-10 w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[90%] flex items-center justify-center"
               >
                 <img
                   src="/Gif.gif"
@@ -460,8 +460,8 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Improved Marquee Section */}
-      <section className="py-12 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 text-center">
+      <section className="py-8 sm:py-12 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5 sm:mb-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -472,10 +472,10 @@ const VendorLandingPage = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
               Trusted by 500+ Businesses
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight font-admin-heading">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight font-admin-heading">
               Powering Loyalty Across Industries
             </h2>
-            <p className="text-lg text-slate-500 max-w-3xl mx-auto font-medium">
+            <p className="text-base sm:text-lg text-slate-500 max-w-3xl mx-auto font-medium">
               From local favorites to national brands, we help businesses grow with data-driven rewards.
             </p>
           </motion.div>
@@ -486,16 +486,16 @@ const VendorLandingPage = () => {
           <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-4 sm:gap-8">
             {/* Marquee Row 1 */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee whitespace-nowrap flex items-center gap-18 px-6 py-4">
+              <div className="animate-marquee whitespace-nowrap flex items-center gap-4 sm:gap-18 px-3 sm:px-6 py-2 sm:py-4">
                 {[...logos, ...logos].map((logo, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-center px-10 py-5 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
+                    className="flex items-center justify-center px-5 py-3 sm:px-10 sm:py-5 rounded-2xl sm:rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-500 group/tag cursor-default"
                   >
-                    <span className="text-sm font-black text-slate-400 uppercase tracking-widest group-hover/tag:text-emerald-600 transition-colors">
+                    <span className="text-[11px] sm:text-sm font-black text-slate-400 uppercase tracking-widest group-hover/tag:text-emerald-600 transition-colors">
                       {logo}
                     </span>
                   </div>
@@ -504,19 +504,19 @@ const VendorLandingPage = () => {
             </div>
             {/* Marquee Row 2 (Reverse) */}
             <div className="flex overflow-hidden group">
-              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-8 py-4 min-h-[160px]">
+              <div className="animate-marquee-reverse whitespace-nowrap flex items-center gap-4 sm:gap-8 py-2 sm:py-4 min-h-[88px] sm:min-h-[160px]">
                 {[...brandImages, ...brandImages, ...brandImages].map(
                   (num, idx) => {
                     const isWhiteLogo = [5, 6, 10, 11].includes(num);
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-center min-w-[300px]"
+                        className="flex items-center justify-center min-w-[150px] sm:min-w-[300px]"
                       >
                         <img
                           src={`/${num}.webp`}
                           alt={`Brand ${num}`}
-                          className={`w-[320px] h-[160px] object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
+                          className={`w-[150px] h-[75px] sm:w-[320px] sm:h-[160px] object-contain transition-all duration-500 ${isWhiteLogo ? "brightness-0 opacity-80" : "opacity-100"}`}
                           onError={(e) => {
                             const currentSrc = e.target.src;
                             if (currentSrc.includes("brand/")) {
@@ -688,7 +688,7 @@ const VendorLandingPage = () => {
               {
                 label: "Easy Setup",
                 value: "3 MIN",
-                desc: "Create and launch rewards campaigns in minutes without any technical complexity.",
+                desc: "Create and launch rewards campaigns in minutes without any technical complexity and knowledge.",
                 icon: Zap,
                 highlight: false,
               },
@@ -771,7 +771,7 @@ const VendorLandingPage = () => {
 
       {/* Premium Multi-State Arc Metric Section */}
       <section
-        className="pt-20 pb-12 md:pb-24 bg-white relative"
+        className="pt-14 pb-0 md:pt-20 md:pb-24 bg-white relative"
         id="how-it-works"
       >
         {/* Subtle Background Elements */}
@@ -1119,7 +1119,7 @@ const VendorLandingPage = () => {
 
                 <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-12 text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
                   <span>Start in Minutes</span>
-                  <span>No Setup Cost</span>
+                  <span>Reasonable setup cost</span>
                   <span>Free Trial Available</span>
                 </div>
               </div>
