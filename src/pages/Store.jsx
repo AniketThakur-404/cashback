@@ -187,18 +187,13 @@ const ProductCard = ({
       onClick={() => navigate(`/store/product/${item.id}`)}
       className="cursor-pointer flex flex-col h-full rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
     >
-      {/* Image Area — clean light background */}
+      {/* Image Area */}
       <div className="relative h-28 sm:h-40 bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center overflow-hidden">
-        {/* Soft colored circle behind image — only when image exists */}
-        {imageSrc && !imgError && (
-          <div className={`absolute w-20 h-20 sm:w-24 sm:h-24 rounded-full ${catColors.circle} opacity-60`} />
-        )}
-        
         {imageSrc && !imgError ? (
           <AuthImage
             src={imageSrc}
             alt={item.name}
-            className="relative z-10 h-[85%] w-[85%] object-contain drop-shadow-lg"
+            className="relative z-10 h-full w-full object-cover"
             onError={() => setImgError(true)}
           />
         ) : (
