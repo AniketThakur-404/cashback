@@ -14,7 +14,6 @@ import {
   QrCode,
   Package,
   ShoppingBag,
-  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -80,17 +79,6 @@ const useDragScroll = () => {
     },
   };
 };
-
-const RailArrowButton = ({ direction, onClick, className = "" }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`absolute top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/95 text-slate-700 shadow-lg shadow-slate-900/10 transition hover:text-emerald-600 active:scale-95 ${className}`}
-    aria-label={direction === "left" ? "Scroll left" : "Scroll right"}
-  >
-    {direction === "left" ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-  </button>
-);
 
 /* -- Mock Data -- */
 const heroBanners = [
@@ -695,16 +683,6 @@ const Home = () => {
             </Link>
           </div>
           <div className="relative -mx-4">
-            <RailArrowButton
-              direction="left"
-              onClick={() => brandsRail.scrollByPage(-1)}
-              className="left-2"
-            />
-            <RailArrowButton
-              direction="right"
-              onClick={() => brandsRail.scrollByPage(1)}
-              className="right-2"
-            />
           <div
             ref={brandsRail.ref}
             {...brandsRail.dragProps}
@@ -777,16 +755,6 @@ const Home = () => {
             </span>
           </div>
           <div className="relative -mx-4">
-            <RailArrowButton
-              direction="left"
-              onClick={() => offersRail.scrollByPage(-1)}
-              className="left-2"
-            />
-            <RailArrowButton
-              direction="right"
-              onClick={() => offersRail.scrollByPage(1)}
-              className="right-2"
-            />
           <div
             ref={offersRail.ref}
             {...offersRail.dragProps}
