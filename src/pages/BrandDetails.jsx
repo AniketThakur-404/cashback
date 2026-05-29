@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -84,8 +84,26 @@ const buildProductReportPath = (brand, product) => {
   return query ? `/product-report?${query}` : "/product-report";
 };
 
+const normalizeWebsiteUrl = (website) => {
+  const value = String(website || "").trim();
+  if (!value || value.toLowerCase() === "null" || value.toLowerCase() === "undefined") {
+    return "";
+  }
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+};
+
+const getWebsiteLabel = (websiteUrl) => {
+  if (!websiteUrl) return "";
+  try {
+    return new URL(websiteUrl).hostname.replace(/^www\./i, "");
+  } catch {
+    return websiteUrl;
+  }
+};
+
 const BrandDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [brandData, setBrandData] = useState(null);
   const [brandError, setBrandError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -111,7 +129,26 @@ const BrandDetails = () => {
           return;
         }
 
-        const dataRaw = await getPublicBrandDetails(targetId);
+        let dataRaw;
+        try {
+          dataRaw = await getPublicBrandDetails(targetId);
+        } catch (detailsErr) {
+          if (detailsErr.status !== 404 || !id) {
+            throw detailsErr;
+          }
+
+          const brands = await getPublicBrands();
+          const fallbackBrand = brands?.find((brand) => brand.id !== id);
+          if (!fallbackBrand?.id) {
+            if (!isMounted) return;
+            setBrandData(null);
+            return;
+          }
+
+          navigate(`/brand-details/${fallbackBrand.id}`, { replace: true });
+          return;
+        }
+
         const data = dataRaw?.brand || dataRaw;
         if (!data || typeof data !== "object" || Array.isArray(data)) {
           throw new Error("Invalid brand response from server.");
@@ -130,7 +167,7 @@ const BrandDetails = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     setQuery("");
@@ -201,12 +238,15 @@ const BrandDetails = () => {
     );
   }
 
+  const websiteUrl = normalizeWebsiteUrl(brandData.website);
   const displayBrand = {
     ...brandData,
     logo: resolvePublicAssetUrl(brandData.logo || brandData.logoUrl),
     banner: resolvePublicAssetUrl(
       brandData.banner || brandData.logoUrl || brandData.logo,
     ),
+    website: websiteUrl,
+    websiteLabel: getWebsiteLabel(websiteUrl),
     tags: Array.isArray(brandData.tags) ? brandData.tags : [],
     faqs: Array.isArray(brandData.faqs) ? brandData.faqs : [],
   };
@@ -273,7 +313,7 @@ const BrandDetails = () => {
                   className="inline-flex items-center gap-1 hover:text-primary-strong"
                 >
                   <Globe size={12} />
-                  Brand Website
+                  {displayBrand.websiteLabel}
                 </a>
               )}
             </div>

@@ -551,6 +551,13 @@ const VendorDashboard = () => {
     localStorage.getItem(VENDOR_TOKEN_KEY),
   );
   const [vendorInfo, setVendorInfo] = useState(null);
+  const timeOfDayGreeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    if (hour < 21) return "Good evening";
+    return "Good night";
+  }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -3325,7 +3332,7 @@ const VendorDashboard = () => {
 
   // Dashboard Auto-Refresh Polling
   useEffect(() => {
-    if (!token) return;
+    if (!token || activeTab !== "overview") return;
     const interval = setInterval(() => {
       refreshCampaignPaymentState(token, {
         includeQrs: true,
@@ -3333,7 +3340,7 @@ const VendorDashboard = () => {
       });
     }, 30000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [token, activeTab]);
 
   useEffect(() => {
     if (!isNotificationsOpen) return undefined;
@@ -6553,7 +6560,7 @@ const VendorDashboard = () => {
                               <span className="h-px w-4 bg-emerald-500/30" />
                             </div>
                             <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight tracking-tight truncate">
-                              Good morning,{" "}
+                              {timeOfDayGreeting},{" "}
                               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-400 dark:to-emerald-300">
                                 {vendorInfo?.name || "Partner"}
                               </span>
