@@ -14,6 +14,7 @@ import {
   QrCode,
   Package,
   ShoppingBag,
+  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -29,6 +30,67 @@ import { useAuth } from "../lib/auth";
 gsap.registerPlugin(ScrollTrigger);
 
 const API_BASE_URL = getApiBaseUrl();
+
+const useDragScroll = () => {
+  const ref = useRef(null);
+  const dragState = useRef({ active: false, startX: 0, scrollLeft: 0 });
+
+  const onMouseDown = (event) => {
+    const element = ref.current;
+    if (!element) return;
+    dragState.current = {
+      active: true,
+      startX: event.pageX - element.offsetLeft,
+      scrollLeft: element.scrollLeft,
+    };
+    element.classList.add("cursor-grabbing");
+    event.preventDefault();
+  };
+
+  const stopDragging = () => {
+    dragState.current.active = false;
+    ref.current?.classList.remove("cursor-grabbing");
+  };
+
+  const onMouseMove = (event) => {
+    const element = ref.current;
+    if (!element || !dragState.current.active) return;
+    const x = event.pageX - element.offsetLeft;
+    const walk = (x - dragState.current.startX) * 1.15;
+    element.scrollLeft = dragState.current.scrollLeft - walk;
+  };
+
+  const scrollByPage = (direction) => {
+    const element = ref.current;
+    if (!element) return;
+    element.scrollBy({
+      left: direction * Math.max(180, element.clientWidth * 0.75),
+      behavior: "smooth",
+    });
+  };
+
+  return {
+    ref,
+    scrollByPage,
+    dragProps: {
+      onMouseDown,
+      onMouseLeave: stopDragging,
+      onMouseUp: stopDragging,
+      onMouseMove,
+    },
+  };
+};
+
+const RailArrowButton = ({ direction, onClick, className = "" }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`absolute top-1/2 z-20 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/95 text-slate-700 shadow-lg shadow-slate-900/10 transition hover:text-emerald-600 active:scale-95 ${className}`}
+    aria-label={direction === "left" ? "Scroll left" : "Scroll right"}
+  >
+    {direction === "left" ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+  </button>
+);
 
 /* -- Mock Data -- */
 const heroBanners = [
@@ -285,6 +347,8 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const pageRef = useRef(null);
+  const brandsRail = useDragScroll();
+  const offersRail = useDragScroll();
 
   useEffect(() => {
     let live = true;
@@ -630,7 +694,22 @@ const Home = () => {
               View All <ChevronRight size={14} />
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar -mx-4 px-4 snap-x">
+          <div className="relative -mx-4">
+            <RailArrowButton
+              direction="left"
+              onClick={() => brandsRail.scrollByPage(-1)}
+              className="left-2"
+            />
+            <RailArrowButton
+              direction="right"
+              onClick={() => brandsRail.scrollByPage(1)}
+              className="right-2"
+            />
+          <div
+            ref={brandsRail.ref}
+            {...brandsRail.dragProps}
+            className="flex cursor-grab select-none gap-4 overflow-x-auto pb-3 pt-1 no-scrollbar px-4 snap-x scroll-smooth"
+          >
             {isLoading ? (
               Array(6)
                 .fill(0)
@@ -672,6 +751,7 @@ const Home = () => {
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* --- 6. TOP OFFERS --- */}
@@ -696,7 +776,22 @@ const Home = () => {
               Top Offers
             </span>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-5 no-scrollbar snap-x snap-mandatory -mx-4 px-4 items-center">
+          <div className="relative -mx-4">
+            <RailArrowButton
+              direction="left"
+              onClick={() => offersRail.scrollByPage(-1)}
+              className="left-2"
+            />
+            <RailArrowButton
+              direction="right"
+              onClick={() => offersRail.scrollByPage(1)}
+              className="right-2"
+            />
+          <div
+            ref={offersRail.ref}
+            {...offersRail.dragProps}
+            className="flex cursor-grab select-none gap-3 overflow-x-auto pb-5 no-scrollbar snap-x snap-mandatory px-4 items-center scroll-smooth"
+          >
             {isLoading ? (
               Array(4)
                 .fill(0)
@@ -799,6 +894,7 @@ const Home = () => {
                 No top offers available.
               </div>
             )}
+          </div>
           </div>
         </div>
 
