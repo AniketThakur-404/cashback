@@ -124,14 +124,18 @@ const UserProfileMenu = () => {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative h-11 w-11 rounded-full border-2 border-white/40 bg-linear-to-br from-yellow-400 to-yellow-500 dark:border-zinc-800 dark:from-yellow-500 dark:to-yellow-600 flex items-center justify-center shadow-md overflow-hidden transition-transform active:scale-95 shrink-0"
+        className={`relative h-11 w-11 rounded-full border-2 border-white/40 dark:border-zinc-800 flex items-center justify-center shadow-md overflow-hidden transition-transform active:scale-95 shrink-0 ${
+          profile?.avatarUrl && !imgError 
+            ? "bg-white" 
+            : "bg-linear-to-br from-yellow-400 to-yellow-500 dark:from-yellow-500 dark:to-yellow-600"
+        }`}
         aria-label="Open user menu"
       >
         {profile?.avatarUrl && !imgError ? (
           <img
             src={resolvePublicAssetUrl(profile.avatarUrl)}
             alt={profile.name}
-            className="h-full w-full object-cover rounded-full p-0.5"
+            className="h-full w-full object-cover rounded-full bg-white"
             onError={() => setImgError(true)}
           />
         ) : (
