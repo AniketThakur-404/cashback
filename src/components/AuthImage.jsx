@@ -27,11 +27,10 @@ const AuthImage = ({
 
       const sourceStr = String(src).trim();
 
-      // If it doesn't contain /api/upload or isn't a relative upload API route,
-      // load it directly
       const isAuthRequired = /\/api\/upload\//i.test(sourceStr);
 
       if (!isAuthRequired) {
+        setError(false);
         setImgSrc(sourceStr);
         return;
       }
@@ -58,7 +57,6 @@ const AuthImage = ({
         objectUrl = URL.createObjectURL(blob);
         setImgSrc(objectUrl);
       } catch (err) {
-        console.error("AuthImage load error:", err);
         if (active) {
           setError(true);
         }
@@ -98,18 +96,20 @@ const AuthImage = ({
           <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
-      <img
-        src={imgSrc}
-        alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          loading ? "opacity-0" : "opacity-100"
-        }`}
-        onError={() => {
-          setError(true);
-          if (externalOnError) externalOnError();
-        }}
-        {...props}
-      />
+      {imgSrc ? (
+        <img
+          src={imgSrc}
+          alt={alt}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            loading ? "opacity-0" : "opacity-100"
+          }`}
+          onError={() => {
+            setError(true);
+            if (externalOnError) externalOnError();
+          }}
+          {...props}
+        />
+      ) : null}
     </div>
   );
 };

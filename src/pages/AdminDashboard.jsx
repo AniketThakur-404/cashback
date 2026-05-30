@@ -9133,18 +9133,24 @@ const AdminDashboard = () => {
                         const productName = selectedProductForDetail.description.replace(/^(Store redeem:|Redeem:)\s*/i, "").trim().toLowerCase();
                         const products = getRedeemStoreProducts();
                         const matchedProduct = products.find(p => p.name?.toLowerCase().trim() === productName);
-                        const hasImage = !!matchedProduct?.image;
+                        
+                        const displayImage = matchedProduct?.image || selectedProductForDetail.metadata?.image;
+
                         return (
                           <div className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                            {hasImage && (
-                              <div className="w-20 h-20 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 flex items-center justify-center self-center sm:self-start">
+                            <div className="w-20 h-20 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 overflow-hidden shrink-0 flex items-center justify-center self-center sm:self-start">
+                              {displayImage ? (
                                 <AuthImage
-                                  src={resolveAssetUrl(matchedProduct.image)}
-                                  alt={matchedProduct.name}
+                                  src={resolveAssetUrl(displayImage)}
+                                  alt={productName}
                                   className="w-full h-full object-contain p-1"
                                 />
-                              </div>
-                            )}
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-slate-300 dark:text-zinc-600">
+                                  <Package size={24} />
+                                </div>
+                              )}
+                            </div>
                             <div className="flex-1 space-y-2">
                               <div className="flex justify-between text-sm gap-2">
                                 <span className="text-slate-500 dark:text-slate-400">Product:</span>

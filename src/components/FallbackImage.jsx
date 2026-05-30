@@ -28,6 +28,7 @@ const FallbackImage = ({
       const isAuthRequired = /\/api\/upload\//i.test(sourceStr);
 
       if (!isAuthRequired) {
+        setError(false);
         setImgSrc(sourceStr);
         return;
       }
