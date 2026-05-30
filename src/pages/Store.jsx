@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Gift,
   ShoppingBag,
-  Sparkles,
   Wallet,
   CheckCircle2,
   X,
@@ -41,7 +40,7 @@ const getItemAmount = (item) => {
 const formatPoints = (value) => {
   const amount = Number(value);
   const normalized = Number.isFinite(amount) ? amount : 0;
-  return `${POINTS_FORMATTER.format(normalized)} Points`;
+  return `₹${POINTS_FORMATTER.format(normalized)}`;
 };
 
 
@@ -100,7 +99,7 @@ const RedemptionSuccessModal = ({
                 {product.name}
               </p>
               <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-0.5">
-                Balance: {balance.toFixed(2)} Pts
+                Balance: ₹{balance.toFixed(2)}
               </p>
             </div>
           </div>
@@ -213,7 +212,7 @@ const ProductCard = ({
         <div className="mb-2">
           {item.brand && (
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400 mb-0.5 flex items-center gap-1">
-              <Sparkles size={10} strokeWidth={3} /> {item.brand}
+              {item.brand}
             </p>
           )}
           <h3
@@ -447,34 +446,30 @@ const Store = () => {
       >
 
         <div className="relative z-10 space-y-5">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex flex-col items-start">
-              <p className="inline-flex items-center gap-1 text-[14px] uppercase tracking-[0.18em] font-medium text-primary whitespace-nowrap">
-                <Sparkles size={12} /> Rewards Exchange
+          <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
+            <div className="flex flex-col items-start flex-1 min-w-0">
+              <p className="inline-flex items-center gap-1 text-[10px] sm:text-[14px] uppercase tracking-[0.18em] font-medium text-primary whitespace-nowrap">
+                Rewards Exchange
               </p>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                Redeem Your<br /><span className="text-primary">Cashback</span>
+              <h1 className="text-[18px] sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5 sm:mt-1 leading-[1.15] sm:leading-tight">
+                <span className="whitespace-nowrap">Redeem Your</span><br /><span className="text-primary">Cashback</span>
               </h1>
-              <p className="text-[16px] font-medium text-slate-500 dark:text-slate-400 mt-1">
-                1 Point = INR 1
-              </p>
             </div>
 
             <div
-              className={`flex items-center gap-3 rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1.5 pr-4 shadow-sm shrink-0 ${!isAuthenticated ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
-              style={{ position: 'absolute', right: '-30px', top: '50%', transform: 'translateY(-50%)' }}
+              className={`flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-white dark:bg-white/5 border border-slate-200/70 dark:border-white/10 p-1 sm:p-1.5 pr-2.5 sm:pr-4 shadow-sm shrink-0 ${!isAuthenticated ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
               onClick={() => {
                 if (!isAuthenticated) navigate("/signin");
               }}
             >
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Wallet size={20} />
+              <div className="h-7 w-7 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Wallet className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <p className="text-[14px] uppercase font-medium text-slate-400 dark:text-slate-500 tracking-wide whitespace-nowrap">
+                <p className="text-[9px] sm:text-[14px] uppercase font-medium text-slate-400 dark:text-slate-500 tracking-wide whitespace-nowrap leading-tight mb-0.5">
                   Your Balance
                 </p>
-                <p className="text-[16px] font-medium text-slate-900 dark:text-white whitespace-nowrap">
+                <p className="text-[11px] sm:text-[16px] font-medium text-slate-900 dark:text-white whitespace-nowrap leading-tight">
                   {isAuthenticated
                     ? isWalletLoading
                       ? "..."
