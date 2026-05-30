@@ -146,7 +146,7 @@ const Wallet = () => {
         )}
 
         {/* 1. Main Wallet Card */}
-        <div className="relative overflow-hidden rounded-[32px] shadow-xl text-white min-h-[190px] flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, #0f9b6e, #0d7a57)' }}>
+        <div className="relative overflow-hidden rounded-[32px] shadow-xl text-white min-h-[150px] flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, #0f9b6e, #0d7a57)' }}>
           <img
             src="/wallet-banner.png"
             alt=""
@@ -154,14 +154,14 @@ const Wallet = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/20 via-transparent to-transparent pointer-events-none" />
           
-          <div className="relative z-10 p-6 flex flex-col h-full justify-between flex-1">
+          <div className="relative z-10 p-5 flex flex-col h-full justify-between flex-1">
             {/* Top Row: Title & Badge */}
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-white/95">
                 <ShieldCheck size={16} className="text-white" />
                 <span>Assured Rewards Wallet</span>
               </div>
-              <div className="mt-5">
+              <div className="mt-2">
                 <span className="text-[33px] font-black tracking-tight leading-none drop-shadow-sm">
                   Rs {formatAmount(balance)}
                 </span>
@@ -169,13 +169,13 @@ const Wallet = () => {
             </div>
 
             {/* Bottom Row: Info Tags */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 space-y-1.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/5 text-[10px] font-medium text-white leading-none">
                 <Lock size={10} className="text-white/80" />
                 <span>Powered by UPI & Net Banking</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white/85 ml-1">
-                <ShieldCheck size={11} className="text-emerald-300" />
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-white ml-1">
+                <ShieldCheck size={11} className="text-white" />
                 <span>Secure transfers, every time</span>
               </div>
             </div>
@@ -193,8 +193,8 @@ const Wallet = () => {
                 <ArrowUpRight size={20} className="text-white" />
               </div>
               <div className="min-w-0">
-                <div className="text-[12.5px] font-black tracking-tight leading-tight whitespace-nowrap">Transfer to Bank</div>
-                <div className="text-[8.5px] font-semibold text-emerald-100/70 truncate mt-0.5 whitespace-nowrap">Send money to your bank</div>
+                <div className="text-[11px] sm:text-[12.5px] font-black tracking-tight leading-tight truncate">Transfer to Bank</div>
+                <div className="text-[8.5px] font-semibold text-emerald-100/70 truncate mt-0.5">Send money to your bank</div>
               </div>
             </div>
             <ChevronRight size={13} className="text-white/50 group-hover:text-white shrink-0" />
@@ -209,8 +209,8 @@ const Wallet = () => {
                 <ShoppingBag size={18} className="text-emerald-400" />
               </div>
               <div className="min-w-0">
-                <div className="text-[12.5px] font-black tracking-tight leading-tight whitespace-nowrap">Redeem in Store</div>
-                <div className="text-[8.5px] font-semibold text-zinc-400 truncate mt-0.5 whitespace-nowrap">Use points for rewards</div>
+                <div className="text-[11px] sm:text-[12.5px] font-black tracking-tight leading-tight truncate">Redeem in Store</div>
+                <div className="text-[8.5px] font-semibold text-zinc-400 truncate mt-0.5">Use points for rewards</div>
               </div>
             </div>
             <ChevronRight size={13} className="text-white/40 group-hover:text-white shrink-0" />
