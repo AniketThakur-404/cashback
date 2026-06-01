@@ -442,7 +442,7 @@ const Store = () => {
     <div className="px-4 py-5 pb-8">
       <div 
         className="relative overflow-hidden rounded-[30px] border border-slate-200/70 dark:border-white/10 p-5 pr-8 md:pr-12 shadow-lg bg-center"
-        style={{ backgroundImage: 'url(/rewards-hero-bg.png)', backgroundSize: '112% 112%' }}
+        style={{ backgroundImage: 'url(/rewards-hero-bg.webp)', backgroundSize: '112% 112%' }}
       >
 
         <div className="relative z-10 space-y-5">
