@@ -480,17 +480,10 @@ const Home = () => {
       className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-primary/10 dark:bg-zinc-950"
     >
       <div className="px-4 pt-4 space-y-4">
-        {/* --- 1 � HERO CAROUSEL --- */}
-        {isLoading ? (
-          <div
-            className="h-[210px] rounded-[28px] animate-pulse"
-            style={{ background: "rgba(0,0,0,0.06)" }}
-          />
-        ) : (
-          <HeroCarousel items={banners} />
-        )}
+        {/* --- 1  HERO CAROUSEL --- */}
+        <HeroCarousel items={banners} />
 
-        {/* --- 2 � SCAN CTA --- */}
+        {/* --- 2  SCAN CTA --- */}
         {!isLoading && (
           <Link to="/scan" className="scan-cta block">
             <div
