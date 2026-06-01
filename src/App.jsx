@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -8,55 +8,56 @@ import {
   useParams,
 } from "react-router-dom";
 import Layout from "./components/Layout";
-import Home from "./pages/Home";
-import GiftCards from "./pages/GiftCards";
-import GiftCardsList from "./pages/GiftCardsList";
-import GiftCardInfo from "./pages/GiftCardInfo";
-import BrandDetails from "./pages/BrandDetails";
-import ProductInfo from "./pages/ProductInfo";
-import LiquidGlassDemo from "./pages/LiquidGlassDemo";
-import Wallet from "./pages/Wallet";
-import Profile from "./pages/Profile";
-import Store from "./pages/Store";
-import Brands from "./pages/Brands";
-import AdminDashboard from "./pages/AdminDashboard";
-import LevelRewards from "./pages/LevelRewards";
-import BrandFAQs from "./pages/BrandFAQs";
-import HowVerifyWorks from "./pages/HowVerifyWorks";
-import AboutUs from "./pages/AboutUs";
-import VendorDashboard from "./pages/VendorDashboard";
-import VendorSignup from "./pages/VendorSignup";
-import HelpSupport from "./pages/HelpSupport";
-import VendorLandingPage from "./pages/VendorLandingPage";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
-import VendorPrivacyPolicy from "./pages/VendorPrivacyPolicy";
-import VendorTerms from "./pages/VendorTerms";
-import VendorFAQs from "./pages/VendorFAQs";
 import { ThemeProvider } from "./components/ThemeProvider";
-import RedeemQr from "./pages/RedeemQr";
-import Claim from "./pages/Claim";
-import BrandRegistration from "./pages/BrandRegistration";
-import UXDemo from "./pages/UXDemo";
 import { ToastProvider } from "./components/ui/ToastContext";
 import { ToastContainer } from "./components/ui/Toast";
-import CameraScan from "./pages/CameraScan";
-import QRScanPage from "./pages/QRScanPage";
-import QRResultPage from "./pages/QRResultPage";
-import TransactionHistory from "./pages/TransactionHistory";
 import ScrollToTop from "./components/ScrollToTop";
-import RedeemPage from "./pages/RedeemPage";
-import PayoutStatus from "./pages/PayoutStatus";
-import ManageUPI from "./pages/ManageUPI";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsConditions from "./pages/TermsConditions";
-import ContactUs from "./pages/ContactUs";
-import History from "./pages/History";
-import ProductReport from "./pages/ProductReport";
-import ReturnRefund from "./pages/ReturnRefund";
-import Orders from "./pages/Orders";
-import NotFound from "./pages/NotFound";
-import RedeemProductInfo from "./pages/RedeemProductInfo";
+
+const Home = lazy(() => import("./pages/Home"));
+const GiftCards = lazy(() => import("./pages/GiftCards"));
+const GiftCardsList = lazy(() => import("./pages/GiftCardsList"));
+const GiftCardInfo = lazy(() => import("./pages/GiftCardInfo"));
+const BrandDetails = lazy(() => import("./pages/BrandDetails"));
+const ProductInfo = lazy(() => import("./pages/ProductInfo"));
+const LiquidGlassDemo = lazy(() => import("./pages/LiquidGlassDemo"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Store = lazy(() => import("./pages/Store"));
+const Brands = lazy(() => import("./pages/Brands"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const LevelRewards = lazy(() => import("./pages/LevelRewards"));
+const BrandFAQs = lazy(() => import("./pages/BrandFAQs"));
+const HowVerifyWorks = lazy(() => import("./pages/HowVerifyWorks"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const VendorDashboard = lazy(() => import("./pages/VendorDashboard"));
+const VendorSignup = lazy(() => import("./pages/VendorSignup"));
+const HelpSupport = lazy(() => import("./pages/HelpSupport"));
+const VendorLandingPage = lazy(() => import("./pages/VendorLandingPage"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const VendorPrivacyPolicy = lazy(() => import("./pages/VendorPrivacyPolicy"));
+const VendorTerms = lazy(() => import("./pages/VendorTerms"));
+const VendorFAQs = lazy(() => import("./pages/VendorFAQs"));
+const RedeemQr = lazy(() => import("./pages/RedeemQr"));
+const Claim = lazy(() => import("./pages/Claim"));
+const BrandRegistration = lazy(() => import("./pages/BrandRegistration"));
+const UXDemo = lazy(() => import("./pages/UXDemo"));
+const CameraScan = lazy(() => import("./pages/CameraScan"));
+const QRScanPage = lazy(() => import("./pages/QRScanPage"));
+const QRResultPage = lazy(() => import("./pages/QRResultPage"));
+const TransactionHistory = lazy(() => import("./pages/TransactionHistory"));
+const RedeemPage = lazy(() => import("./pages/RedeemPage"));
+const PayoutStatus = lazy(() => import("./pages/PayoutStatus"));
+const ManageUPI = lazy(() => import("./pages/ManageUPI"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsConditions = lazy(() => import("./pages/TermsConditions"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+const History = lazy(() => import("./pages/History"));
+const ProductReport = lazy(() => import("./pages/ProductReport"));
+const ReturnRefund = lazy(() => import("./pages/ReturnRefund"));
+const Orders = lazy(() => import("./pages/Orders"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const RedeemProductInfo = lazy(() => import("./pages/RedeemProductInfo"));
 
 function App() {
   const AppLayout = () => (
@@ -74,7 +75,8 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <ScrollToTop />
-          <Routes>
+          <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div></div>}>
+            <Routes>
             <Route
               path="/admin"
               element={<Navigate to="/admin/overview" replace />}
@@ -169,7 +171,8 @@ function App() {
 
             {/* 404 Catch-All Route */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </BrowserRouter>
         <ToastContainer />
       </ToastProvider>

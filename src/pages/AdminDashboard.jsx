@@ -53,7 +53,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 
 import AdminSidebar from "../components/AdminSidebar";
 import BalanceCard from "../components/BalanceCard";
@@ -5032,6 +5032,8 @@ const AdminDashboard = () => {
                         tick={{ fontSize: 11, fill: '#94a3b8' }}
                         tickFormatter={(val) => val >= 1000 ? `₹${(val/1000).toFixed(0)}k` : `₹${val}`}
                         width={55}
+                        domain={[0, "dataMax"]}
+                        allowDecimals={false}
                       />
                       <Tooltip
                         contentStyle={{
@@ -5059,7 +5061,16 @@ const AdminDashboard = () => {
                         fill="url(#gradientMoneyIn)"
                         dot={{ r: 3, fill: '#059669', strokeWidth: 2, stroke: '#fff' }}
                         activeDot={{ r: 5, fill: '#059669', stroke: '#fff', strokeWidth: 2 }}
-                      />
+                      >
+                        <LabelList
+                          dataKey="moneyIn"
+                          position="top"
+                          formatter={(value) => value > 0 ? `₹${formatAmount(value)}` : ""}
+                          fill="#059669"
+                          fontSize={11}
+                          fontWeight={700}
+                        />
+                      </Area>
                       <Area
                         type="monotone"
                         dataKey="moneyOut"
