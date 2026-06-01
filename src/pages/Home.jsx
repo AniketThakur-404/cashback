@@ -632,7 +632,7 @@ const Home = () => {
                     {s.label}
                   </span>
                   {isLoading ? (
-                    <div className="h-6 w-12 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-md" />
+                    <div className="h-6 w-12 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-md" />
                   ) : (
                     <span
                       className="text-[20px] font-black text-zinc-900 dark:text-white leading-none mt-0.5"
@@ -695,8 +695,8 @@ const Home = () => {
                     key={i}
                     className="flex flex-col items-center gap-1.5 shrink-0 snap-center"
                   >
-                    <div className="w-[64px] h-[64px] rounded-[18px] bg-gray-100 dark:bg-zinc-800 animate-pulse" />
-                    <div className="w-10 h-2.5 rounded-full bg-gray-100 dark:bg-zinc-800 animate-pulse mt-0.5" />
+                    <div className="w-[64px] h-[64px] rounded-[18px] bg-gray-200 dark:bg-zinc-800 animate-pulse" />
+                    <div className="w-10 h-2.5 rounded-full bg-gray-200 dark:bg-zinc-800 animate-pulse mt-0.5" />
                   </div>
                 ))
             ) : brands.length > 0 ? (
@@ -765,7 +765,7 @@ const Home = () => {
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="offer-card w-[130px] h-[165px] rounded-[24px] bg-black/5 dark:bg-white/5 animate-pulse snap-center shrink-0"
+                    className="offer-card w-[130px] h-[165px] rounded-[24px] bg-gray-200 dark:bg-zinc-800 animate-pulse snap-center shrink-0"
                   />
                 ))
             ) : topOffers.length > 0 ? (

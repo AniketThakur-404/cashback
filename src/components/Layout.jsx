@@ -113,7 +113,7 @@ const Layout = ({ children }) => {
                   <span className="leading-none">
                     {authToken
                       ? isWalletLoading
-                        ? "\u20B9 0.00"
+                        ? <div className="h-4 w-10 bg-white/40 animate-pulse rounded-md" />
                         : `\u20B9 ${(walletBalance ?? 0).toFixed(2)}`
                       : "\u20B9 0.00"}
                   </span>

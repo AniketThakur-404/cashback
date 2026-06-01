@@ -131,7 +131,9 @@ const UserProfileMenu = () => {
         }`}
         aria-label="Open user menu"
       >
-        {profile?.avatarUrl && !imgError ? (
+        {isLoading ? (
+          <div className="h-full w-full bg-gray-200 animate-pulse rounded-full" />
+        ) : profile?.avatarUrl && !imgError ? (
           <img
             src={resolvePublicAssetUrl(profile.avatarUrl)}
             alt={profile.name}
