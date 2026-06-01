@@ -59,7 +59,8 @@
   --color-ring: var(--ring);
 }
 
-@variant dark (&:where(.dark, .dark *));
+/* Force Light Mode Always by overriding the dark variant */
+@custom-variant dark (&:where(.force-dark-mode-disabled));
 
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
