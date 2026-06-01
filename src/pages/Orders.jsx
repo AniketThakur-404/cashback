@@ -295,7 +295,7 @@ const Orders = () => {
         {/* Banner Section */}
         <div className="relative overflow-hidden rounded-[24px] shadow-lg bg-[#d4f5e4]" style={{ height: '140px' }}>
           <img
-            src="/orders-banner.png"
+            src="/orders-banner.webp"
             alt=""
             className="absolute inset-0 w-full h-full object-cover scale-110"
           />

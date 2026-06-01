@@ -449,7 +449,7 @@ const VendorLandingPage = () => {
                 className="relative z-10 w-full max-w-[340px] sm:max-w-[440px] lg:max-w-[90%] flex items-center justify-center"
               >
                 <img
-                  src="/Gif.gif"
+                  src="/Gif.webp"
                   alt="Dashboard Animation"
                   className="w-full h-auto object-contain mix-blend-multiply"
                 />

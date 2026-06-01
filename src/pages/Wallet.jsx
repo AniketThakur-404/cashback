@@ -148,7 +148,7 @@ const Wallet = () => {
         {/* 1. Main Wallet Card */}
         <div className="relative overflow-hidden rounded-[32px] shadow-xl text-white min-h-[150px] flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, #0f9b6e, #0d7a57)' }}>
           <img
-            src="/wallet-banner.png"
+            src="/wallet-banner.webp"
             alt=""
             className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
           />
