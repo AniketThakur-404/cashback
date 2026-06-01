@@ -1561,6 +1561,8 @@ const VendorDashboard = () => {
       skipLogo: 1,
       ...(options?.onlyRecharged ? { onlyRecharged: 1 } : {}),
       ...(options?.exactAmount ? { exactAmount: options.exactAmount } : {}),
+      ...(options?.statusLabel ? { batchLabel: options.statusLabel } : {}),
+      ...(options?.qrRange ? { qrRange: options.qrRange } : {}),
       ...(resolvedOffset !== null ? { offset: resolvedOffset } : {}),
       ...(resolvedLimit !== null ? { limit: resolvedLimit } : {}),
       ...(isSheetDownload

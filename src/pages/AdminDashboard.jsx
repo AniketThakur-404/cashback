@@ -4381,6 +4381,100 @@ const AdminDashboard = () => {
     );
   }
 
+  const activityChartData = useMemo(() => {
+    let txs = effectiveTransactions || [];
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date();
+
+    if (activityTimeframe === "today") {
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+    } else if (activityTimeframe === "week") {
+      startDate.setDate(now.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "month") {
+      startDate.setDate(now.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "year") {
+      startDate.setFullYear(now.getFullYear() - 1);
+      startDate.setDate(1);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (activityTimeframe === "custom") {
+      startDate = activityCustomStart ? new Date(activityCustomStart) : new Date(now.getTime() - 7 * 86400000);
+      endDate = activityCustomEnd ? new Date(activityCustomEnd) : new Date();
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    const buckets = {};
+
+    if (activityTimeframe === "today") {
+      for (let h = 0; h <= now.getHours(); h++) {
+        const label = `${h.toString().padStart(2, "0")}:00`;
+        buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: h };
+      }
+    } else if (activityTimeframe === "year") {
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const label = cursor.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        if (!buckets[label]) {
+          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
+        }
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    } else {
+      const cursor = new Date(startDate);
+      while (cursor <= endDate) {
+        const label = cursor.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        if (!buckets[label]) {
+          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    const filteredTxs = txs.filter((tx) => {
+      const d = new Date(tx.createdAt);
+      if (activityTimeframe === "custom") {
+        return d >= startDate && d <= endDate;
+      }
+      return d >= startDate;
+    });
+
+    filteredTxs.forEach((tx) => {
+      const d = new Date(tx.createdAt);
+      let key = "";
+
+      if (activityTimeframe === "today") {
+        key = `${d.getHours().toString().padStart(2, "0")}:00`;
+      } else if (activityTimeframe === "year") {
+        key = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      } else {
+        key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      }
+
+      if (!buckets[key]) {
+        buckets[key] = { name: key, moneyIn: 0, moneyOut: 0, timestamp: activityTimeframe === "today" ? d.getHours() : d.getTime() };
+      }
+      const amount = Number(tx.amount) || 0;
+      if (tx.type === "credit") {
+        buckets[key].moneyIn += amount;
+      } else if (tx.type === "debit") {
+        buckets[key].moneyOut += amount;
+      }
+    });
+
+    return Object.values(buckets).sort((a, b) => a.timestamp - b.timestamp);
+  }, [effectiveTransactions, activityTimeframe, activityCustomStart, activityCustomEnd]);
+
+  const activityTotals = useMemo(() => {
+    return activityChartData.reduce((acc, curr) => {
+      acc.moneyIn += curr.moneyIn;
+      acc.moneyOut += curr.moneyOut;
+      return acc;
+    }, { moneyIn: 0, moneyOut: 0 });
+  }, [activityChartData]);
+
   if (!token) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 p-4 text-slate-900 dark:bg-[#020202] dark:text-white transition-colors duration-300 font-admin-body relative overflow-hidden">
@@ -4507,103 +4601,6 @@ const AdminDashboard = () => {
       </div>
     );
   }
-
-  const activityChartData = useMemo(() => {
-    let txs = effectiveTransactions || [];
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
-    
-    if (activityTimeframe === "today") {
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date();
-    } else if (activityTimeframe === "week") {
-      startDate.setDate(now.getDate() - 6);
-      startDate.setHours(0, 0, 0, 0);
-    } else if (activityTimeframe === "month") {
-      startDate.setDate(now.getDate() - 29);
-      startDate.setHours(0, 0, 0, 0);
-    } else if (activityTimeframe === "year") {
-      startDate.setFullYear(now.getFullYear() - 1);
-      startDate.setDate(1);
-      startDate.setHours(0, 0, 0, 0);
-    } else if (activityTimeframe === "custom") {
-      startDate = activityCustomStart ? new Date(activityCustomStart) : new Date(now.getTime() - 7 * 86400000);
-      endDate = activityCustomEnd ? new Date(activityCustomEnd) : new Date();
-      endDate.setHours(23, 59, 59, 999);
-    }
-
-    // Pre-fill all buckets in the range
-    const buckets = {};
-
-    if (activityTimeframe === "today") {
-      for (let h = 0; h <= now.getHours(); h++) {
-        const label = `${h.toString().padStart(2, "0")}:00`;
-        buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: h };
-      }
-    } else if (activityTimeframe === "year") {
-      const cursor = new Date(startDate);
-      while (cursor <= endDate) {
-        const label = cursor.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-        if (!buckets[label]) {
-          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
-        }
-        cursor.setMonth(cursor.getMonth() + 1);
-      }
-    } else {
-      // day-level buckets for week, month, custom
-      const cursor = new Date(startDate);
-      while (cursor <= endDate) {
-        const label = cursor.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        if (!buckets[label]) {
-          buckets[label] = { name: label, moneyIn: 0, moneyOut: 0, timestamp: cursor.getTime() };
-        }
-        cursor.setDate(cursor.getDate() + 1);
-      }
-    }
-
-    // Fill actual transaction amounts into the buckets
-    const filteredTxs = txs.filter((tx) => {
-      const d = new Date(tx.createdAt);
-      if (activityTimeframe === "custom") {
-        return d >= startDate && d <= endDate;
-      }
-      return d >= startDate;
-    });
-
-    filteredTxs.forEach((tx) => {
-      const d = new Date(tx.createdAt);
-      let key = "";
-      
-      if (activityTimeframe === "today") {
-        key = `${d.getHours().toString().padStart(2, "0")}:00`;
-      } else if (activityTimeframe === "year") {
-        key = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-      } else {
-        key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      }
-
-      if (!buckets[key]) {
-        buckets[key] = { name: key, moneyIn: 0, moneyOut: 0, timestamp: activityTimeframe === "today" ? d.getHours() : d.getTime() };
-      }
-      const amount = Number(tx.amount) || 0;
-      if (tx.type === "credit") {
-        buckets[key].moneyIn += amount;
-      } else if (tx.type === "debit") {
-        buckets[key].moneyOut += amount;
-      }
-    });
-
-    return Object.values(buckets).sort((a, b) => a.timestamp - b.timestamp);
-  }, [effectiveTransactions, activityTimeframe, activityCustomStart, activityCustomEnd]);
-
-  const activityTotals = useMemo(() => {
-    return activityChartData.reduce((acc, curr) => {
-      acc.moneyIn += curr.moneyIn;
-      acc.moneyOut += curr.moneyOut;
-      return acc;
-    }, { moneyIn: 0, moneyOut: 0 });
-  }, [activityChartData]);
 
   return (
     <div className="flex min-h-screen w-full bg-slate-100 text-slate-900 dark:bg-[#020202] dark:text-white transition-colors duration-300 font-admin-body">

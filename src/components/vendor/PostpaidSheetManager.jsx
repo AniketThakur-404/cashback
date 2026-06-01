@@ -565,6 +565,7 @@ const PostpaidSheetManager = React.memo(
                       limit: row.quantityValue,
                       onlyRecharged: true,
                       statusLabel: `Batch ${row.batchNumber}`,
+                      qrRange: formatBatchRange(row.start, row.quantityValue)
                     })
                   }
                 />

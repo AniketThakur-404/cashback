@@ -7,6 +7,7 @@ import {
   Edit2,
   LoaderCircle,
   Archive,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "../ui";
 import {
@@ -147,17 +148,34 @@ const CampaignCard = React.memo(
             {typeof onStartBulkExport === "function" ? (
               campaignExportJob?.isReady ||
               campaignExportJob?.status === "completed" ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onDownloadReadyExport &&
-                    onDownloadReadyExport(campaignExportJob)
-                  }
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-semibold cursor-pointer"
-                >
-                  <Download size={14} />
-                  Download Export
-                </button>
+                (campaignExportJob.createdAt && campaign.updatedAt && new Date(campaign.updatedAt) > new Date(campaignExportJob.createdAt)) ? (
+                  <button
+                    type="button"
+                    onClick={() => onStartBulkExport(campaign)}
+                    disabled={isBulkExportStarting}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors disabled:opacity-60 text-xs font-semibold cursor-pointer"
+                    title="Campaign has been updated. Click to generate a new export."
+                  >
+                    {isBulkExportStarting ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={14} />
+                    )}
+                    Update Export
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onDownloadReadyExport &&
+                      onDownloadReadyExport(campaignExportJob)
+                    }
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-semibold cursor-pointer"
+                  >
+                    <Download size={14} />
+                    Download Export
+                  </button>
+                )
               ) : campaignExportJob?.status === "processing" ||
                 campaignExportJob?.status === "queued" ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs font-semibold">
