@@ -487,10 +487,16 @@ const Home = () => {
     >
       <div className="px-4 pt-4 space-y-4">
         {/* --- 1  HERO CAROUSEL --- */}
-        <HeroCarousel items={banners} />
+        {isLoading ? (
+          <div className="w-full h-[280px] sm:h-[270px] rounded-3xl bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 animate-pulse shadow-sm" />
+        ) : (
+          <HeroCarousel items={banners} />
+        )}
 
         {/* --- 2  SCAN CTA --- */}
-        {!isLoading && (
+        {isLoading ? (
+          <div className="w-full h-[120px] rounded-3xl bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 animate-pulse shadow-sm" />
+        ) : (
           <Link to="/scan" className="scan-cta block">
             <div
               className="relative rounded-3xl p-6 overflow-hidden active:scale-[0.97] transition-transform"
@@ -577,29 +583,43 @@ const Home = () => {
 
         {/* --- 3 – QUICK ACTIONS --- */}
         <div className="quick-actions grid grid-cols-4 gap-3">
-          {quickActions.map((item, i) => (
-            <Link
-              key={i}
-              to={item.to}
-              className="quick-action active:scale-[0.95] transition-transform"
-              style={{ opacity: 1, visibility: "visible", transform: "none" }}
-            >
-              <div className="flex flex-col items-center text-center gap-2 p-2.5 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm">
+          {isLoading ? (
+            Array(4)
+              .fill(0)
+              .map((_, i) => (
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: item.gradient,
-                    boxShadow: `0 4px 12px ${item.shadow}`,
-                  }}
+                  key={i}
+                  className="flex flex-col items-center text-center gap-2 p-2.5 rounded-2xl bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm animate-pulse"
                 >
-                  <item.icon size={18} className="text-white" />
+                  <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-zinc-800 shrink-0" />
+                  <div className="w-10 h-3 rounded-full bg-gray-200 dark:bg-zinc-800 mt-1" />
                 </div>
-                <span className="text-[10px] font-bold text-zinc-900 dark:text-gray-100 truncate w-full">
-                  {item.label}
-                </span>
-              </div>
-            </Link>
-          ))}
+              ))
+          ) : (
+            quickActions.map((item, i) => (
+              <Link
+                key={i}
+                to={item.to}
+                className="quick-action active:scale-[0.95] transition-transform"
+                style={{ opacity: 1, visibility: "visible", transform: "none" }}
+              >
+                <div className="flex flex-col items-center text-center gap-2 p-2.5 rounded-2xl bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/5 shadow-sm">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{
+                      background: item.gradient,
+                      boxShadow: `0 4px 12px ${item.shadow}`,
+                    }}
+                  >
+                    <item.icon size={18} className="text-white" />
+                  </div>
+                  <span className="text-[10px] font-bold text-zinc-900 dark:text-gray-100 truncate w-full">
+                    {item.label}
+                  </span>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
 
         {/* --- 4 – YOUR ACTIVITY STATS --- */}
@@ -632,7 +652,7 @@ const Home = () => {
                     {s.label}
                   </span>
                   {isLoading ? (
-                    <div className="h-6 w-12 bg-gray-100 dark:bg-zinc-800 animate-pulse rounded-md" />
+                    <div className="h-6 w-12 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-md" />
                   ) : (
                     <span
                       className="text-[20px] font-black text-zinc-900 dark:text-white leading-none mt-0.5"
@@ -695,8 +715,8 @@ const Home = () => {
                     key={i}
                     className="flex flex-col items-center gap-1.5 shrink-0 snap-center"
                   >
-                    <div className="w-[64px] h-[64px] rounded-[18px] bg-gray-100 dark:bg-zinc-800 animate-pulse" />
-                    <div className="w-10 h-2.5 rounded-full bg-gray-100 dark:bg-zinc-800 animate-pulse mt-0.5" />
+                    <div className="w-[64px] h-[64px] rounded-[18px] bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm animate-pulse" />
+                    <div className="w-10 h-2.5 rounded-full bg-gray-200 dark:bg-zinc-800 animate-pulse mt-0.5" />
                   </div>
                 ))
             ) : brands.length > 0 ? (
@@ -765,7 +785,7 @@ const Home = () => {
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="offer-card w-[130px] h-[165px] rounded-[24px] bg-black/5 dark:bg-white/5 animate-pulse snap-center shrink-0"
+                    className="offer-card w-[130px] h-[165px] rounded-[24px] bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm animate-pulse snap-center shrink-0"
                   />
                 ))
             ) : topOffers.length > 0 ? (
