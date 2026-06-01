@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-import { useSEO } from "../hooks/useSEO";
   MessageSquare,
   ChevronDown,
   ChevronUp,
@@ -10,6 +9,7 @@ import { useSEO } from "../hooks/useSEO";
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
+import { useSEO } from "../hooks/useSEO";
 
 const HelpSupport = () => {
   useSEO(
