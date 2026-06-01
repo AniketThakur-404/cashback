@@ -28,6 +28,7 @@ import {
 } from "framer-motion";
 import VendorNavbar from "../components/VendorNavbar";
 // import whyCashbackHero from "../assets/why-cashback-hero.png";
+import { useSEO } from "../hooks/useSEO";
 const ScrollContent = () => {
   const [idx, setIdx] = React.useState(0);
 
@@ -243,6 +244,11 @@ const Button = ({
 };
 
 const VendorLandingPage = () => {
+  useSEO(
+    "Loyalty Program for Small Business | Vendor Portal",
+    "Grow your store with our loyalty program for small business. Partner with Assured Rewards to offer loyalty promotions and reward loyal customers today."
+  );
+
   const { scrollY } = useScroll();
   const heroImageY = useTransform(scrollY, [0, 800], [-50, 100]);
 

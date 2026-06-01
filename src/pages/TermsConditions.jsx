@@ -1,8 +1,14 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const TermsConditions = () => {
+  useSEO(
+    "Terms & Conditions | Assured Rewards Loyalty Program",
+    "Review the Terms and Conditions for our loyalty rewards program. Understand the rules to earn loyalty points, redeem rewards, and use cashback coupons."
+  );
+
   const navigate = useNavigate();
 
   return (

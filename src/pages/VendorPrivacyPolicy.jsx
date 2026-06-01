@@ -9,8 +9,14 @@ import {
   Mail,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const VendorPrivacyPolicy = () => {
+  useSEO(
+    "Vendor Privacy Policy | Secure Loyalty Program Data",
+    "Read our Vendor Privacy Policy. Assured Rewards ensures your business data is safe while you manage your customer loyalty programs and cashback offers."
+  );
+
   const navigate = useNavigate();
 
   const sections = [

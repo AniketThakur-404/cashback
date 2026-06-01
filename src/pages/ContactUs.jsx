@@ -10,8 +10,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const ContactUs = () => {
+  useSEO(
+    "Contact Assured Rewards | Support for Loyalty Points",
+    "Need help with your cashback on shopping or bonus reward points? Contact the Assured Rewards support team today. We value and reward loyal customers."
+  );
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",

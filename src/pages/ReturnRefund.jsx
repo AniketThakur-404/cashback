@@ -1,8 +1,14 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const ReturnRefund = () => {
+  useSEO(
+    "Return & Refund Policy | Assured Rewards Shopping",
+    "Check our Return and Refund Policy for purchases made using loyalty points or cashback on shopping. We strive to provide the best customer experience."
+  );
+
   const navigate = useNavigate();
 
   return (

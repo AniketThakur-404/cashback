@@ -1,8 +1,14 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const VendorTerms = () => {
+  useSEO(
+    "Vendor Terms | Partner for Loyalty Membership Deals",
+    "Review the Vendor Terms for partnering with Assured Rewards. Learn the guidelines for running loyal customer discounts and daily rewards deals with us."
+  );
+
   const navigate = useNavigate();
 
   return (

@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { ArrowLeft, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const BrandFAQs = () => {
+  useSEO(
+    "Brand FAQs | Loyalty Promotions & Cashback Offers",
+    "Find answers to FAQs about brand loyalty promotions, bank cashback offers, and loyalty membership deals. Maximize your benefits with Assured Rewards."
+  );
+
   const navigate = useNavigate();
   const [openId, setOpenId] = useState("0-0");
 

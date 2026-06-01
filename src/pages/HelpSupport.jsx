@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+import { useSEO } from "../hooks/useSEO";
   MessageSquare,
   ChevronDown,
   ChevronUp,
@@ -11,6 +12,11 @@ import {
 } from "lucide-react";
 
 const HelpSupport = () => {
+  useSEO(
+    "Help Center | Guide to Earn Reward Points & Cashback",
+    "Have questions about our customer loyalty programs? Visit our Help Center to learn how to earn loyalty points, redeem rewards, and use cashback coupons."
+  );
+
   const faqSections = [
     {
       title: "General",

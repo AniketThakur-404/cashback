@@ -25,6 +25,7 @@ import HowItWorks from "../components/HowItWorks";
 import { getPublicHome, getUserHomeStats } from "../lib/api";
 import { getApiBaseUrl, resolvePublicAssetUrl } from "../lib/apiClient";
 import { useAuth } from "../lib/auth";
+import { useSEO } from "../hooks/useSEO";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -329,6 +330,11 @@ const HeroCarousel = React.memo(({ items }) => {
 
 /* ---------------------- MAIN HOME ---------------------- */
 const Home = () => {
+  useSEO(
+    "Best Customer Loyalty Program | Earn Cashback Offers",
+    "Join the best customer loyalty program! Earn reward points, get the highest cashback deals, and redeem rewards on daily shopping. Start earning today!"
+  );
+
   const navigate = useNavigate();
   const { authToken } = useAuth();
   const [homeData, setHomeData] = useState(null);

@@ -7,8 +7,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const HowVerifyWorks = () => {
+  useSEO(
+    "How Verify Works | Secure Cashback & Reward Points",
+    "Learn how our verification process ensures you safely earn reward points and get cashback on payment. Enjoy secure and fast loyalty rewards processing."
+  );
+
   const navigate = useNavigate();
 
   useEffect(() => {

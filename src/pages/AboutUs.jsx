@@ -9,8 +9,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const AboutUs = () => {
+  useSEO(
+    "About Assured Rewards | Best Loyalty Rewards Program",
+    "Discover how Assured Rewards is building the best loyalty rewards program. We aim to reward loyal customers with top cashback offers and loyalty points."
+  );
+
   const navigate = useNavigate();
 
   useEffect(() => {

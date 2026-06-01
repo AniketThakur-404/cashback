@@ -18,6 +18,7 @@ import { useAuth } from "../lib/auth";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
 import AuthImage from "../components/AuthImage";
 import ScratchCardModal from "../components/ScratchCardModal";
+import { useSEO } from "../hooks/useSEO";
 
 const CATEGORY_STYLES = {
   Popular: "from-emerald-600 to-teal-500",
@@ -273,6 +274,11 @@ const ProductCard = ({
 };
 
 const Store = () => {
+  useSEO(
+    "Earn Cashback Online | Redeem Rewards at Assured Rewards",
+    "Shop at the Assured Rewards store to earn cashback online and bonus reward points. Find the highest cashback deals and redeem rewards seamlessly here."
+  );
+
   const navigate = useNavigate();
   const { authToken, isAuthenticated } = useAuth();
   const [storeData, setStoreData] = useState({

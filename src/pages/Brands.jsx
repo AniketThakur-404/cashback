@@ -4,8 +4,14 @@ import { Search, ChevronRight, ArrowLeft, QrCode } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPublicBrands } from "../lib/api";
 import { resolvePublicAssetUrl } from "../lib/apiClient";
+import { useSEO } from "../hooks/useSEO";
 
 const Brands = () => {
+  useSEO(
+    "Top Brands Loyalty Discounts & Rewards | Assured Rewards",
+    "Explore our partner brands to earn loyalty points and daily rewards deals. Get exclusive member benefits and repeat customer offers on your shopping."
+  );
+
   const navigate = useNavigate();
   const [brands, setBrands] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

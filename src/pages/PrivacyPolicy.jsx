@@ -1,8 +1,14 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const PrivacyPolicy = () => {
+  useSEO(
+    "Privacy Policy | Secure Customer Loyalty Program",
+    "Read the Privacy Policy of Assured Rewards. We protect your data while you earn cashback online, use cash back apps, and enjoy our rewards program safely."
+  );
+
   const navigate = useNavigate();
 
   return (

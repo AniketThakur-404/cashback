@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import VendorNavbar from "../components/VendorNavbar";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 const faqSections = [
   {
@@ -78,6 +79,11 @@ const faqSections = [
 ];
 
 const VendorFAQs = () => {
+  useSEO(
+    "Vendor FAQs | Loyalty Program for Small Business Help",
+    "Get answers on how to set up your loyalty program for small business. Learn about managing bonus reward points, cashback offers, and vendor benefits."
+  );
+
   const [openId, setOpenId] = useState(null);
   const navigate = useNavigate();
 
