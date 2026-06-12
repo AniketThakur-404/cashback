@@ -1204,3 +1204,10 @@ export const sendAdminNotification = (token, payload) =>
     token,
     body: payload,
   });
+
+export const updateAdminTransactionStatus = (token, transactionId, status) =>
+  apiRequest(`/api/admin/transactions/${encodeURIComponent(transactionId)}/status`, {
+    method: "PUT",
+    token,
+    body: { status },
+  });

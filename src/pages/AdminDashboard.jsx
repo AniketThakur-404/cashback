@@ -100,6 +100,7 @@ import {
   updateAdminOrderStatus,
   getAdminTransactions,
   getAdminTransactionsFiltered,
+  updateAdminTransactionStatus,
   getAdminQrs,
   getAdminWithdrawals,
   getAdminNotifications,
@@ -1528,7 +1529,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUpdateRedeemOrderStatus = (orderId, newStatus) => {
+  const handleUpdateRedeemOrderStatus = async (orderId, newStatus) => {
     const statusText = newStatus === "SUCCESS" ? "Placed" : newStatus.charAt(0) + newStatus.slice(1).toLowerCase();
     if (!window.confirm(`Are you sure you want to change the order status to "${statusText}"?`)) {
       return;
@@ -1547,6 +1548,16 @@ const AdminDashboard = () => {
       localStorage.setItem("redeem_order_timestamps", JSON.stringify(savedTimestamps));
     } catch (e) {
       console.error(e);
+    }
+
+    if (token) {
+      try {
+        await updateAdminTransactionStatus(token, orderId, newStatus);
+        // Refresh transactions to get updated metadata (timestamps, orderStatus)
+        await loadTransactions(token);
+      } catch (err) {
+        console.error("Failed to update order status on backend:", err);
+      }
     }
   };
 
@@ -9224,7 +9235,7 @@ const AdminDashboard = () => {
                               </thead>
                               <tbody className="divide-y divide-slate-200/70 dark:divide-white/5">
                                 {filtered.map((order) => {
-                                  const orderStatus = redeemOrderStatuses[order.id] || "SUCCESS";
+                                  const orderStatus = order.metadata?.orderStatus || redeemOrderStatuses[order.id] || "SUCCESS";
                                   const productName = order.description.replace(/^(Store redeem:|Redeem:)\s*/i, "");
                                   
                                   const statusBadgeClass = orderStatus === "SUCCESS"
@@ -9398,6 +9409,9 @@ const AdminDashboard = () => {
                       {/* Timeline status track */}
                       {(() => {
                         const getStepDate = (stepKey, hoursOffset) => {
+                          if (selectedProductForDetail.metadata?.statusTimestamps && selectedProductForDetail.metadata.statusTimestamps[stepKey]) {
+                            return new Date(selectedProductForDetail.metadata.statusTimestamps[stepKey]);
+                          }
                           try {
                             const saved = JSON.parse(localStorage.getItem("redeem_order_timestamps") || "{}");
                             const orderTimes = saved[selectedProductForDetail.id];
@@ -9410,7 +9424,7 @@ const AdminDashboard = () => {
                           return new Date(date.getTime() + hoursOffset * 60 * 60 * 1000);
                         };
 
-                        const currentStatus = redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS";
+                        const currentStatus = selectedProductForDetail.metadata?.orderStatus || redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS";
                         const timelineSteps = [
                           { label: "Order Placed", key: "SUCCESS", done: true, icon: Clock, date: getStepDate("SUCCESS", 0) },
                           { label: "Processing", key: "PROCESSING", done: currentStatus === "PROCESSING" || currentStatus === "SHIPPED" || currentStatus === "DELIVERED", icon: Package, date: getStepDate("PROCESSING", 2) },
@@ -9457,8 +9471,8 @@ const AdminDashboard = () => {
                           <button
                             key={st}
                             onClick={() => handleUpdateRedeemOrderStatus(selectedProductForDetail.id, st)}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                              (redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS") === st
+                             className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                              (selectedProductForDetail.metadata?.orderStatus || redeemOrderStatuses[selectedProductForDetail.id] || "SUCCESS") === st
                                 ? "bg-primary text-white"
                                 : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
                             }`}

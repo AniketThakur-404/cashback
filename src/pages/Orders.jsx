@@ -59,6 +59,9 @@ const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
   if (!order) return null;
 
   const getStepDate = (stepKey, hoursOffset) => {
+    if (order.metadata?.statusTimestamps && order.metadata.statusTimestamps[stepKey]) {
+      return new Date(order.metadata.statusTimestamps[stepKey]);
+    }
     try {
       const saved = JSON.parse(localStorage.getItem("redeem_order_timestamps") || "{}");
       const orderTimes = saved[order.id];
@@ -176,9 +179,11 @@ const OrderDetailModal = ({ order, status = "SUCCESS", onClose }) => {
                   >
                     {step.status}
                   </p>
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-1">
-                    {formatDate(step.date)}
-                  </p>
+                  {step.done && (
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-1">
+                      {formatDate(step.date)}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -343,7 +348,7 @@ const Orders = () => {
             {orders.map((tx) => {
               const productName = getOrderProductName(tx);
               const product = storeProductMap[normalizeName(productName)];
-              const statusVal = orderStatuses[tx.id] || "SUCCESS";
+              const statusVal = tx.metadata?.orderStatus || orderStatuses[tx.id] || "SUCCESS";
               const statusColor =
                 statusVal === "SUCCESS"
                   ? "bg-emerald-500 text-white"
@@ -422,7 +427,7 @@ const Orders = () => {
         {selectedOrder && (
           <OrderDetailModal
             order={selectedOrder}
-            status={orderStatuses[selectedOrder.id] || "SUCCESS"}
+            status={selectedOrder.metadata?.orderStatus || orderStatuses[selectedOrder.id] || "SUCCESS"}
             onClose={() => setSelectedOrder(null)}
           />
         )}
