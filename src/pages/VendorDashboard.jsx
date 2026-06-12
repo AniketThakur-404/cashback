@@ -159,6 +159,7 @@ const VENDOR_TOKEN_KEY = "cashback_vendor_token";
 const CAMPAIGN_QR_CHUNK_DOWNLOAD_THRESHOLD = 10000;
 const CAMPAIGN_QR_CHUNK_SIZE = 5000;
 const BULK_EXPORT_JOB_POLL_MS = 10000;
+const QR_EXPORT_LABEL_FORMAT_VERSION = 2;
 // Redundant formatAmount removed
 
 const formatCompactAmount = (value) => {
@@ -1780,8 +1781,11 @@ const VendorDashboard = () => {
     try {
       const payload =
         campaign.planType === "postpaid" && Number(campaign.qrsPerSheet) > 0
-          ? { qrsPerSheet: Number(campaign.qrsPerSheet) }
-          : {};
+          ? {
+              qrsPerSheet: Number(campaign.qrsPerSheet),
+              qrLabelFormatVersion: QR_EXPORT_LABEL_FORMAT_VERSION,
+            }
+          : { qrLabelFormatVersion: QR_EXPORT_LABEL_FORMAT_VERSION };
       const response = await startCampaignBulkQrExport(
         token,
         campaign.id,
@@ -4851,6 +4855,8 @@ const VendorDashboard = () => {
       if (
         job?.type === "campaign_qr_pdf" &&
         job?.campaignId &&
+        job?.requestParams?.qrLabelFormatVersion ===
+          QR_EXPORT_LABEL_FORMAT_VERSION &&
         !map.has(job.campaignId)
       ) {
         map.set(job.campaignId, job);

@@ -58,6 +58,8 @@ const ReturnRefund = lazy(() => import("./pages/ReturnRefund"));
 const Orders = lazy(() => import("./pages/Orders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const RedeemProductInfo = lazy(() => import("./pages/RedeemProductInfo"));
+const BlogPortal = lazy(() => import("./pages/BlogPortal"));
+const BlogViewer = lazy(() => import("./pages/BlogViewer"));
 
 function App() {
   const AppLayout = () => (
@@ -107,6 +109,10 @@ function App() {
             <Route path="/vendor/terms" element={<VendorTerms />} />
             <Route path="/vendor/faqs" element={<VendorFAQs />} />
             <Route path="/vendor-faqs" element={<VendorFAQs />} />
+            <Route path="/blog" element={<BlogViewer />} />
+            <Route path="/blog/:slug" element={<BlogViewer />} />
+            <Route path="/blog-edit" element={<BlogPortal />} />
+            <Route path="/blog-edit/:slug" element={<BlogPortal />} />
 
             {/* QR Scan Flow */}
             <Route path="/scan" element={<CameraScan />} />

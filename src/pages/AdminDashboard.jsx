@@ -45,9 +45,12 @@ import {
   Zap,
   X,
   Mail,
+  Newspaper,
   Phone,
   Trash2,
   ArrowRight,
+  ArrowLeft,
+  ChevronLeft,
   Settings,
   FileText,
   Eye,
@@ -68,6 +71,7 @@ import UserAccountManager from "../components/admin/UserAccountManager";
 import { ModeToggle } from "../components/ModeToggle";
 import UserWalletModal from "../components/admin/UserWalletModal";
 import RedeemProductModal from "../components/admin/RedeemProductModal";
+import BlogContentToolbar from "../components/admin/BlogContentToolbar";
 import {
   loginWithEmail,
   getMe,
@@ -241,6 +245,73 @@ const normalizeRedeemProducts = (products) => {
   return products
     .map((product, index) => normalizeRedeemProductEntry(product, index))
     .filter((product) => product.name);
+};
+
+const createBlogDraft = () => ({
+  id: `blog-${Date.now()}`,
+  title: "",
+  slug: "",
+  excerpt: "",
+  author: "",
+  category: "",
+  coverImage: "",
+  content: "",
+  status: "draft",
+  publishedAt: "",
+});
+
+const createBlogUserDraft = () => ({
+  id: `blog-user-${Date.now()}`,
+  name: "",
+  email: "",
+  password: "",
+  access: true,
+});
+
+const normalizeBlogEntries = (blogs) => {
+  if (!Array.isArray(blogs)) return [];
+  return blogs.map((blog, index) => ({
+    id: String(blog?.id || `blog-${index + 1}`),
+    title: String(blog?.title || ""),
+    slug: String(blog?.slug || ""),
+    excerpt: String(blog?.excerpt || ""),
+    author: String(blog?.author || ""),
+    category: String(blog?.category || ""),
+    coverImage: String(blog?.coverImage || blog?.image || ""),
+    content: String(blog?.content || ""),
+    status: String(blog?.status || "draft").toLowerCase() === "published" ? "published" : "draft",
+    publishedAt: String(blog?.publishedAt || ""),
+  }));
+};
+
+const normalizeBlogUsers = (users, legacyCredentials) => {
+  const source = Array.isArray(users) ? users : [];
+  const normalized = source
+    .map((user, index) => ({
+      id: String(user?.id || `blog-user-${index + 1}`),
+      name: String(user?.name || ""),
+      email: String(user?.email || user?.username || ""),
+      password: String(user?.password || ""),
+      access: user?.access !== false,
+    }))
+    .filter((user) => user.email || user.password || user.name);
+
+  if (
+    normalized.length === 0 &&
+    legacyCredentials &&
+    typeof legacyCredentials === "object" &&
+    (legacyCredentials.username || legacyCredentials.password)
+  ) {
+    normalized.push({
+      id: "blog-user-legacy",
+      name: "Blog User",
+      email: String(legacyCredentials.username || ""),
+      password: String(legacyCredentials.password || ""),
+      access: true,
+    });
+  }
+
+  return normalized;
 };
 
 const resolveAssetUrl = (value) => {
@@ -830,6 +901,7 @@ const GradientPicker = ({ value, onChange }) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const blogTextareaRefs = useRef({});
   const { section, subSection } = useParams();
   const { effectiveTheme } = useTheme();
   const [token, setToken] = useState(() =>
@@ -989,6 +1061,9 @@ const AdminDashboard = () => {
   const [settingsError, setSettingsError] = useState("");
   const [settingsMessage, setSettingsMessage] = useState("");
   const [bannerUploadState, setBannerUploadState] = useState({});
+  const [blogUploadState, setBlogUploadState] = useState({});
+  const [isBlogUsersModalOpen, setIsBlogUsersModalOpen] = useState(false);
+  const [editingBlogId, setEditingBlogId] = useState(null);
   const [redeemProductUploadState, setRedeemProductUploadState] = useState({});
   const [isRedeemProductModalOpen, setIsRedeemProductModalOpen] =
     useState(false);
@@ -1211,6 +1286,7 @@ const AdminDashboard = () => {
   const isVendorsRoute = activeSection === "vendors";
   const isLogsRoute = activeSection === "logs";
   const isSettingsRoute = activeSection === "settings";
+  const isBlogsRoute = activeSection === "blogs";
   const isRedeemCatalogRoute = activeSection === "redeem-catalog";
   const isProductTrackRoute = activeSection === "product-track" || activeSection === "product_track";
   const isAddProductRoute = activeSection === "add-product";
@@ -1284,6 +1360,7 @@ const AdminDashboard = () => {
     "product-track": "/admin/product-track",
     "product_track": "/admin/product_track",
     logs: "/admin/logs",
+    blogs: "/admin/blogs",
     settings: "/admin/settings",
     account: "/admin/account",
     security: "/admin/security",
@@ -1307,6 +1384,7 @@ const AdminDashboard = () => {
     "product-track": "Product Track",
     "product_track": "Product Track",
     logs: "Logs & Audit",
+    blogs: "Upload Blog",
     settings: "System Settings",
     account: "Account",
     security: "Security",
@@ -1673,6 +1751,10 @@ const AdminDashboard = () => {
       const normalizedMetadata = {
         ...(data?.metadata || {}),
       };
+      normalizedMetadata.blogUsers = normalizeBlogUsers(
+        normalizedMetadata.blogUsers,
+        normalizedMetadata.blogCredentials,
+      );
       if (
         !Array.isArray(normalizedMetadata.homeBanners) ||
         normalizedMetadata.homeBanners.length === 0
@@ -1700,6 +1782,7 @@ const AdminDashboard = () => {
         categories: normalizedRedeemCategories,
         products: normalizedRedeemProducts,
       };
+      normalizedMetadata.blogs = normalizeBlogEntries(normalizedMetadata.blogs);
       const normalized = {
         ...(data || {}),
         metadata: normalizedMetadata,
@@ -1835,6 +1918,8 @@ const AdminDashboard = () => {
     } else if (isLogsRoute) {
       tasks.push(loadLogs(authToken));
     } else if (isRedeemCatalogRoute || isAddProductRoute) {
+      tasks.push(loadSettings(authToken));
+    } else if (isBlogsRoute) {
       tasks.push(loadSettings(authToken));
     } else if (isProductTrackRoute) {
       tasks.push(loadTransactions(authToken), loadSettings(authToken));
@@ -2332,6 +2417,119 @@ const AdminDashboard = () => {
       }));
     } catch (err) {
       setBannerUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "", error: err.message || "Upload failed." },
+      }));
+    }
+  };
+
+  const getBlogs = () => {
+    const blogs = settings?.metadata?.blogs;
+    return Array.isArray(blogs) ? blogs : [];
+  };
+
+  const setBlogs = (nextBlogs) => {
+    setSettings((prev) => ({
+      ...(prev || {}),
+      metadata: {
+        ...(prev?.metadata || {}),
+        blogs: nextBlogs,
+      },
+    }));
+  };
+
+  const getBlogUsers = () => {
+    const users = settings?.metadata?.blogUsers;
+    return Array.isArray(users) ? users : [];
+  };
+
+  const setBlogUsers = (nextUsers) => {
+    setSettings((prev) => ({
+      ...(prev || {}),
+      metadata: {
+        ...(prev?.metadata || {}),
+        blogUsers: nextUsers,
+      },
+    }));
+  };
+
+  const handleAddBlogUser = () => {
+    setBlogUsers([createBlogUserDraft(), ...getBlogUsers()]);
+  };
+
+  const handleBlogUserChange = (index, field, value) => {
+    setBlogUsers(
+      getBlogUsers().map((user, idx) =>
+        idx === index ? { ...(user || {}), [field]: value } : user,
+      ),
+    );
+  };
+
+  const handleRemoveBlogUser = (index) => {
+    setBlogUsers(getBlogUsers().filter((_, idx) => idx !== index));
+  };
+
+  const handleBlogFieldChange = (index, field, value) => {
+    const blogs = getBlogs();
+    const next = blogs.map((blog, idx) => {
+      if (idx === index) {
+        const updated = { ...(blog || {}), [field]: value };
+        if (field === "title") {
+          updated.slug = value
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+        }
+        return updated;
+      }
+      return blog;
+    });
+    setBlogs(next);
+  };
+
+  const handleAddBlog = () => {
+    const newBlog = createBlogDraft();
+    setBlogs([newBlog, ...getBlogs()]);
+    setEditingBlogId(newBlog.id);
+  };
+
+  const handleRemoveBlog = (index) => {
+    const blogsList = getBlogs();
+    const blogToRemove = blogsList[index];
+    setBlogs(blogsList.filter((_, idx) => idx !== index));
+    if (blogToRemove && blogToRemove.id === editingBlogId) {
+      setEditingBlogId(null);
+    }
+  };
+
+  const handleBlogImageUpload = async (index, file) => {
+    if (!file) return;
+    if (!token) {
+      setBlogUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "", error: "Sign in to upload." },
+      }));
+      return;
+    }
+
+    setBlogUploadState((prev) => ({
+      ...prev,
+      [index]: { status: "Uploading...", error: "" },
+    }));
+
+    try {
+      const data = await uploadImage(token, file);
+      const uploadedUrl = data?.url;
+      if (!uploadedUrl) {
+        throw new Error("Upload failed. No URL returned.");
+      }
+      handleBlogFieldChange(index, "coverImage", uploadedUrl);
+      setBlogUploadState((prev) => ({
+        ...prev,
+        [index]: { status: "Cover image uploaded.", error: "" },
+      }));
+    } catch (err) {
+      setBlogUploadState((prev) => ({
         ...prev,
         [index]: { status: "", error: err.message || "Upload failed." },
       }));
@@ -4339,6 +4537,8 @@ const AdminDashboard = () => {
     maxRedeemerSharePercent: 40,
   };
   const homeBanners = getHomeBanners();
+  const blogEntries = getBlogs();
+  const blogUsers = getBlogUsers();
   const redeemStoreProducts = getRedeemStoreProducts();
   const redeemCatalogSummary = useMemo(() => {
     const summary = {
@@ -9281,6 +9481,562 @@ const AdminDashboard = () => {
                 </div>
               )}
             </section>
+          )}
+
+          {/* Blog Upload Section */}
+          {isBlogsRoute && (
+            <section
+              id="blogs"
+              className="space-y-6 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    Upload Blog
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Create and manage blog posts for the platform.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsBlogUsersModalOpen(true)}
+                    className={`${adminGhostButtonClass} flex items-center gap-2 justify-center`}
+                  >
+                    <Users size={16} /> Blog Users ({blogUsers.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddBlog}
+                    className={`${adminPrimaryButtonClass} flex items-center gap-2 justify-center`}
+                  >
+                    <Plus size={16} /> Add Blog
+                  </button>
+                </div>
+              </div>
+
+              {settingsLoading && (
+                <div className="text-slate-500">Loading blog settings...</div>
+              )}
+              {settingsError && (
+                <div className="text-rose-500">{settingsError}</div>
+              )}
+              {settingsMessage && (
+                <div className="text-emerald-500">{settingsMessage}</div>
+              )}
+
+              {settings && (
+                <div className="space-y-5">
+                  {(() => {
+                    const editingBlogIndex = editingBlogId !== null ? blogEntries.findIndex(b => b.id === editingBlogId) : -1;
+                    const isEditing = editingBlogIndex !== -1;
+                    const blog = isEditing ? blogEntries[editingBlogIndex] : null;
+
+                    if (isEditing && blog) {
+                      return (
+                        <div className={`${adminPanelClass} p-6 space-y-6 animate-in fade-in duration-300`}>
+                          {/* Editor Header */}
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200/60 dark:border-white/10">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setEditingBlogId(null)}
+                                className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors"
+                                title="Back to Blogs"
+                              >
+                                <ArrowLeft size={16} />
+                              </button>
+                              <div>
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                                  Editing: {blog.title || "Untitled Post"}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  Status: {blog.status === "published" ? "Published" : "Draft"}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBlog(editingBlogIndex)}
+                              className="px-3.5 py-2 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 font-semibold text-xs flex items-center gap-2 transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} /> Remove Blog
+                            </button>
+                          </div>
+
+                          {/* Editor Body */}
+                          <div className="grid lg:grid-cols-[200px_1fr] gap-6">
+                            <div className="space-y-4">
+                              <div className="aspect-[4/3] rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center relative group">
+                                {blog.coverImage ? (
+                                  <AuthImage
+                                    src={resolveAssetUrl(blog.coverImage)}
+                                    alt="Blog cover preview"
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
+                                    <Newspaper size={24} className="opacity-40" />
+                                    <span className="text-xs font-medium">No cover image</span>
+                                  </div>
+                                )}
+                              </div>
+                              <label className="w-full px-3 py-2.5 rounded-lg border border-slate-200/60 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-center gap-2 transition-colors shadow-sm">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    handleBlogImageUpload(editingBlogIndex, file);
+                                    e.target.value = "";
+                                  }}
+                                />
+                                <Upload size={14} /> Upload Cover
+                              </label>
+                              {blogUploadState[editingBlogIndex]?.status && (
+                                <p className="text-[11px] text-emerald-500 text-center font-medium">
+                                  {blogUploadState[editingBlogIndex].status}
+                                </p>
+                              )}
+                              {blogUploadState[editingBlogIndex]?.error && (
+                                <p className="text-[11px] text-rose-500 text-center font-medium">
+                                  {blogUploadState[editingBlogIndex].error}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blog.title || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "title", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                  placeholder="Enter blog title"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Slug
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blog.slug || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "slug", e.target.value)
+                                  }
+                                  placeholder="how-to-earn-cashback"
+                                  className={adminInputClass}
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Author
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blog.author || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "author", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                  placeholder="Author name"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Category
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blog.category || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "category", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                  placeholder="e.g. Tips, Cashback, Guides"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Publish Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={blog.publishedAt || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "publishedAt", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Status
+                                </label>
+                                <select
+                                  value={blog.status || "draft"}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "status", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                >
+                                  <option className={adminOptionClass} value="draft">
+                                    Draft
+                                  </option>
+                                  <option className={adminOptionClass} value="published">
+                                    Published
+                                  </option>
+                                </select>
+                              </div>
+                              <div className="md:col-span-2 space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Excerpt
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={blog.excerpt || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "excerpt", e.target.value)
+                                  }
+                                  className={adminInputClass}
+                                  placeholder="Brief description of the blog post..."
+                                />
+                              </div>
+                              <div className="md:col-span-2 space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                  Content
+                                </label>
+                                <div>
+                                  <BlogContentToolbar
+                                    value={blog.content || ""}
+                                    onChange={(value) =>
+                                      handleBlogFieldChange(editingBlogIndex, "content", value)
+                                    }
+                                    textareaRef={{ current: blogTextareaRefs.current[editingBlogIndex] }}
+                                  />
+                                  <textarea
+                                    ref={(el) => (blogTextareaRefs.current[editingBlogIndex] = el)}
+                                    rows={12}
+                                    value={blog.content || ""}
+                                    onChange={(e) =>
+                                      handleBlogFieldChange(editingBlogIndex, "content", e.target.value)
+                                    }
+                                    className={`${adminInputClass} rounded-t-none font-mono text-sm`}
+                                    placeholder="Write your blog content here in markdown..."
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-4 flex items-center justify-between border-t border-slate-200/60 dark:border-white/10 mt-6">
+                            <button
+                              type="button"
+                              onClick={() => setEditingBlogId(null)}
+                              className={adminGhostButtonClass}
+                            >
+                              Back to Blogs
+                            </button>
+                            <button
+                              onClick={handleSettingsUpdate}
+                              disabled={settingsLoading}
+                              className={adminPrimaryButtonClass}
+                            >
+                              {settingsLoading ? "Saving..." : "Save Blogs"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Otherwise, render grid view
+                    return (
+                      <div className="space-y-6">
+                        {blogEntries.length === 0 ? (
+                          <div className={`${adminPanelClass} p-8 text-center`}>
+                            <Newspaper className="mx-auto mb-3 text-slate-400" size={28} />
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                              No blogs added yet
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              Use Add Blog to create the first post.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {blogEntries.map((item, idx) => (
+                              <div
+                                key={item.id || idx}
+                                onClick={() => setEditingBlogId(item.id)}
+                                className={`${adminPanelClass} overflow-hidden flex flex-col group cursor-pointer hover:border-[#059669] dark:hover:border-[#059669] hover:shadow-md transition-all duration-200`}
+                              >
+                                {/* Cover Image */}
+                                <div className="relative aspect-[16/10] bg-slate-100 dark:bg-black/40 overflow-hidden border-b border-slate-200/60 dark:border-white/10">
+                                  {item.coverImage ? (
+                                    <AuthImage
+                                      src={resolveAssetUrl(item.coverImage)}
+                                      alt={item.title || "Blog cover"}
+                                      className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-300"
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                                      <Newspaper size={28} className="opacity-40" />
+                                      <span className="text-xs font-medium">No cover image</span>
+                                    </div>
+                                  )}
+                                  {/* Status Badge */}
+                                  <div className="absolute top-3 right-3">
+                                    <span
+                                      className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                        item.status === "published"
+                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                      }`}
+                                    >
+                                      {item.status === "published" ? "Published" : "Draft"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Details */}
+                                <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                                      <span>{item.category || "Uncategorized"}</span>
+                                      <span>{item.publishedAt || "No date"}</span>
+                                    </div>
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-base line-clamp-2 group-hover:text-[#059669] transition-colors leading-tight">
+                                      {item.title || "Untitled Post"}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                      {item.excerpt || "No summary provided."}
+                                    </p>
+                                  </div>
+
+                                  <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                                    <span className="truncate">
+                                      {item.author && item.author.toLowerCase() !== "admin" ? `By ${item.author}` : ""}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveBlog(idx);
+                                      }}
+                                      className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 hover:dark:bg-rose-500/20 transition-colors cursor-pointer"
+                                      title="Delete Blog"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="pt-2">
+                          <button
+                            onClick={handleSettingsUpdate}
+                            disabled={settingsLoading}
+                            className={adminPrimaryButtonClass}
+                          >
+                            {settingsLoading ? "Saving..." : "Save Blogs"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </section>
+          )}
+
+          {isBlogUsersModalOpen && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+              <div className={`${adminPanelClass} w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl`}>
+                <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#101214]">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300 flex items-center justify-center">
+                      <Users size={21} />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                          Blog Users
+                        </h3>
+                        <span className="rounded-full bg-slate-100 dark:bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                          {blogUsers.length} total
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Manage team accounts that can sign in at /blog and upload posts.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddBlogUser}
+                      className={`${adminPrimaryButtonClass} flex items-center gap-2`}
+                    >
+                      <Plus size={16} /> Add User
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsBlogUsersModalOpen(false)}
+                      className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"
+                      aria-label="Close blog users"
+                    >
+                      <X size={19} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[calc(90vh-154px)] overflow-y-auto px-6 py-5 bg-slate-50/70 dark:bg-black/20">
+                  {blogUsers.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-slate-300 dark:border-white/15 bg-white dark:bg-white/[0.04] p-10 text-center">
+                      <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400">
+                        <Users size={28} />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                        No blog users added yet
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Add a user to grant access to the /blog upload page.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid gap-4">
+                    {blogUsers.map((user, index) => {
+                      const displayName = user.name || user.email || `Blog User ${index + 1}`;
+                      const initials = displayName
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2) || "BU";
+                      const hasAccess = user.access !== false;
+
+                      return (
+                        <div
+                          key={user.id || index}
+                          className="rounded-xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-white/[0.04] p-4 shadow-sm"
+                        >
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                              <div className={`h-11 w-11 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0 ${hasAccess ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300"}`}>
+                                {initials}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                    {displayName}
+                                  </p>
+                                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${hasAccess ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"}`}>
+                                    {hasAccess ? "Enabled" : "Disabled"}
+                                  </span>
+                                </div>
+                                <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                                  {user.email || "Email ID not set"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleBlogUserChange(index, "access", !hasAccess)}
+                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${hasAccess ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20" : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15"}`}
+                              >
+                                {hasAccess ? "Disable Access" : "Enable Access"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBlogUser(index)}
+                                className="px-3 py-2 rounded-lg bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid md:grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Name
+                              </label>
+                              <input
+                                type="text"
+                                value={user.name || ""}
+                                onChange={(e) => handleBlogUserChange(index, "name", e.target.value)}
+                                className={adminInputClass}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Email ID
+                              </label>
+                              <input
+                                type="email"
+                                value={user.email || ""}
+                                onChange={(e) => handleBlogUserChange(index, "email", e.target.value)}
+                                className={adminInputClass}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Password
+                              </label>
+                              <input
+                                type="text"
+                                value={user.password || ""}
+                                onChange={(e) => handleBlogUserChange(index, "password", e.target.value)}
+                                className={adminInputClass}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-slate-200/70 dark:border-white/10 bg-white dark:bg-[#101214]">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Save after changing users or access.
+                  </p>
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsBlogUsersModalOpen(false)}
+                      className={adminGhostButtonClass}
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSettingsUpdate}
+                      disabled={settingsLoading}
+                      className={adminPrimaryButtonClass}
+                    >
+                      {settingsLoading ? "Saving..." : "Save Users"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* System Settings Section */}

@@ -1039,6 +1039,31 @@ export const getPublicGiftCardDetails = (giftCardId) =>
 
 export const getPublicStoreData = () => apiRequest("/api/public/store");
 
+export const getPublicBlogs = () => apiRequest("/api/public/blogs");
+
+export const loginBlogTeam = (email, password) =>
+  apiRequest("/api/public/blog/login", {
+    method: "POST",
+    body: { email, password },
+  });
+
+export const saveBlogTeamPosts = (email, password, blogs) =>
+  apiRequest("/api/public/blog/posts", {
+    method: "PUT",
+    body: { email, password, blogs },
+  });
+
+export const uploadBlogTeamImage = (email, password, file) => {
+  const formData = new FormData();
+  formData.append("email", email);
+  formData.append("password", password);
+  formData.append("image", file);
+  return apiRequest("/api/public/blog/upload", {
+    method: "POST",
+    body: formData,
+  });
+};
+
 export const redeemStoreProduct = (token, productId, address) =>
   apiRequest("/api/user/store/redeem", {
      method: "POST",

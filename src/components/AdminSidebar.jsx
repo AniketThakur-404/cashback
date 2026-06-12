@@ -25,6 +25,7 @@ import {
     UserX,
     Gift,
     ShoppingBag,
+    Newspaper,
 } from 'lucide-react';
 import StarBorder from './StarBorder';
 import { useTheme } from "./ThemeProvider";
@@ -99,6 +100,7 @@ const AdminSidebar = ({
             label: "System",
             items: [
                 { id: 'support', label: 'Support Tickets', icon: LifeBuoy },
+                { id: 'blogs', label: 'Upload Blog', icon: Newspaper },
                 { id: 'product-reports', label: 'Product Reports', icon: FileText },
                 { id: 'logs', label: 'Logs & Audit', icon: FileText },
             ],
