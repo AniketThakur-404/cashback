@@ -19,18 +19,21 @@ const primaryButtonClass =
 const ghostButtonClass =
   "px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm text-slate-700 font-medium transition-colors";
 
-const createBlogDraft = () => ({
-  id: `blog-${Date.now()}`,
-  title: "",
-  slug: "",
-  excerpt: "",
-  author: "",
-  category: "",
-  coverImage: "",
-  content: "",
-  status: "draft",
-  publishedAt: "",
-});
+const createBlogDraft = () => {
+  const timestamp = Date.now();
+  return {
+    id: `blog-${timestamp}`,
+    title: "",
+    slug: `draft-${timestamp}`,
+    excerpt: "",
+    author: "",
+    category: "",
+    coverImage: "",
+    content: "",
+    status: "draft",
+    publishedAt: "",
+  };
+};
 
 const resolveAssetUrl = (value) => {
   if (!value) return "";
