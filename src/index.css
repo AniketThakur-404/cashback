@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss/index.css";
 @import "tw-animate-css";
 
 @keyframes moveBackground {
@@ -314,3 +314,4 @@ body.modal-open .app-dock {
 .animate-fade-in {
   animation: fade-in 0.8s ease-out forwards;
 }
+
