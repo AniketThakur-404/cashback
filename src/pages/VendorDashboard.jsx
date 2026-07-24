@@ -4,7 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import VendorNavbar from "../components/VendorNavbar";
 import { format, differenceInDays, subDays, parseISO } from "date-fns";
 import { jsPDF } from "jspdf";
-import { PDFDocument } from "pdf-lib";
+
 import {
   Menu,
   X,
@@ -121,7 +121,7 @@ import {
   parseNumericValue,
   buildAllocationGroups,
 } from "../lib/vendorUtils";
-import L from "leaflet";
+import * as L from "leaflet/dist/leaflet-src.esm.js";
 import "leaflet/dist/leaflet.css";
 import { getApiBaseUrl } from "../lib/apiClient";
 import VendorAnalytics from "../components/VendorAnalytics";
@@ -466,6 +466,11 @@ const getGeneratedPrice = (qr) => {
 
 const CAMPAIGN_FEE_GST_RATE = 0.18;
 const VOUCHER_COST_MAP = { digital_voucher: 0.2, printed_qr: 0.5, none: 0 };
+
+const resolveLiveTechFeePerQr = (value) => {
+  const parsed = parseNumericValue(value, 0);
+  return parsed > 1 ? parsed : 1.5;
+};
 
 const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
   const allocations = Array.isArray(campaign?.allocations)
@@ -1428,6 +1433,7 @@ const VendorDashboard = () => {
       message: `Preparing ${totalSheets} selected sheet${totalSheets === 1 ? "" : "s"}...`,
     });
 
+    const { PDFDocument } = await import("pdf-lib");
     const mergedPdf = await PDFDocument.create();
 
     let successfulSheets = 0;
@@ -11480,10 +11486,7 @@ Quantity: ${invoiceData.quantity} QRs
                                   }
                                 });
 
-                                const qrBaseRate = parseNumericValue(
-                                  brandProfile?.qrPricePerUnit,
-                                  1,
-                                );
+                                const qrBaseRate = resolveLiveTechFeePerQr(brandProfile?.qrPricePerUnit);
                                 const voucherBaseRate =
                                   VOUCHER_COST_MAP[paymentForm.voucherType] ||
                                   0;
@@ -11772,10 +11775,7 @@ Quantity: ${invoiceData.quantity} QRs
                             totalQuantity += qty;
                           }
                         });
-                        const qrBaseRate = parseNumericValue(
-                          brandProfile?.qrPricePerUnit,
-                          1,
-                        );
+                        const qrBaseRate = resolveLiveTechFeePerQr(brandProfile?.qrPricePerUnit);
                         const qrGenCost =
                           totalQuantity *
                           qrBaseRate *
@@ -11917,5 +11917,13 @@ Quantity: ${invoiceData.quantity} QRs
 };
 
 export default VendorDashboard;
+
+
+
+
+
+
+
+
 
 
