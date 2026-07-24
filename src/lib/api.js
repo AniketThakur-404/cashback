@@ -317,6 +317,11 @@ export const rechargeVendorWallet = (token, amount) =>
     body: { amount },
   });
 
+export const getRazorpayConfig = (token) =>
+  apiRequest("/api/payments/config", {
+    token,
+  });
+
 export const createPaymentOrder = (token, amount) =>
   apiRequest("/api/payments/order", {
     method: "POST",
@@ -1211,3 +1216,5 @@ export const updateAdminTransactionStatus = (token, transactionId, status) =>
     token,
     body: { status },
   });
+
+

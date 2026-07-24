@@ -96,6 +96,7 @@ import {
   downloadCampaignQrPdf,
   fetchCampaignQrPdfBlob,
   startCampaignBulkQrExport,
+  getRazorpayConfig,
   createPaymentOrder,
   verifyPayment,
   getUserNotifications,
@@ -3620,13 +3621,19 @@ const VendorDashboard = () => {
         );
       }
 
+      const razorpayConfig = await getRazorpayConfig(token);
+      const razorpayKeyId = String(razorpayConfig?.keyId || "").trim();
+      if (!razorpayKeyId) {
+        throw new Error("Razorpay key is missing on the backend.");
+      }
+
       const order = await createPaymentOrder(token, amount);
       if (!order || !order.id) {
         throw new Error("Failed to create payment order.");
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_RwcLAPO7q0AESo",
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: "GoHype",
@@ -3660,6 +3667,10 @@ const VendorDashboard = () => {
           color: "#10B981",
         },
       };
+
+      if (!options.key) {
+        throw new Error("Razorpay key is missing on the backend.");
+      }
 
       const rzp1 = new window.Razorpay(options);
       rzp1.on("payment.failed", function (response) {
@@ -11917,6 +11928,10 @@ Quantity: ${invoiceData.quantity} QRs
 };
 
 export default VendorDashboard;
+
+
+
+
 
 
 
