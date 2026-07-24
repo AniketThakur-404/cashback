@@ -380,7 +380,7 @@ const getVendorTechFee = (vendor) => {
   const legacyQrFee = Number(vendor?.Brand?.qrPricePerUnit);
   if (Number.isFinite(legacyQrFee) && legacyQrFee > 0) return legacyQrFee;
 
-  return 0;
+  return 1.5;
 };
 
 const formatDate = (value) => {
@@ -403,7 +403,7 @@ const getDefaultBrandFormState = () => ({
   website: "",
   vendorEmail: "",
   vendorPhone: "",
-  qrPricePerUnit: "1.00",
+  qrPricePerUnit: "1.50",
 });
 
 const getDefaultCampaignEditFormState = () => ({
@@ -10769,3 +10769,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

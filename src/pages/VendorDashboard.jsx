@@ -1035,7 +1035,7 @@ const VendorDashboard = () => {
       : selectedCampaignPriceHint;
 
   const isAuthenticated = Boolean(token);
-  const qrPricePerUnit = parseNumericValue(brandProfile?.qrPricePerUnit, 1);
+  const qrPricePerUnit = parseNumericValue(brandProfile?.qrPricePerUnit, 1.5);
   const brandLogoPreviewSrc = resolveAssetUrl(brandProfile.logoUrl);
 
   const getQrValue = (hash) => {
@@ -3773,7 +3773,7 @@ const VendorDashboard = () => {
       const voucherCost = VOUCHER_COST_MAP[resolvedVoucherType] || 0;
 
       // Get base rates
-      const qrBaseRate = parseNumericValue(brandProfile?.qrPricePerUnit, 1);
+      const qrBaseRate = parseNumericValue(brandProfile?.qrPricePerUnit, 1.5);
 
       const totalCost = validRows.reduce((sum, row) => {
         const cb = parseNumericValue(row.cashbackAmount);
@@ -11917,3 +11917,4 @@ Quantity: ${invoiceData.quantity} QRs
 };
 
 export default VendorDashboard;
+
