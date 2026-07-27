@@ -2682,10 +2682,21 @@ const VendorDashboard = () => {
           city: geo.city || pt.city || "",
           state: geo.state || pt.state || "",
           pincode: geo.pincode || pt.pincode || "",
+          // Preserve the resolved address for list labels and map popups.
+          displayName: geo.displayName || pt.displayName || "",
         };
       }
       return pt;
     });
+  };
+
+  const filterLocationPoints = (points, locationQuery) => {
+    const needle = String(locationQuery || "").trim().toLowerCase();
+    if (!needle) return points;
+
+    return points.filter((point) =>
+      formatLocationLabel(point).toLowerCase().includes(needle),
+    );
   };
 
   const fetchLocationPoints = async (
@@ -2693,7 +2704,14 @@ const VendorDashboard = () => {
     filtersOverride = null,
   ) => {
     const allFilters = filtersOverride || buildExtraFilterParams();
-    const { city: filterCity, state: filterState, ...apiParams } = allFilters;
+    // Free-text location is matched after reverse geocoding, not against the
+    // raw database coordinates.
+    const {
+      city: filterCity,
+      state: filterState,
+      location: filterLocation,
+      ...apiParams
+    } = allFilters;
 
     try {
       const data = await getVendorRedemptionsMap(authToken, apiParams);
@@ -2713,7 +2731,7 @@ const VendorDashboard = () => {
           return true;
         });
       }
-      return points;
+      return filterLocationPoints(points, filterLocation);
     } catch (err) {
       if (err?.status !== 404) throw err;
       const fallback = await getVendorRedemptions(authToken, {
@@ -2737,7 +2755,7 @@ const VendorDashboard = () => {
           return true;
         });
       }
-      return points;
+      return filterLocationPoints(points, filterLocation);
     }
   };
 
@@ -3564,6 +3582,7 @@ const VendorDashboard = () => {
     }
     // Clear cluster filter when leaving the customer subtab
     if (activeTab !== "customers") {
+      activeClusterFilterRef.current = null;
       setClusterCityFilter(null);
       setClusterLocationFilter(null);
     }
@@ -5805,6 +5824,16 @@ const VendorDashboard = () => {
 
   const handleApplyExtraFilters = () => {
     if (!token) return;
+    // A changed search must not retain a previous map-cluster ID filter.
+    if (
+      activeClusterFilterRef.current &&
+      String(dashboardFilters.location || "").trim() !==
+        String(clusterCityFilter || "").trim()
+    ) {
+      activeClusterFilterRef.current = null;
+      setClusterCityFilter(null);
+      setClusterLocationFilter(null);
+    }
     loadExtraTabData(token);
   };
 
@@ -10565,6 +10594,7 @@ Quantity: ${invoiceData.quantity} QRs
                               <button
                                 type="button"
                                 onClick={() => {
+                                  activeClusterFilterRef.current = null;
                                   setClusterCityFilter(null);
                                   setClusterLocationFilter(null);
                                   setDashboardFilters((prev) => ({
