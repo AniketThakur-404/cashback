@@ -2599,97 +2599,64 @@ const VendorDashboard = () => {
     );
   };
 
-  const reverseGeocodePoints = async (points) => {
-    const needGeocode = points.filter((pt) => {
-      if (
-        !Number.isFinite(Number(pt.lat)) ||
-        !Number.isFinite(Number(pt.lng))
-      ) {
-        return false;
+  // Location names are resolved by the authenticated API. Calling the public
+  // geocoder from a browser causes CORS failures and rate-limit errors.
+  const reverseGeocodePoints = async (points) => points;
+
+  const inferNearbyLocationLabels = (points) => {
+    const knownPoints = points.filter(
+      (point) => formatLocationLabel(point).toLowerCase() !== "unknown area",
+    );
+    if (knownPoints.length === 0) return points;
+
+    const distanceInMeters = (a, b) => {
+      const toRadians = (value) => (value * Math.PI) / 180;
+      const earthRadius = 6371000;
+      const lat1 = Number(a.lat);
+      const lat2 = Number(b.lat);
+      const dLat = toRadians(lat2 - lat1);
+      const dLng = toRadians(Number(b.lng) - Number(a.lng));
+      const distance =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRadians(lat1)) *
+          Math.cos(toRadians(lat2)) *
+          Math.sin(dLng / 2) ** 2;
+      return 2 * earthRadius * Math.atan2(Math.sqrt(distance), Math.sqrt(1 - distance));
+    };
+
+    return points.map((point) => {
+      if (formatLocationLabel(point).toLowerCase() !== "unknown area") {
+        return point;
       }
-      // Geocode if city is empty, '-', or just a single word (like "Delhi")
-      const loc = pt.city || "";
-      return !loc || loc === "-" || !loc.includes(",");
-    });
-    if (needGeocode.length === 0) return points;
+      if (!Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lng))) {
+        return point;
+      }
 
-    // Deduplicate by rounded coords to minimise API calls
-    const uniqueCoords = new Map();
-    needGeocode.forEach((pt) => {
-      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
-      if (!uniqueCoords.has(key)) uniqueCoords.set(key, pt);
-    });
-
-    const resolved = new Map();
-    // Nominatim allows max 1 req/sec; limit to first 10 unique coords
-    const entries = Array.from(uniqueCoords.entries()).slice(0, 10);
-    for (const [key, pt] of entries) {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${pt.lat}&lon=${pt.lng}&format=json&zoom=18&accept-language=en`,
-          { headers: { "User-Agent": "AssuredRewards/1.0" } },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const addr = data?.address || {};
-          const landmark =
-            addr.amenity ||
-            addr.building ||
-            addr.shop ||
-            addr.office ||
-            addr.leisure ||
-            "";
-          const road = addr.road || "";
-          let area = addr.suburb || addr.neighbourhood || "";
-          area = area.replace(/\s+Tehsil/gi, "");
-          const district = addr.city_district || addr.district || "";
-          const city = addr.city || addr.town || addr.village || "";
-          const state = addr.state || "";
-          const pincode = addr.postcode || "";
-
-          const displayParts = [landmark, road, area, district, city, state]
-            .filter(Boolean)
-            .map((s) => s.trim());
-
-          const uniqueParts = [];
-          displayParts.forEach((p) => {
-            if (
-              uniqueParts.length === 0 ||
-              uniqueParts[uniqueParts.length - 1] !== p
-            ) {
-              uniqueParts.push(p);
-            }
-          });
-
-          const dbCityParts = [landmark, road, area, district, city]
-            .filter(Boolean)
-            .map((s) => s.trim());
-          const dbCity = dbCityParts.join(", ");
-
-          resolved.set(key, { city: dbCity, state: state, pincode, displayName: uniqueParts.join(", ") || dbCity || city || state || pincode });
+      let nearest = null;
+      let nearestDistance = Infinity;
+      knownPoints.forEach((candidate) => {
+        if (!Number.isFinite(Number(candidate.lat)) || !Number.isFinite(Number(candidate.lng))) {
+          return;
         }
-      } catch {
-        // silently skip failed geocodes
-      }
-    }
+        const distance = distanceInMeters(point, candidate);
+        if (distance < nearestDistance) {
+          nearest = candidate;
+          nearestDistance = distance;
+        }
+      });
 
-    return points.map((pt) => {
-      const key = `${Number(pt.lat).toFixed(3)}_${Number(pt.lng).toFixed(3)}`;
-      const geo = resolved.get(key);
-      if (geo) {
-        return {
-          ...pt,
-          city: geo.city || pt.city || "",
-          state: geo.state || pt.state || "",
-          pincode: geo.pincode || pt.pincode || "",
-          // Preserve the resolved address for list labels and map popups.
-          displayName: geo.displayName || pt.displayName || "",
-        };
-      }
-      return pt;
+      // GPS points within 2 km are treated as the same locality. This covers
+      // legacy scans missing their address without guessing across a city.
+      if (!nearest || nearestDistance > 2000) return point;
+      return {
+        ...point,
+        city: nearest.city || "",
+        state: nearest.state || "",
+        pincode: nearest.pincode || "",
+        displayName: formatLocationLabel(nearest),
+      };
     });
   };
-
   const filterLocationPoints = (points, locationQuery) => {
     const needle = String(locationQuery || "").trim().toLowerCase();
     if (!needle) return points;
@@ -2717,6 +2684,7 @@ const VendorDashboard = () => {
       const data = await getVendorRedemptionsMap(authToken, apiParams);
       let points = Array.isArray(data?.points) ? data.points : [];
       points = await reverseGeocodePoints(points);
+      points = inferNearbyLocationLabels(points);
 
       if (filterCity || filterState) {
         const cityLower = (filterCity || "").toLowerCase();
@@ -2741,6 +2709,7 @@ const VendorDashboard = () => {
       });
       let points = buildLocationPointsFromRedemptions(fallback?.redemptions);
       points = await reverseGeocodePoints(points);
+      points = inferNearbyLocationLabels(points);
 
       if (filterCity || filterState) {
         const cityLower = (filterCity || "").toLowerCase();
@@ -10895,14 +10864,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 >
                                   <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                   <TileLayer url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
-                                  {locationsData
-                                    .filter(
-                                      (pt) =>
-                                        Number.isFinite(Number(pt?.lat)) &&
-                                        Number.isFinite(Number(pt?.lng)) &&
-                                        getClusterCustomerCount(pt) > 0,
-                                    )
-                                    .map((pt, i) => (
+                                  {overviewLocationClusters.map((pt, i) => (
                                       <Marker
                                         key={`loc-${pt.lat}-${pt.lng}-${i}`}
                                         position={[
