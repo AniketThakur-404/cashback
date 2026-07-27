@@ -521,6 +521,21 @@ const getClusterCustomerCount = (cluster) => {
   return new Set(ids.filter(Boolean).map((value) => String(value))).size;
 };
 
+const INDIAN_STATE_OR_UT_NAMES = new Set([
+  "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh",
+  "goa", "gujarat", "haryana", "himachal pradesh", "jharkhand", "karnataka",
+  "kerala", "madhya pradesh", "maharashtra", "manipur", "meghalaya", "mizoram",
+  "nagaland", "odisha", "punjab", "rajasthan", "sikkim", "tamil nadu", "telangana",
+  "tripura", "uttar pradesh", "uttarakhand", "west bengal", "delhi", "jammu and kashmir",
+  "ladakh", "chandigarh", "puducherry", "andaman and nicobar islands",
+  "dadra and nagar haveli and daman and diu", "lakshadweep",
+]);
+
+const isStateOnlyLocation = (location) => {
+  const city = String(location?.city || "").trim().toLowerCase();
+  const state = String(location?.state || "").trim().toLowerCase();
+  return Boolean(city) && INDIAN_STATE_OR_UT_NAMES.has(city) && (!state || state === city);
+};
 const formatLocationLabel = (location) => {
   if (!location) return "Unknown Area";
   const displayName = String(location.displayName || "").trim();
@@ -2608,7 +2623,9 @@ const VendorDashboard = () => {
 
   const inferNearbyLocationLabels = (points) => {
     const knownPoints = points.filter(
-      (point) => formatLocationLabel(point).toLowerCase() !== "unknown area",
+      (point) =>
+        formatLocationLabel(point).toLowerCase() !== "unknown area" &&
+        !isStateOnlyLocation(point),
     );
     if (knownPoints.length === 0) return points;
 
@@ -2628,7 +2645,10 @@ const VendorDashboard = () => {
     };
 
     return points.map((point) => {
-      if (formatLocationLabel(point).toLowerCase() !== "unknown area") {
+      if (
+        formatLocationLabel(point).toLowerCase() !== "unknown area" &&
+        !isStateOnlyLocation(point)
+      ) {
         return point;
       }
       if (!Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lng))) {
