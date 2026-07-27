@@ -2853,7 +2853,7 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleClusterClick = async (cluster) => {
+  const handleClusterClick = (cluster) => {
     const customerIds = Array.isArray(cluster?.customerIds)
       ? cluster.customerIds.filter(Boolean).map((id) => String(id))
       : cluster?.customerIds instanceof Set
@@ -2875,14 +2875,9 @@ const VendorDashboard = () => {
     }));
     setClusterCityFilter(locationLabel);
     setClusterLocationFilter(activeFilter);
-    if (token) {
-      await loadCustomersData(token, {
-        ...buildExtraFilterParams(),
-        customerIds: activeFilter.customerIds || undefined,
-        mobile: "",
-      });
-    }
-    navigate("/vendor/customers");
+    // Navigate in the same update as the ID filter. The customer-tab effect
+    // performs the request after the route has changed.
+    navigate("/vendor/customers" );
   };
 
   const handleClearClusterFilter = async () => {
@@ -3575,18 +3570,13 @@ const VendorDashboard = () => {
     }
   }, [activeTab]);
 
-  // Load customer data when switching to Customer Summary sub-tab
+  // Load customers after entering their tab. Other filter updates are applied
+  // explicitly by the Apply action, avoiding request races while typing.
   useEffect(() => {
     if (displayTab === "customers" && token) {
       loadCustomersData(token, buildExtraFilterParams());
     }
-    // Clear cluster filter when leaving the customer subtab
-    if (activeTab !== "customers") {
-      activeClusterFilterRef.current = null;
-      setClusterCityFilter(null);
-      setClusterLocationFilter(null);
-    }
-  }, [activeTab, token, dashboardFilters.location, dashboardFilters.mobile, dashboardFilters.dateFrom, dashboardFilters.dateTo, dashboardFilters.campaignId, dashboardFilters.productId, dashboardFilters.invoiceNo]);
+  }, [activeTab, token]);
 
   const handleSignIn = async () => {
     const identifier = email.trim();
