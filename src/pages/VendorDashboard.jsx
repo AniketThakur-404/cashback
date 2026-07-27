@@ -86,7 +86,7 @@ import {
   uploadImage,
   loginWithEmail,
   createVendorCampaign,
-  deleteVendorCampaign,
+  updateVendorCampaignStatus,
   deleteVendorQrBatch,
   orderVendorQrs,
   rechargeVendorWallet,
@@ -507,6 +507,20 @@ const getCampaignPaymentSummary = (campaign, qrPricePerUnit) => {
 
 // Redundant toRoman removed
 
+const getClusterCustomerCount = (cluster) => {
+  if (!cluster) return 0;
+  if (typeof cluster.totalCustomers === "number") return cluster.totalCustomers;
+  if (typeof cluster.customerCount === "number") return cluster.customerCount;
+
+  const ids = Array.isArray(cluster.customerIds)
+    ? cluster.customerIds
+    : cluster.customerIds instanceof Set
+      ? Array.from(cluster.customerIds)
+      : [];
+
+  return new Set(ids.filter(Boolean).map((value) => String(value))).size;
+};
+
 const VendorDashboard = () => {
   const { section } = useParams();
   const navigate = useNavigate();
@@ -521,6 +535,7 @@ const VendorDashboard = () => {
     "products",
     "wallet",
     "customers",
+    "notifications",
     "support",
     "locations",
     "billing",
@@ -534,7 +549,7 @@ const VendorDashboard = () => {
   const activeTab = allowedTabs.has(normalizedSection)
     ? normalizedSection
     : "overview";
-
+  const displayTab = activeTab;
   const [showOtpReset, setShowOtpReset] = useState(false);
 
   useEffect(() => {
@@ -545,14 +560,16 @@ const VendorDashboard = () => {
   }, [location.search]);
 
   useEffect(() => {
-    if (section === "notifications") {
-      navigate("/vendor/overview", { replace: true });
-      return;
-    }
     if (section === "reports" || section === "product-reports") {
       navigate("/vendor/overview", { replace: true });
     }
   }, [section, navigate]);
+
+  useEffect(() => {
+    if (section === "notifications") {
+      setIsNotificationsOpen(true);
+    }
+  }, [section]);
 
   const [token, setToken] = useState(() =>
     localStorage.getItem(VENDOR_TOKEN_KEY),
@@ -883,6 +900,7 @@ const VendorDashboard = () => {
   const [isPayingCampaign, setIsPayingCampaign] = useState(false);
   const [deletingCampaignId, setDeletingCampaignId] = useState(null);
   const [campaignToDelete, setCampaignToDelete] = useState(null);
+  const [campaignActionType, setCampaignActionType] = useState(null);
   const [bulkExportPrompt, setBulkExportPrompt] = useState(null);
   const [isConfirmingBulkExport, setIsConfirmingBulkExport] = useState(false);
 
@@ -2728,12 +2746,12 @@ const VendorDashboard = () => {
     }
   };
 
-  const loadCustomersData = async (authToken = token) => {
+  const loadCustomersData = async (authToken = token, filtersOverride = null) => {
     if (!authToken) return;
     setIsLoadingExtraTab(true);
     setExtraTabError("");
     try {
-      const allFilters = buildExtraFilterParams();
+      const allFilters = filtersOverride || buildExtraFilterParams();
 
       // Pass all filters to the backend — it handles city/state filtering post-processing
       const custResult = await getVendorCustomers(authToken, allFilters);
@@ -2772,32 +2790,37 @@ const VendorDashboard = () => {
 
   const loadExtraTabData = async (authToken = token) => {
     if (!authToken) return;
-    if (activeTab === "locations") {
+    if (displayTab === "locations") {
       await loadLocationsData(authToken);
       return;
     }
-    if (activeTab === "customers") {
+    if (displayTab === "customers") {
       await loadCustomersData(authToken);
       return;
     }
-    if (activeTab === "billing") {
+    if (displayTab === "billing") {
       await loadInvoicesData(authToken);
       return;
     }
   };
 
-  const handleClusterClick = (cluster) => {
+  const handleClusterClick = async (cluster) => {
     const city = cluster.city || "";
     if (!city) return;
     setDashboardFilters((prev) => ({ ...prev, location: city, mobile: "" }));
     setClusterCityFilter(city);
+    if (token) {
+      await loadCustomersData(token, { ...buildExtraFilterParams(), location: city, mobile: "" });
+    }
     navigate("/vendor/customers");
   };
 
-  const handleClearClusterFilter = () => {
+  const handleClearClusterFilter = async () => {
     setClusterCityFilter(null);
     setDashboardFilters((prev) => ({ ...prev, location: "" }));
-    loadCustomersData(token);
+    if (token) {
+      await loadCustomersData(token, { ...buildExtraFilterParams(), location: "" });
+    }
   };
 
   const loadCompanyProfile = async (authToken = token) => {
@@ -3464,7 +3487,7 @@ const VendorDashboard = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
 
     // Auto-fill wallet recharge if redirected with a shortfall
-    if (activeTab === "wallet" && lastAutoFilledCashbackRef.current !== null) {
+    if (displayTab === "wallet" && lastAutoFilledCashbackRef.current !== null) {
       const shortfall = lastAutoFilledCashbackRef.current;
       if (typeof shortfall === "number" && shortfall > 0) {
         setRechargeAmount(String(Math.ceil(shortfall)));
@@ -3474,14 +3497,14 @@ const VendorDashboard = () => {
 
   // Load customer data when switching to Customer Summary sub-tab
   useEffect(() => {
-    if (activeTab === "customers" && token) {
+    if (displayTab === "customers" && token) {
       loadCustomersData(token);
     }
     // Clear cluster filter when leaving the customer subtab
     if (activeTab !== "customers") {
       setClusterCityFilter(null);
     }
-  }, [activeTab]);
+  }, [activeTab, token, dashboardFilters.location, dashboardFilters.mobile, dashboardFilters.dateFrom, dashboardFilters.dateTo, dashboardFilters.campaignId, dashboardFilters.productId, dashboardFilters.invoiceNo]);
 
   const handleSignIn = async () => {
     const identifier = email.trim();
@@ -3867,34 +3890,46 @@ const VendorDashboard = () => {
     }
   };
 
-  const handleDeleteCampaign = (campaign) => {
+  const updateCampaignStatus = async (
+    campaign,
+    nextStatus,
+    successTitle,
+    successMessage,
+  ) => {
     if (!campaign?.id || !token || deletingCampaignId) return;
-    setCampaignToDelete(campaign);
-    setCampaignError("");
-    setCampaignStatus("");
-  };
-
-  const confirmDeleteCampaign = async () => {
-    if (!campaignToDelete?.id || !token || deletingCampaignId) return;
-    const deletingCampaign = campaignToDelete;
-    setDeletingCampaignId(deletingCampaign.id);
+    setDeletingCampaignId(campaign.id);
     setCampaignError("");
     setCampaignStatus("");
 
     try {
-      const result = await deleteVendorCampaign(token, deletingCampaign.id);
-      const refundedAmount = parseNumericValue(result?.refundedAmount, 0);
-      setCampaignStatusWithTimeout("Campaign deleted.");
-      setCampaigns((prev) =>
-        prev.filter((item) => item.id !== deletingCampaign.id),
+      const result = await updateVendorCampaignStatus(
+        token,
+        campaign.id,
+        nextStatus,
       );
-      if (selectedPendingCampaign?.id === deletingCampaign.id) {
+      const updatedCampaign = result?.campaign;
+      const statusMessage =
+        nextStatus === "paused" ? "Campaign put on hold." : "Campaign resumed.";
+      setCampaignStatusWithTimeout(statusMessage);
+      setCampaigns((prev) =>
+        prev.map((item) =>
+          item.id === campaign.id
+            ? {
+                ...item,
+                status: updatedCampaign?.status || nextStatus,
+                updatedAt: updatedCampaign?.updatedAt || item.updatedAt,
+              }
+            : item,
+        ),
+      );
+      if (selectedPendingCampaign?.id === campaign.id) {
         setSelectedPendingCampaign(null);
       }
-      if (selectedActiveCampaign?.id === deletingCampaign.id) {
+      if (selectedActiveCampaign?.id === campaign.id) {
         setSelectedActiveCampaign(null);
       }
       setCampaignToDelete(null);
+      setCampaignActionType(null);
       await Promise.all([
         loadCampaigns(),
         loadCampaignStats(),
@@ -3902,21 +3937,39 @@ const VendorDashboard = () => {
         loadTransactions(),
         loadQrs(token, { page: 1, append: false }),
       ]);
-      openSuccessModal(
-        "Campaign deleted",
-        refundedAmount > 0 && !isPostpaid
-          ? `Campaign deleted. INR ${refundedAmount.toFixed(2)} moved from locked balance to your available wallet.`
-          : "Campaign deleted.",
-      );
+      openSuccessModal(successTitle, successMessage);
     } catch (err) {
       if (handleVendorAccessError(err)) {
         setCampaignToDelete(null);
+        setCampaignActionType(null);
         return;
       }
-      setCampaignError(err.message || "Unable to delete campaign.");
+      setCampaignError(err.message || "Unable to update campaign.");
     } finally {
       setDeletingCampaignId(null);
     }
+  };
+
+  const handleDeleteCampaign = (campaign) => {
+    if (!campaign?.id || !token || deletingCampaignId) return;
+    const nextStatus = String(campaign.status || "").toLowerCase() === "paused" ? "active" : "paused";
+    setCampaignToDelete(campaign);
+    setCampaignActionType(nextStatus);
+    setCampaignError("");
+    setCampaignStatus("");
+  };
+
+  const confirmDeleteCampaign = async () => {
+    if (!campaignToDelete?.id || !token || deletingCampaignId) return;
+    const nextStatus = campaignActionType === "active" ? "active" : "paused";
+    await updateCampaignStatus(
+      campaignToDelete,
+      nextStatus,
+      nextStatus === "active" ? "Campaign resumed" : "Campaign put on hold",
+      nextStatus === "active"
+        ? "The campaign is active again."
+        : "The campaign has been put on hold and moved below active campaigns.",
+    );
   };
 
   const handleOrderQrs = async () => {
@@ -4703,6 +4756,31 @@ const VendorDashboard = () => {
   const activeCampaigns = useMemo(
     () => campaigns.filter((campaign) => campaign.status === "active"),
     [campaigns],
+  );
+
+  const stoppedCampaigns = useMemo(
+    () => campaigns.filter((campaign) => campaign.status === "paused"),
+    [campaigns],
+  );
+
+  const activeCampaignDisplayCampaigns = useMemo(
+    () =>
+      [...activeCampaigns].sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return bTime - aTime;
+      }),
+    [activeCampaigns],
+  );
+
+  const pausedCampaignDisplayCampaigns = useMemo(
+    () =>
+      [...stoppedCampaigns].sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return bTime - aTime;
+      }),
+    [stoppedCampaigns],
   );
 
   const isOverviewAll = overviewCampaignId === "all";
@@ -5596,7 +5674,8 @@ const VendorDashboard = () => {
       locationsData.filter(
         (point) =>
           Number.isFinite(Number(point?.lat)) &&
-          Number.isFinite(Number(point?.lng)),
+          Number.isFinite(Number(point?.lng)) &&
+          getClusterCustomerCount(point) > 0,
       ),
     [locationsData],
   );
@@ -5616,22 +5695,35 @@ const VendorDashboard = () => {
             `Area (${Number(point.lat).toFixed(2)}, ${Number(point.lng).toFixed(2)})`,
           state,
           totalScans: 0,
+          customerIds: new Set(),
           lat: Number(point.lat),
           lng: Number(point.lng),
         });
       }
       const cluster = grouped.get(key);
       cluster.totalScans += Number(point?.count || 0);
+      const pointCustomerIds = Array.isArray(point?.customerIds)
+        ? point.customerIds
+        : point?.customerIds instanceof Set
+          ? Array.from(point.customerIds)
+          : [];
+      pointCustomerIds.forEach((id) => {
+        if (id) cluster.customerIds.add(id);
+      });
     });
-    return Array.from(grouped.values()).sort(
-      (a, b) => b.totalScans - a.totalScans,
-    );
+    return Array.from(grouped.values())
+      .map((cluster) => ({
+        ...cluster,
+        totalCustomers: getClusterCustomerCount(cluster),
+      }))
+      .filter((cluster) => cluster.totalCustomers > 0)
+      .sort((a, b) => b.totalCustomers - a.totalCustomers || b.totalScans - a.totalScans);
   }, [overviewLocationPoints]);
   const overviewLocationSummary = useMemo(
     () => ({
       regions: overviewLocationClusters.length,
       scans: overviewLocationClusters.reduce(
-        (sum, cluster) => sum + Number(cluster.totalScans || 0),
+        (sum, cluster) => sum + Number(cluster.totalCustomers || 0),
         0,
       ),
     }),
@@ -5642,7 +5734,8 @@ const VendorDashboard = () => {
     const firstPoint = locationsData.find(
       (point) =>
         Number.isFinite(Number(point?.lat)) &&
-        Number.isFinite(Number(point?.lng)),
+        Number.isFinite(Number(point?.lng)) &&
+        getClusterCustomerCount(point) > 0,
     );
     if (!firstPoint) return [20.5937, 78.9629];
     return [Number(firstPoint.lat), Number(firstPoint.lng)];
@@ -6626,7 +6719,7 @@ const VendorDashboard = () => {
                       </div>
 
                       {/* Overview Tab Controls - Pulled into header for better accessibility */}
-                      {activeTab === "overview" && (
+                      {displayTab === "overview" && (
                         <div className="flex items-center justify-between bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-3 px-4 shadow-sm">
                           <div className="flex items-center gap-2">
                             <Filter size={16} className="text-emerald-500" />
@@ -6656,7 +6749,7 @@ const VendorDashboard = () => {
                       )}
                     </div>
 
-                    {activeTab === "overview" && (
+                    {displayTab === "overview" && (
                       <div className="space-y-4 sm:space-y-6">
                         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 px-4 sm:px-0">
                           {/* Wallet Balance Card */}
@@ -6783,7 +6876,12 @@ const VendorDashboard = () => {
 
                         <VendorAnalytics
                           redemptionSeries={overviewRedemptionSeries}
-                          campaignSeries={campaignPerformanceSeries}
+                          locationSeries={overviewLocationClusters.map((cluster) => ({
+                            name: [cluster.city, cluster.state]
+                              .filter(Boolean)
+                              .join(", ") || "Unknown location",
+                            totalCustomers: cluster.totalCustomers,
+                          }))}
                           selectionLabel={overviewCampaignLabel}
                           dateFilter={dateFilter}
                           onDateFilterChange={setDateFilter}
@@ -6833,8 +6931,7 @@ const VendorDashboard = () => {
                             ) : overviewLocationPoints.length === 0 ? (
                               <div className="h-[320px] rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 flex flex-col items-center justify-center gap-2 text-sm text-gray-500">
                                 <MapPin size={18} className="text-gray-400" />
-                                No location points yet. Scan redemptions to see
-                                map activity.
+                                No location points yet. Customer activity will appear here when people scan.
                               </div>
                             ) : (
                               <div className="h-[320px] rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800 relative z-0">
@@ -6873,7 +6970,7 @@ const VendorDashboard = () => {
                                                 : "Unknown area"}
                                             </div>
                                             <div className="text-gray-600 mt-0.5">
-                                              {point.count || 0} scans
+                                              {getClusterCustomerCount(point)} {getClusterCustomerCount(point) === 1 ? "customer" : "customers"}
                                             </div>
                                           </div>
                                         </Popup>
@@ -6896,10 +6993,10 @@ const VendorDashboard = () => {
                               </div>
                               <div className="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-zinc-900 p-3">
                                 <div className="text-[11px] text-gray-500">
-                                  Total Scans
+                                  Total Customers
                                 </div>
                                 <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
-                                  {overviewLocationSummary.scans}
+                                  {overviewLocationSummary.scans} customers
                                 </div>
                               </div>
                             </div>
@@ -6938,7 +7035,7 @@ const VendorDashboard = () => {
                                             (cluster.state || "")}
                                         </div>
                                         <div className="text-[11px] text-gray-500 mt-0.5">
-                                          {cluster.totalScans} scans
+                                          {cluster.totalCustomers} {cluster.totalCustomers === 1 ? "customer" : "customers"}
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -7128,7 +7225,7 @@ const VendorDashboard = () => {
                       </div>
                     )}
 
-                    {activeTab === "brand" && (
+                    {displayTab === "brand" && (
                       <div className="space-y-6 pb-20">
                         <div
                           className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none"
@@ -7911,7 +8008,7 @@ const VendorDashboard = () => {
                       </div>
                     )}
 
-                    {activeTab === "campaigns" && (
+                    {displayTab === "campaigns" && (
                       <div
                         className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-2xl border-y sm:border border-gray-100 dark:border-zinc-800 p-4 shadow-sm space-y-4"
                         id="campaigns"
@@ -7969,10 +8066,10 @@ const VendorDashboard = () => {
                             )}
                           >
                             <span className="sm:hidden">
-                              Active ({activeCampaigns.length})
+                              Active ({activeCampaignDisplayCampaigns.length})
                             </span>
                             <span className="hidden sm:inline">
-                              Active Campaigns ({activeCampaigns.length})
+                              Active Campaigns ({activeCampaignDisplayCampaigns.length})
                             </span>
                           </button>
                         </div>
@@ -8121,7 +8218,7 @@ const VendorDashboard = () => {
                                           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                                           aria-label="Remove row"
                                         >
-                                          <Trash2 size={16} />
+                                          <Ban size={16} />
                                         </button>
                                       </div>
                                     </>
@@ -8582,9 +8679,9 @@ Quantity: ${invoiceData.quantity} QRs
                             )}
 
                             <div className="space-y-4">
-                              {activeCampaigns.length === 0 ? (
+                              {activeCampaignDisplayCampaigns.length === 0 ? (
                                 <div className="text-xs text-center text-gray-500 py-4 space-y-2">
-                                  <div>No active campaign found.</div>
+                                  <div>No active or paused campaign found.</div>
                                   <div>
                                     Create or activate a campaign from Pending
                                     Campaigns to see details here.
@@ -8592,7 +8689,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 </div>
                               ) : (
                                 (() => {
-                                  const grouped = activeCampaigns.reduce(
+                                  const grouped = activeCampaignDisplayCampaigns.reduce(
                                     (acc, c) => {
                                       const p =
                                         c.Product?.name || "Other Campaigns";
@@ -8701,6 +8798,59 @@ Quantity: ${invoiceData.quantity} QRs
                                   );
                                 })()
                               )}
+                            </div>
+                          </div>
+                        )}
+
+                        {campaignTab === "active" &&
+                          pausedCampaignDisplayCampaigns.length > 0 && (
+                          <div className="space-y-4">
+                            <div className="rounded-2xl border border-rose-200/70 bg-rose-50/40 dark:border-rose-500/20 dark:bg-rose-950/10 p-4 shadow-sm">
+                              <div className="flex items-center gap-2 mb-4 text-rose-600 dark:text-rose-300 font-bold text-sm uppercase tracking-widest">
+                                <Ban size={16} /> On Hold
+                                <span className="text-[10px] font-bold text-rose-500 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-800">
+                                  {pausedCampaignDisplayCampaigns.length} Campaigns
+                                </span>
+                              </div>
+                              <div className="space-y-4">
+                                {pausedCampaignDisplayCampaigns.map((campaign) => (
+                                  <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    campaignStats={
+                                      campaignStatsMap[campaign.id] ||
+                                      campaignStatsMap[
+                                        `title:${campaign.title}`
+                                      ] ||
+                                      {}
+                                    }
+                                    token={token}
+                                    onDownloadQr={handleDownloadCampaignPdf}
+                                    onStartBulkExport={
+                                      handleStartCampaignBulkExport
+                                    }
+                                    campaignExportJob={campaignBulkExportJobsMap.get(
+                                      campaign.id,
+                                    )}
+                                    isStartingBulkExportId={
+                                      startingBulkExportKey ===
+                                      `campaign:${campaign.id}`
+                                        ? campaign.id
+                                        : ""
+                                    }
+                                    onDownloadReadyExport={
+                                      handleDownloadBulkExportJob
+                                    }
+                                    onViewDetails={setSelectedActiveCampaign}
+                                    onDelete={handleDeleteCampaign}
+                                    deletingCampaignId={deletingCampaignId}
+                                    isDownloadingPdf={isDownloadingPdf}
+                                    loadCampaigns={(t) =>
+                                      refreshCampaignPaymentState(t || token)
+                                    }
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -8839,7 +8989,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                       }
                                                       className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
                                                     >
-                                                      <Trash2 size={14} />
+                                                      <Ban size={14} />
                                                     </button>
                                                     <button
                                                       type="button"
@@ -8951,9 +9101,9 @@ Quantity: ${invoiceData.quantity} QRs
                                                       campaign.id
                                                     }
                                                     className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
-                                                    title="Delete Campaign"
+                                                    title="Put Campaign on Hold"
                                                   >
-                                                    <Trash2 size={16} />
+                                                    <Ban size={16} />
                                                   </button>
                                                   <button
                                                     type="button"
@@ -9478,11 +9628,15 @@ Quantity: ${invoiceData.quantity} QRs
                                     disabled={
                                       deletingCampaignId === activeCampaign?.id
                                     }
-                                    className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 font-semibold hover:bg-rose-500/20 transition-colors disabled:opacity-60 cursor-pointer"
+                                    className={`flex-1 px-4 py-2.5 rounded-xl font-semibold transition-colors disabled:opacity-60 cursor-pointer ${String(activeCampaign?.status || "").toLowerCase() === "paused" ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"}`}
                                   >
                                     {deletingCampaignId === activeCampaign?.id
-                                      ? "Deleting..."
-                                      : "Delete Campaign"}
+                                      ? String(activeCampaign?.status || "").toLowerCase() === "paused"
+                                        ? "Resuming..."
+                                        : "Holding..."
+                                      : String(activeCampaign?.status || "").toLowerCase() === "paused"
+                                        ? "Resume Campaign"
+                                        : "Put on Hold"}
                                   </button>
                                 </div>
                               </div>
@@ -9742,7 +9896,7 @@ Quantity: ${invoiceData.quantity} QRs
                     )}
 
                     {/* Products Section */}
-                    {activeTab === "products" && (
+                    {displayTab === "products" && (
                       <div
                         className="bg-white dark:bg-[#1a1a1a] rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 p-4 sm:p-5 shadow-sm dark:shadow-none space-y-4"
                         id="products"
@@ -9888,6 +10042,8 @@ Quantity: ${invoiceData.quantity} QRs
                                             handleDeleteProduct(product.id)
                                           }
                                           className="p-2 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-500 border border-rose-100 dark:border-rose-900/30"
+                                          aria-label="Delete product"
+                                          title="Delete product"
                                         >
                                           <Trash2 size={16} />
                                         </button>
@@ -9996,8 +10152,10 @@ Quantity: ${invoiceData.quantity} QRs
                                                 handleDeleteProduct(product.id)
                                               }
                                               className="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-500 transition-colors"
-                                            >
-                                              <Trash2 size={16} />
+                                          aria-label="Delete product"
+                                          title="Delete product"
+                                        >
+                                          <Trash2 size={16} />
                                             </button>
                                           </div>
                                         </td>
@@ -10044,7 +10202,7 @@ Quantity: ${invoiceData.quantity} QRs
                       </div>
                     )}
                     {/* Wallet Section */}
-                    {activeTab === "wallet" && (
+                    {displayTab === "wallet" && (
                       <div
                         className="bg-white dark:bg-[#09090b] rounded-none sm:rounded-2xl p-4 sm:p-8 space-y-10 min-h-[80vh]"
                         id="wallet"
@@ -10327,7 +10485,7 @@ Quantity: ${invoiceData.quantity} QRs
                     )}
 
                     {/* Customers Tab */}
-                    {activeTab === "customers" && (
+                    {displayTab === "customers" && (
                       <div className="space-y-4">
                         <div className="space-y-4">
                           {/* Location filter breadcrumb */}
@@ -10618,7 +10776,7 @@ Quantity: ${invoiceData.quantity} QRs
                       </div>
                     )}
 
-                    {activeTab === "locations" && (
+                    {displayTab === "locations" && (
                       <div className="bg-white dark:bg-[#1a1a1a] sm:rounded-2xl border-y sm:border border-gray-100 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
                         <AdvancedFilters
                           filters={dashboardFilters}
@@ -10662,7 +10820,8 @@ Quantity: ${invoiceData.quantity} QRs
                                     .filter(
                                       (pt) =>
                                         Number.isFinite(Number(pt?.lat)) &&
-                                        Number.isFinite(Number(pt?.lng)),
+                                        Number.isFinite(Number(pt?.lng)) &&
+                                        getClusterCustomerCount(pt) > 0,
                                     )
                                     .map((pt, i) => (
                                       <Marker
@@ -10680,7 +10839,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                 : "Unknown"}
                                             </div>
                                             <div className="text-gray-600 mt-0.5">
-                                              {pt.count || 0} scans
+                                              {getClusterCustomerCount(pt)} {getClusterCustomerCount(pt) === 1 ? "customer" : "customers"}
                                             </div>
                                             {pt.city && (
                                               <button
@@ -10703,10 +10862,12 @@ Quantity: ${invoiceData.quantity} QRs
                             </div>
                             {(() => {
                               const grouped = {};
-                              locationsData.forEach((pt) => {
-                                const city = pt.city || "";
-                                const state = pt.state || "";
-                                // If no city/state, use rounded coords as the grouping key
+                              locationsData
+                                .filter((pt) => getClusterCustomerCount(pt) > 0)
+                                .forEach((pt) => {
+                                  const city = pt.city || "";
+                                  const state = pt.state || "";
+                                  // If no city/state, use rounded coords as the grouping key
                                 const key =
                                   city || state
                                     ? city + "|||" + state
@@ -10720,91 +10881,113 @@ Quantity: ${invoiceData.quantity} QRs
                                         : "Unknown Area"),
                                     state,
                                     totalScans: 0,
+                                    customerIds: new Set(),
                                     pincodes: new Set(),
                                     lat: pt.lat,
                                     lng: pt.lng,
                                   };
                                 }
                                 grouped[key].totalScans += pt.count || 0;
+                                const customerIds = Array.isArray(pt.customerIds)
+                                  ? pt.customerIds
+                                  : pt.customerIds instanceof Set
+                                    ? Array.from(pt.customerIds)
+                                    : [];
+                                customerIds.forEach((id) => {
+                                  if (id) grouped[key].customerIds.add(id);
+                                });
+                                if (pt.customerId) grouped[key].customerIds.add(pt.customerId);
                                 if (pt.pincode)
                                   grouped[key].pincodes.add(pt.pincode);
                               });
-                              const clusters = Object.values(grouped).sort(
-                                (a, b) => b.totalScans - a.totalScans,
-                              );
+                              const clusters = Object.values(grouped)
+                                .map((cluster) => ({
+                                  ...cluster,
+                                  totalCustomers: getClusterCustomerCount(cluster),
+                                }))
+                                .filter((cluster) => cluster.totalCustomers > 0)
+                                .sort(
+                                  (a, b) =>
+                                    b.totalCustomers - a.totalCustomers ||
+                                    b.totalScans - a.totalScans,
+                                );
                               return (
-                                <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
-                                  <div className="flex items-center justify-between mb-3">
-                                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                      Clusters
-                                    </div>
-                                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                                      {clusters.length} regions
-                                    </span>
-                                  </div>
-                                  <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                                    {clusters.length === 0 ? (
-                                      <div className="text-xs text-gray-500 py-8 text-center">
-                                        No locations found.
+                                <div className="space-y-4">
+                                  <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        Clusters
                                       </div>
-                                    ) : (
-                                      clusters.map((cluster, i) => (
-                                        <button
-                                          type="button"
-                                          key={
-                                            "cluster-" +
-                                            cluster.city +
-                                            "-" +
-                                            cluster.state +
-                                            "-" +
-                                            i
-                                          }
-                                          onClick={() =>
-                                            handleClusterClick(cluster)
-                                          }
-                                          className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                                <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                                        {clusters.length} regions
+                                      </span>
+                                    </div>
+                                    <div className="space-y-2 max-h-[440px] overflow-y-auto pr-1">
+                                      {clusters.length === 0 ? (
+                                        <div className="text-xs text-gray-500 py-8 text-center">
+                                          No customers found.
+                                        </div>
+                                      ) : (
+                                        clusters.map((cluster, i) => (
+                                          <button
+                                            type="button"
+                                            key={
+                                              "cluster-" +
+                                              cluster.city +
+                                              "-" +
+                                              cluster.state +
+                                              "-" +
+                                              i
+                                            }
+                                            onClick={() =>
+                                              handleClusterClick(cluster)
+                                            }
+                                            className="w-full text-left rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-3 hover:border-emerald-400 dark:hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/5 transition-all group cursor-pointer"
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                                  <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                    {(cluster.city || "") +
+                                                      (cluster.city &&
+                                                      cluster.state
+                                                        ? ", "
+                                                        : "") +
+                                                      (cluster.state || "")}
+                                                  </div>
+                                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                                                      {cluster.totalCustomers}{" "}
+                                                      {cluster.totalCustomers === 1
+                                                        ? "customer"
+                                                        : "customers"}
+                                                    </span>
+                                                  </div>
+                                                </div>
                                               </div>
-                                              <div className="min-w-0">
-                                                <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                  {(cluster.city || "") +
-                                                    (cluster.city &&
-                                                    cluster.state
-                                                      ? ", "
-                                                      : "") +
-                                                    (cluster.state || "")}
-                                                </div>
-                                                <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                                                    {cluster.totalScans} scans
-                                                  </span>
-                                                </div>
+                                              <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500">
+                                                  #{i + 1}
+                                                </span>
+                                                <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
                                               </div>
                                             </div>
-                                            <div className="flex items-center gap-2 shrink-0">
-                                              <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500">
-                                                #{i + 1}
-                                              </span>
-                                              <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
-                                            </div>
-                                          </div>
-                                        </button>
-                                      ))
-                                    )}
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              );
-                            })()}
+                              );                            })()}
                           </div>
                         )}
                       </div>
                     )}
 
-                    {activeTab === "billing" && (
+                    {displayTab === "billing" && (
                       <div className="space-y-4">
                         <div className="rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
@@ -11187,7 +11370,77 @@ Quantity: ${invoiceData.quantity} QRs
                     )}
 
                     {/* Support Tab - Create and view support tickets */}
-                    {activeTab === "support" && <VendorSupport token={token} />}
+                    {displayTab === "notifications" && (
+                      <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
+                        <div className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm">
+                          <div>
+                            <h2 className="text-lg font-black text-gray-900 dark:text-white">
+                              Notifications
+                            </h2>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Showing all recent notifications for your account.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => loadNotifications(token)}
+                              className="rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              Refresh
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleMarkAllNotificationsRead}
+                              disabled={
+                                isMarkingNotificationsRead ||
+                                isLoadingNotifications ||
+                                notificationUnreadCount === 0
+                              }
+                              className="rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isMarkingNotificationsRead
+                                ? "Marking..."
+                                : "Mark all read"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {notificationsError && (
+                          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-600 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
+                            {notificationsError}
+                          </div>
+                        )}
+
+                        <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] shadow-sm overflow-hidden">
+                          <div className="max-h-[70vh] overflow-y-auto">
+                            {isLoadingNotifications && notifications.length === 0 ? (
+                              <div className="py-12 text-center text-xs text-gray-400">
+                                Loading notifications...
+                              </div>
+                            ) : notifications.length === 0 ? (
+                              <div className="py-12 text-center text-xs text-gray-500 dark:text-gray-400">
+                                No notifications yet.
+                              </div>
+                            ) : (
+                              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+                                {notifications.map((item) => (
+                                  <NotificationItem
+                                    key={item.id}
+                                    item={item}
+                                    onClick={handleNotificationClick}
+                                    getMeta={getNotificationMeta}
+                                    formatDate={formatDate}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {displayTab === "support" && <VendorSupport token={token} />}
 
                     {/* Footer */}
                     <div className="mt-auto border-t border-gray-100 dark:border-gray-800 pt-6 pb-2">
@@ -11325,7 +11578,12 @@ Quantity: ${invoiceData.quantity} QRs
                         ))}
                         {notifications.length > 30 && (
                           <button
-                            onClick={() => navigate("/vendor/notifications")}
+                            onClick={() => {
+                              if (activeTab !== "notifications") {
+                                navigate("/vendor/notifications");
+                              }
+                              setIsNotificationsOpen(false);
+                            }}
                             className="w-full py-2.5 text-xs font-medium text-primary hover:text-primary-focus hover:bg-primary/5 rounded-xl transition-colors border border-dashed border-primary/20 mt-2"
                           >
                             View All Notifications ({notifications.length})
@@ -11370,19 +11628,26 @@ Quantity: ${invoiceData.quantity} QRs
                 onClose={() => {
                   if (deletingCampaignId) return;
                   setCampaignToDelete(null);
+                  setCampaignActionType(null);
                 }}
                 onConfirm={confirmDeleteCampaign}
-                title="Delete campaign?"
+                title={
+                  campaignActionType === "active"
+                    ? "Resume campaign?"
+                    : "Stop campaign?"
+                }
                 message={
                   campaignToDelete
-                    ? isPostpaid
-                      ? `Delete "${campaignToDelete.title}"? This will void all linked QRs.`
-                      : `Delete "${campaignToDelete.title}"? This will void linked QRs and refund locked cashback to your available wallet.`
+                    ? campaignActionType === "active"
+                      ? `Resume "${campaignToDelete.title}"? The campaign will become active again and move back into the active list.`
+                      : `Stop "${campaignToDelete.title}"? This will pause the campaign and move it to the bottom of the list.`
                     : ""
                 }
-                confirmText="Delete Campaign"
+                confirmText={
+                  campaignActionType === "active" ? "Resume Campaign" : "Put on Hold"
+                }
                 cancelText="Keep Campaign"
-                type="danger"
+                type={campaignActionType === "active" ? "info" : "danger"}
                 loading={
                   !!campaignToDelete &&
                   deletingCampaignId === campaignToDelete.id
@@ -11928,6 +12193,32 @@ Quantity: ${invoiceData.quantity} QRs
 };
 
 export default VendorDashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -515,6 +515,13 @@ export const updateVendorCampaign = (token, campaignId, payload) =>
     body: payload,
   });
 
+export const updateVendorCampaignStatus = (token, campaignId, status) =>
+  apiRequest(`/api/vendor/campaigns/${campaignId}/status`, {
+    method: "PUT",
+    token,
+    body: { status },
+  });
+
 export const deleteVendorCampaign = (token, campaignId) =>
   apiRequest(`/api/vendor/campaigns/${campaignId}`, {
     method: "DELETE",
@@ -1216,5 +1223,6 @@ export const updateAdminTransactionStatus = (token, transactionId, status) =>
     token,
     body: { status },
   });
+
 
 

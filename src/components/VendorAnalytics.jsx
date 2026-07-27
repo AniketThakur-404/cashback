@@ -7,10 +7,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
+  PieChart,
+  Pie,
   Cell,
+  Legend,
 } from "recharts";
 import { format, subDays, subMonths, subYears, parseISO } from "date-fns";
 import {
@@ -40,6 +40,34 @@ const CustomBarTooltip = ({ active, payload, label }) => {
           </span>
         </div>
       ))}
+    </div>
+  );
+};
+
+const CustomPieTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const item = payload[0]?.payload;
+  return (
+    <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#1a1a1a] px-3.5 py-2.5 shadow-xl text-xs min-w-[160px]">
+      <p className="font-semibold text-gray-900 dark:text-white mb-1.5">
+        {item?.name || "Location"}
+      </p>
+      <div className="flex items-center gap-2 py-0.5">
+        <span
+          className="inline-block h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: item?.fill || "#3b82f6" }}
+        />
+        <span className="text-gray-500 dark:text-gray-400">Customers</span>
+        <span className="ml-auto font-semibold text-gray-900 dark:text-white pl-3">
+          {item?.value || 0}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 py-0.5">
+        <span className="text-gray-500 dark:text-gray-400">Share</span>
+        <span className="ml-auto font-semibold text-gray-900 dark:text-white pl-3">
+          {item?.percentage || 0}%
+        </span>
+      </div>
     </div>
   );
 };
@@ -86,13 +114,30 @@ const CustomLegend = ({ payload }) => {
 /* ── Main component ─────────────────────────────────────────── */
 const VendorAnalytics = ({
   redemptionSeries = [],
-  campaignSeries = [],
+  locationSeries = [],
   selectionLabel = "All campaigns",
   dateFilter = { from: "", to: "" },
   onDateFilterChange = () => {},
 }) => {
   const showRedemptionChart = redemptionSeries.length > 0;
-  const showCampaignChart = campaignSeries.length > 0;
+  const showLocationChart = locationSeries.length > 0;
+  const locationPieSeries = locationSeries.map((item, index) => ({
+    ...item,
+    value: Number(item.totalCustomers) || 0,
+    fill: ["#3b82f6", "#6366f1", "#8b5cf6", "#14b8a6", "#10b981", "#f59e0b"][
+      index % 6
+    ],
+  }));
+  const locationCustomerTotal = locationPieSeries.reduce(
+    (sum, item) => sum + Number(item.value || 0),
+    0,
+  );
+  const locationPieSeriesWithShare = locationPieSeries.map((item) => ({
+    ...item,
+    percentage: locationCustomerTotal
+      ? Math.round((item.value / locationCustomerTotal) * 100)
+      : 0,
+  }));
 
   /* ── Custom X-Axis Tick (Defined here to access redemptionSeries) ── */
   const CustomXAxisTick = ({ x, y, payload, index }) => {
@@ -310,7 +355,7 @@ const VendorAnalytics = ({
         </div>
       </div>
 
-      {/* ── Campaign Performance Chart ── */}
+      {/* ── Customers by Location Chart ── */}
       <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm dark:shadow-none">
         <div className="flex items-center gap-3 mb-5">
           <div className="h-9 w-9 rounded-lg bg-linear-to-br from-blue-500/20 to-indigo-600/10 flex items-center justify-center">
@@ -318,88 +363,70 @@ const VendorAnalytics = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
-              Campaign Performance
+              Customers by Location
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Total vs Redeemed &middot; {selectionLabel}
+              Unique customers &middot; {selectionLabel}
             </p>
           </div>
         </div>
 
         <div className="h-[240px] w-full">
-          {showCampaignChart ? (
+          {showLocationChart ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={campaignSeries}
-                margin={{ top: 5, right: 30, left: -10, bottom: 5 }}
-                barCategoryGap="40%"
-              >
+              <PieChart>
                 <defs>
                   <linearGradient
-                    id="barGradientTotal"
+                    id="locationPieCenterGlow"
                     x1="0"
                     y1="0"
-                    x2="0"
+                    x2="1"
                     y2="1"
                   >
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#6366f1" />
-                  </linearGradient>
-                  <linearGradient
-                    id="barGradientRedeemed"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#059669" />
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.22} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.14} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#e5e7eb"
-                  strokeOpacity={0.5}
-                  vertical={false}
+                <Tooltip content={<CustomPieTooltip />} />
+                <Legend
+                  verticalAlign="bottom"
+                  align="center"
+                  iconType="circle"
+                  formatter={(value, entry) => (
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {value} ({entry?.payload?.percentage || 0}%)
+                    </span>
+                  )}
                 />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 600 }}
-                  dy={8}
-                  interval={0}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 11 }}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  content={<CustomBarTooltip />}
-                  cursor={{ fill: "rgba(99,102,241,0.06)", radius: 8 }}
-                />
-                {/* <Legend content={<CustomLegend />} /> */}
-                <Bar
-                  dataKey="sent"
-                  name="Total"
-                  fill="url(#barGradientTotal)"
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={60}
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                />
-                <Bar
-                  dataKey="redeemed"
-                  name="Redeemed"
-                  fill="url(#barGradientRedeemed)"
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={60}
-                  animationDuration={800}
-                  animationEasing="ease-out"
-                />
-              </BarChart>
+                <Pie
+                  data={locationPieSeriesWithShare}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={68}
+                  outerRadius={96}
+                  paddingAngle={3}
+                  stroke="none"
+                  isAnimationActive
+                  labelLine={false}
+                >
+                  {locationPieSeriesWithShare.map((entry, index) => (
+                    <Cell key={`cell-${entry.name}-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <text
+                  x="50%"
+                  y="46%"
+                  textAnchor="middle"
+                  className="fill-gray-900 dark:fill-white"
+                >
+                  <tspan x="50%" dy="-0.2em" className="text-sm font-semibold">
+                    {locationCustomerTotal}
+                  </tspan>
+                  <tspan x="50%" dy="1.4em" className="text-[11px] fill-gray-400 dark:fill-gray-500">
+                    customers
+                  </tspan>
+                </text>
+              </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center gap-2">
@@ -407,7 +434,7 @@ const VendorAnalytics = ({
                 size={24}
                 className="text-gray-300 dark:text-gray-600"
               />
-              <p className="text-xs text-gray-400">No campaign data yet</p>
+              <p className="text-xs text-gray-400">No customer locations yet</p>
             </div>
           )}
         </div>
@@ -417,3 +444,4 @@ const VendorAnalytics = ({
 };
 
 export default VendorAnalytics;
+

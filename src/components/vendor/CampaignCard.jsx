@@ -3,7 +3,7 @@ import {
   Download,
   FileText,
   Eye,
-  Trash2,
+  Ban,
   Edit2,
   LoaderCircle,
   Archive,
@@ -122,17 +122,45 @@ const CampaignCard = React.memo(
     };
 
     const isBulkExportStarting = isStartingBulkExportId === campaign.id;
+    const campaignStatus = String(campaign.status || "active").toLowerCase();
+    const isOnHold = campaignStatus === "paused";
+    const statusLabel =
+      campaignStatus === "paused"
+        ? "On Hold"
+        : campaignStatus === "pending"
+          ? "Pending"
+          : campaignStatus === "completed"
+            ? "Completed"
+            : campaignStatus === "rejected"
+              ? "Rejected"
+              : "Active";
+    const statusBadgeClass =
+      campaignStatus === "paused"
+        ? "bg-rose-500/15 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300"
+        : campaignStatus === "pending"
+          ? "bg-amber-500/15 text-amber-600 dark:text-amber-300"
+          : campaignStatus === "completed"
+            ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            : campaignStatus === "rejected"
+              ? "bg-rose-500/15 text-rose-600 dark:text-rose-300"
+              : "bg-primary/15 text-primary";
+    const actionButtonClass = isOnHold
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/20"
+      : "border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20";
+    const actionButtonTitle = isOnHold
+      ? "Resume Campaign"
+      : "Put Campaign on Hold";
 
     return (
-      <div className="rounded-2xl border border-gray-300/20 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/60 px-4 py-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
+      <div className={`rounded-2xl border px-4 py-4 shadow-sm transition-all hover:shadow-md ${isOnHold ? "border-rose-500/25 bg-rose-50/55 dark:border-rose-500/20 dark:bg-rose-950/10 hover:border-rose-500/40" : "border-gray-300/20 bg-white/90 dark:border-zinc-800 dark:bg-zinc-950/60 hover:border-primary/40"}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between text-left">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="text-base font-bold text-gray-900 dark:text-white">
                 {campaign.title}
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold uppercase tracking-wider">
-                Active
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusBadgeClass}`}>
+                {statusLabel}
               </span>
             </div>
             {campaign.Product?.name && (
@@ -230,9 +258,10 @@ const CampaignCard = React.memo(
               type="button"
               onClick={() => onDelete(campaign)}
               disabled={deletingCampaignId === campaign.id}
-              className="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors disabled:opacity-60"
+              className={`inline-flex items-center justify-center h-9 w-9 rounded-lg transition-colors disabled:opacity-60 ${actionButtonClass}`}
+              title={actionButtonTitle}
             >
-              <Trash2 size={14} />
+              {isOnHold ? <RefreshCw size={14} /> : <Ban size={14} />}
             </button>
           </div>
         </div>
@@ -420,10 +449,10 @@ const CampaignCard = React.memo(
             type="button"
             onClick={() => onDelete(campaign)}
             disabled={deletingCampaignId === campaign.id}
-            className="inline-flex items-center justify-center h-10 w-10 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-all disabled:opacity-60 shadow-sm active:scale-95"
-            title="Delete Campaign"
+            className={`inline-flex items-center justify-center h-10 w-10 rounded-xl transition-all disabled:opacity-60 shadow-sm active:scale-95 ${actionButtonClass}`}
+            title={actionButtonTitle}
           >
-            <Trash2 size={16} />
+            {isOnHold ? <RefreshCw size={16} /> : <Ban size={16} />}
           </button>
         </div>
       </div>
@@ -432,3 +461,13 @@ const CampaignCard = React.memo(
 );
 
 export default CampaignCard;
+
+
+
+
+
+
+
+
+
+
