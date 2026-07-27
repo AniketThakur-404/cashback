@@ -523,24 +523,22 @@ const getClusterCustomerCount = (cluster) => {
 
 const formatLocationLabel = (location) => {
   if (!location) return "Unknown Area";
+  const displayName = String(location.displayName || "").trim();
+  if (displayName && displayName.toLowerCase() !== "unknown area") {
+    return displayName;
+  }
+
   const city = String(location.city || "").trim();
-  const displayCity = /^Area \(/i.test(city) ? "" : city;
   const state = String(location.state || "").trim();
   const pincode = String(location.pincode || "").trim();
-  const lat = Number(location.lat);
-  const lng = Number(location.lng);
 
   const parts = [];
-  if (displayCity) parts.push(displayCity);
-  if (state && state !== displayCity) parts.push(state);
+  if (city) parts.push(city);
+  if (state && state !== city) parts.push(state);
 
   if (parts.length > 0) {
     const label = parts.join(", ");
     return pincode ? `${label} - ${pincode}` : label;
-  }
-
-  if (Number.isFinite(lat) && Number.isFinite(lng)) {
-    return `Area (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
   }
 
   return pincode || "Unknown Area";
@@ -701,6 +699,7 @@ const VendorDashboard = () => {
   const [extraTabError, setExtraTabError] = useState("");
   const [clusterCityFilter, setClusterCityFilter] = useState(null);
   const [clusterLocationFilter, setClusterLocationFilter] = useState(null);
+  const activeClusterFilterRef = useRef(null);
   const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
 
   const [selectedCustomerModal, setSelectedCustomerModal] = useState(null);
@@ -2506,15 +2505,16 @@ const VendorDashboard = () => {
 
   const buildExtraFilterParams = () => {
     const params = {};
+    const activeClusterFilter = activeClusterFilterRef.current;
     if (dashboardFilters.dateFrom) params.dateFrom = dashboardFilters.dateFrom;
     if (dashboardFilters.dateTo) params.dateTo = dashboardFilters.dateTo;
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
-    if (clusterLocationFilter?.customerIds) {
-      params.customerIds = clusterLocationFilter.customerIds;
+    if (activeClusterFilter?.customerIds) {
+      params.customerIds = activeClusterFilter.customerIds;
     } else {
-      if (clusterLocationFilter?.city) params.city = clusterLocationFilter.city;
-      if (clusterLocationFilter?.state) params.state = clusterLocationFilter.state;
+      if (activeClusterFilter?.city) params.city = activeClusterFilter.city;
+      if (activeClusterFilter?.state) params.state = activeClusterFilter.state;
       if (dashboardFilters.location) params.location = dashboardFilters.location.trim();
     }
     if (dashboardFilters.productId)
@@ -2666,7 +2666,7 @@ const VendorDashboard = () => {
             .map((s) => s.trim());
           const dbCity = dbCityParts.join(", ");
 
-          resolved.set(key, { city: dbCity, state: state, pincode });
+          resolved.set(key, { city: dbCity, state: state, pincode, displayName: uniqueParts.join(", ") || dbCity || city || state || pincode });
         }
       } catch {
         // silently skip failed geocodes
@@ -2844,21 +2844,23 @@ const VendorDashboard = () => {
     const city = String(cluster?.city || "").trim();
     const state = String(cluster?.state || "").trim();
     const locationLabel = formatLocationLabel(cluster);
+    const activeFilter = {
+      customerIds: customerIds.length ? customerIds.join(",") : "",
+      city,
+      state,
+    };
+    activeClusterFilterRef.current = activeFilter;
     setDashboardFilters((prev) => ({
       ...prev,
       location: locationLabel,
       mobile: "",
     }));
     setClusterCityFilter(locationLabel);
-    setClusterLocationFilter({
-      customerIds: customerIds.length ? customerIds.join(",") : "",
-      city,
-      state,
-    });
+    setClusterLocationFilter(activeFilter);
     if (token) {
       await loadCustomersData(token, {
         ...buildExtraFilterParams(),
-        customerIds: customerIds.length ? customerIds.join(",") : undefined,
+        customerIds: activeFilter.customerIds || undefined,
         mobile: "",
       });
     }
@@ -2866,6 +2868,7 @@ const VendorDashboard = () => {
   };
 
   const handleClearClusterFilter = async () => {
+    activeClusterFilterRef.current = null;
     setClusterCityFilter(null);
     setClusterLocationFilter(null);
     setDashboardFilters((prev) => ({ ...prev, location: "" }));
@@ -3557,7 +3560,7 @@ const VendorDashboard = () => {
   // Load customer data when switching to Customer Summary sub-tab
   useEffect(() => {
     if (displayTab === "customers" && token) {
-      loadCustomersData(token);
+      loadCustomersData(token, buildExtraFilterParams());
     }
     // Clear cluster filter when leaving the customer subtab
     if (activeTab !== "customers") {
@@ -5750,14 +5753,13 @@ const VendorDashboard = () => {
           : `coord_${Number(point.lat).toFixed(2)}_${Number(point.lng).toFixed(2)}`;
       if (!grouped.has(key)) {
         grouped.set(key, {
-          city:
-            city ||
-            `Area (${Number(point.lat).toFixed(2)}, ${Number(point.lng).toFixed(2)})`,
+          city: city || String(point?.displayName || "").trim(),
           state,
           totalScans: 0,
           customerIds: new Set(),
           lat: Number(point.lat),
           lng: Number(point.lng),
+          displayName: String(point?.displayName || "").trim(),
         });
       }
       const cluster = grouped.get(key);
@@ -10929,17 +10931,14 @@ Quantity: ${invoiceData.quantity} QRs
                                     : `coord_${Number(pt.lat).toFixed(2)}_${Number(pt.lng).toFixed(2)}`;
                                 if (!grouped[key]) {
                                   grouped[key] = {
-                                    city:
-                                      city ||
-                                      (pt.lat
-                                        ? `Area (${Number(pt.lat).toFixed(2)}, ${Number(pt.lng).toFixed(2)})`
-                                        : "Unknown Area"),
+                                    city: city || String(pt?.displayName || "").trim(),
                                     state,
                                     totalScans: 0,
                                     customerIds: new Set(),
                                     pincodes: new Set(),
                                     lat: pt.lat,
                                     lng: pt.lng,
+                                    displayName: String(pt?.displayName || "").trim(),
                                   };
                                 }
                                 grouped[key].totalScans += pt.count || 0;
