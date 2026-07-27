@@ -2512,6 +2512,9 @@ const VendorDashboard = () => {
       params.campaignId = dashboardFilters.campaignId;
     if (activeClusterFilter?.customerIds) {
       params.customerIds = activeClusterFilter.customerIds;
+      if (activeClusterFilter.selectedLocation) {
+        params.selectedLocation = activeClusterFilter.selectedLocation;
+      }
     } else {
       if (activeClusterFilter?.city) params.city = activeClusterFilter.city;
       if (activeClusterFilter?.state) params.state = activeClusterFilter.state;
@@ -2833,6 +2836,7 @@ const VendorDashboard = () => {
     const locationLabel = formatLocationLabel(cluster);
     const activeFilter = {
       customerIds: customerIds.length ? customerIds.join(",") : "",
+      selectedLocation: locationLabel,
       city,
       state,
     };
