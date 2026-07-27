@@ -10,7 +10,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 import { format, subDays, subMonths, subYears, parseISO } from "date-fns";
 import {
@@ -388,22 +387,12 @@ const VendorAnalytics = ({
                   </linearGradient>
                 </defs>
                 <Tooltip content={<CustomPieTooltip />} />
-                <Legend
-                  verticalAlign="bottom"
-                  align="center"
-                  iconType="circle"
-                  formatter={(value, entry) => (
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      {value} ({entry?.payload?.percentage || 0}%)
-                    </span>
-                  )}
-                />
                 <Pie
                   data={locationPieSeriesWithShare}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius={68}
-                  outerRadius={96}
+                  innerRadius={72}
+                  outerRadius={104}
                   paddingAngle={3}
                   stroke="none"
                   isAnimationActive

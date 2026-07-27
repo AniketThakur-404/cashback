@@ -521,6 +521,31 @@ const getClusterCustomerCount = (cluster) => {
   return new Set(ids.filter(Boolean).map((value) => String(value))).size;
 };
 
+const formatLocationLabel = (location) => {
+  if (!location) return "Unknown Area";
+  const city = String(location.city || "").trim();
+  const displayCity = /^Area \(/i.test(city) ? "" : city;
+  const state = String(location.state || "").trim();
+  const pincode = String(location.pincode || "").trim();
+  const lat = Number(location.lat);
+  const lng = Number(location.lng);
+
+  const parts = [];
+  if (displayCity) parts.push(displayCity);
+  if (state && state !== displayCity) parts.push(state);
+
+  if (parts.length > 0) {
+    const label = parts.join(", ");
+    return pincode ? `${label} - ${pincode}` : label;
+  }
+
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    return `Area (${lat.toFixed(2)}, ${lng.toFixed(2)})`;
+  }
+
+  return pincode || "Unknown Area";
+};
+
 const VendorDashboard = () => {
   const { section } = useParams();
   const navigate = useNavigate();
@@ -675,6 +700,7 @@ const VendorDashboard = () => {
   const [isLoadingExtraTab, setIsLoadingExtraTab] = useState(false);
   const [extraTabError, setExtraTabError] = useState("");
   const [clusterCityFilter, setClusterCityFilter] = useState(null);
+  const [clusterLocationFilter, setClusterLocationFilter] = useState(null);
   const [invoiceShareStatus, setInvoiceShareStatus] = useState("");
 
   const [selectedCustomerModal, setSelectedCustomerModal] = useState(null);
@@ -2484,8 +2510,13 @@ const VendorDashboard = () => {
     if (dashboardFilters.dateTo) params.dateTo = dashboardFilters.dateTo;
     if (dashboardFilters.campaignId)
       params.campaignId = dashboardFilters.campaignId;
-    if (dashboardFilters.location)
-      params.location = dashboardFilters.location.trim();
+    if (clusterLocationFilter?.customerIds) {
+      params.customerIds = clusterLocationFilter.customerIds;
+    } else {
+      if (clusterLocationFilter?.city) params.city = clusterLocationFilter.city;
+      if (clusterLocationFilter?.state) params.state = clusterLocationFilter.state;
+      if (dashboardFilters.location) params.location = dashboardFilters.location.trim();
+    }
     if (dashboardFilters.productId)
       params.productId = dashboardFilters.productId;
     if (dashboardFilters.mobile) params.mobile = dashboardFilters.mobile.trim();
@@ -2805,21 +2836,49 @@ const VendorDashboard = () => {
   };
 
   const handleClusterClick = async (cluster) => {
-    const city = cluster.city || "";
-    if (!city) return;
-    setDashboardFilters((prev) => ({ ...prev, location: city, mobile: "" }));
-    setClusterCityFilter(city);
+    const customerIds = Array.isArray(cluster?.customerIds)
+      ? cluster.customerIds.filter(Boolean).map((id) => String(id))
+      : cluster?.customerIds instanceof Set
+        ? Array.from(cluster.customerIds).filter(Boolean).map((id) => String(id))
+        : [];
+    const city = String(cluster?.city || "").trim();
+    const state = String(cluster?.state || "").trim();
+    const locationLabel = formatLocationLabel(cluster);
+    setDashboardFilters((prev) => ({
+      ...prev,
+      location: locationLabel,
+      mobile: "",
+    }));
+    setClusterCityFilter(locationLabel);
+    setClusterLocationFilter({
+      customerIds: customerIds.length ? customerIds.join(",") : "",
+      city,
+      state,
+    });
     if (token) {
-      await loadCustomersData(token, { ...buildExtraFilterParams(), location: city, mobile: "" });
+      await loadCustomersData(token, {
+        ...buildExtraFilterParams(),
+        customerIds: customerIds.length ? customerIds.join(",") : undefined,
+        mobile: "",
+      });
     }
     navigate("/vendor/customers");
   };
 
   const handleClearClusterFilter = async () => {
     setClusterCityFilter(null);
+    setClusterLocationFilter(null);
     setDashboardFilters((prev) => ({ ...prev, location: "" }));
     if (token) {
-      await loadCustomersData(token, { ...buildExtraFilterParams(), location: "" });
+      await loadCustomersData(token, {
+        dateFrom: dashboardFilters.dateFrom,
+        dateTo: dashboardFilters.dateTo,
+        campaignId: dashboardFilters.campaignId,
+        location: "",
+        productId: dashboardFilters.productId,
+        mobile: dashboardFilters.mobile.trim(),
+        invoiceNo: dashboardFilters.invoiceNo.trim(),
+      });
     }
   };
 
@@ -3503,6 +3562,7 @@ const VendorDashboard = () => {
     // Clear cluster filter when leaving the customer subtab
     if (activeTab !== "customers") {
       setClusterCityFilter(null);
+      setClusterLocationFilter(null);
     }
   }, [activeTab, token, dashboardFilters.location, dashboardFilters.mobile, dashboardFilters.dateFrom, dashboardFilters.dateTo, dashboardFilters.campaignId, dashboardFilters.productId, dashboardFilters.invoiceNo]);
 
@@ -7028,12 +7088,8 @@ const VendorDashboard = () => {
                                     >
                                       <div className="min-w-0">
                                         <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
-                                          {(cluster.city || "") +
-                                            (cluster.city && cluster.state
-                                              ? ", "
-                                              : "") +
-                                            (cluster.state || "")}
-                                        </div>
+                                          {formatLocationLabel(cluster)}
+                                                  </div>
                                         <div className="text-[11px] text-gray-500 mt-0.5">
                                           {cluster.totalCustomers} {cluster.totalCustomers === 1 ? "customer" : "customers"}
                                         </div>
@@ -10508,6 +10564,7 @@ Quantity: ${invoiceData.quantity} QRs
                                 type="button"
                                 onClick={() => {
                                   setClusterCityFilter(null);
+                                  setClusterLocationFilter(null);
                                   setDashboardFilters((prev) => ({
                                     ...prev,
                                     location: "",
@@ -10834,9 +10891,7 @@ Quantity: ${invoiceData.quantity} QRs
                                         <Popup>
                                           <div className="text-xs min-w-[140px]">
                                             <div className="font-semibold text-gray-900">
-                                              {pt.city || pt.state
-                                                ? `${pt.city || ""}${pt.city && pt.state ? ", " : ""}${pt.state || ""}${pt.pincode ? ` - ${pt.pincode}` : ""}`
-                                                : "Unknown"}
+                                              {formatLocationLabel(pt)}
                                             </div>
                                             <div className="text-gray-600 mt-0.5">
                                               {getClusterCustomerCount(pt)} {getClusterCustomerCount(pt) === 1 ? "customer" : "customers"}
@@ -10951,12 +11006,7 @@ Quantity: ${invoiceData.quantity} QRs
                                                 </div>
                                                 <div className="min-w-0">
                                                   <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                    {(cluster.city || "") +
-                                                      (cluster.city &&
-                                                      cluster.state
-                                                        ? ", "
-                                                        : "") +
-                                                      (cluster.state || "")}
+                                                    {formatLocationLabel(cluster)}
                                                   </div>
                                                   <div className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                                     <span className="font-medium text-emerald-600 dark:text-emerald-400">
@@ -12193,6 +12243,7 @@ Quantity: ${invoiceData.quantity} QRs
 };
 
 export default VendorDashboard;
+
 
 
 
