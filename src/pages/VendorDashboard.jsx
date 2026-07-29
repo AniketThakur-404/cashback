@@ -2507,6 +2507,15 @@ const VendorDashboard = () => {
     }
   };
 
+  const handleWalletInvoiceDownload = async (invoiceId) => {
+    if (!invoiceId) return;
+    try {
+      await downloadVendorInvoicePdf(token, invoiceId);
+    } catch (err) {
+      toastError("Download Failed", err.message || "Failed to download invoice.");
+    }
+  };
+
   const loadQrInventorySeries = async (authToken = token) => {
     if (!authToken) return;
     try {
@@ -10401,6 +10410,9 @@ Quantity: ${invoiceData.quantity} QRs
                                       <th className="px-5 py-3.5 w-24">
                                         Status
                                       </th>
+                                      <th className="px-5 py-3.5 w-28 text-right">
+                                        Invoice
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/50">
@@ -10455,6 +10467,20 @@ Quantity: ${invoiceData.quantity} QRs
                                               success
                                             </span>
                                           </td>
+                                          <td className="px-5 py-4 text-right">
+                                            {tx.invoiceId ? (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleWalletInvoiceDownload(tx.invoiceId)}
+                                                className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+                                              >
+                                                <Download size={13} />
+                                                Invoice
+                                              </button>
+                                            ) : (
+                                              <span className="text-gray-300 dark:text-gray-600">-</span>
+                                            )}
+                                          </td>
                                         </tr>
                                       );
                                     })}
@@ -10507,6 +10533,17 @@ Quantity: ${invoiceData.quantity} QRs
                                         <div className="bg-gray-50/50 dark:bg-zinc-800/20 p-3 rounded-xl border border-gray-100/50 dark:border-zinc-800/30 text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed italic">
                                           {tx.description}
                                         </div>
+                                      )}
+
+                                      {tx.invoiceId && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleWalletInvoiceDownload(tx.invoiceId)}
+                                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+                                        >
+                                          <Download size={14} />
+                                          Download invoice
+                                        </button>
                                       )}
 
                                       <div className="flex justify-between items-end pt-2 border-t border-gray-50 dark:border-zinc-800/50">
