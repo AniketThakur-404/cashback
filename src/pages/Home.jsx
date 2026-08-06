@@ -456,6 +456,13 @@ const Home = () => {
   const banners = homeData?.banners?.length ? homeData.banners : heroBanners;
   const stats = homeData?.stats || {};
   const topOffers = homeData?.topOffers || [];
+  const getOfferDestination = (offer) => {
+    if (offer?.targetType === "brand" || !offer?.productId) {
+      return offer?.brandId ? `/brand-details/${offer.brandId}` : "/store";
+    }
+
+    return `/product-info/${offer.productId}`;
+  };
   const fmtCash = (v) => {
     const num = Number(v);
     return !Number.isFinite(num) ? "₹0" : `₹${num.toFixed(0)}`;
@@ -795,7 +802,7 @@ const Home = () => {
                 return (
                   <div
                     key={offer.id || i}
-                    onClick={() => navigate(`/product-info/${offer.id}`)}
+                    onClick={() => navigate(getOfferDestination(offer))}
                     className="offer-card group w-[130px] h-[165px] rounded-[24px] p-0 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.96] transition-all shrink-0 cursor-pointer shadow-md bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800"
                   >
                     {/* Inner Content Container */}

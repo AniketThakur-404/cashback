@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { BadgeCheck, ChevronRight, Scan, Gift } from "lucide-react";
 import FallbackImage from "../components/FallbackImage";
 import {
@@ -14,6 +14,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 const ProductInfo = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [productError, setProductError] = useState("");
@@ -50,6 +51,16 @@ const ProductInfo = () => {
         if (!isMounted) return;
         setProduct(normalizedProduct);
       } catch (err) {
+        if (err?.status === 404 && id) {
+          try {
+            await getPublicBrandDetails(id);
+            if (!isMounted) return;
+            navigate(`/brand-details/${id}`, { replace: true });
+            return;
+          } catch {
+            // The route ID is not an active brand either; show the original error.
+          }
+        }
         if (!isMounted) return;
         setProductError(err.message || "Unable to load product details.");
       } finally {
