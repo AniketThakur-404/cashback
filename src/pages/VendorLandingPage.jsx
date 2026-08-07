@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -17,7 +17,7 @@ import {
   Quote,
   ChevronDown,
   ChevronUp,
-  HelpCircle,
+  HelpCircle, X,
 } from "lucide-react";
 import {
   motion,
@@ -29,6 +29,8 @@ import {
 import VendorNavbar from "../components/VendorNavbar";
 // import whyCashbackHero from "../assets/why-cashback-hero.png";
 import { useSEO } from "../hooks/useSEO";
+const DEMO_VIDEO_URL = "https://pub-0cdc1d08d00648b48a3ee29c444168cb.r2.dev/video/ASSURED%20REWARDS.mp4";
+
 const ScrollContent = () => {
   const [idx, setIdx] = React.useState(0);
 
@@ -254,8 +256,40 @@ const VendorLandingPage = () => {
 
   const [hoveredLogo, setHoveredLogo] = useState(null);
   const [isRupee, setIsRupee] = useState(false);
+  const [isDemoOpen, setIsDemoOpen] = useState(false);
   const navigate = useNavigate();
   const APP_NAME = "Assured Rewards";
+
+  useEffect(() => {
+    if (!isDemoOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setIsDemoOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isDemoOpen]);
+
+  useEffect(() => {
+    const scrollToHash = () => {
+      const sectionId = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+      if (!sectionId) return;
+      window.requestAnimationFrame(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+      });
+    };
+
+    scrollToHash();
+    window.addEventListener("hashchange", scrollToHash);
+    return () => window.removeEventListener("hashchange", scrollToHash);
+  }, []);
 
   const logos = [
     "FMCG",
@@ -343,6 +377,50 @@ const VendorLandingPage = () => {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-admin-body text-base">
       <VendorNavbar />
+      <AnimatePresence>
+        {isDemoOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setIsDemoOpen(false);
+            }}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Assured Rewards product demo"
+              className="relative w-full max-w-6xl"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <video
+                className="block h-auto max-h-[calc(100dvh-1.5rem)] w-full rounded-[28px] bg-black object-contain"
+                controls
+                autoPlay
+                playsInline
+                preload="metadata"
+              >
+                <source src={DEMO_VIDEO_URL} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <button
+                type="button"
+                onClick={() => setIsDemoOpen(false)}
+                className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label="Close video"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <section className="relative pt-20 pb-20 overflow-hidden bg-white">
         {/* Advanced Background Design */}
@@ -414,6 +492,8 @@ const VendorLandingPage = () => {
                 <Button
                   size="xl"
                   variant="outline"
+                  onClick={() => setIsDemoOpen(true)}
+                  aria-haspopup="dialog"
                   className="bg-white/40 backdrop-blur-md border-slate-200 text-slate-700 px-10 h-14 w-full sm:w-auto rounded-xl text-base font-bold hover:bg-white/60 transition-all"
                 >
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-[10px] mr-3">
@@ -657,7 +737,7 @@ const VendorLandingPage = () => {
       </section>
 
       {/* Redesigned Vendor Advantage Section (Premium Content Update) */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <section id="features" className="scroll-mt-24 py-24 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Centered Header & Quote */}
           <div className="text-center max-w-4xl mx-auto mb-20">
@@ -801,7 +881,7 @@ const VendorLandingPage = () => {
       {/* Improved Impact Section */}
       <section
         id="resources"
-        className="pt-16 pb-8 md:py-32 bg-white relative overflow-hidden"
+        className="scroll-mt-24 pt-16 pb-8 md:py-32 bg-white relative overflow-hidden"
       >
         <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px]" />
@@ -885,8 +965,8 @@ const VendorLandingPage = () => {
 
       {/* Improved Versatile Solutions Section */}
       <section
-        id="features"
-        className="pt-8 pb-16 md:py-24 bg-white relative overflow-hidden"
+        id="solutions"
+        className="scroll-mt-24 pt-8 pb-16 md:py-24 bg-white relative overflow-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="mb-10 md:mb-16 max-w-4xl text-center md:text-left">
@@ -1074,7 +1154,7 @@ const VendorLandingPage = () => {
 
 
       {/* Improved Final CTA Section */}
-      <section id="pricing" className="py-32 bg-white relative">
+      <section id="pricing" className="scroll-mt-24 py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -1153,7 +1233,7 @@ const VendorLandingPage = () => {
                 { label: "Privacy Policy", path: "/vendor/privacy" },
                 { label: "Terms of Service", path: "/vendor/terms" },
                 { label: "FAQs", path: "/vendor/faqs" },
-                { label: "Contact", href: "mailto:contact@assuredrewards.com" },
+                { label: "Contact", href: "mailto:support@assuredrewards.in?subject=Vendor%20Support%20Request" },
               ].map((link, i) => (
                 <a
                   key={i}
@@ -1174,7 +1254,7 @@ const VendorLandingPage = () => {
 
           <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">
-              © 2024 {APP_NAME}. Built for scale.
+              © 2026 {APP_NAME}. Built for scale.
             </div>
             <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
               Secure • Reliable • Seamless

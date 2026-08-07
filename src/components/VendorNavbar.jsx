@@ -89,7 +89,7 @@ const VendorNavbar = () => {
 
         <div className="hidden md:flex items-center gap-9 text-[14px] font-semibold text-slate-600/90">
           <button
-            onClick={() => scrollToSection("how-it-works")}
+            onClick={() => scrollToSection("solutions")}
             className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Solutions
@@ -107,10 +107,10 @@ const VendorNavbar = () => {
             Resources
           </button>
           <button
-            onClick={() => scrollToSection("pricing")}
+            onClick={() => handleNavigate("/vendor-signup")}
             className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
-            Pricing
+            Register
           </button>
         </div>
 
@@ -146,7 +146,7 @@ const VendorNavbar = () => {
         <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-4 shadow-lg shadow-slate-900/5">
           <div className="flex flex-col gap-1 text-[15px] font-semibold text-slate-700">
             <button
-              onClick={() => scrollToSection("how-it-works")}
+              onClick={() => scrollToSection("solutions")}
               className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
             >
               Solutions
@@ -164,10 +164,10 @@ const VendorNavbar = () => {
               Resources
             </button>
             <button
-              onClick={() => scrollToSection("pricing")}
+              onClick={() => handleNavigate("/vendor-signup")}
               className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
             >
-              Pricing
+              Register
             </button>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">

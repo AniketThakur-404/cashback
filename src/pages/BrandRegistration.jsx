@@ -26,6 +26,7 @@ import {
   User, // Added
   Mail, // Added
   Phone, // Added
+  MessageCircle,
   Lock,
   X,
   Eye,
@@ -283,6 +284,8 @@ const ActionButton = ({ onClick, disabled, loading, children }) => (
 // MAIN PAGE COMPONENT
 // ============================================================================
 
+const isValidIndianMobile = (value) =>
+  /^[6-9]\d{9}$/.test(String(value || ""));
 const BrandRegistration = () => {
   const navigate = useNavigate();
   const { error: toastError, success: toastSuccess } = useToast();
@@ -301,6 +304,13 @@ const BrandRegistration = () => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
+
+  // WhatsApp phone verification state
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState("");
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
 
@@ -352,6 +362,11 @@ const BrandRegistration = () => {
       setIsEmailVerified(false);
       setShowOtpInput(false);
       setEmailOtp("");
+    }
+    if (field === "phoneNumber") {
+      setIsPhoneVerified(false);
+      setShowPhoneOtpInput(false);
+      setPhoneOtp("");
     }
   };
 
@@ -418,6 +433,70 @@ const BrandRegistration = () => {
     }
   };
 
+  const sendPhoneVerification = async () => {
+    const phoneNumber = formData.phoneNumber.trim();
+
+    if (!isValidIndianMobile(phoneNumber)) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    setIsSendingPhoneOtp(true);
+    setError("");
+    try {
+      await apiRequest("/api/auth/send-vendor-phone-otp", {
+        method: "POST",
+        body: { phoneNumber },
+      });
+      setShowPhoneOtpInput(true);
+      toastSuccess(
+        "WhatsApp OTP sent",
+        "A 6-digit code was sent to your WhatsApp number.",
+      );
+    } catch (err) {
+      console.error("Failed to send WhatsApp OTP", err);
+      const errorMsg = err.message || "Unable to send the WhatsApp OTP.";
+      setError(errorMsg);
+      toastError("OTP not sent", errorMsg);
+    } finally {
+      setIsSendingPhoneOtp(false);
+    }
+  };
+
+  const verifyPhoneOtp = async () => {
+    const phoneNumber = formData.phoneNumber.trim();
+    const otp = phoneOtp.trim();
+
+    if (!isValidIndianMobile(phoneNumber)) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    if (!/^\d{6}$/.test(otp)) {
+      setError("Enter the 6-digit code sent on WhatsApp.");
+      return;
+    }
+
+    setIsVerifyingPhoneOtp(true);
+    setError("");
+    try {
+      await apiRequest("/api/auth/verify-vendor-phone-otp", {
+        method: "POST",
+        body: { phoneNumber, otp },
+      });
+      setIsPhoneVerified(true);
+      setShowPhoneOtpInput(false);
+      setPhoneOtp("");
+      toastSuccess("Phone verified", "Your WhatsApp number is verified.");
+    } catch (err) {
+      console.error("Failed to verify WhatsApp OTP", err);
+      const errorMsg = err.message || "Invalid or expired WhatsApp OTP.";
+      setError(errorMsg);
+      toastError("Verification failed", errorMsg);
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -450,10 +529,14 @@ const BrandRegistration = () => {
       case 1: // Account
         if (!formData.contactName.trim()) return "Contact name is required.";
         if (!formData.designation.trim()) return "Designation is required.";
-        if (!formData.phoneNumber.trim()) return "Phone number is required.";
+        if (!isValidIndianMobile(formData.phoneNumber))
+          return "Enter a valid 10-digit Indian mobile number.";
+        if (formData.alternatePhone && !isValidIndianMobile(formData.alternatePhone))
+          return "Enter a valid 10-digit alternate mobile number.";
         if (!formData.email.trim() || !formData.email.includes("@"))
           return "Valid email is required.";
-        if (!isEmailVerified) return "Please verify your email address before continuing.";
+        if (!isEmailVerified && !isPhoneVerified)
+          return "Verify either your work email or WhatsApp number before continuing.";
         if (!formData.username.trim()) return "Username is required.";
         if (usernameStatus === "taken") return "Username is already taken.";
         // Password is only required for new users (not logged in)
@@ -838,14 +921,121 @@ const BrandRegistration = () => {
               </div>
               <Input
                 type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                maxLength={10}
+                pattern="[6-9][0-9]{9}"
                 placeholder="10-digit mobile"
-                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+                aria-invalid={
+                  Boolean(formData.phoneNumber) &&
+                  !isValidIndianMobile(formData.phoneNumber)
+                }
+                className={cn(
+                  "pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all",
+                  isPhoneVerified && "border-green-500 bg-green-50/30",
+                )}
                 value={formData.phoneNumber}
                 onChange={(e) =>
-                  handleFieldChange("phoneNumber", e.target.value)
+                  handleFieldChange(
+                    "phoneNumber",
+                    e.target.value.replace(/\D/g, "").slice(0, 10),
+                  )
                 }
               />
             </div>
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 sm:p-5">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-emerald-200/35 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-lg shadow-emerald-600/20">
+                  {isPhoneVerified ? (
+                    <Check className="h-5 w-5 stroke-[3]" />
+                  ) : (
+                    <MessageCircle className="h-5 w-5 fill-current/10" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700/70">
+                    WhatsApp verification
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-800" aria-live="polite">
+                    {isPhoneVerified
+                      ? "WhatsApp number verified"
+                      : "Verify with WhatsApp"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {isPhoneVerified
+                      ? "Your phone number is ready to use."
+                      : "Choose WhatsApp, or verify your work email below."}
+                  </p>
+                </div>
+              </div>
+
+              {isPhoneVerified ? (
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                  <Check className="h-3.5 w-3.5 stroke-[3]" />
+                  Verified
+                </span>
+              ) : (
+                <Button
+                  type="button"
+                  className="h-11 shrink-0 rounded-xl bg-[#25D366] px-5 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-[#1ebc5a] focus-visible:ring-[#25D366]"
+                  onClick={sendPhoneVerification}
+                  disabled={
+                    !isValidIndianMobile(formData.phoneNumber) ||
+                    isSendingPhoneOtp
+                  }
+                >
+                  {isSendingPhoneOtp ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {showPhoneOtpInput ? "Resend code" : "Send code"}
+                </Button>
+              )}
+            </div>
+
+            {showPhoneOtpInput && !isPhoneVerified && (
+              <div className="mt-4 border-t border-emerald-100/90 pt-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="min-w-0 flex-1">
+                    <Label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                      Enter the code from WhatsApp
+                    </Label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                       placeholder="6-digit code"
+                      className="h-12 border-emerald-100 bg-white/90 text-center text-base font-bold tracking-[0.42em] placeholder:tracking-[0.28em] focus:border-emerald-500"
+                      maxLength={6}
+                      value={phoneOtp}
+                      onChange={(e) =>
+                        setPhoneOtp(
+                          e.target.value.replace(/\D/g, "").slice(0, 6),
+                        )
+                      }
+                      disabled={isVerifyingPhoneOtp}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="mt-auto h-12 shrink-0 rounded-xl px-6 font-bold"
+                    onClick={verifyPhoneOtp}
+                    disabled={phoneOtp.length !== 6 || isVerifyingPhoneOtp}
+                  >
+                    {isVerifyingPhoneOtp ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Verify number
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="space-y-2">
@@ -868,7 +1058,9 @@ const BrandRegistration = () => {
           </div>
         </div>
         <div className="space-y-2">
-          <Label className="text-base text-gray-900">Work Email</Label>
+          <Label className="text-base text-gray-900">
+            Work Email <span className="text-xs font-normal text-gray-400">(or verify by email)</span>
+          </Label>
           <div className="relative flex gap-2">
             <div className="relative flex-1">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -902,9 +1094,9 @@ const BrandRegistration = () => {
                 {isSendingOtp ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : showOtpInput ? (
-                  "Resend"
+                  "Resend email OTP"
                 ) : (
-                  "Verify"
+                  "Send email OTP"
                 )}
               </Button>
             )}

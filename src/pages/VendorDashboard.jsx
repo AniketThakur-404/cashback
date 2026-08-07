@@ -134,6 +134,7 @@ import StarBorder from "../components/StarBorder";
 import { WelcomeModal } from "../components/vendor/WelcomeModal";
 
 import { ConfirmModal } from "../components/ui/ConfirmModal";
+import MonthDatePicker from "../components/ui/MonthDatePicker";
 import { useToast } from "../components/ui";
 import {
   PRIMARY_BUTTON,
@@ -11082,52 +11083,58 @@ Quantity: ${invoiceData.quantity} QRs
                     {displayTab === "billing" && (
                       <div className="space-y-4">
                         <div className="rounded-none sm:rounded-xl border-y sm:border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] p-4 shadow-sm dark:shadow-none">
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                            <input
-                              type="date"
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                            <MonthDatePicker
+                              label="From date"
                               value={dashboardFilters.dateFrom}
-                              onChange={(event) =>
+                              max={format(new Date(), "yyyy-MM-dd")}
+                              onChange={(value) =>
                                 setDashboardFilters((prev) => ({
                                   ...prev,
-                                  dateFrom: event.target.value,
+                                  dateFrom: value,
                                 }))
                               }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
                             />
-                            <input
-                              type="date"
+                            <MonthDatePicker
+                              label="To date"
                               value={dashboardFilters.dateTo}
-                              onChange={(event) =>
+                              min={dashboardFilters.dateFrom}
+                              max={format(new Date(), "yyyy-MM-dd")}
+                              onChange={(value) =>
                                 setDashboardFilters((prev) => ({
                                   ...prev,
-                                  dateTo: event.target.value,
+                                  dateTo: value,
                                 }))
                               }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
                             />
-                            <input
-                              type="text"
-                              placeholder="Invoice number"
-                              value={dashboardFilters.invoiceNo}
-                              onChange={(event) =>
-                                setDashboardFilters((prev) => ({
-                                  ...prev,
-                                  invoiceNo: event.target.value,
-                                }))
-                              }
-                              className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#0f0f0f] px-3 py-2 text-sm"
-                            />
+                            <label className="min-w-0">
+                              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                                Invoice number
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="e.g. AR/26-27/000083"
+                                value={dashboardFilters.invoiceNo}
+                                onChange={(event) =>
+                                  setDashboardFilters((prev) => ({
+                                    ...prev,
+                                    invoiceNo: event.target.value,
+                                  }))
+                                }
+                                className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm shadow-sm transition-all placeholder:text-slate-400 hover:border-emerald-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 dark:border-zinc-700 dark:bg-[#0f0f0f] dark:placeholder:text-zinc-500"
+                              />
+                            </label>
                             <button
                               type="button"
                               onClick={handleApplyExtraFilters}
-                              className={`${PRIMARY_BUTTON} rounded-lg`}
+                              className={`${PRIMARY_BUTTON} self-end rounded-lg`}
                             >
                               Apply
                             </button>
                             <button
                               type="button"
                               onClick={() => loadInvoicesData(token)}
-                              className={`${SECONDARY_BUTTON} rounded-lg`}
+                              className={`${SECONDARY_BUTTON} self-end rounded-lg`}
                             >
                               Refresh
                             </button>

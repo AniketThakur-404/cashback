@@ -178,7 +178,7 @@ const VendorFAQs = () => {
           Still have questions? We're here to help 7 days a week.
         </p>
         <a 
-          href="mailto:support@assuredrewards.in" 
+          href="mailto:support@assuredrewards.in?subject=Vendor%20Support%20Request&body=Hello%20Vendor%20Support%20Team%2C%0A%0A" 
           className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white px-6 py-3 text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95"
         >
           Email Vendor Support

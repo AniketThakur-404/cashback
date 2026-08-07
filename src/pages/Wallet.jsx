@@ -279,12 +279,11 @@ const Wallet = () => {
                       </div>
                     </div>
 
-                    {/* Right side: Amount + Arrow */}
+                    {/* Right side: Amount */}
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-[14.5px] font-black whitespace-nowrap ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-gray-900 dark:text-white"}`}>
                         {isCredit ? "+" : "-"} Rs {Math.floor(Number(tx.amount || 0))}
                       </span>
-                      <ChevronRight size={14} className="text-gray-300 dark:text-zinc-600" />
                     </div>
                   </div>
                 );
