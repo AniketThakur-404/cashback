@@ -3730,6 +3730,19 @@ const VendorDashboard = () => {
         throw new Error("Failed to create payment order.");
       }
 
+      let checkoutResponseReceived = false;
+      let paymentFinished = false;
+      let settlePayment;
+      const paymentResult = new Promise((resolve) => {
+        settlePayment = resolve;
+      });
+
+      const finishPayment = (result) => {
+        if (paymentFinished) return;
+        paymentFinished = true;
+        settlePayment(result);
+      };
+
       const options = {
         key: razorpayKeyId,
         amount: order.amount,
@@ -3738,22 +3751,39 @@ const VendorDashboard = () => {
         description: description || "Payment",
         order_id: order.id,
         handler: async function (response) {
+          checkoutResponseReceived = true;
+          let verification;
           try {
-            const verification = await verifyPayment(token, {
+            verification = await verifyPayment(token, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
-
-            if (verification.success) {
-              await loadWallet();
-              await loadTransactions();
-              if (onSuccess) onSuccess();
-            } else {
-              setWalletError("Payment verification failed.");
-            }
           } catch (verifyErr) {
-            setWalletError(verifyErr.message || "Payment verification failed.");
+            const message = verifyErr.message || "Payment verification failed.";
+            setWalletError(message);
+            finishPayment({ success: false, error: message });
+            return;
+          }
+
+          if (!verification?.success) {
+            const message =
+              verification?.message || "Payment verification failed.";
+            setWalletError(message);
+            finishPayment({ success: false, error: message });
+            return;
+          }
+
+          try {
+            await loadWallet();
+            await loadTransactions();
+            if (onSuccess) await onSuccess();
+            finishPayment({ success: true });
+          } catch {
+            const message =
+              "Payment was verified, but the wallet balance could not refresh. Please reload the page.";
+            setWalletStatus(message);
+            finishPayment({ success: true, warning: message });
           }
         },
         prefill: {
@@ -3764,6 +3794,14 @@ const VendorDashboard = () => {
         theme: {
           color: "#10B981",
         },
+        modal: {
+          ondismiss: () => {
+            if (!checkoutResponseReceived) {
+              setWalletStatus("Payment was cancelled before completion.");
+              finishPayment({ success: false, cancelled: true });
+            }
+          },
+        },
       };
 
       if (!options.key) {
@@ -3772,12 +3810,18 @@ const VendorDashboard = () => {
 
       const rzp1 = new window.Razorpay(options);
       rzp1.on("payment.failed", function (response) {
-        setWalletError(response.error.description || "Payment failed.");
+        checkoutResponseReceived = true;
+        const message = response.error?.description || "Payment failed.";
+        setWalletError(message);
+        finishPayment({ success: false, error: message });
       });
       rzp1.open();
+      return paymentResult;
     } catch (err) {
       if (handleVendorAccessError(err)) return;
-      setWalletError(err.message || "Payment initialization failed.");
+      const message = err.message || "Payment initialization failed.";
+      setWalletError(message);
+      return { success: false, error: message };
     }
   };
 
@@ -3791,16 +3835,14 @@ const VendorDashboard = () => {
     setWalletError("");
     setWalletStatus("");
 
-    await initiateRazorpayPayment(amountValue, "Wallet Recharge", () => {
-      setWalletStatus("Wallet recharged successfully.");
-      setRechargeAmount("");
+    try {
+      await initiateRazorpayPayment(amountValue, "Wallet Recharge", () => {
+        setWalletStatus("Wallet recharged successfully.");
+        setRechargeAmount("");
+      });
+    } finally {
       setIsRecharging(false);
-    });
-    // Note: setIsRecharging(false) is handled in callback or if error occurs?
-    // The shared function doesn't handle loading state fully for the caller.
-    // Let's rely on the user manually closing or the flow completing.
-    // Actually, simple way:
-    setIsRecharging(false);
+    }
   };
 
   // Re-implementing handleRecharge to be cleaner with the async flow
