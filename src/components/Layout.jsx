@@ -114,7 +114,13 @@ const Layout = ({ children }) => {
                     {authToken
                       ? isWalletLoading
                         ? <div className="h-4 w-10 bg-white/40 animate-pulse rounded-md" />
-                        : `\u20B9 ${(walletBalance ?? 0).toFixed(2)}`
+                        : (() => {
+                            const bal = walletBalance ?? 0;
+                            if (bal >= 10000000) return `\u20B9${(bal / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+                            if (bal >= 100000) return `\u20B9${(bal / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+                            if (bal >= 1000) return `\u20B9${(bal / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+                            return `\u20B9${bal.toFixed(2)}`;
+                          })()
                       : "\u20B9 0.00"}
                   </span>
                 </div>

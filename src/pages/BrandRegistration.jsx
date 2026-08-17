@@ -313,6 +313,12 @@ const BrandRegistration = () => {
   const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpModalCode, setOtpModalCode] = useState("");
+  const [otpModalLoading, setOtpModalLoading] = useState(false);
+  const [otpModalSending, setOtpModalSending] = useState(false);
+  const [otpModalError, setOtpModalError] = useState("");
+  const [otpModalSent, setOtpModalSent] = useState(false);
 
   // Username validation state
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
@@ -497,6 +503,106 @@ const BrandRegistration = () => {
     }
   };
 
+  const sendBothOtps = async () => {
+    const phoneNumber = formData.phoneNumber.trim();
+    const email = formData.email.trim();
+    setOtpModalSending(true);
+    setOtpModalError("");
+    let phoneSent = false;
+    let emailSent = false;
+
+    // Send WhatsApp OTP
+    if (isValidIndianMobile(phoneNumber)) {
+      try {
+        await apiRequest("/api/auth/send-vendor-phone-otp", {
+          method: "POST",
+          body: { phoneNumber },
+        });
+        phoneSent = true;
+      } catch (err) {
+        console.error("WhatsApp OTP failed", err);
+      }
+    }
+
+    // Send Email OTP
+    if (email && email.includes("@")) {
+      try {
+        await apiRequest("/api/auth/send-email-verification-otp", {
+          method: "POST",
+          body: { email, name: formData.contactName },
+        });
+        emailSent = true;
+      } catch (err) {
+        console.error("Email OTP failed", err);
+      }
+    }
+
+    setOtpModalSending(false);
+    if (!phoneSent && !emailSent) {
+      setOtpModalError("Failed to send OTP. Please check your details.");
+      return false;
+    }
+    setOtpModalSent(true);
+    return true;
+  };
+
+  const verifyOtpModal = async () => {
+    const otp = otpModalCode.trim();
+    if (!/^\d{6}$/.test(otp)) {
+      setOtpModalError("Enter a valid 6-digit OTP.");
+      return;
+    }
+    setOtpModalLoading(true);
+    setOtpModalError("");
+
+    // Try phone verification first
+    const phoneNumber = formData.phoneNumber.trim();
+    if (isValidIndianMobile(phoneNumber)) {
+      try {
+        await apiRequest("/api/auth/verify-vendor-phone-otp", {
+          method: "POST",
+          body: { phoneNumber, otp },
+        });
+        setIsPhoneVerified(true);
+        setShowOtpModal(false);
+        setOtpModalCode("");
+        setOtpModalLoading(false);
+        toastSuccess("Verified!", "Your identity has been verified.");
+        // Move to next step
+        setCurrentStep((curr) => curr + 1);
+        setError("");
+        return;
+      } catch (err) {
+        console.error("Phone OTP verify failed", err);
+      }
+    }
+
+    // Try email verification as fallback
+    const email = formData.email.trim();
+    if (email && email.includes("@")) {
+      try {
+        await apiRequest("/api/auth/verify-email-verification-otp", {
+          method: "POST",
+          body: { email, otp },
+        });
+        setIsEmailVerified(true);
+        setShowOtpModal(false);
+        setOtpModalCode("");
+        setOtpModalLoading(false);
+        toastSuccess("Verified!", "Your identity has been verified.");
+        // Move to next step
+        setCurrentStep((curr) => curr + 1);
+        setError("");
+        return;
+      } catch (err) {
+        console.error("Email OTP verify failed", err);
+      }
+    }
+
+    setOtpModalLoading(false);
+    setOtpModalError("Invalid or expired OTP. Please try again.");
+  };
+
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -535,8 +641,7 @@ const BrandRegistration = () => {
           return "Enter a valid 10-digit alternate mobile number.";
         if (!formData.email.trim() || !formData.email.includes("@"))
           return "Valid email is required.";
-        if (!isEmailVerified && !isPhoneVerified)
-          return "Verify either your work email or WhatsApp number before continuing.";
+        // Verification is handled by the OTP modal in handleNext
         if (!formData.username.trim()) return "Username is required.";
         if (usernameStatus === "taken") return "Username is already taken.";
         // Password is only required for new users (not logged in)
@@ -579,7 +684,40 @@ const BrandRegistration = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Custom validation for account step that doesn't check verification status
+    if (currentStep === 1) {
+      if (!formData.contactName.trim()) { setError("Contact name is required."); toastError("Validation Error", "Contact name is required."); return; }
+      if (!formData.designation.trim()) { setError("Designation is required."); toastError("Validation Error", "Designation is required."); return; }
+      if (!isValidIndianMobile(formData.phoneNumber)) { setError("Enter a valid 10-digit Indian mobile number."); toastError("Validation Error", "Enter a valid 10-digit Indian mobile number."); return; }
+      if (formData.alternatePhone && !isValidIndianMobile(formData.alternatePhone)) { setError("Enter a valid 10-digit alternate mobile number."); toastError("Validation Error", "Enter a valid 10-digit alternate mobile number."); return; }
+      if (!formData.email.trim() || !formData.email.includes("@")) { setError("Valid email is required."); toastError("Validation Error", "Valid email is required."); return; }
+      if (!formData.username.trim()) { setError("Username is required."); toastError("Validation Error", "Username is required."); return; }
+      if (usernameStatus === "taken") { setError("Username is already taken."); toastError("Validation Error", "Username is already taken."); return; }
+      if (!isLoggedIn) {
+        if (formData.password.length < 6) { setError("Password must be at least 6 characters."); toastError("Validation Error", "Password must be at least 6 characters."); return; }
+        if (formData.password !== formData.confirmPassword) { setError("Passwords do not match."); toastError("Validation Error", "Passwords do not match."); return; }
+      } else {
+        if (formData.password && formData.password.length < 6) { setError("Password must be at least 6 characters."); toastError("Validation Error", "Password must be at least 6 characters."); return; }
+        if (formData.password && formData.password !== formData.confirmPassword) { setError("Passwords do not match."); toastError("Validation Error", "Passwords do not match."); return; }
+      }
+
+      // If already verified, skip the modal
+      if (isPhoneVerified || isEmailVerified) {
+        setCurrentStep((curr) => curr + 1);
+        setError("");
+        return;
+      }
+
+      // Show OTP modal and send OTPs
+      setShowOtpModal(true);
+      setOtpModalCode("");
+      setOtpModalError("");
+      setOtpModalSent(false);
+      sendBothOtps();
+      return;
+    }
+
     const validationError = validateStep(currentStep);
     if (validationError) {
       setError(validationError);
@@ -898,22 +1036,6 @@ const BrandRegistration = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-base text-gray-900">Designation</Label>
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <Input
-                placeholder="e.g. CEO, Director"
-                className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
-                value={formData.designation}
-                onChange={(e) =>
-                  handleFieldChange("designation", e.target.value)
-                }
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
             <Label className="text-base text-gray-900">Phone Number</Label>
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -926,10 +1048,6 @@ const BrandRegistration = () => {
                 maxLength={10}
                 pattern="[6-9][0-9]{9}"
                 placeholder="10-digit mobile"
-                aria-invalid={
-                  Boolean(formData.phoneNumber) &&
-                  !isValidIndianMobile(formData.phoneNumber)
-                }
                 className={cn(
                   "pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all",
                   isPhoneVerified && "border-green-500 bg-green-50/30",
@@ -942,128 +1060,17 @@ const BrandRegistration = () => {
                   )
                 }
               />
-            </div>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4 sm:p-5">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-emerald-200/35 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-lg shadow-emerald-600/20">
-                  {isPhoneVerified ? (
-                    <Check className="h-5 w-5 stroke-[3]" />
-                  ) : (
-                    <MessageCircle className="h-5 w-5 fill-current/10" />
-                  )}
+              {isPhoneVerified && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
+                  <Check className="w-5 h-5" />
                 </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700/70">
-                    WhatsApp verification
-                  </p>
-                  <p className="mt-0.5 text-sm font-semibold text-slate-800" aria-live="polite">
-                    {isPhoneVerified
-                      ? "WhatsApp number verified"
-                      : "Verify with WhatsApp"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {isPhoneVerified
-                      ? "Your phone number is ready to use."
-                      : "Choose WhatsApp, or verify your work email below."}
-                  </p>
-                </div>
-              </div>
-
-              {isPhoneVerified ? (
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                  <Check className="h-3.5 w-3.5 stroke-[3]" />
-                  Verified
-                </span>
-              ) : (
-                <Button
-                  type="button"
-                  className="h-11 shrink-0 rounded-xl bg-[#25D366] px-5 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-[#1ebc5a] focus-visible:ring-[#25D366]"
-                  onClick={sendPhoneVerification}
-                  disabled={
-                    !isValidIndianMobile(formData.phoneNumber) ||
-                    isSendingPhoneOtp
-                  }
-                >
-                  {isSendingPhoneOtp ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                  )}
-                  {showPhoneOtpInput ? "Resend code" : "Send code"}
-                </Button>
               )}
             </div>
-
-            {showPhoneOtpInput && !isPhoneVerified && (
-              <div className="mt-4 border-t border-emerald-100/90 pt-4">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <div className="min-w-0 flex-1">
-                    <Label className="mb-1.5 block text-xs font-semibold text-slate-600">
-                      Enter the code from WhatsApp
-                    </Label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                       placeholder="6-digit code"
-                      className="h-12 border-emerald-100 bg-white/90 text-center text-base font-bold tracking-[0.42em] placeholder:tracking-[0.28em] focus:border-emerald-500"
-                      maxLength={6}
-                      value={phoneOtp}
-                      onChange={(e) =>
-                        setPhoneOtp(
-                          e.target.value.replace(/\D/g, "").slice(0, 6),
-                        )
-                      }
-                      disabled={isVerifyingPhoneOtp}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    className="mt-auto h-12 shrink-0 rounded-xl px-6 font-bold"
-                    onClick={verifyPhoneOtp}
-                    disabled={phoneOtp.length !== 6 || isVerifyingPhoneOtp}
-                  >
-                    {isVerifyingPhoneOtp ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Verify number
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-base text-gray-900">
-            Alternate Mobile (Optional)
-          </Label>
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <Phone className="w-5 h-5" />
-            </div>
-            <Input
-              type="tel"
-              placeholder="Alternate mobile number"
-              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
-              value={formData.alternatePhone}
-              onChange={(e) =>
-                handleFieldChange("alternatePhone", e.target.value)
-              }
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-base text-gray-900">
-            Work Email <span className="text-xs font-normal text-gray-400">(or verify by email)</span>
-          </Label>
-          <div className="relative flex gap-2">
-            <div className="relative flex-1">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+          <div className="space-y-2">
+            <Label className="text-base text-gray-900">Work Email</Label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                 <Mail className="w-5 h-5" />
               </div>
               <Input
@@ -1071,11 +1078,10 @@ const BrandRegistration = () => {
                 placeholder="name@company.com"
                 className={cn(
                   "pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all",
-                  isEmailVerified && "border-green-500 bg-green-50/30"
+                  isEmailVerified && "border-green-500 bg-green-50/30",
                 )}
                 value={formData.email}
                 onChange={(e) => handleFieldChange("email", e.target.value)}
-                disabled={isEmailVerified || isSendingOtp}
               />
               {isEmailVerified && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
@@ -1083,61 +1089,39 @@ const BrandRegistration = () => {
                 </div>
               )}
             </div>
-            {!isEmailVerified && (
-              <Button
-                type="button"
-                variant="outline"
-                className="shrink-0 h-14 px-6 border-primary text-primary hover:bg-primary/5"
-                onClick={sendEmailVerification}
-                disabled={!formData.email || isSendingOtp}
-              >
-                {isSendingOtp ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : showOtpInput ? (
-                  "Resend email OTP"
-                ) : (
-                  "Send email OTP"
-                )}
-              </Button>
-            )}
           </div>
-          {showOtpInput && !isEmailVerified && (
-            <div className="flex flex-col gap-2 mt-2 animate-in fade-in slide-in-from-top-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter 6-digit OTP"
-                  className="h-14 bg-gray-50 text-center tracking-widest text-lg"
-                  maxLength={6}
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ""))}
-                  disabled={isVerifyingOtp}
-                />
-                <Button
-                  type="button"
-                  className="shrink-0 h-14 px-8"
-                  onClick={verifyEmailOtp}
-                  disabled={emailOtp.length !== 6 || isVerifyingOtp}
-                >
-                  {isVerifyingOtp ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    "Confirm"
-                  )}
-                </Button>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={sendEmailVerification}
-                  disabled={isSendingOtp}
-                  className="text-sm text-primary hover:text-primary/80 font-medium disabled:opacity-50"
-                >
-                  Resend OTP
-                </button>
-              </div>
-            </div>
-          )}
         </div>
+
+        <div className="space-y-2">
+          <Label className="text-base text-gray-900">Designation</Label>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <Input
+              placeholder="e.g. CEO, Director"
+              className="pl-12 h-14 bg-gray-50 border-gray-200 text-lg focus:border-primary/50 transition-all"
+              value={formData.designation}
+              onChange={(e) =>
+                handleFieldChange("designation", e.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        {(isPhoneVerified || isEmailVerified) && (
+          <div className="flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4 text-white stroke-[3]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-green-800">Identity Verified</p>
+              <p className="text-xs text-green-600">
+                {isPhoneVerified ? "Phone number" : "Email"} verified successfully.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="text-base text-gray-900">
@@ -1657,6 +1641,120 @@ const BrandRegistration = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <AnimatePresence>
+        {showOtpModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowOtpModal(false);
+                setOtpModalCode("");
+                setOtpModalError("");
+              }
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: "spring", damping: 26, stiffness: 320 }}
+              className="w-full max-w-[390px] bg-white rounded-[28px] shadow-2xl border border-slate-100 overflow-hidden p-6 sm:p-7 relative"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOtpModal(false);
+                  setOtpModalCode("");
+                  setOtpModalError("");
+                }}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors text-slate-500 hover:text-slate-700"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Header */}
+              <div className="flex flex-col items-center text-center mt-1 mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 shadow-sm text-emerald-600">
+                  <ShieldCheck className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
+                  Enter Verification Code
+                </h3>
+                <p className="text-sm text-slate-500 mt-2 max-w-[260px] leading-relaxed">
+                  We've sent a 6-digit OTP code to verify your identity.
+                </p>
+              </div>
+
+              {/* OTP Input Field */}
+              <div className="mb-5">
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="------"
+                    maxLength={6}
+                    value={otpModalCode}
+                    onChange={(e) => {
+                      setOtpModalCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                      setOtpModalError("");
+                    }}
+                    disabled={otpModalLoading}
+                    className="w-full h-14 rounded-2xl border border-slate-200 bg-slate-50/80 text-center text-2xl font-bold font-mono tracking-[0.55em] text-slate-900 placeholder:text-slate-300 placeholder:font-normal placeholder:tracking-[0.4em] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all disabled:opacity-50"
+                    autoFocus
+                  />
+                </div>
+                {otpModalError && (
+                  <p className="text-xs font-semibold text-rose-500 mt-2.5 text-center">
+                    {otpModalError}
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={verifyOtpModal}
+                  disabled={otpModalCode.length !== 6 || otpModalLoading}
+                  className="w-full h-13 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none flex items-center justify-center gap-2"
+                >
+                  {otpModalLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" /> Verify & Continue
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={sendBothOtps}
+                  disabled={otpModalSending}
+                  className="w-full py-2.5 text-xs font-semibold text-slate-500 hover:text-emerald-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {otpModalSending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending new code...
+                    </>
+                  ) : (
+                    "Didn't receive the code? Resend OTP"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-6 md:p-8 bg-white/90 backdrop-blur-sm z-40 border-t border-gray-100">

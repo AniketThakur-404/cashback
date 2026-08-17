@@ -463,10 +463,17 @@ const Home = () => {
 
     return `/product-info/${offer.productId}`;
   };
-  const fmtCash = (v) => {
+  const fmtRound = (v) => {
     const num = Number(v);
-    return !Number.isFinite(num) ? "₹0" : `₹${num.toFixed(0)}`;
+    if (!Number.isFinite(num) || num === 0) return "₹0";
+    const abs = Math.abs(num);
+    const sign = num < 0 ? "-" : "";
+    if (abs >= 10000000) return `${sign}₹${(abs / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+    if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+    if (abs >= 1000) return `${sign}₹${(abs / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+    return `${sign}₹${Math.round(abs).toLocaleString("en-IN")}`;
   };
+  const fmtCash = fmtRound;
 
   const statItems = [
     {
@@ -797,7 +804,7 @@ const Home = () => {
                 ))
             ) : topOffers.length > 0 ? (
               topOffers.map((offer, i) => {
-                const amountText = `₹${Number(offer.maxCashback).toLocaleString("en-IN")}`;
+                const amountText = fmtRound(offer.maxCashback);
 
                 return (
                   <div

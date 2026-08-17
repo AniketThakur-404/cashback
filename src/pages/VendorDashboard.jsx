@@ -3407,6 +3407,11 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     if (!token) return;
+    if (activeTab === "wallet") {
+      loadWallet(token);
+      loadTransactions(token);
+      return;
+    }
     if (
       activeTab !== "locations" &&
       activeTab !== "customers" &&

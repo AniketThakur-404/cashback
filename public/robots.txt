@@ -5,7 +5,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /vendor-dashboard/
 Disallow: /vendor-panel/
-Disallow: /vendor-signup
+Disallow: /brand-registration
 
 # QR Scanning Flow
 Disallow: /scan/

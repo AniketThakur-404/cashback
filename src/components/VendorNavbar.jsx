@@ -107,7 +107,7 @@ const VendorNavbar = () => {
             Resources
           </button>
           <button
-            onClick={() => handleNavigate("/vendor-signup")}
+            onClick={() => handleNavigate("/brand-registration")}
             className="hover:text-emerald-600 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
           >
             Register
@@ -164,7 +164,7 @@ const VendorNavbar = () => {
               Resources
             </button>
             <button
-              onClick={() => handleNavigate("/vendor-signup")}
+              onClick={() => handleNavigate("/brand-registration")}
               className="rounded-lg px-3 py-3 text-left hover:bg-emerald-50 hover:text-emerald-700"
             >
               Register
