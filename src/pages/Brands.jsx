@@ -50,7 +50,7 @@ const Brands = () => {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800">
         <div className="px-4 h-16 flex items-center justify-center">
-          <h1 className="text-xl font-black text-gray-950 dark:text-white uppercase tracking-tight">
+          <h1 className="text-xl font-bold text-gray-950 dark:text-white uppercase tracking-tight">
             All Brands
           </h1>
         </div>
@@ -65,7 +65,7 @@ const Brands = () => {
               placeholder="Search Brand"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-zinc-900 border-none rounded-2xl py-4 px-6 text-[15px] font-bold text-gray-900 dark:text-white placeholder:text-gray-400 outline-none transition-all focus:bg-white dark:focus:bg-zinc-800 focus:ring-1 focus:ring-gray-200 dark:focus:ring-zinc-700"
+              className="w-full bg-gray-50 dark:bg-zinc-900 border-none rounded-2xl py-4 px-6 text-[15px] font-medium text-gray-900 dark:text-white placeholder:text-gray-400 outline-none transition-all focus:bg-white dark:focus:bg-zinc-800 focus:ring-1 focus:ring-gray-200 dark:focus:ring-zinc-700"
             />
           </div>
         </div>
@@ -73,10 +73,10 @@ const Brands = () => {
         {/* Brand List */}
         <div className="space-y-0">
           <div className="mb-4 px-2 flex items-center justify-between">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
               Partner Network
             </span>
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">
               {filteredBrands.length} Brands
             </span>
           </div>
@@ -114,14 +114,14 @@ const Brands = () => {
                           className="w-full h-full object-contain p-2.5"
                           onError={(e) => {
                             e.target.style.display = "none";
-                            e.target.parentElement.innerHTML = `<span class="text-xl font-black text-emerald-600">${brand.name
+                            e.target.parentElement.innerHTML = `<span class="text-xl font-semibold text-emerald-600">${brand.name
                               ?.charAt(0)
                               ?.toUpperCase()}</span>`;
                           }}
                         />
                       </div>
                       <div className="flex-1">
-                        <span className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        <span className="text-[15px] font-semibold text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {brand.name}
                         </span>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">

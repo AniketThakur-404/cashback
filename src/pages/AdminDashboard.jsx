@@ -256,6 +256,7 @@ const createBlogDraft = () => ({
   author: "",
   category: "",
   coverImage: "",
+  coverImageAlt: "",
   content: "",
   status: "draft",
   publishedAt: "",
@@ -279,6 +280,7 @@ const normalizeBlogEntries = (blogs) => {
     author: String(blog?.author || ""),
     category: String(blog?.category || ""),
     coverImage: String(blog?.coverImage || blog?.image || ""),
+    coverImageAlt: String(blog?.coverImageAlt || blog?.imageAlt || ""),
     content: String(blog?.content || ""),
     status: String(blog?.status || "draft").toLowerCase() === "published" ? "published" : "draft",
     publishedAt: String(blog?.publishedAt || ""),
@@ -9581,12 +9583,12 @@ const AdminDashboard = () => {
 
                           {/* Editor Body */}
                           <div className="grid lg:grid-cols-[200px_1fr] gap-6">
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                               <div className="aspect-[4/3] rounded-lg border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/20 overflow-hidden flex items-center justify-center relative group">
                                 {blog.coverImage ? (
                                   <AuthImage
                                     src={resolveAssetUrl(blog.coverImage)}
-                                    alt="Blog cover preview"
+                                    alt={blog.coverImageAlt || blog.title || "Blog cover preview"}
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
@@ -9609,6 +9611,20 @@ const AdminDashboard = () => {
                                 />
                                 <Upload size={14} /> Upload Cover
                               </label>
+                              <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                                  <span>Image ALT Text</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={blog.coverImageAlt || ""}
+                                  onChange={(e) =>
+                                    handleBlogFieldChange(editingBlogIndex, "coverImageAlt", e.target.value)
+                                  }
+                                  placeholder="Image ALT text (SEO)"
+                                  className={adminInputClass}
+                                />
+                              </div>
                               {blogUploadState[editingBlogIndex]?.status && (
                                 <p className="text-[11px] text-emerald-500 text-center font-medium">
                                   {blogUploadState[editingBlogIndex].status}

@@ -29,6 +29,7 @@ const createBlogDraft = () => {
     author: "",
     category: "",
     coverImage: "",
+    coverImageAlt: "",
     content: "",
     status: "draft",
     publishedAt: "",
@@ -52,6 +53,7 @@ const normalizeBlogs = (blogs) =>
         author: String(blog?.author || ""),
         category: String(blog?.category || ""),
         coverImage: String(blog?.coverImage || blog?.image || ""),
+        coverImageAlt: String(blog?.coverImageAlt || blog?.imageAlt || ""),
         content: String(blog?.content || ""),
         status:
           String(blog?.status || "draft").toLowerCase() === "published"
@@ -137,6 +139,23 @@ const renderPreviewBlocks = (content) => {
   const lines = String(content || "").split("\n");
   return lines.map((line, index) => {
     const key = `${index}-${line}`;
+    const imgMatch = line.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imgMatch) {
+      return (
+        <div key={key} className="my-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+          <img
+            src={resolveAssetUrl(imgMatch[2])}
+            alt={imgMatch[1] || "Blog image"}
+            className="w-full h-auto max-h-[400px] object-cover"
+          />
+          {imgMatch[1] && (
+            <p className="text-center text-xs text-slate-500 py-1.5 px-3 bg-slate-50 border-t border-slate-100 italic">
+              {imgMatch[1]}
+            </p>
+          )}
+        </div>
+      );
+    }
     if (line.startsWith("# ")) {
       return (
         <h1 key={key} className="text-3xl font-bold leading-tight mb-5">
@@ -527,10 +546,10 @@ const BlogPortal = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="aspect-[4/1.25] rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
                       {blog.coverImage ? (
-                        <AuthImage src={resolveAssetUrl(blog.coverImage)} alt="Blog cover preview" className="h-full w-full object-cover" />
+                        <AuthImage src={resolveAssetUrl(blog.coverImage)} alt={blog.coverImageAlt || blog.title || "Blog cover preview"} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-xs text-slate-400">No cover image</span>
                       )}
@@ -558,6 +577,19 @@ const BlogPortal = () => {
                           Remove Image
                         </button>
                       )}
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-600 flex items-center justify-between">
+                        <span>Image ALT Text</span>
+                        <span className="text-[10px] text-slate-400 font-normal">SEO & Accessibility</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={blog.coverImageAlt || ""}
+                        onChange={(e) => handleBlogChange(index, "coverImageAlt", e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#059669] transition-colors"
+                        placeholder="e.g. Customer loyalty reward card benefits"
+                      />
                     </div>
                     {uploadState[index]?.status && <p className="text-center text-[11px] text-emerald-600">{uploadState[index].status}</p>}
                     {uploadState[index]?.error && <p className="text-center text-[11px] text-rose-600">{uploadState[index].error}</p>}
@@ -618,7 +650,7 @@ const BlogPortal = () => {
                     {blog.coverImage ? (
                       <AuthImage
                         src={resolveAssetUrl(blog.coverImage)}
-                        alt={blog.title}
+                        alt={blog.coverImageAlt || blog.title || "Blog cover"}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (

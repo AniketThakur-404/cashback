@@ -6,6 +6,7 @@ import {
   Bold,
   Heading1,
   Heading2,
+  Image,
   Italic,
   Link,
   List,
@@ -60,6 +61,9 @@ const BlogContentToolbar = ({ value, onChange, textareaRef }) => {
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("https://");
   const [linkTextState, setLinkTextState] = useState("");
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("https://");
+  const [imageAltState, setImageAltState] = useState("");
   const [pendingSelection, setPendingSelection] = useState({ start: 0, end: 0 });
 
   const handleCancelLink = () => {
@@ -109,6 +113,53 @@ const BlogContentToolbar = ({ value, onChange, textareaRef }) => {
     }
   };
 
+  const handleCancelImage = () => {
+    setIsImageModalOpen(false);
+    const textarea = textareaRef?.current;
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(pendingSelection.start, pendingSelection.end);
+      }, 0);
+    }
+  };
+
+  const handleInsertImage = (e) => {
+    e.preventDefault();
+    setIsImageModalOpen(false);
+
+    const textarea = textareaRef?.current;
+    const content = String(value || "");
+    const finalUrl = imageUrl.trim() || "https://example.com/image.jpg";
+    const finalAlt = imageAltState.trim() || "Image description";
+    const replacement = `![${finalAlt}](${finalUrl})`;
+
+    let newValue = "";
+    let start = content.length;
+    let end = content.length;
+
+    if (textarea) {
+      start = pendingSelection.start;
+      end = pendingSelection.end;
+      newValue = content.substring(0, start) + replacement + content.substring(end);
+    } else {
+      const needsNewLine = content && !content.endsWith("\n") ? "\n" : "";
+      newValue = `${content}${needsNewLine}${replacement}`;
+      start = newValue.length - replacement.length;
+    }
+
+    if (typeof onChange === "function") {
+      onChange(newValue);
+    }
+
+    if (textarea) {
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + replacement.length, start + replacement.length);
+      }, 0);
+    }
+  };
+
   const handleClick = (action) => {
     const content = String(value || "");
     const textarea = textareaRef?.current;
@@ -122,6 +173,18 @@ const BlogContentToolbar = ({ value, onChange, textareaRef }) => {
       setLinkUrl("https://");
       setPendingSelection({ start, end });
       setIsLinkModalOpen(true);
+      return;
+    }
+
+    if (action === "image") {
+      const start = textarea ? textarea.selectionStart : content.length;
+      const end = textarea ? textarea.selectionEnd : content.length;
+      const selectedText = textarea ? content.substring(start, end) : "";
+
+      setImageAltState(selectedText || "");
+      setImageUrl("https://");
+      setPendingSelection({ start, end });
+      setIsImageModalOpen(true);
       return;
     }
 
@@ -265,6 +328,7 @@ const BlogContentToolbar = ({ value, onChange, textareaRef }) => {
     { action: "center", label: "Align center", icon: AlignCenter },
     { action: "right", label: "Align right", icon: AlignRight },
     { action: "link", label: "Link", icon: Link },
+    { action: "image", label: "Image (with Alt Text)", icon: Image },
     { action: "table", label: "Table", icon: Table },
   ];
 
@@ -346,6 +410,73 @@ const BlogContentToolbar = ({ value, onChange, textareaRef }) => {
                   className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-xs font-semibold text-white shadow-md shadow-[#059669]/10 hover:shadow-lg transition-all cursor-pointer"
                 >
                   Insert Link
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div 
+            className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-[#131317] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleInsertImage} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                  <Image size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Insert Image</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Add an image with SEO & Accessibility Alt text</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Image URL
+                </label>
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/image.png"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 placeholder:text-slate-400 focus:border-[#059669] focus:outline-none dark:border-white/10 dark:bg-black/20 dark:text-white"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Image ALT Text
+                  </label>
+                  <span className="text-[9px] text-slate-400">SEO / Accessibility</span>
+                </div>
+                <input
+                  type="text"
+                  value={imageAltState}
+                  onChange={(e) => setImageAltState(e.target.value)}
+                  placeholder="e.g. Loyalty program discount rewards banner"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 placeholder:text-slate-400 focus:border-[#059669] focus:outline-none dark:border-white/10 dark:bg-black/20 dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCancelImage}
+                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-[#059669] hover:bg-[#047857] text-xs font-semibold text-white shadow-md shadow-[#059669]/10 hover:shadow-lg transition-all cursor-pointer"
+                >
+                  Insert Image
                 </button>
               </div>
             </form>

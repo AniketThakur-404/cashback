@@ -25,6 +25,7 @@ const normalizeBlogs = (blogs) =>
         author: String(blog?.author || ""),
         category: String(blog?.category || ""),
         coverImage: String(blog?.coverImage || blog?.image || ""),
+        coverImageAlt: String(blog?.coverImageAlt || blog?.imageAlt || ""),
         content: String(blog?.content || ""),
         status:
           String(blog?.status || "draft").toLowerCase() === "published"
@@ -73,7 +74,7 @@ const parseInlineMarkdown = (text) => {
 
     if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
       return (
-        <strong key={index} className="font-bold">
+        <strong key={index} className="font-bold text-slate-900 dark:text-white">
           {parseInlineMarkdown(part.slice(2, -2))}
         </strong>
       );
@@ -89,7 +90,7 @@ const parseInlineMarkdown = (text) => {
 
     if (part.startsWith("~~") && part.endsWith("~~")) {
       return (
-        <del key={index} className="line-through text-slate-450 dark:text-slate-500">
+        <del key={index} className="line-through text-slate-400 dark:text-slate-500">
           {parseInlineMarkdown(part.slice(2, -2))}
         </del>
       );
@@ -103,6 +104,23 @@ const renderBlogBlocks = (content) => {
   const lines = String(content || "").split("\n");
   return lines.map((line, index) => {
     const key = `${index}-${line}`;
+    const imgMatch = line.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
+    if (imgMatch) {
+      return (
+        <div key={key} className="my-6 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/30 shadow-sm">
+          <img
+            src={resolveAssetUrl(imgMatch[2])}
+            alt={imgMatch[1] || "Blog content image"}
+            className="w-full h-auto max-h-[500px] object-cover"
+          />
+          {imgMatch[1] && (
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 py-2 px-4 bg-slate-100/50 dark:bg-white/[0.02] border-t border-slate-200/40 dark:border-white/5 italic">
+              {imgMatch[1]}
+            </p>
+          )}
+        </div>
+      );
+    }
     if (line.startsWith("# ")) {
       return (
         <h1 key={key} className="text-2xl sm:text-3xl font-extrabold leading-tight mb-5 text-slate-900 dark:text-white">
@@ -502,7 +520,7 @@ const BlogViewer = () => {
                     {blog.coverImage ? (
                       <AuthImage
                         src={resolveAssetUrl(blog.coverImage)}
-                        alt={blog.title}
+                        alt={blog.coverImageAlt || blog.title || "Blog cover"}
                         className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-500"
                       />
                     ) : (

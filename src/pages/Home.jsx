@@ -423,20 +423,6 @@ const Home = () => {
         ease: "sine.inOut",
         force3D: true,
       });
-      gsap.to(".scan-ring-1", {
-        rotation: 360,
-        duration: 30,
-        repeat: -1,
-        ease: "none",
-        force3D: true,
-      });
-      gsap.to(".scan-ring-2", {
-        rotation: -360,
-        duration: 40,
-        repeat: -1,
-        ease: "none",
-        force3D: true,
-      });
       // Quick actions animation removed for alignment reliability
       // Brand items and offer cards animations removed for visibility reliability
       gsap.to(".offer-shine", {
@@ -520,15 +506,15 @@ const Home = () => {
               }}
             >
               <div
-                className="scan-ring-1 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full"
+                className="scan-ring-1 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full pointer-events-none"
                 style={{ border: "1px solid rgba(5,150,105,0.1)" }}
               />
               <div
-                className="scan-ring-2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full"
+                className="scan-ring-2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] h-[260px] rounded-full pointer-events-none"
                 style={{ border: "1px solid rgba(5,150,105,0.05)" }}
               />
               <div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-3xl"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-3xl pointer-events-none"
                 style={{ background: "rgba(5,150,105,0.15)" }}
               />
 
@@ -669,7 +655,7 @@ const Home = () => {
                     <div className="h-6 w-12 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-md" />
                   ) : (
                     <span
-                      className="text-[20px] font-black text-zinc-900 dark:text-white leading-none mt-0.5"
+                      className="text-[18px] font-semibold text-zinc-800 dark:text-zinc-100 leading-none mt-0.5"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {s.value}
@@ -747,11 +733,11 @@ const Home = () => {
                       className="w-full h-full object-contain p-2.5 transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
                         e.target.style.display = "none";
-                        e.target.parentElement.innerHTML = `<span style="font-size:24px;font-weight:900;color:#059669;font-family:system-ui">${b.name?.charAt(0)?.toUpperCase() || "B"}</span>`;
+                        e.target.parentElement.innerHTML = `<span style="font-size:22px;font-weight:600;color:#059669;font-family:system-ui">${b.name?.charAt(0)?.toUpperCase() || "B"}</span>`;
                       }}
                     />
                   </div>
-                  <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 truncate w-[68px] text-center transition-colors group-hover:text-gray-900 dark:group-hover:text-emerald-50 mt-0.5">
+                  <span className="text-[11px] font-medium text-gray-600 dark:text-gray-400 truncate w-[68px] text-center transition-colors group-hover:text-gray-900 dark:group-hover:text-emerald-50 mt-0.5">
                     {b.name}
                   </span>
                 </Link>
@@ -781,7 +767,7 @@ const Home = () => {
               />
             </div>
             <span
-              className="text-[13px] font-black text-emerald-950 dark:text-emerald-50 uppercase"
+              className="text-[13px] font-bold text-emerald-950 dark:text-emerald-50 uppercase"
               style={{ letterSpacing: "0.15em" }}
             >
               Top Offers
