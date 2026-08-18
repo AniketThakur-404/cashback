@@ -51,11 +51,23 @@ const parseInlineMarkdown = (text) => {
     );
   }
 
-  const regex = /(\[.*?\]\(.*?\)|\*\*.*?\*\*|__.*?__|~~.*?~~|\*.*?\*|_.*?_)/g;
+  const regex = /(`[^`]+`|\[.*?\]\(.*?\)|\*\*.*?\*\*|__.*?__|~~.*?~~|\*.*?\*|_.*?_)/g;
   const parts = text.split(regex);
 
   return parts.map((part, index) => {
     if (!part) return null;
+
+    // Inline code
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 1) {
+      return (
+        <code
+          key={index}
+          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-emerald-700 dark:text-emerald-400 font-mono text-[13px]"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
 
     const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
     if (linkMatch) {
@@ -72,7 +84,8 @@ const parseInlineMarkdown = (text) => {
       );
     }
 
-    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+    if ((part.startsWith("**") && part.endsWith("**") && part.length >= 4) ||
+        (part.startsWith("__") && part.endsWith("__") && part.length >= 4)) {
       return (
         <strong key={index} className="font-bold text-slate-900 dark:text-white">
           {parseInlineMarkdown(part.slice(2, -2))}
@@ -80,7 +93,8 @@ const parseInlineMarkdown = (text) => {
       );
     }
 
-    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+    if ((part.startsWith("*") && part.endsWith("*") && part.length >= 2) ||
+        (part.startsWith("_") && part.endsWith("_") && part.length >= 2)) {
       return (
         <em key={index} className="italic">
           {parseInlineMarkdown(part.slice(1, -1))}
@@ -88,7 +102,7 @@ const parseInlineMarkdown = (text) => {
       );
     }
 
-    if (part.startsWith("~~") && part.endsWith("~~")) {
+    if (part.startsWith("~~") && part.endsWith("~~") && part.length >= 4) {
       return (
         <del key={index} className="line-through text-slate-400 dark:text-slate-500">
           {parseInlineMarkdown(part.slice(2, -2))}
@@ -100,74 +114,286 @@ const parseInlineMarkdown = (text) => {
   });
 };
 
-const renderBlogBlocks = (content) => {
-  const lines = String(content || "").split("\n");
-  return lines.map((line, index) => {
-    const key = `${index}-${line}`;
-    const imgMatch = line.trim().match(/^!\[(.*?)\]\((.*?)\)$/);
+const parseMarkdownBlocks = (content) => {
+  if (!content) return [];
+  const rawLines = String(content || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+  const blocks = [];
+  let i = 0;
+
+  while (i < rawLines.length) {
+    const line = rawLines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    // Code block (```)
+    if (trimmed.startsWith("```")) {
+      const codeLines = [];
+      i++;
+      while (i < rawLines.length && !rawLines[i].trim().startsWith("```")) {
+        codeLines.push(rawLines[i]);
+        i++;
+      }
+      if (i < rawLines.length) i++;
+      blocks.push({ type: "code", content: codeLines.join("\n") });
+      continue;
+    }
+
+    // Horizontal rule (---, ***, ___)
+    if (/^(\-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      blocks.push({ type: "hr" });
+      i++;
+      continue;
+    }
+
+    // Markdown Image: ![alt](url)
+    const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imgMatch) {
-      return (
-        <div key={key} className="my-6 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/30 shadow-sm">
-          <img
-            src={resolveAssetUrl(imgMatch[2])}
-            alt={imgMatch[1] || "Blog content image"}
-            className="w-full h-auto max-h-[500px] object-cover"
-          />
-          {imgMatch[1] && (
-            <p className="text-center text-xs text-slate-500 dark:text-slate-400 py-2 px-4 bg-slate-100/50 dark:bg-white/[0.02] border-t border-slate-200/40 dark:border-white/5 italic">
-              {imgMatch[1]}
-            </p>
-          )}
-        </div>
-      );
+      blocks.push({ type: "image", alt: imgMatch[1], url: imgMatch[2] });
+      i++;
+      continue;
     }
-    if (line.startsWith("# ")) {
-      return (
-        <h1 key={key} className="text-2xl sm:text-3xl font-extrabold leading-tight mb-5 text-slate-900 dark:text-white">
-          {parseInlineMarkdown(line.slice(2))}
-        </h1>
-      );
+
+    // Headings (# to ######)
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      blocks.push({ type: "heading", level, text: headingMatch[2] });
+      i++;
+      continue;
     }
-    if (line.startsWith("## ")) {
-      return (
-        <h2 key={key} className="text-xl sm:text-2xl font-bold leading-snug mb-4 text-slate-850 dark:text-slate-200">
-          {parseInlineMarkdown(line.slice(3))}
-        </h2>
-      );
+
+    // Blockquote (> ...)
+    if (trimmed.startsWith(">")) {
+      const quoteLines = [];
+      while (i < rawLines.length && rawLines[i].trim().startsWith(">")) {
+        quoteLines.push(rawLines[i].trim().replace(/^>\s?/, ""));
+        i++;
+      }
+      blocks.push({ type: "blockquote", text: quoteLines.join("\n") });
+      continue;
     }
-    if (line.startsWith("> ")) {
-      return (
-        <blockquote key={key} className="border-l-4 border-emerald-500 bg-slate-100/40 dark:bg-white/[0.02] pl-4 py-2 italic mb-4 text-slate-700 dark:text-slate-300 rounded-r-lg">
-          {parseInlineMarkdown(line.slice(2))}
-        </blockquote>
-      );
+
+    // Table: lines starting with | and ending with |
+    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+      const tableLines = [];
+      while (i < rawLines.length && rawLines[i].trim().startsWith("|") && rawLines[i].trim().endsWith("|")) {
+        tableLines.push(rawLines[i].trim());
+        i++;
+      }
+      if (tableLines.length >= 2) {
+        const parseRow = (rowStr) =>
+          rowStr
+            .slice(1, -1)
+            .split("|")
+            .map((c) => c.trim());
+
+        const headers = parseRow(tableLines[0]);
+        const isSeparator = /^\|?(\s*:?-+:?\s*\|?)+\s*$/.test(tableLines[1]);
+        const startRowIdx = isSeparator ? 2 : 1;
+        const rows = tableLines.slice(startRowIdx).map(parseRow);
+
+        blocks.push({ type: "table", headers, rows });
+        continue;
+      }
     }
-    if (line.startsWith("- ")) {
-      return (
-        <p key={key} className="mb-2 pl-4 text-slate-700 dark:text-slate-300">
-          • {parseInlineMarkdown(line.slice(2))}
-        </p>
-      );
+
+    // Unordered list (*, -, +)
+    if (/^[\*\-\+]\s+/.test(trimmed)) {
+      const items = [];
+      while (i < rawLines.length && /^[\*\-\+]\s+/.test(rawLines[i].trim())) {
+        items.push(rawLines[i].trim().replace(/^[\*\-\+]\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "ul", items });
+      continue;
     }
-    if (/^\d+\.\s/.test(line)) {
-      const match = line.match(/^(\d+\.\s)/)[0];
-      return (
-        <p key={key} className="mb-2 pl-4 text-slate-700 dark:text-slate-300">
-          {match}{parseInlineMarkdown(line.slice(match.length))}
-        </p>
-      );
+
+    // Ordered list (1. , 2. )
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const items = [];
+      while (i < rawLines.length && /^\d+\.\s+/.test(rawLines[i].trim())) {
+        const itemMatch = rawLines[i].trim().match(/^(\d+)\.\s+(.+)$/);
+        if (itemMatch) {
+          items.push({ num: itemMatch[1], text: itemMatch[2] });
+        } else {
+          items.push({ num: String(items.length + 1), text: rawLines[i].trim().replace(/^\d+\.\s+/, "") });
+        }
+        i++;
+      }
+      blocks.push({ type: "ol", items });
+      continue;
     }
-    if (line.trim() === "---") {
-      return <hr key={key} className="my-6 border-slate-200 dark:border-zinc-800" />;
+
+    // Paragraph
+    const paragraphLines = [];
+    while (
+      i < rawLines.length &&
+      rawLines[i].trim() &&
+      !rawLines[i].trim().startsWith("#") &&
+      !rawLines[i].trim().startsWith(">") &&
+      !rawLines[i].trim().startsWith("```") &&
+      !/^(\-{3,}|\*{3,}|_{3,})$/.test(rawLines[i].trim()) &&
+      !/^!\[(.*?)\]\((.*?)\)$/.test(rawLines[i].trim()) &&
+      !(rawLines[i].trim().startsWith("|") && rawLines[i].trim().endsWith("|")) &&
+      !/^[\*\-\+]\s+/.test(rawLines[i].trim()) &&
+      !/^\d+\.\s+/.test(rawLines[i].trim())
+    ) {
+      paragraphLines.push(rawLines[i]);
+      i++;
     }
-    if (!line.trim()) {
-      return <div key={key} className="h-4" />;
+    blocks.push({ type: "p", text: paragraphLines.join("\n") });
+  }
+
+  return blocks;
+};
+
+const renderBlogBlocks = (content) => {
+  const blocks = parseMarkdownBlocks(content);
+  return blocks.map((block, index) => {
+    const key = `blk-${index}`;
+    switch (block.type) {
+      case "heading": {
+        if (block.level === 1) {
+          return (
+            <h1 key={key} className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-8 mb-4 leading-tight">
+              {parseInlineMarkdown(block.text)}
+            </h1>
+          );
+        }
+        if (block.level === 2) {
+          return (
+            <h2 key={key} className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-7 mb-3.5 leading-snug border-b border-slate-100 dark:border-white/5 pb-2">
+              {parseInlineMarkdown(block.text)}
+            </h2>
+          );
+        }
+        if (block.level === 3) {
+          return (
+            <h3 key={key} className="text-lg sm:text-xl font-bold text-slate-850 dark:text-slate-100 mt-6 mb-2.5 leading-snug">
+              {parseInlineMarkdown(block.text)}
+            </h3>
+          );
+        }
+        if (block.level === 4) {
+          return (
+            <h4 key={key} className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200 mt-5 mb-2">
+              {parseInlineMarkdown(block.text)}
+            </h4>
+          );
+        }
+        if (block.level === 5) {
+          return (
+            <h5 key={key} className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-1.5">
+              {parseInlineMarkdown(block.text)}
+            </h5>
+          );
+        }
+        return (
+          <h6 key={key} className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mt-3 mb-1">
+            {parseInlineMarkdown(block.text)}
+          </h6>
+        );
+      }
+      case "ul": {
+        return (
+          <ul key={key} className="my-4 space-y-2 pl-1">
+            {block.items.map((item, itemIdx) => (
+              <li key={itemIdx} className="flex items-start gap-2.5 text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed">
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold shrink-0 mt-0.5 text-base leading-none">•</span>
+                <div className="flex-1">{parseInlineMarkdown(item)}</div>
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      case "ol": {
+        return (
+          <ol key={key} className="my-4 space-y-2 pl-1">
+            {block.items.map((item, itemIdx) => (
+              <li key={itemIdx} className="flex items-start gap-2.5 text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm shrink-0 min-w-[20px]">
+                  {item.num}.
+                </span>
+                <div className="flex-1">{parseInlineMarkdown(item.text)}</div>
+              </li>
+            ))}
+          </ol>
+        );
+      }
+      case "table": {
+        return (
+          <div key={key} className="my-6 overflow-x-auto rounded-xl border border-slate-200/80 dark:border-white/10 shadow-sm bg-white dark:bg-zinc-900/50">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="bg-slate-50 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-white/10">
+                <tr>
+                  {block.headers.map((h, hIdx) => (
+                    <th key={hIdx} className="px-4 py-3 font-bold text-slate-900 dark:text-white tracking-tight">
+                      {parseInlineMarkdown(h)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {block.rows.map((row, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                    {row.map((cell, cIdx) => (
+                      <td key={cIdx} className="px-4 py-3 text-slate-700 dark:text-slate-300 leading-relaxed">
+                        {parseInlineMarkdown(cell)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      case "blockquote": {
+        return (
+          <blockquote key={key} className="my-5 border-l-4 border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/20 px-4 py-3 italic text-[15px] text-slate-700 dark:text-slate-300 rounded-r-xl leading-relaxed">
+            {parseInlineMarkdown(block.text)}
+          </blockquote>
+        );
+      }
+      case "image": {
+        return (
+          <div key={key} className="my-6 rounded-2xl overflow-hidden border border-slate-200/60 dark:border-white/10 bg-slate-50 dark:bg-black/30 shadow-sm">
+            <img
+              src={resolveAssetUrl(block.url)}
+              alt={block.alt || "Blog image"}
+              className="w-full h-auto max-h-[500px] object-cover"
+            />
+            {block.alt && (
+              <p className="text-center text-xs text-slate-500 dark:text-slate-400 py-2 px-4 bg-slate-100/50 dark:bg-white/[0.02] border-t border-slate-200/40 dark:border-white/5 italic">
+                {block.alt}
+              </p>
+            )}
+          </div>
+        );
+      }
+      case "code": {
+        return (
+          <pre key={key} className="my-5 p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800">
+            <code>{block.content}</code>
+          </pre>
+        );
+      }
+      case "hr": {
+        return <hr key={key} className="my-7 border-slate-200 dark:border-zinc-800" />;
+      }
+      case "p":
+      default: {
+        return (
+          <p key={key} className="mb-4 leading-7 text-slate-700 dark:text-slate-300 text-[15px]">
+            {parseInlineMarkdown(block.text)}
+          </p>
+        );
+      }
     }
-    return (
-      <p key={key} className="mb-4 leading-7 text-slate-700 dark:text-slate-300 text-[15px]">
-        {parseInlineMarkdown(line)}
-      </p>
-    );
   });
 };
 
