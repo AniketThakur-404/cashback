@@ -103,6 +103,7 @@ const AdminSidebar = ({
                 { id: 'blogs', label: 'Upload Blog', icon: Newspaper },
                 { id: 'product-reports', label: 'Product Reports', icon: FileText },
                 { id: 'logs', label: 'Logs & Audit', icon: FileText },
+                { id: 'compliance', label: 'Compliance & Audit', icon: ShieldCheck },
             ],
         },
     ];

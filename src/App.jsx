@@ -38,6 +38,7 @@ const SignIn = lazy(() => import("./pages/SignIn"));
 const VendorPrivacyPolicy = lazy(() => import("./pages/VendorPrivacyPolicy"));
 const VendorTerms = lazy(() => import("./pages/VendorTerms"));
 const VendorFAQs = lazy(() => import("./pages/VendorFAQs"));
+const VendorContact = lazy(() => import("./pages/VendorContact"));
 const RedeemQr = lazy(() => import("./pages/RedeemQr"));
 const Claim = lazy(() => import("./pages/Claim"));
 const BrandRegistration = lazy(() => import("./pages/BrandRegistration"));
@@ -109,6 +110,8 @@ function App() {
             <Route path="/vendor/terms" element={<VendorTerms />} />
             <Route path="/vendor/faqs" element={<VendorFAQs />} />
             <Route path="/vendor-faqs" element={<VendorFAQs />} />
+            <Route path="/vendor/contact" element={<VendorContact />} />
+            <Route path="/vendor-contact" element={<VendorContact />} />
             <Route path="/blog" element={<BlogViewer />} />
             <Route path="/blog/:slug" element={<BlogViewer />} />
             <Route path="/blog-edit" element={<BlogPortal />} />

@@ -117,6 +117,7 @@ import {
 } from "../lib/api";
 import { getApiBaseUrl } from "../lib/apiClient";
 import AuthImage from "../components/AuthImage";
+import CompliancePanel from "../components/admin/CompliancePanel";
 
 const ADMIN_TOKEN_KEY = "cashback_admin_token";
 const ADMIN_SIDEBAR_KEY = "cashback_admin_sidebar";
@@ -1288,6 +1289,7 @@ const AdminDashboard = () => {
   const isQrsRoute = activeSection === "qrs";
   const isVendorsRoute = activeSection === "vendors";
   const isLogsRoute = activeSection === "logs";
+  const isComplianceRoute = activeSection === "compliance";
   const isSettingsRoute = activeSection === "settings";
   const isBlogsRoute = activeSection === "blogs";
   const isRedeemCatalogRoute = activeSection === "redeem-catalog";
@@ -1387,6 +1389,7 @@ const AdminDashboard = () => {
     "product-track": "Product Track",
     "product_track": "Product Track",
     logs: "Logs & Audit",
+    compliance: "Compliance & Audit",
     blogs: "Upload Blog",
     settings: "System Settings",
     account: "Account",
@@ -8885,6 +8888,11 @@ const AdminDashboard = () => {
                 </div>
               )}
             </section>
+          )}
+
+          {/* Compliance & Audit Section */}
+          {isComplianceRoute && (
+            <CompliancePanel token={token} apiBase={API_BASE_URL} />
           )}
 
           {/* Redeem Catalog Section */}

@@ -1233,7 +1233,7 @@ const VendorLandingPage = () => {
                 { label: "Privacy Policy", path: "/vendor/privacy" },
                 { label: "Terms of Service", path: "/vendor/terms" },
                 { label: "FAQs", path: "/vendor/faqs" },
-                { label: "Contact", href: "mailto:support@assuredrewards.in?subject=Vendor%20Support%20Request" },
+                { label: "Contact", path: "/vendor/contact" },
               ].map((link, i) => (
                 <a
                   key={i}

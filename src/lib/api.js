@@ -1224,5 +1224,21 @@ export const updateAdminTransactionStatus = (token, transactionId, status) =>
     body: { status },
   });
 
+export const getAdminCampaignComplianceSummary = (token, params) =>
+  apiRequest(`/api/admin/compliance/campaign-summary${buildQueryString(params)}`, { token });
 
+export const getAdminBeneficiaryReport = (token, params) =>
+  apiRequest(`/api/admin/compliance/beneficiary-report${buildQueryString(params)}`, { token });
 
+export const getAdminPayoutMapping = (token, params) =>
+  apiRequest(`/api/admin/compliance/payout-mapping${buildQueryString(params)}`, { token });
+
+export const getAdminComplianceExceptions = (token) =>
+  apiRequest("/api/admin/compliance/exceptions", { token });
+
+export const reviewAdminComplianceException = (token, id) =>
+  apiRequest(`/api/admin/compliance/exceptions/${encodeURIComponent(id)}/review`, {
+    method: "PUT",
+    token,
+    body: { reviewed: true },
+  });
