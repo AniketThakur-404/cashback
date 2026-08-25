@@ -6,7 +6,7 @@ import { useSEO } from "../hooks/useSEO";
 const TermsConditions = () => {
   useSEO(
     "Terms & Conditions | Assured Rewards Loyalty Program",
-    "Review the Terms and Conditions for our loyalty rewards program. Understand the rules to earn loyalty points, redeem rewards, and use cashback coupons."
+    "Review the Assured Rewards terms and conditions. Understand the rules for earning loyalty points, redeeming rewards and using cashback coupons."
   );
 
   const navigate = useNavigate();

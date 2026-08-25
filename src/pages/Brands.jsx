@@ -96,7 +96,7 @@ const Brands = () => {
               <AnimatePresence>
                 {filteredBrands.map((brand, idx) => (
                   <motion.div
-                    key={brand.id}
+                    key={brand.id ? `brand-${brand.id}` : `brand-${brand.name || idx}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.03 }}

@@ -5,8 +5,8 @@ import { useSEO } from "../hooks/useSEO";
 
 const ReturnRefund = () => {
   useSEO(
-    "Return & Refund Policy | Assured Rewards Shopping",
-    "Check our Return and Refund Policy for purchases made using loyalty points or cashback on shopping. We strive to provide the best customer experience."
+    "Return & Refund Policy | Assured Rewards",
+    "Read the Assured Rewards return and refund policy for purchases made with reward points or cashback and understand eligibility and refund timelines."
   );
 
   const navigate = useNavigate();

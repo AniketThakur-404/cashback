@@ -5,8 +5,8 @@ import { useSEO } from "../hooks/useSEO";
 
 const PrivacyPolicy = () => {
   useSEO(
-    "Privacy Policy | Secure Customer Loyalty Program",
-    "Read the Privacy Policy of Assured Rewards. We protect your data while you earn cashback online, use cash back apps, and enjoy our rewards program safely."
+    "Privacy Policy | Assured Rewards Customer Loyalty Program",
+    "Read the Assured Rewards Privacy Policy and learn how we protect your personal information while you earn cashback and use our rewards program."
   );
 
   const navigate = useNavigate();

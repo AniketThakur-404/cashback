@@ -6,7 +6,7 @@ import { useSEO } from "../hooks/useSEO";
 const BrandFAQs = () => {
   useSEO(
     "Brand FAQs | Loyalty Promotions & Cashback Offers",
-    "Find answers to FAQs about brand loyalty promotions, bank cashback offers, and loyalty membership deals. Maximize your benefits with Assured Rewards."
+    "Find answers about brand loyalty promotions, bank cashback offers and loyalty membership deals. Maximize your benefits with Assured Rewards."
   );
 
   const navigate = useNavigate();

@@ -225,7 +225,7 @@ const HeroCarousel = React.memo(({ items }) => {
           }
 
           return (
-            <div key={i} className="relative flex-none w-full h-full">
+            <div key={b.id ? `banner-${b.id}` : `banner-idx-${i}`} className="relative flex-none w-full h-full">
               <div className="absolute inset-0" style={inlineBg} />
               <div
                 className="absolute inset-0"
@@ -331,7 +331,7 @@ const HeroCarousel = React.memo(({ items }) => {
 /* ---------------------- MAIN HOME ---------------------- */
 const Home = () => {
   useSEO(
-    "Best Customer Loyalty Program | Earn Cashback Offers",
+    "Best Customer Loyalty Program & Cashback Deals | Assured Rewards",
     "Join the best customer loyalty program! Earn reward points, get the highest cashback deals, and redeem rewards on daily shopping. Start earning today!"
   );
 
@@ -588,7 +588,7 @@ const Home = () => {
               .fill(0)
               .map((_, i) => (
                 <div
-                  key={i}
+                  key={`skeleton-qa-${i}`}
                   className="flex flex-col items-center text-center gap-2 p-2.5 rounded-2xl bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm animate-pulse"
                 >
                   <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-zinc-800 shrink-0" />
@@ -598,7 +598,7 @@ const Home = () => {
           ) : (
             quickActions.map((item, i) => (
               <Link
-                key={i}
+                key={item.to || `qa-${i}`}
                 to={item.to}
                 className="quick-action active:scale-[0.95] transition-transform"
                 style={{ opacity: 1, visibility: "visible", transform: "none" }}
@@ -644,7 +644,7 @@ const Home = () => {
           <div className="grid grid-cols-2 gap-2">
             {statItems.map((s, i) => (
               <div
-                key={i}
+                key={s.label || `stat-${i}`}
                 className="group relative overflow-hidden p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between"
               >
                 <div className="flex flex-col gap-1 z-10">
@@ -720,10 +720,10 @@ const Home = () => {
                   </div>
                 ))
             ) : brands.length > 0 ? (
-              brands.map((b) => (
+              brands.map((b, idx) => (
                 <Link
-                  key={b.id}
-                  to={`/brand-details/${b.id}`}
+                  key={b.id ? `brand-${b.id}` : `brand-${b.name || idx}`}
+                  to={`/brand-details/${b.id || ""}`}
                   className="brand-item flex flex-col items-center gap-1.5 shrink-0 snap-center group"
                 >
                   <div className="w-[64px] h-[64px] rounded-[18px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] dark:shadow-none overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_8px_16px_rgba(5,150,105,0.1)]">
@@ -784,7 +784,7 @@ const Home = () => {
                 .fill(0)
                 .map((_, i) => (
                   <div
-                    key={i}
+                    key={`skeleton-offer-${i}`}
                     className="offer-card w-[130px] h-[165px] rounded-[24px] bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800 shadow-sm animate-pulse snap-center shrink-0"
                   />
                 ))
@@ -794,7 +794,7 @@ const Home = () => {
 
                 return (
                   <div
-                    key={offer.id || i}
+                    key={offer.id ? `top-offer-${offer.id}-${i}` : `top-offer-idx-${i}`}
                     onClick={() => navigate(getOfferDestination(offer))}
                     className="offer-card group w-[130px] h-[165px] rounded-[24px] p-0 flex flex-col justify-between relative overflow-hidden snap-center active:scale-[0.96] transition-all shrink-0 cursor-pointer shadow-md bg-white border border-gray-100 dark:bg-zinc-900 dark:border-zinc-800"
                   >

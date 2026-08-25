@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   Mail,
   Phone,
@@ -15,7 +15,7 @@ import { useSEO } from "../hooks/useSEO";
 const ContactUs = () => {
   useSEO(
     "Contact Assured Rewards | Support for Loyalty Points",
-    "Need help with your cashback on shopping or bonus reward points? Contact the Assured Rewards support team today. We value and reward loyal customers."
+    "Need help with cashback on shopping or bonus reward points? Contact the Assured Rewards support team today. We value and reward loyal customers."
   );
 
   const navigate = useNavigate();

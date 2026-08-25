@@ -247,8 +247,8 @@ const Button = ({
 
 const VendorLandingPage = () => {
   useSEO(
-    "Loyalty Program for Small Business | Vendor Portal",
-    "Grow your store with our loyalty program for small business. Partner with Assured Rewards to offer loyalty promotions and reward loyal customers today."
+    "Loyalty Program for Small Businesses | Vendor Portal | Assured Rewards",
+    "Grow your store with our loyalty program for small businesses. Partner with Assured Rewards to offer loyalty promotions and reward loyal customers."
   );
 
   const { scrollY } = useScroll();

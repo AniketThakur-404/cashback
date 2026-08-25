@@ -80,8 +80,8 @@ const faqSections = [
 
 const VendorFAQs = () => {
   useSEO(
-    "Vendor FAQs | Loyalty Program for Small Business Help",
-    "Get answers on how to set up your loyalty program for small business. Learn about managing bonus reward points, cashback offers, and vendor benefits."
+    "Vendor FAQs | Loyalty Program for Small Businesses | Assured Rewards",
+    "Find answers about setting up a loyalty program for your small business and managing reward points, cashback offers and vendor benefits."
   );
 
   const [openId, setOpenId] = useState(null);

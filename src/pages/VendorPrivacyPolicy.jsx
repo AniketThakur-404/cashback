@@ -13,8 +13,8 @@ import { useSEO } from "../hooks/useSEO";
 
 const VendorPrivacyPolicy = () => {
   useSEO(
-    "Vendor Privacy Policy | Secure Loyalty Program Data",
-    "Read our Vendor Privacy Policy. Assured Rewards ensures your business data is safe while you manage your customer loyalty programs and cashback offers."
+    "Vendor Privacy Policy | Assured Rewards",
+    "Read our Vendor Privacy Policy and learn how Assured Rewards protects your business information while managing loyalty and cashback programs."
   );
 
   const navigate = useNavigate();

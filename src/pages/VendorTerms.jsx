@@ -5,8 +5,8 @@ import { useSEO } from "../hooks/useSEO";
 
 const VendorTerms = () => {
   useSEO(
-    "Vendor Terms | Partner for Loyalty Membership Deals",
-    "Review the Vendor Terms for partnering with Assured Rewards. Learn the guidelines for running loyal customer discounts and daily rewards deals with us."
+    "Vendor Terms & Conditions | Assured Rewards",
+    "Review the terms for partnering with Assured Rewards and understand the guidelines for loyalty discounts, cashback offers and daily rewards deals."
   );
 
   const navigate = useNavigate();
